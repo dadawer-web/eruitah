@@ -1,0 +1,3 @@
+/home/xmy/code/testmuduo/bulid/CMakeFiles/server.dir
+/home/xmy/code/testmuduo/bulid/CMakeFiles/edit_cache.dir
+/home/xmy/code/testmuduo/bulid/CMakeFiles/rebuild_cache.dir

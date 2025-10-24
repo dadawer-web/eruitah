@@ -1,0 +1,62 @@
+[
+{
+  "directory": "/home/xmy/code/build/src/server",
+  "command": "/usr/bin/g++  -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/muduo/include  -g  -g -o CMakeFiles/ChatServer.dir/chatserver.cpp.o -c /home/xmy/code/src/server/chatserver.cpp",
+  "file": "/home/xmy/code/src/server/chatserver.cpp",
+  "output": "src/server/CMakeFiles/ChatServer.dir/chatserver.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/server",
+  "command": "/usr/bin/g++  -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/muduo/include  -g  -g -o CMakeFiles/ChatServer.dir/chatservice.cpp.o -c /home/xmy/code/src/server/chatservice.cpp",
+  "file": "/home/xmy/code/src/server/chatservice.cpp",
+  "output": "src/server/CMakeFiles/ChatServer.dir/chatservice.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/server",
+  "command": "/usr/bin/g++  -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/muduo/include  -g  -g -o CMakeFiles/ChatServer.dir/main.cpp.o -c /home/xmy/code/src/server/main.cpp",
+  "file": "/home/xmy/code/src/server/main.cpp",
+  "output": "src/server/CMakeFiles/ChatServer.dir/main.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/server",
+  "command": "/usr/bin/g++  -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/muduo/include  -g  -g -o CMakeFiles/ChatServer.dir/db/db.cpp.o -c /home/xmy/code/src/server/db/db.cpp",
+  "file": "/home/xmy/code/src/server/db/db.cpp",
+  "output": "src/server/CMakeFiles/ChatServer.dir/db/db.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/server",
+  "command": "/usr/bin/g++  -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/muduo/include  -g  -g -o CMakeFiles/ChatServer.dir/model/friendmodel.cpp.o -c /home/xmy/code/src/server/model/friendmodel.cpp",
+  "file": "/home/xmy/code/src/server/model/friendmodel.cpp",
+  "output": "src/server/CMakeFiles/ChatServer.dir/model/friendmodel.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/server",
+  "command": "/usr/bin/g++  -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/muduo/include  -g  -g -o CMakeFiles/ChatServer.dir/model/groupmodel.cpp.o -c /home/xmy/code/src/server/model/groupmodel.cpp",
+  "file": "/home/xmy/code/src/server/model/groupmodel.cpp",
+  "output": "src/server/CMakeFiles/ChatServer.dir/model/groupmodel.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/server",
+  "command": "/usr/bin/g++  -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/muduo/include  -g  -g -o CMakeFiles/ChatServer.dir/model/offlinemessagemodel.cpp.o -c /home/xmy/code/src/server/model/offlinemessagemodel.cpp",
+  "file": "/home/xmy/code/src/server/model/offlinemessagemodel.cpp",
+  "output": "src/server/CMakeFiles/ChatServer.dir/model/offlinemessagemodel.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/server",
+  "command": "/usr/bin/g++  -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/muduo/include  -g  -g -o CMakeFiles/ChatServer.dir/model/usermodel.cpp.o -c /home/xmy/code/src/server/model/usermodel.cpp",
+  "file": "/home/xmy/code/src/server/model/usermodel.cpp",
+  "output": "src/server/CMakeFiles/ChatServer.dir/model/usermodel.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/server",
+  "command": "/usr/bin/g++  -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/muduo/include  -g  -g -o CMakeFiles/ChatServer.dir/redis/redis.cpp.o -c /home/xmy/code/src/server/redis/redis.cpp",
+  "file": "/home/xmy/code/src/server/redis/redis.cpp",
+  "output": "src/server/CMakeFiles/ChatServer.dir/redis/redis.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/client",
+  "command": "/usr/bin/g++  -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty  -g  -g -o CMakeFiles/ChatClient.dir/main.cpp.o -c /home/xmy/code/src/client/main.cpp",
+  "file": "/home/xmy/code/src/client/main.cpp",
+  "output": "src/client/CMakeFiles/ChatClient.dir/main.cpp.o"
+}
+]
