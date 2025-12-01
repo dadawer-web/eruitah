@@ -1,62 +1,224 @@
 [
 {
   "directory": "/home/xmy/code/build/src/server",
-  "command": "/usr/bin/g++  -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/muduo/include  -g  -g -o CMakeFiles/ChatServer.dir/chatserver.cpp.o -c /home/xmy/code/src/server/chatserver.cpp",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_NETWORK_LIB -I/home/xmy/code/build/src/server/ChatServer_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/muduo/include -I/home/xmy/code/src -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/ChatServer.dir/ChatServer_autogen/mocs_compilation.cpp.o -c /home/xmy/code/build/src/server/ChatServer_autogen/mocs_compilation.cpp",
+  "file": "/home/xmy/code/build/src/server/ChatServer_autogen/mocs_compilation.cpp",
+  "output": "src/server/CMakeFiles/ChatServer.dir/ChatServer_autogen/mocs_compilation.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/server",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_NETWORK_LIB -I/home/xmy/code/build/src/server/ChatServer_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/muduo/include -I/home/xmy/code/src -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/ChatServer.dir/chatserver.cpp.o -c /home/xmy/code/src/server/chatserver.cpp",
   "file": "/home/xmy/code/src/server/chatserver.cpp",
   "output": "src/server/CMakeFiles/ChatServer.dir/chatserver.cpp.o"
 },
 {
   "directory": "/home/xmy/code/build/src/server",
-  "command": "/usr/bin/g++  -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/muduo/include  -g  -g -o CMakeFiles/ChatServer.dir/chatservice.cpp.o -c /home/xmy/code/src/server/chatservice.cpp",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_NETWORK_LIB -I/home/xmy/code/build/src/server/ChatServer_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/muduo/include -I/home/xmy/code/src -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/ChatServer.dir/chatservice.cpp.o -c /home/xmy/code/src/server/chatservice.cpp",
   "file": "/home/xmy/code/src/server/chatservice.cpp",
   "output": "src/server/CMakeFiles/ChatServer.dir/chatservice.cpp.o"
 },
 {
   "directory": "/home/xmy/code/build/src/server",
-  "command": "/usr/bin/g++  -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/muduo/include  -g  -g -o CMakeFiles/ChatServer.dir/main.cpp.o -c /home/xmy/code/src/server/main.cpp",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_NETWORK_LIB -I/home/xmy/code/build/src/server/ChatServer_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/muduo/include -I/home/xmy/code/src -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/ChatServer.dir/main.cpp.o -c /home/xmy/code/src/server/main.cpp",
   "file": "/home/xmy/code/src/server/main.cpp",
   "output": "src/server/CMakeFiles/ChatServer.dir/main.cpp.o"
 },
 {
   "directory": "/home/xmy/code/build/src/server",
-  "command": "/usr/bin/g++  -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/muduo/include  -g  -g -o CMakeFiles/ChatServer.dir/db/db.cpp.o -c /home/xmy/code/src/server/db/db.cpp",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_NETWORK_LIB -I/home/xmy/code/build/src/server/ChatServer_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/muduo/include -I/home/xmy/code/src -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/ChatServer.dir/db/db.cpp.o -c /home/xmy/code/src/server/db/db.cpp",
   "file": "/home/xmy/code/src/server/db/db.cpp",
   "output": "src/server/CMakeFiles/ChatServer.dir/db/db.cpp.o"
 },
 {
   "directory": "/home/xmy/code/build/src/server",
-  "command": "/usr/bin/g++  -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/muduo/include  -g  -g -o CMakeFiles/ChatServer.dir/model/friendmodel.cpp.o -c /home/xmy/code/src/server/model/friendmodel.cpp",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_NETWORK_LIB -I/home/xmy/code/build/src/server/ChatServer_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/muduo/include -I/home/xmy/code/src -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/ChatServer.dir/model/friendmodel.cpp.o -c /home/xmy/code/src/server/model/friendmodel.cpp",
   "file": "/home/xmy/code/src/server/model/friendmodel.cpp",
   "output": "src/server/CMakeFiles/ChatServer.dir/model/friendmodel.cpp.o"
 },
 {
   "directory": "/home/xmy/code/build/src/server",
-  "command": "/usr/bin/g++  -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/muduo/include  -g  -g -o CMakeFiles/ChatServer.dir/model/groupmodel.cpp.o -c /home/xmy/code/src/server/model/groupmodel.cpp",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_NETWORK_LIB -I/home/xmy/code/build/src/server/ChatServer_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/muduo/include -I/home/xmy/code/src -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/ChatServer.dir/model/groupmodel.cpp.o -c /home/xmy/code/src/server/model/groupmodel.cpp",
   "file": "/home/xmy/code/src/server/model/groupmodel.cpp",
   "output": "src/server/CMakeFiles/ChatServer.dir/model/groupmodel.cpp.o"
 },
 {
   "directory": "/home/xmy/code/build/src/server",
-  "command": "/usr/bin/g++  -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/muduo/include  -g  -g -o CMakeFiles/ChatServer.dir/model/offlinemessagemodel.cpp.o -c /home/xmy/code/src/server/model/offlinemessagemodel.cpp",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_NETWORK_LIB -I/home/xmy/code/build/src/server/ChatServer_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/muduo/include -I/home/xmy/code/src -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/ChatServer.dir/model/offlinemessagemodel.cpp.o -c /home/xmy/code/src/server/model/offlinemessagemodel.cpp",
   "file": "/home/xmy/code/src/server/model/offlinemessagemodel.cpp",
   "output": "src/server/CMakeFiles/ChatServer.dir/model/offlinemessagemodel.cpp.o"
 },
 {
   "directory": "/home/xmy/code/build/src/server",
-  "command": "/usr/bin/g++  -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/muduo/include  -g  -g -o CMakeFiles/ChatServer.dir/model/usermodel.cpp.o -c /home/xmy/code/src/server/model/usermodel.cpp",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_NETWORK_LIB -I/home/xmy/code/build/src/server/ChatServer_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/muduo/include -I/home/xmy/code/src -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/ChatServer.dir/model/usermodel.cpp.o -c /home/xmy/code/src/server/model/usermodel.cpp",
   "file": "/home/xmy/code/src/server/model/usermodel.cpp",
   "output": "src/server/CMakeFiles/ChatServer.dir/model/usermodel.cpp.o"
 },
 {
   "directory": "/home/xmy/code/build/src/server",
-  "command": "/usr/bin/g++  -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/muduo/include  -g  -g -o CMakeFiles/ChatServer.dir/redis/redis.cpp.o -c /home/xmy/code/src/server/redis/redis.cpp",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_NETWORK_LIB -I/home/xmy/code/build/src/server/ChatServer_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/muduo/include -I/home/xmy/code/src -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/ChatServer.dir/redis/redis.cpp.o -c /home/xmy/code/src/server/redis/redis.cpp",
   "file": "/home/xmy/code/src/server/redis/redis.cpp",
   "output": "src/server/CMakeFiles/ChatServer.dir/redis/redis.cpp.o"
 },
 {
+  "directory": "/home/xmy/code/build/src/server",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_NETWORK_LIB -I/home/xmy/code/build/src/server/ChatServer_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/muduo/include -I/home/xmy/code/src -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/ChatServer.dir/__/chatserver.cpp.o -c /home/xmy/code/src/chatserver.cpp",
+  "file": "/home/xmy/code/src/chatserver.cpp",
+  "output": "src/server/CMakeFiles/ChatServer.dir/__/chatserver.cpp.o"
+},
+{
   "directory": "/home/xmy/code/build/src/client",
-  "command": "/usr/bin/g++  -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty  -g  -g -o CMakeFiles/ChatClient.dir/main.cpp.o -c /home/xmy/code/src/client/main.cpp",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_WIDGETS_LIB -I/home/xmy/code/build/src/client/ChatClient_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/code/src -I/home/xmy/code/src/server/db -I/home/xmy/code/src/server/model -I/home/xmy/code/src/server/redis -I/home/xmy/muduo/include -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtWidgets -isystem /usr/include/x86_64-linux-gnu/qt5/QtGui -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/ChatClient.dir/ChatClient_autogen/mocs_compilation.cpp.o -c /home/xmy/code/build/src/client/ChatClient_autogen/mocs_compilation.cpp",
+  "file": "/home/xmy/code/build/src/client/ChatClient_autogen/mocs_compilation.cpp",
+  "output": "src/client/CMakeFiles/ChatClient.dir/ChatClient_autogen/mocs_compilation.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/client",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_WIDGETS_LIB -I/home/xmy/code/build/src/client/ChatClient_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/code/src -I/home/xmy/code/src/server/db -I/home/xmy/code/src/server/model -I/home/xmy/code/src/server/redis -I/home/xmy/muduo/include -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtWidgets -isystem /usr/include/x86_64-linux-gnu/qt5/QtGui -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/ChatClient.dir/main.cpp.o -c /home/xmy/code/src/client/main.cpp",
   "file": "/home/xmy/code/src/client/main.cpp",
   "output": "src/client/CMakeFiles/ChatClient.dir/main.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/client",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_WIDGETS_LIB -I/home/xmy/code/build/src/client/ChatClient_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/code/src -I/home/xmy/code/src/server/db -I/home/xmy/code/src/server/model -I/home/xmy/code/src/server/redis -I/home/xmy/muduo/include -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtWidgets -isystem /usr/include/x86_64-linux-gnu/qt5/QtGui -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/ChatClient.dir/__/chatclient.cpp.o -c /home/xmy/code/src/chatclient.cpp",
+  "file": "/home/xmy/code/src/chatclient.cpp",
+  "output": "src/client/CMakeFiles/ChatClient.dir/__/chatclient.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/client",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_WIDGETS_LIB -I/home/xmy/code/build/src/client/ChatClient_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/code/src -I/home/xmy/code/src/server/db -I/home/xmy/code/src/server/model -I/home/xmy/code/src/server/redis -I/home/xmy/muduo/include -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtWidgets -isystem /usr/include/x86_64-linux-gnu/qt5/QtGui -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/ChatClient.dir/__/chatwindow.cpp.o -c /home/xmy/code/src/chatwindow.cpp",
+  "file": "/home/xmy/code/src/chatwindow.cpp",
+  "output": "src/client/CMakeFiles/ChatClient.dir/__/chatwindow.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/client",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_WIDGETS_LIB -I/home/xmy/code/build/src/client/ChatClient_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/code/src -I/home/xmy/code/src/server/db -I/home/xmy/code/src/server/model -I/home/xmy/code/src/server/redis -I/home/xmy/muduo/include -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtWidgets -isystem /usr/include/x86_64-linux-gnu/qt5/QtGui -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/ChatClient.dir/__/loginwindow.cpp.o -c /home/xmy/code/src/loginwindow.cpp",
+  "file": "/home/xmy/code/src/loginwindow.cpp",
+  "output": "src/client/CMakeFiles/ChatClient.dir/__/loginwindow.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/client",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_WIDGETS_LIB -I/home/xmy/code/build/src/client/ChatClient_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/code/src -I/home/xmy/code/src/server/db -I/home/xmy/code/src/server/model -I/home/xmy/code/src/server/redis -I/home/xmy/muduo/include -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtWidgets -isystem /usr/include/x86_64-linux-gnu/qt5/QtGui -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/ChatClient.dir/__/mainwindow.cpp.o -c /home/xmy/code/src/mainwindow.cpp",
+  "file": "/home/xmy/code/src/mainwindow.cpp",
+  "output": "src/client/CMakeFiles/ChatClient.dir/__/mainwindow.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/client",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_WIDGETS_LIB -I/home/xmy/code/build/src/client/ChatClient_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/code/src -I/home/xmy/code/src/server/db -I/home/xmy/code/src/server/model -I/home/xmy/code/src/server/redis -I/home/xmy/muduo/include -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtWidgets -isystem /usr/include/x86_64-linux-gnu/qt5/QtGui -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/ChatClient.dir/__/chatserver.cpp.o -c /home/xmy/code/src/chatserver.cpp",
+  "file": "/home/xmy/code/src/chatserver.cpp",
+  "output": "src/client/CMakeFiles/ChatClient.dir/__/chatserver.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/client",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_WIDGETS_LIB -I/home/xmy/code/build/src/client/ChatClient_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/code/src -I/home/xmy/code/src/server/db -I/home/xmy/code/src/server/model -I/home/xmy/code/src/server/redis -I/home/xmy/muduo/include -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtWidgets -isystem /usr/include/x86_64-linux-gnu/qt5/QtGui -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/ChatClient.dir/__/server/db/db.cpp.o -c /home/xmy/code/src/server/db/db.cpp",
+  "file": "/home/xmy/code/src/server/db/db.cpp",
+  "output": "src/client/CMakeFiles/ChatClient.dir/__/server/db/db.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/client",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_WIDGETS_LIB -I/home/xmy/code/build/src/client/ChatClient_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/code/src -I/home/xmy/code/src/server/db -I/home/xmy/code/src/server/model -I/home/xmy/code/src/server/redis -I/home/xmy/muduo/include -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtWidgets -isystem /usr/include/x86_64-linux-gnu/qt5/QtGui -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/ChatClient.dir/__/server/model/usermodel.cpp.o -c /home/xmy/code/src/server/model/usermodel.cpp",
+  "file": "/home/xmy/code/src/server/model/usermodel.cpp",
+  "output": "src/client/CMakeFiles/ChatClient.dir/__/server/model/usermodel.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/client",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_WIDGETS_LIB -I/home/xmy/code/build/src/client/ChatClient_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/code/src -I/home/xmy/code/src/server/db -I/home/xmy/code/src/server/model -I/home/xmy/code/src/server/redis -I/home/xmy/muduo/include -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtWidgets -isystem /usr/include/x86_64-linux-gnu/qt5/QtGui -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/ChatClient.dir/__/server/model/friendmodel.cpp.o -c /home/xmy/code/src/server/model/friendmodel.cpp",
+  "file": "/home/xmy/code/src/server/model/friendmodel.cpp",
+  "output": "src/client/CMakeFiles/ChatClient.dir/__/server/model/friendmodel.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/client",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_WIDGETS_LIB -I/home/xmy/code/build/src/client/ChatClient_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/code/src -I/home/xmy/code/src/server/db -I/home/xmy/code/src/server/model -I/home/xmy/code/src/server/redis -I/home/xmy/muduo/include -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtWidgets -isystem /usr/include/x86_64-linux-gnu/qt5/QtGui -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/ChatClient.dir/__/server/model/groupmodel.cpp.o -c /home/xmy/code/src/server/model/groupmodel.cpp",
+  "file": "/home/xmy/code/src/server/model/groupmodel.cpp",
+  "output": "src/client/CMakeFiles/ChatClient.dir/__/server/model/groupmodel.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/client",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_WIDGETS_LIB -I/home/xmy/code/build/src/client/ChatClient_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/code/src -I/home/xmy/code/src/server/db -I/home/xmy/code/src/server/model -I/home/xmy/code/src/server/redis -I/home/xmy/muduo/include -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtWidgets -isystem /usr/include/x86_64-linux-gnu/qt5/QtGui -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/ChatClient.dir/__/server/model/offlinemessagemodel.cpp.o -c /home/xmy/code/src/server/model/offlinemessagemodel.cpp",
+  "file": "/home/xmy/code/src/server/model/offlinemessagemodel.cpp",
+  "output": "src/client/CMakeFiles/ChatClient.dir/__/server/model/offlinemessagemodel.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/client",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_WIDGETS_LIB -I/home/xmy/code/build/src/client/ChatClient_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/code/src -I/home/xmy/code/src/server/db -I/home/xmy/code/src/server/model -I/home/xmy/code/src/server/redis -I/home/xmy/muduo/include -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtWidgets -isystem /usr/include/x86_64-linux-gnu/qt5/QtGui -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/ChatClient.dir/__/server/redis/redis.cpp.o -c /home/xmy/code/src/server/redis/redis.cpp",
+  "file": "/home/xmy/code/src/server/redis/redis.cpp",
+  "output": "src/client/CMakeFiles/ChatClient.dir/__/server/redis/redis.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/client",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_WIDGETS_LIB -I/home/xmy/code/build/src/client/QtChat_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/code/src -I/home/xmy/code/src/server/db -I/home/xmy/code/src/server/model -I/home/xmy/code/src/server/redis -I/home/xmy/muduo/include -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtWidgets -isystem /usr/include/x86_64-linux-gnu/qt5/QtGui -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/QtChat.dir/QtChat_autogen/mocs_compilation.cpp.o -c /home/xmy/code/build/src/client/QtChat_autogen/mocs_compilation.cpp",
+  "file": "/home/xmy/code/build/src/client/QtChat_autogen/mocs_compilation.cpp",
+  "output": "src/client/CMakeFiles/QtChat.dir/QtChat_autogen/mocs_compilation.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/client",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_WIDGETS_LIB -I/home/xmy/code/build/src/client/QtChat_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/code/src -I/home/xmy/code/src/server/db -I/home/xmy/code/src/server/model -I/home/xmy/code/src/server/redis -I/home/xmy/muduo/include -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtWidgets -isystem /usr/include/x86_64-linux-gnu/qt5/QtGui -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/QtChat.dir/__/main.cpp.o -c /home/xmy/code/src/main.cpp",
+  "file": "/home/xmy/code/src/main.cpp",
+  "output": "src/client/CMakeFiles/QtChat.dir/__/main.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/client",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_WIDGETS_LIB -I/home/xmy/code/build/src/client/QtChat_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/code/src -I/home/xmy/code/src/server/db -I/home/xmy/code/src/server/model -I/home/xmy/code/src/server/redis -I/home/xmy/muduo/include -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtWidgets -isystem /usr/include/x86_64-linux-gnu/qt5/QtGui -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/QtChat.dir/__/chatclient.cpp.o -c /home/xmy/code/src/chatclient.cpp",
+  "file": "/home/xmy/code/src/chatclient.cpp",
+  "output": "src/client/CMakeFiles/QtChat.dir/__/chatclient.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/client",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_WIDGETS_LIB -I/home/xmy/code/build/src/client/QtChat_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/code/src -I/home/xmy/code/src/server/db -I/home/xmy/code/src/server/model -I/home/xmy/code/src/server/redis -I/home/xmy/muduo/include -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtWidgets -isystem /usr/include/x86_64-linux-gnu/qt5/QtGui -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/QtChat.dir/__/chatwindow.cpp.o -c /home/xmy/code/src/chatwindow.cpp",
+  "file": "/home/xmy/code/src/chatwindow.cpp",
+  "output": "src/client/CMakeFiles/QtChat.dir/__/chatwindow.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/client",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_WIDGETS_LIB -I/home/xmy/code/build/src/client/QtChat_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/code/src -I/home/xmy/code/src/server/db -I/home/xmy/code/src/server/model -I/home/xmy/code/src/server/redis -I/home/xmy/muduo/include -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtWidgets -isystem /usr/include/x86_64-linux-gnu/qt5/QtGui -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/QtChat.dir/__/loginwindow.cpp.o -c /home/xmy/code/src/loginwindow.cpp",
+  "file": "/home/xmy/code/src/loginwindow.cpp",
+  "output": "src/client/CMakeFiles/QtChat.dir/__/loginwindow.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/client",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_WIDGETS_LIB -I/home/xmy/code/build/src/client/QtChat_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/code/src -I/home/xmy/code/src/server/db -I/home/xmy/code/src/server/model -I/home/xmy/code/src/server/redis -I/home/xmy/muduo/include -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtWidgets -isystem /usr/include/x86_64-linux-gnu/qt5/QtGui -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/QtChat.dir/__/mainwindow.cpp.o -c /home/xmy/code/src/mainwindow.cpp",
+  "file": "/home/xmy/code/src/mainwindow.cpp",
+  "output": "src/client/CMakeFiles/QtChat.dir/__/mainwindow.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/client",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_WIDGETS_LIB -I/home/xmy/code/build/src/client/QtChat_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/code/src -I/home/xmy/code/src/server/db -I/home/xmy/code/src/server/model -I/home/xmy/code/src/server/redis -I/home/xmy/muduo/include -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtWidgets -isystem /usr/include/x86_64-linux-gnu/qt5/QtGui -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/QtChat.dir/__/chatserver.cpp.o -c /home/xmy/code/src/chatserver.cpp",
+  "file": "/home/xmy/code/src/chatserver.cpp",
+  "output": "src/client/CMakeFiles/QtChat.dir/__/chatserver.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/client",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_WIDGETS_LIB -I/home/xmy/code/build/src/client/QtChat_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/code/src -I/home/xmy/code/src/server/db -I/home/xmy/code/src/server/model -I/home/xmy/code/src/server/redis -I/home/xmy/muduo/include -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtWidgets -isystem /usr/include/x86_64-linux-gnu/qt5/QtGui -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/QtChat.dir/__/server/db/db.cpp.o -c /home/xmy/code/src/server/db/db.cpp",
+  "file": "/home/xmy/code/src/server/db/db.cpp",
+  "output": "src/client/CMakeFiles/QtChat.dir/__/server/db/db.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/client",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_WIDGETS_LIB -I/home/xmy/code/build/src/client/QtChat_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/code/src -I/home/xmy/code/src/server/db -I/home/xmy/code/src/server/model -I/home/xmy/code/src/server/redis -I/home/xmy/muduo/include -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtWidgets -isystem /usr/include/x86_64-linux-gnu/qt5/QtGui -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/QtChat.dir/__/server/model/usermodel.cpp.o -c /home/xmy/code/src/server/model/usermodel.cpp",
+  "file": "/home/xmy/code/src/server/model/usermodel.cpp",
+  "output": "src/client/CMakeFiles/QtChat.dir/__/server/model/usermodel.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/client",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_WIDGETS_LIB -I/home/xmy/code/build/src/client/QtChat_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/code/src -I/home/xmy/code/src/server/db -I/home/xmy/code/src/server/model -I/home/xmy/code/src/server/redis -I/home/xmy/muduo/include -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtWidgets -isystem /usr/include/x86_64-linux-gnu/qt5/QtGui -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/QtChat.dir/__/server/model/friendmodel.cpp.o -c /home/xmy/code/src/server/model/friendmodel.cpp",
+  "file": "/home/xmy/code/src/server/model/friendmodel.cpp",
+  "output": "src/client/CMakeFiles/QtChat.dir/__/server/model/friendmodel.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/client",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_WIDGETS_LIB -I/home/xmy/code/build/src/client/QtChat_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/code/src -I/home/xmy/code/src/server/db -I/home/xmy/code/src/server/model -I/home/xmy/code/src/server/redis -I/home/xmy/muduo/include -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtWidgets -isystem /usr/include/x86_64-linux-gnu/qt5/QtGui -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/QtChat.dir/__/server/model/groupmodel.cpp.o -c /home/xmy/code/src/server/model/groupmodel.cpp",
+  "file": "/home/xmy/code/src/server/model/groupmodel.cpp",
+  "output": "src/client/CMakeFiles/QtChat.dir/__/server/model/groupmodel.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/client",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_WIDGETS_LIB -I/home/xmy/code/build/src/client/QtChat_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/code/src -I/home/xmy/code/src/server/db -I/home/xmy/code/src/server/model -I/home/xmy/code/src/server/redis -I/home/xmy/muduo/include -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtWidgets -isystem /usr/include/x86_64-linux-gnu/qt5/QtGui -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/QtChat.dir/__/server/model/offlinemessagemodel.cpp.o -c /home/xmy/code/src/server/model/offlinemessagemodel.cpp",
+  "file": "/home/xmy/code/src/server/model/offlinemessagemodel.cpp",
+  "output": "src/client/CMakeFiles/QtChat.dir/__/server/model/offlinemessagemodel.cpp.o"
+},
+{
+  "directory": "/home/xmy/code/build/src/client",
+  "command": "/usr/bin/g++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_WIDGETS_LIB -I/home/xmy/code/build/src/client/QtChat_autogen/include -I/home/xmy/code/include -I/home/xmy/code/include/server -I/home/xmy/code/include/server/db -I/home/xmy/code/include/server/model -I/home/xmy/code/include/server/redis -I/home/xmy/code/thirdparty -I/home/xmy/code/src -I/home/xmy/code/src/server/db -I/home/xmy/code/src/server/model -I/home/xmy/code/src/server/redis -I/home/xmy/muduo/include -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtWidgets -isystem /usr/include/x86_64-linux-gnu/qt5/QtGui -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -isystem /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork  -g  -g -fPIC -o CMakeFiles/QtChat.dir/__/server/redis/redis.cpp.o -c /home/xmy/code/src/server/redis/redis.cpp",
+  "file": "/home/xmy/code/src/server/redis/redis.cpp",
+  "output": "src/client/CMakeFiles/QtChat.dir/__/server/redis/redis.cpp.o"
 }
 ]

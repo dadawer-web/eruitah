@@ -320,7 +320,7 @@ src/server/CMakeFiles/ChatServer.dir/chatservice.cpp.o: \
  /home/xmy/muduo/muduo/base/Mutex.h \
  /home/xmy/muduo/muduo/base/CurrentThread.h \
  /home/xmy/muduo/muduo/net/TimerId.h \
- /home/xmy/code/include/server/model/UserModel.hpp \
+ /home/xmy/code/include/server/model/usermodel.hpp \
  /home/xmy/code/include/server/model/user.hpp /usr/include/c++/13/mutex \
  /usr/include/c++/13/bits/chrono.h /usr/include/c++/13/ratio \
  /usr/include/c++/13/ctime /usr/include/c++/13/bits/parse_numbers.h \
@@ -338,4 +338,4 @@ src/server/CMakeFiles/ChatServer.dir/chatservice.cpp.o: \
  /home/xmy/code/include/server/model/group.hpp \
  /home/xmy/code/include/server/model/groupuser.hpp \
  /home/xmy/code/include/public.hpp /home/xmy/muduo/muduo/base/Logging.h \
- /home/xmy/muduo/muduo/base/LogStream.h
+ /home/xmy/muduo/muduo/base/LogStream.h /usr/include/c++/13/iostream

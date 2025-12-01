@@ -2,73 +2,98 @@
 #include"public.hpp"
 #include<string>
 #include<muduo/base/Logging.h>
+#include<iostream>
 #include<vector>
 
 using namespace muduo;
 using namespace std;
-//获取单例对象的接口函数
+// 获取单例对象的接口函数
+// 设计模式：单例模式实现，确保整个应用只有一个ChatService实例
 ChatService* ChatService::instance(){
     static ChatService service;
     return &service;
 }
-//构造函数注册消息以及对应的handler操作
+
+// 构造函数 - 服务初始化
+// 业务逻辑：注册所有消息处理器，建立消息类型到处理函数的映射关系
 ChatService::ChatService()
 {
     // 用户基本业务管理相关事件处理回调注册
+    // 命令模式：通过映射表实现消息类型到处理函数的动态路由
     _msgHandlerMap.insert({LOGIN_MSG,std::bind(&ChatService::login,this,_1,_2,_3)});
     _msgHandlerMap.insert({LOGINOUT_MSG,std::bind(&ChatService::loginout,this,_1,_2,_3)});
     _msgHandlerMap.insert({REG_MSG,std::bind(&ChatService::reg,this,_1,_2,_3)});
     _msgHandlerMap.insert({ONE_CHAT_MSG,std::bind(&ChatService::oneChat,this,_1,_2,_3)});
     _msgHandlerMap.insert({ADD_FRIEND_MSG,std::bind(&ChatService::addFriend,this,_1,_2,_3)});
-     // 群组业务管理相关事件处理回调注册
+    
+    // 群组业务管理相关事件处理回调注册
     _msgHandlerMap.insert({CREATE_GROUP_MSG ,std::bind(&ChatService::createGroup,this,_1,_2,_3)});
     _msgHandlerMap.insert({ADD_GROUP_MSG ,std::bind(&ChatService::addGroup,this,_1,_2,_3)});
     _msgHandlerMap.insert({GROUP_CHAT_MSG,std::bind(&ChatService::groupChat,this,_1,_2,_3)});
+    
+    // 文件传输相关事件处理回调注册 - 扩展功能支持
+    _msgHandlerMap.insert({FILE_TRANSFER_REQ,std::bind(&ChatService::fileTransferRequest,this,_1,_2,_3)});
+    _msgHandlerMap.insert({FILE_TRANSFER_DATA,std::bind(&ChatService::fileTransferData,this,_1,_2,_3)});
+    _msgHandlerMap.insert({FILE_TRANSFER_COMPLETE,std::bind(&ChatService::fileTransferComplete,this,_1,_2,_3)});
+    
+    // 查询好友和群组列表相关事件处理回调注册
+    _msgHandlerMap.insert({QUERY_FRIEND_MSG,std::bind(&ChatService::queryFriendList,this,_1,_2,_3)});
+    _msgHandlerMap.insert({QUERY_GROUP_MSG,std::bind(&ChatService::queryGroupList,this,_1,_2,_3)});
 
-    //连接redis服务器
+    // 连接Redis服务器 - 分布式消息支持
     if(_redis.connect()){
-        //设置上报消息的回调
+        // 设置上报消息的回调 - 跨服务器消息转发机制
         _redis.init_notify_handler(std::bind(&ChatService::handleRedisSubscribeMessage,this,_1,_2));
-         LOG_INFO << "Redis connected and notify handler initialized";
+        LOG_INFO << "Redis connected and notify handler initialized";
     }
     else{
-    LOG_ERROR << "Failed to connect to Redis";
-  }
+        LOG_ERROR << "Failed to connect to Redis";
+    }
 }
-//如果服务器宕机，用户的在线状态需要更新，以免出现服务器断开后，用户一直显示在线的情况(自己更新数据库offline我遇到的)
-//服务器异常后，业务重置方法
+// 服务器异常后，业务重置方法
+// 业务逻辑：确保服务器重启后，所有用户状态的一致性
 void ChatService::reset(){
-    //把online状态的用户，设置成offline
+    // 把online状态的用户，设置成offline - 状态恢复机制
+    // 保证服务重启后用户在线状态的正确性，防止僵尸会话
     _userModel.resetState();
 }
 
 
 
-
-
-//获取消息对应的处理器
+// 获取消息对应的处理器
+// 业务逻辑：实现消息分发的核心功能，根据消息类型返回对应的处理函数
 MsgHandler ChatService::getHandler(int msgid){
-    //记录错误日志，msgid没有对应的处理事件回调
+    // 查找对应消息类型的处理器
+    // 命令模式的应用：动态路由到具体的处理函数
     auto it=_msgHandlerMap.find(msgid);
     if(it==_msgHandlerMap.end()){//如果没有找到
-        //返回一个空的处理器。空操作
+        // 返回一个空的处理器 - 错误处理机制
+        // 优雅降级：对于未知消息类型，记录错误并返回空操作处理器
         return[=](const TcpConnectionPtr& conn,json& js,Timestamp time){
             LOG_ERROR<<"msgid:"<<msgid<<" can not find handler!";
         };
     }
     else{
-           return _msgHandlerMap[msgid];
+        // 返回找到的处理器
+        return _msgHandlerMap[msgid];
     }
-  
-}
- //处理登录业务 ORM 业务层操作的都是对象 DAO  数据层操作的都是关系型数据库 id pwd pwd
-  void ChatService::login(const TcpConnectionPtr& conn,json& js,Timestamp time){
-        int id=js["id"].get<int>();//字符串转换成整型
+  }
+ // 处理登录业务
+ // 业务逻辑：实现用户身份认证、会话管理、分布式支持和初始数据同步
+ void ChatService::login(const TcpConnectionPtr& conn,json& js,Timestamp time){
+        LOG_INFO << "do login service!";
+        // 获取客户端提供的用户ID - 身份凭证提取
+        long long id = js["id"].get<long long>();
         string pwd=js["password"];
+        // 直接使用long long类型查询，避免int类型转换截断
         User user=_userModel.query(id);
+        
+        // 验证用户登录信息 - 身份认证核心逻辑
+        // 安全机制：双重验证（用户存在性和密码匹配）
         if(user.getId()==id&&user.getPwd()==pwd){//登录成功 存在用户且密码正确
+            // 检查用户是否已在线 - 防重复登录机制
             if(user.getState()=="online"){//该用户已经登录
-                //该用户已经登录，不能重复登录
+                // 拒绝重复登录 - 账户安全保护
                 json response;
                 response["msgid"]=LOGIN_MSG_ACK;
                 response["errno"]=2;//失败 
@@ -76,38 +101,45 @@ MsgHandler ChatService::getHandler(int msgid){
                 conn->send(response.dump());
             }
             else{
-                //登录成功，记录用户连接信息 因为是多线程，考虑线程安全,数据库的操作是线程安全的，mysql自动保证,而代码中json都是局部变量不用加锁
+                // 登录成功，记录用户连接信息 - 会话管理
+                // 并发安全：使用互斥锁保护共享资源
                 {
-                lock_guard<mutex> lock(_connMutex);
-                _userConnMap.insert({id,conn});
-                 LOG_INFO << "User " << id << " added to connection map";
+                    lock_guard<mutex> lock(_connMutex);
+                    _userConnMap.insert({(int)id,conn});
+                    LOG_INFO << "User " << id << " added to connection map";
                 }
 
-                //id用户登录成功后，向redis订阅channel(id)
-                if(_redis.subscribe(id)){
-                     LOG_INFO << "Successfully subscribed to Redis channel for user " << id;
+                // 用户登录成功后，向redis订阅channel(id) - 分布式消息支持
+                // 微服务架构：通过Redis实现跨服务器消息路由
+                if(_redis.subscribe((int)id)){
+                    LOG_INFO << "Successfully subscribed to Redis channel for user " << id;
                 }
                 else{
                     LOG_ERROR << "Failed to subscribe to Redis channel for user " << id;
                 }
 
-                //登录成功，更新用户状态信息 state offline=>online
+                // 登录成功，更新用户状态信息 state offline=>online - 状态同步
                 user.setState("online");
                 _userModel.updateState(user);
 
+                // 构建登录成功响应 - 用户体验优化
                 json response;
                 response["msgid"]=LOGIN_MSG_ACK;
                 response["errno"]=0;
                 response["id"]=user.getId();
                 response["name"]=user.getName();
-                //查询该用户是否有离线消息，如果有的话，查询，json返回给用户
+                
+                // 查询该用户是否有离线消息 - 消息可靠性保障
+                // 消息存储策略：确保用户不会丢失离线期间的消息
                 vector<string> vec=_offlineMsgModel.query(id);
                 if(!vec.empty()){
                     response["offlinemsg"]=vec;
-                    //读取该用户离线消息后，删除该用户的离线消息
+                    // 读取该用户离线消息后，删除该用户的离线消息 - 数据清理
                     _offlineMsgModel.remove(id);
                 }
-                //查询该用户的好友列表信息并返回
+                
+                // 查询该用户的好友列表信息并返回 - 社交关系同步
+                // 数据预加载：登录时一次性加载用户相关的所有社交数据
                 vector<User> userVec=_friendModel.query(id);
                 if(!userVec.empty()){
                     vector<string> vec2;
@@ -120,45 +152,52 @@ MsgHandler ChatService::getHandler(int msgid){
                     }
                     response["friends"]=vec2;
                 }
-                // 查询用户的群组信息
+                
+                // 查询用户的群组信息 - 社交关系同步
                 vector<Group> groupuserVec = _groupModel.queryGroups(id);
-                 if (!groupuserVec.empty())
+                if (!groupuserVec.empty())
                 {
-                // group:[{groupid:[xxx, xxx, xxx, xxx]}]
-                vector<string> groupV;
-                for (Group &group : groupuserVec)
-                {
-                    json grpjson;
-                    grpjson["id"] = group.getId();
-                    grpjson["groupname"] = group.getName();
-                    grpjson["groupdesc"] = group.getDesc();
-                    vector<string> userV;
-                    for (GroupUser &user : group.getUsers())
+                    // 群组信息序列化 - 数据结构设计
+                    vector<string> groupV;
+                    for (Group &group : groupuserVec)
                     {
-                        json js;
-                        js["id"] = user.getId();
-                        js["name"] = user.getName();
-                        js["state"] = user.getState();
-                        js["role"] = user.getRole();
-                        userV.push_back(js.dump());
+                        json grpjson;
+                        grpjson["id"] = group.getId();
+                        grpjson["groupname"] = group.getName();
+                        grpjson["groupdesc"] = group.getDesc();
+                        vector<string> userV;
+                        for (GroupUser &user : group.getUsers())
+                        {
+                            json js;
+                            js["id"] = user.getId();
+                            js["name"] = user.getName();
+                            js["state"] = user.getState();
+                            js["role"] = user.getRole();
+                            userV.push_back(js.dump());
+                        }
+                        grpjson["users"] = userV;
+                        groupV.push_back(grpjson.dump());
                     }
-                    grpjson["users"] = userV;
-                    groupV.push_back(grpjson.dump());
+
+                    response["groups"] = groupV;
                 }
 
-                response["groups"] = groupV;
-            }
-
-            conn->send(response.dump());
+                string responseStr = response.dump();
+                cout << "[DEBUG] Sending login success response: " << responseStr << endl;
+                conn->send(responseStr);
+                cout << "[DEBUG] Login response sent successfully" << endl;
             } 
         }
         else{
             //该用户不存在，登录失败或者用户存在但是密码错误
+            cout << "[DEBUG] User authentication failed, id: " << id << endl;
             json response;
             response["msgid"]=LOGIN_MSG_ACK;
             response["errno"]=1;//失败
             response["errmsg"]="id or password is invalid!";
-            conn->send(response.dump());
+            string responseStr = response.dump();
+            cout << "[DEBUG] Sending login ACK (failed): " << responseStr << endl;
+            conn->send(responseStr);
         }
         //测试{"msgid":1,"id":12,"password":"123456"}注意json数字不加引号(id)      //{"msgid":1,"id":22,"password":"123456"}正确的 再新开一个终端登录
         //{"msgid":1,"id":23,"password":"666666"}
@@ -326,13 +365,140 @@ MsgHandler ChatService::getHandler(int msgid){
          }
 }
 //当数据很多时，如一百万，会涉及数据库表的优化和拆分，还有分库分表的工具
+// 文件传输请求处理
+void ChatService::fileTransferRequest(const TcpConnectionPtr& conn, json& js, Timestamp time) {
+    LOG_INFO << "File transfer request received";
+    
+    int fromId = js["from"].get<int>();
+    int toId = js["to"].get<int>();
+    std::string filename = js["filename"].get<std::string>();
+    long long filesize = js["filesize"].get<long long>();
+    std::string fileId = js["fileid"].get<std::string>();
+    
+    LOG_INFO << "File request from: " << fromId << " to: " << toId << ", file: " << filename << ", size: " << filesize;
+    
+    // 检查接收方是否在线
+    {   
+        lock_guard<mutex> lock(_connMutex);
+        auto it = _userConnMap.find(toId);
+        if (it != _userConnMap.end()) {
+            // 接收方在线，转发文件传输请求
+            json response;
+            response["msgid"] = FILE_TRANSFER_REQ;
+            response["from"] = fromId;
+            response["to"] = toId;
+            response["filename"] = filename;
+            response["filesize"] = filesize;
+            response["fileid"] = fileId;
+            
+            std::string responseStr = response.dump();
+            it->second->send(responseStr);
+            LOG_INFO << "File transfer request forwarded to user " << toId;
+            return;
+        }
+    }
+    
+    // 接收方不在线，存储离线消息
+    json offlineMsg;
+    offlineMsg["msgid"] = FILE_TRANSFER_REQ;
+    offlineMsg["from"] = fromId;
+    offlineMsg["filename"] = filename;
+    offlineMsg["filesize"] = filesize;
+    offlineMsg["fileid"] = fileId;
+    
+    _offlineMsgModel.insert(toId, offlineMsg.dump());
+    LOG_INFO << "File transfer request stored as offline message for user " << toId;
+    
+    // 回复发送方，接收方不在线
+    json reply;
+    reply["msgid"] = FILE_TRANSFER_ERROR;
+    reply["errno"] = 1;
+    reply["errmsg"] = "Recipient is offline";
+    conn->send(reply.dump());
+}
+
+// 文件数据传输处理
+void ChatService::fileTransferData(const TcpConnectionPtr& conn, json& js, Timestamp time) {
+    LOG_INFO << "File transfer data received";
+    
+    int fromId = js["from"].get<int>();
+    int toId = js["to"].get<int>();
+    std::string fileId = js["fileid"].get<std::string>();
+    int chunkIndex = js["chunkindex"].get<int>();
+    std::string data = js["data"].get<std::string>();
+    
+    // 检查接收方是否在线
+    {   
+        lock_guard<mutex> lock(_connMutex);
+        auto it = _userConnMap.find(toId);
+        if (it != _userConnMap.end()) {
+            // 接收方在线，转发文件数据
+            json response;
+            response["msgid"] = FILE_TRANSFER_DATA;
+            response["from"] = fromId;
+            response["fileid"] = fileId;
+            response["chunkindex"] = chunkIndex;
+            response["data"] = data;
+            
+            std::string responseStr = response.dump();
+            it->second->send(responseStr);
+            return;
+        }
+    }
+    
+    // 接收方不在线，回复发送方错误
+    json reply;
+    reply["msgid"] = FILE_TRANSFER_ERROR;
+    reply["errno"] = 2;
+    reply["errmsg"] = "Recipient went offline during file transfer";
+    conn->send(reply.dump());
+}
+
+// 文件传输完成处理
+void ChatService::fileTransferComplete(const TcpConnectionPtr& conn, json& js, Timestamp time) {
+    LOG_INFO << "File transfer complete notification received";
+    
+    int fromId = js["from"].get<int>();
+    int toId = js["to"].get<int>();
+    std::string fileId = js["fileid"].get<std::string>();
+    bool success = js["success"].get<bool>();
+    
+    // 检查接收方是否在线
+    {   
+        lock_guard<mutex> lock(_connMutex);
+        auto it = _userConnMap.find(toId);
+        if (it != _userConnMap.end()) {
+            // 接收方在线，转发完成通知
+            json response;
+            response["msgid"] = FILE_TRANSFER_COMPLETE;
+            response["from"] = fromId;
+            response["fileid"] = fileId;
+            response["success"] = success;
+            
+            std::string responseStr = response.dump();
+            it->second->send(responseStr);
+            return;
+        }
+    }
+    
+    // 接收方不在线，存储离线通知
+    json offlineMsg;
+    offlineMsg["msgid"] = FILE_TRANSFER_COMPLETE;
+    offlineMsg["from"] = fromId;
+    offlineMsg["fileid"] = fileId;
+    offlineMsg["success"] = success;
+    
+    _offlineMsgModel.insert(toId, offlineMsg.dump());
+}
+
 // 从redis消息队列中获取订阅的消息
-void ChatService::handleRedisSubscribeMessage(int userid, string msg)
+void ChatService::handleRedisSubscribeMessage(long long userid, string msg)
 {
     LOG_INFO << "Received message from Redis for user " << userid;
     LOG_INFO << "Message content: " << msg;
     lock_guard<mutex> lock(_connMutex);
-    auto it = _userConnMap.find(userid);
+    // 将long long转换为int进行查找，因为_userConnMap存储的是int类型的键
+    auto it = _userConnMap.find(static_cast<int>(userid));
     if (it != _userConnMap.end())
     {
         LOG_INFO << "Found user " << userid << " in connection map";
@@ -346,4 +512,79 @@ void ChatService::handleRedisSubscribeMessage(int userid, string msg)
     _offlineMsgModel.insert(userid, msg);
     }
     
+}
+
+// 查询好友列表业务
+void ChatService::queryFriendList(const TcpConnectionPtr& conn, json& js, Timestamp time) {
+    LOG_INFO << "do query friend list service!";
+    
+    long long userId = js["id"].get<long long>();
+    cout << "[DEBUG] Querying friend list for user: " << userId << endl;
+    
+    // 查询该用户的好友列表
+    vector<User> friendList = _friendModel.query(userId);
+    cout << "[DEBUG] Found " << friendList.size() << " friends" << endl;
+    
+    json response;
+    response["msgid"] = QUERY_FRIEND_MSG_ACK;
+    response["errno"] = 0;
+    
+    if (!friendList.empty()) {
+        vector<string> vec;
+        for (User& user : friendList) {
+            json js;
+            js["id"] = user.getId();
+            js["name"] = user.getName();
+            js["state"] = user.getState();
+            vec.push_back(js.dump());
+        }
+        response["friends"] = vec;
+    }
+    
+    string responseStr = response.dump();
+    cout << "[DEBUG] Sending friend list response: " << responseStr << endl;
+    conn->send(responseStr);
+}
+
+// 查询群组列表业务
+void ChatService::queryGroupList(const TcpConnectionPtr& conn, json& js, Timestamp time) {
+    LOG_INFO << "do query group list service!";
+    
+    long long userId = js["id"].get<long long>();
+    cout << "[DEBUG] Querying group list for user: " << userId << endl;
+    
+    // 查询该用户的群组列表
+    vector<Group> groupList = _groupModel.queryGroups(userId);
+    cout << "[DEBUG] Found " << groupList.size() << " groups" << endl;
+    
+    json response;
+    response["msgid"] = QUERY_GROUP_MSG_ACK;
+    response["errno"] = 0;
+    
+    if (!groupList.empty()) {
+        vector<string> groupV;
+        for (Group& group : groupList) {
+            json grpjson;
+            grpjson["id"] = group.getId();
+            grpjson["groupname"] = group.getName();
+            grpjson["groupdesc"] = group.getDesc();
+            
+            vector<string> userV;
+            for (GroupUser& user : group.getUsers()) {
+                json js;
+                js["id"] = user.getId();
+                js["name"] = user.getName();
+                js["state"] = user.getState();
+                js["role"] = user.getRole();
+                userV.push_back(js.dump());
+            }
+            grpjson["users"] = userV;
+            groupV.push_back(grpjson.dump());
+        }
+        response["groups"] = groupV;
+    }
+    
+    string responseStr = response.dump();
+    cout << "[DEBUG] Sending group list response: " << responseStr << endl;
+    conn->send(responseStr);
 }

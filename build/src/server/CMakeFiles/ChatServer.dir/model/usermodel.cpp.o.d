@@ -1,6 +1,6 @@
 src/server/CMakeFiles/ChatServer.dir/model/usermodel.cpp.o: \
  /home/xmy/code/src/server/model/usermodel.cpp /usr/include/stdc-predef.h \
- /home/xmy/code/include/server/model/UserModel.hpp \
+ /home/xmy/code/include/server/model/usermodel.hpp \
  /home/xmy/code/include/server/model/user.hpp /usr/include/c++/13/string \
  /usr/include/c++/13/bits/requires_hosted.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/c++config.h \

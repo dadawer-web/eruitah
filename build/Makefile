@@ -130,6 +130,32 @@ ChatServer/fast:
 .PHONY : ChatServer/fast
 
 #=============================================================================
+# Target rules for targets named ChatServer_autogen_timestamp_deps
+
+# Build rule for target.
+ChatServer_autogen_timestamp_deps: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ChatServer_autogen_timestamp_deps
+.PHONY : ChatServer_autogen_timestamp_deps
+
+# fast build rule for target.
+ChatServer_autogen_timestamp_deps/fast:
+	$(MAKE) $(MAKESILENT) -f src/server/CMakeFiles/ChatServer_autogen_timestamp_deps.dir/build.make src/server/CMakeFiles/ChatServer_autogen_timestamp_deps.dir/build
+.PHONY : ChatServer_autogen_timestamp_deps/fast
+
+#=============================================================================
+# Target rules for targets named ChatServer_autogen
+
+# Build rule for target.
+ChatServer_autogen: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ChatServer_autogen
+.PHONY : ChatServer_autogen
+
+# fast build rule for target.
+ChatServer_autogen/fast:
+	$(MAKE) $(MAKESILENT) -f src/server/CMakeFiles/ChatServer_autogen.dir/build.make src/server/CMakeFiles/ChatServer_autogen.dir/build
+.PHONY : ChatServer_autogen/fast
+
+#=============================================================================
 # Target rules for targets named ChatClient
 
 # Build rule for target.
@@ -142,6 +168,71 @@ ChatClient/fast:
 	$(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/build
 .PHONY : ChatClient/fast
 
+#=============================================================================
+# Target rules for targets named QtChat
+
+# Build rule for target.
+QtChat: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 QtChat
+.PHONY : QtChat
+
+# fast build rule for target.
+QtChat/fast:
+	$(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/build
+.PHONY : QtChat/fast
+
+#=============================================================================
+# Target rules for targets named ChatClient_autogen_timestamp_deps
+
+# Build rule for target.
+ChatClient_autogen_timestamp_deps: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ChatClient_autogen_timestamp_deps
+.PHONY : ChatClient_autogen_timestamp_deps
+
+# fast build rule for target.
+ChatClient_autogen_timestamp_deps/fast:
+	$(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient_autogen_timestamp_deps.dir/build.make src/client/CMakeFiles/ChatClient_autogen_timestamp_deps.dir/build
+.PHONY : ChatClient_autogen_timestamp_deps/fast
+
+#=============================================================================
+# Target rules for targets named ChatClient_autogen
+
+# Build rule for target.
+ChatClient_autogen: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ChatClient_autogen
+.PHONY : ChatClient_autogen
+
+# fast build rule for target.
+ChatClient_autogen/fast:
+	$(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient_autogen.dir/build.make src/client/CMakeFiles/ChatClient_autogen.dir/build
+.PHONY : ChatClient_autogen/fast
+
+#=============================================================================
+# Target rules for targets named QtChat_autogen_timestamp_deps
+
+# Build rule for target.
+QtChat_autogen_timestamp_deps: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 QtChat_autogen_timestamp_deps
+.PHONY : QtChat_autogen_timestamp_deps
+
+# fast build rule for target.
+QtChat_autogen_timestamp_deps/fast:
+	$(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat_autogen_timestamp_deps.dir/build.make src/client/CMakeFiles/QtChat_autogen_timestamp_deps.dir/build
+.PHONY : QtChat_autogen_timestamp_deps/fast
+
+#=============================================================================
+# Target rules for targets named QtChat_autogen
+
+# Build rule for target.
+QtChat_autogen: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 QtChat_autogen
+.PHONY : QtChat_autogen
+
+# fast build rule for target.
+QtChat_autogen/fast:
+	$(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat_autogen.dir/build.make src/client/CMakeFiles/QtChat_autogen.dir/build
+.PHONY : QtChat_autogen/fast
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -150,8 +241,15 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
+	@echo "... ChatClient_autogen"
+	@echo "... ChatClient_autogen_timestamp_deps"
+	@echo "... ChatServer_autogen"
+	@echo "... ChatServer_autogen_timestamp_deps"
+	@echo "... QtChat_autogen"
+	@echo "... QtChat_autogen_timestamp_deps"
 	@echo "... ChatClient"
 	@echo "... ChatServer"
+	@echo "... QtChat"
 .PHONY : help
 
 

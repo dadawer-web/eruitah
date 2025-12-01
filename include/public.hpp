@@ -1,22 +1,42 @@
 #ifndef PUBLIC_H
 #define PUBLIC_H
 
-/*
-server和client公用的文件
-*/
+/**
+ * @brief Common definitions shared between server and client
+ * 
+ * This header file contains enumerations and constants that must be
+ * consistent across both server and client implementations.
+ */
 
+/**
+ * @brief Message type enumeration
+ * 
+ * Defines all message types used in the chat application protocol.
+ * Both server and client must use these identical values.
+ */
 enum EnMsgType
 {
-    LOGIN_MSG=1,//登录消息
-    LOGIN_MSG_ACK,//登录响应消息
-    LOGINOUT_MSG,//注销消息
-    REG_MSG,//注册消息
-    REG_MSG_ACK,//注册响应消息
-    ONE_CHAT_MSG,//一对一聊天消息
-    ADD_FRIEND_MSG,//添加好友消息
+    LOGIN_MSG=1,            // Login request message
+    LOGIN_MSG_ACK,          // Login response message
+    LOGINOUT_MSG,           // Logout message
+    REG_MSG,                // Registration request message
+    REG_MSG_ACK,            // Registration response message
+    ONE_CHAT_MSG,           // One-to-one chat message
+    ADD_FRIEND_MSG,         // Add friend request message
+    QUERY_FRIEND_MSG,       // Query friend list request message
+    QUERY_FRIEND_MSG_ACK,   // Query friend list response message
+    QUERY_GROUP_MSG,        // Query group list request message
+    QUERY_GROUP_MSG_ACK,    // Query group list response message
 
-    CREATE_GROUP_MSG,//创建群组消息
-    ADD_GROUP_MSG,//加入群组消息
-    GROUP_CHAT_MSG//群聊天消息
+    CREATE_GROUP_MSG,       // Create group request message
+    ADD_GROUP_MSG,          // Join group request message
+    GROUP_CHAT_MSG,         // Group chat message
+    
+    // File transfer related message types
+    FILE_TRANSFER_REQ=20,   // File transfer request
+    FILE_TRANSFER_ACK,      // File transfer response
+    FILE_TRANSFER_DATA,     // File data transfer
+    FILE_TRANSFER_COMPLETE, // File transfer complete notification
+    FILE_TRANSFER_ERROR     // File transfer error notification
 };
 #endif

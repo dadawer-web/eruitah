@@ -1,0 +1,279 @@
+#ifndef CHATCLIENT_H
+#define CHATCLIENT_H
+
+#include <QObject>
+#include <QTcpSocket>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QMap>
+#include <QMutex>
+#include "models/user.h"
+#include "models/group.h"
+
+/**
+ * @brief The ChatClient class
+ * 
+ * This class implements the client-side communication logic for the chat application.
+ * It handles TCP socket communication, message serialization/deserialization,
+ * and provides a high-level API for chat operations.
+ */
+class ChatClient : public QObject {
+    Q_OBJECT
+
+public:
+    /**
+     * @brief Constructor for ChatClient
+     * @param parent Parent QObject
+     */
+    ChatClient(QObject *parent = nullptr);
+    
+    /**
+     * @brief Destructor for ChatClient
+     * 
+     * Ensures proper cleanup of socket resources and disconnects from server.
+     */
+    ~ChatClient();
+
+    /**
+     * @brief Connect to the chat server
+     * @param host Server hostname or IP address
+     * @param port Server port number
+     * @return true if connection was successful, false otherwise
+     */
+    bool connectToServer(const QString &host = "127.0.0.1", quint16 port = 6000);
+
+    /**
+     * @brief Login to the chat server
+     * @param userId User identification number
+     * @param password User password
+     */
+    void login(qint64 userId, const QString &password);
+
+    /**
+     * @brief Register a new user on the server
+     * @param userName Desired username
+     * @param password User password
+     */
+    void registerUser(const QString &userName, const QString &password);
+
+    /**
+     * @brief Logout from the server
+     * @param userId User identification number
+     */
+    void logout(int userId);
+
+    /**
+     * @brief Send a private message to another user
+     * @param toId Recipient user ID
+     * @param message Message content
+     */
+    void sendMessage(int toId, const QString &message);
+
+    /**
+     * @brief Send a message to a group
+     * @param groupId Group identification number
+     * @param message Message content
+     */
+    void sendGroupMessage(int groupId, const QString &message);
+
+    /**
+     * @brief Send friend request to another user
+     * @param userId Current user ID
+     * @param friendId Target user ID to add as friend
+     */
+    void addFriend(int userId, int friendId);
+
+    /**
+     * @brief Create a new chat group
+     * @param userId Creator user ID
+     * @param groupName Name of the new group
+     * @param groupDesc Description of the new group
+     */
+    void createGroup(int userId, const QString &groupName, const QString &groupDesc);
+
+    /**
+     * @brief Join an existing chat group
+     * @param userId User ID requesting to join
+     * @param groupId Group ID to join
+     */
+    void joinGroup(int userId, int groupId);
+
+    /**
+     * @brief Request the list of friends for a user
+     * @param userId User ID to query
+     */
+    void requestFriendList(int userId);
+
+    /**
+     * @brief Request the list of groups for a user
+     * @param userId User ID to query
+     */
+    void requestGroupList(int userId);
+
+    /**
+     * @brief Send file transfer request to another user
+     * @param fromId Sender user ID
+     * @param toId Recipient user ID
+     * @param filename Name of the file to transfer
+     * @param filesize Size of the file in bytes
+     */
+    void sendFileRequest(int fromId, int toId, const QString &filename, qint64 filesize);
+    
+    /**
+     * @brief Send chunk of file data during file transfer
+     * @param fromId Sender user ID
+     * @param toId Recipient user ID
+     * @param fileId Unique identifier for the file transfer
+     * @param chunkIndex Index of the current data chunk
+     * @param data Raw file data for this chunk
+     */
+    void sendFileData(int fromId, int toId, const QString &fileId, int chunkIndex, const QByteArray &data);
+    
+    /**
+     * @brief Notify completion of file transfer
+     * @param fromId Sender user ID
+     * @param toId Recipient user ID
+     * @param fileId Unique identifier for the file transfer
+     * @param success Whether the transfer completed successfully
+     */
+    void sendFileTransferComplete(int fromId, int toId, const QString &fileId, bool success);
+    
+    /**
+     * @brief Respond to a file transfer request
+     * @param fileId Unique identifier for the file transfer
+     * @param accept Whether to accept the file transfer
+     */
+    void acceptFileTransfer(const QString &fileId, bool accept);
+
+    /**
+     * @brief Set the current user ID
+     * @param id User ID
+     */
+    void setUserId(int id) { currentUserId = id; }
+    
+    /**
+     * @brief Get the current user ID
+     * @return Current user ID
+     */
+    int getUserId() const { return currentUserId; }
+
+private:
+    /**
+     * @brief Message type enumeration
+     * 
+     * These message types must be kept consistent with the server-side implementation.
+     */
+    enum MsgType {
+        LOGIN_MSG = 1,
+        LOGIN_MSG_ACK = 2,
+        LOGINOUT_MSG = 3,
+        REG_MSG = 4,
+        REG_MSG_ACK = 5,
+        ONE_CHAT_MSG = 6,
+        ADD_FRIEND_MSG = 7,
+        CREATE_GROUP_MSG = 8,
+        ADD_GROUP_MSG = 9,
+        GROUP_CHAT_MSG = 10,
+        // Client-specific message types
+        ONE_CHAT_MSG_ACK = 11,
+        GROUP_CHAT_MSG_ACK = 12,
+        ADD_FRIEND_MSG_ACK = 13,
+        QUERY_FRIEND_MSG = 14,
+        QUERY_FRIEND_MSG_ACK = 15,
+        QUERY_GROUP_MSG = 16,
+        QUERY_GROUP_MSG_ACK = 17,
+        ADD_GROUP_MSG_ACK = 18,
+        CREATE_GROUP_MSG_ACK = 19,
+        // File transfer related message types
+        FILE_TRANSFER_REQ = 20,
+        FILE_TRANSFER_ACK = 21,
+        FILE_TRANSFER_DATA = 22,
+        FILE_TRANSFER_COMPLETE = 23,
+        FILE_TRANSFER_ERROR = 24
+    };
+private:
+    QTcpSocket *socket;          // TCP socket for server communication
+    QMutex mutex;                // Mutex to protect socket operations
+    bool isConnected;            // Flag indicating connection status
+    int currentUserId;           // Currently logged-in user ID
+
+public:
+    /**
+     * @brief Generate a unique file ID for file transfers
+     * @return Unique string identifier
+     */
+    QString generateFileId();
+
+    /**
+     * @brief Send a JSON-formatted message to the server
+     * @param message JSON object containing the message data
+     */
+    void sendJsonMessage(const QJsonObject &message);
+
+    /**
+     * @brief Process a message received from the server
+     * @param message JSON object containing the message data
+     * 
+     * This method routes messages based on their type and emits appropriate signals.
+     */
+    void processMessage(const QJsonObject &message);
+
+private slots:
+    /**
+     * @brief Slot called when connection to server is established
+     */
+    void onConnected();
+    
+    /**
+     * @brief Slot called when connection to server is closed
+     */
+    void onDisconnected();
+    
+    /**
+     * @brief Slot called when data is available to read from the socket
+     */
+    void onReadyRead();
+    
+    /**
+     * @brief Slot called when a socket error occurs
+     * @param socketError Error code
+     */
+    void onError(QAbstractSocket::SocketError socketError);
+
+ signals:
+    // Connection status signals
+    void connected();                                 // Emitted when connection is established
+    void disconnected();                              // Emitted when connection is closed
+    void error(const QString &errorMsg);              // Emitted when an error occurs
+    void connectionStateChanged(bool connected);      // Emitted when connection state changes
+
+    // Login related signals
+    void loginResponse(bool success, const QString &message);  // Response to login attempt
+
+    // Message related signals
+    void messageReceived(int fromId, const QString &message, bool isGroup = false, int groupId = -1);
+    void groupMessageReceived(int groupId, int fromId, const QString &userName, const QString &message);
+
+    // Friend related signals
+    void friendListUpdated(const QList<User> &friends);        // New friend list available
+    void friendAdded(bool success, const QString &message);    // Response to friend request
+    void addFriendResponse(bool success, const QString &message);
+
+    // Group related signals
+    void groupListUpdated(const QList<Group> &groups);         // New group list available
+    void groupCreated(bool success, const QString &message);   // Response to group creation
+    void groupJoined(bool success, const QString &message);    // Response to group join request
+    void createGroupResponse(bool success, const QString &message);
+    void addGroupResponse(bool success, const QString &message);
+
+    // File transfer related signals
+    void fileTransferRequestReceived(int fromId, const QString &filename, qint64 filesize, const QString &fileId);
+    void fileTransferAccepted(const QString &fileId, bool accepted);
+    void fileTransferDataReceived(const QString &fileId, int chunkIndex, const QByteArray &data);
+    void fileTransferCompleteReceived(const QString &fileId, bool success);
+    void fileTransferError(const QString &fileId, int errorCode, const QString &errorMsg);
+    void registerResponse(bool success, int userId, const QString &message);
+};
+
+#endif // CHATCLIENT_H

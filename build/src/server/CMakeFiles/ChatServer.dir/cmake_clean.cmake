@@ -1,6 +1,13 @@
 file(REMOVE_RECURSE
   "/home/xmy/code/bin/ChatServer"
   "/home/xmy/code/bin/ChatServer.pdb"
+  "CMakeFiles/ChatServer_autogen.dir/AutogenUsed.txt"
+  "CMakeFiles/ChatServer_autogen.dir/ParseCache.txt"
+  "ChatServer_autogen"
+  "CMakeFiles/ChatServer.dir/ChatServer_autogen/mocs_compilation.cpp.o"
+  "CMakeFiles/ChatServer.dir/ChatServer_autogen/mocs_compilation.cpp.o.d"
+  "CMakeFiles/ChatServer.dir/__/chatserver.cpp.o"
+  "CMakeFiles/ChatServer.dir/__/chatserver.cpp.o.d"
   "CMakeFiles/ChatServer.dir/chatserver.cpp.o"
   "CMakeFiles/ChatServer.dir/chatserver.cpp.o.d"
   "CMakeFiles/ChatServer.dir/chatservice.cpp.o"
@@ -19,6 +26,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/ChatServer.dir/model/usermodel.cpp.o.d"
   "CMakeFiles/ChatServer.dir/redis/redis.cpp.o"
   "CMakeFiles/ChatServer.dir/redis/redis.cpp.o.d"
+  "ChatServer_autogen/mocs_compilation.cpp"
+  "ChatServer_autogen/timestamp"
 )
 
 # Per-language clean rules from dependency scanning.

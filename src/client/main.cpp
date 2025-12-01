@@ -1,46 +1,59 @@
-//客户端没有图形界面，是在终端上进行输入输出(后期补前端)
-//好友列表的实时显示(后期业务拓展)不存在的群聊发信息显示错误提示
-//是好友才能聊，不是好友不能聊(后期业务拓展)
-//从telnet 127.0.0.1 6000    =》   ./ChatClient 127.0.0.1 6000  CRTL+C关闭    {"msgid":6,"id":22,"friendid":26}  {"msgid":6,"id":26,"friendid":22}
-//choice:2  username:gao yang  userpassword:123456 gao yang register success, userid is 26, do not forget it!
+// 客户端聊天程序 - 命令行界面实现
+// 注：当前版本为终端交互模式，图形界面将在后续版本开发
+// 功能规划：后续将实现好友列表实时显示、非好友聊天限制等功能
 
-#include "json.hpp"
-#include <iostream>
-#include <thread>
-#include <string>
-#include <vector>
-#include <chrono>
-#include <ctime>
-#include <unordered_map>
-#include <functional>
+// 包含必要的头文件
+#include "json.hpp"             // JSON处理库，用于数据序列化和反序列化
+#include <iostream>              // 标准输入输出
+#include <thread>                // 线程支持
+#include <string>                // 字符串处理
+#include <vector>                // 动态数组
+#include <chrono>                // 现代C++时间库
+#include <ctime>                 // C风格时间处理
+#include <unordered_map>         // 哈希表容器，用于命令处理映射
+#include <functional>            // 函数对象支持
+
+// 命名空间别名，简化代码
 using namespace std;
-using json = nlohmann::json;
+using json = nlohmann::json;    // 为json库定义别名，方便使用
 
-#include <unistd.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <semaphore.h>
-#include <atomic>
+// 网络和系统相关头文件
+#include <unistd.h>              // 系统调用（如close, read, write）
+#include <sys/socket.h>          // socket API
+#include <sys/types.h>           // 基本系统数据类型
+#include <netinet/in.h>          // 互联网地址族
+#include <arpa/inet.h>           // 网络地址转换
+#include <semaphore.h>           // 信号量，用于线程同步
+#include <atomic>                // 原子变量，保证线程安全
 
-#include "group.hpp"
-#include "user.hpp"
-#include "public.hpp"
+// 自定义头文件，包含聊天系统的数据结构定义
+#include "group.hpp"             // 群组相关类定义
+#include "user.hpp"              // 用户相关类定义
+#include "public.hpp"            // 公共常量和函数定义
 
-// 记录当前系统登录的用户信息
-User g_currentUser;
-// 记录当前登录用户的好友列表信息
-vector<User> g_currentUserFriendList;
-// 记录当前登录用户的群组列表信息
-vector<Group> g_currentUserGroupList;
+// 全局状态管理 - 多线程共享数据
+// 业务逻辑：维护客户端会话状态，支持多线程间的数据共享
+User g_currentUser;                      // 当前登录的用户信息对象 - 核心会话状态
+vector<User> g_currentUserFriendList;    // 当前用户的好友列表 - 社交关系数据
+vector<Group> g_currentUserGroupList;    // 当前用户的群组列表 - 群组关系数据
 
-// 控制主菜单页面程序
-bool isMainMenuRunning = false;
+// 界面控制变量
+bool isMainMenuRunning = false;          // 标记主菜单运行状态 - UI状态控制
 
-// 用于读写线程之间的通信
+// 线程同步机制
+// 关键设计：使用信号量实现读写线程间的同步通信
+// 业务说明：主线程等待子线程处理服务器响应后才能继续执行
+// 技术选型：sem_t比pthread_mutex_t更适合生产者-消费者模型
+
+// 线程安全变量
+// 关键设计：使用atomic_bool确保在多线程环境下登录状态的线程安全
+// 业务说明：避免线程竞争导致的状态不一致问题
+
+// 线程同步信号量
+// 业务逻辑：实现主线程与接收线程之间的同步通信
 sem_t rwsem;
-// 记录登录状态
+// 登录状态标记（原子类型，保证线程安全）
+// 业务逻辑：跨线程安全地共享登录状态
 atomic_bool g_isLoginSuccess{false};
 
 
@@ -184,9 +197,13 @@ int main(int argc, char **argv)
     return 0;
 }
 
-// 处理注册的响应逻辑
+// 处理服务器返回的注册响应
+// 参数：responsejs - 服务器返回的JSON格式响应数据
+// 功能：根据服务器返回的错误码判断注册是否成功，并显示相应信息
 void doRegResponse(json &responsejs)
 {
+    // 检查错误码，0表示成功，非0表示失败
+    // []操作符用于访问JSON对象的字段，get<int>()将JSON值转换为int类型
     if (0 != responsejs["errno"].get<int>()) // 注册失败
     {
         cerr << "name is already exist, register error!" << endl;
@@ -198,9 +215,12 @@ void doRegResponse(json &responsejs)
     }
 }
 
-// 处理登录的响应逻辑
+// 处理登录响应的业务逻辑
+// 参数：responsejs - 服务器返回的JSON格式响应数据
+// 功能：解析登录结果，更新用户信息、好友列表和群组列表，并显示离线消息
 void doLoginResponse(json &responsejs)
 {
+    // 检查错误码
     if (0 != responsejs["errno"].get<int>()) // 登录失败
     {
         cerr << responsejs["errmsg"] << endl;
@@ -209,10 +229,11 @@ void doLoginResponse(json &responsejs)
     else // 登录成功
     {
         // 记录当前用户的id和name
-        g_currentUser.setId(responsejs["id"].get<int>());
-        g_currentUser.setName(responsejs["name"]);
+        g_currentUser.setId(responsejs["id"].get<int>());       // 设置用户ID
+        g_currentUser.setName(responsejs["name"]);              // 设置用户名
 
         // 记录当前用户的好友列表信息
+        // contains()函数检查JSON对象中是否存在指定字段
         if (responsejs.contains("friends"))
         {
             // 初始化
@@ -289,13 +310,27 @@ void doLoginResponse(json &responsejs)
     }
 }
 
-// 子线程 - 接收线程
+// 子线程函数 - 负责接收服务器发送的消息
+// 参数：clientfd - 客户端socket文件描述符
+// 功能：持续监听来自服务器的数据，根据消息类型进行不同处理
+// 这是一个线程函数，会在单独的线程中运行
 void readTaskHandler(int clientfd)
 {
+    // 无限循环，持续接收消息
     for (;;)
     {
+        // 缓冲区，用于存储接收到的数据
         char buffer[1024] = {0};
-        int len = recv(clientfd, buffer, 1024, 0);  // 阻塞了
+        
+        // recv()函数从socket接收数据
+        // clientfd: socket文件描述符
+        // buffer: 接收数据的缓冲区
+        // 1024: 缓冲区大小
+        // 0: 标志位，默认为0
+        // 返回值: 成功接收的字节数，-1表示失败，0表示连接关闭
+        int len = recv(clientfd, buffer, 1024, 0);  // 阻塞操作，直到收到数据或连接关闭
+        
+        // 检查连接是否关闭或出错
         if (-1 == len || 0 == len)
         {
             close(clientfd);
@@ -335,7 +370,8 @@ void readTaskHandler(int clientfd)
     }
 }
 
-// 显示当前登录成功用户的基本信息
+// 显示当前登录用户的基本信息
+// 功能：打印当前用户的ID、名称、好友列表和群组列表
 void showCurrentUserData()
 {
     cout << "======================login user======================" << endl;
@@ -380,6 +416,9 @@ void groupchat(int, string);
 void loginout(int, string);
 
 // 系统支持的客户端命令列表
+// 使用unordered_map（哈希表）存储命令名称和对应描述
+// 这样可以通过命令名称快速查找对应的描述信息
+// 哈希表的查找时间复杂度为O(1)，非常高效
 unordered_map<string, string> commandMap = {
     {"help", "显示所有支持的命令，格式help"},
     {"chat", "一对一聊天，格式chat:friendid:message"},
@@ -389,7 +428,11 @@ unordered_map<string, string> commandMap = {
     {"groupchat", "群聊，格式groupchat:groupid:message"},
     {"loginout", "注销，格式loginout"}};
 
-// 注册系统支持的客户端命令处理
+// 注册系统支持的客户端命令处理函数
+// 使用函数对象映射表，实现命令模式设计模式
+// 键是命令名称，值是对应的处理函数
+// function<void(int, string)> 是一个函数类型模板，表示接受int和string参数且无返回值的函数
+// 这种设计使得添加新命令非常方便，只需要添加新的映射即可
 unordered_map<string, function<void(int, string)>> commandHandlerMap = {
     {"help", help},
     {"chat", chat},
@@ -400,8 +443,12 @@ unordered_map<string, function<void(int, string)>> commandHandlerMap = {
     {"loginout", loginout}};
 
 // 主聊天页面程序
+// 参数：clientfd - 客户端socket文件描述符
+// 功能：接收用户输入的命令，并调用相应的处理函数
+// 这是一个事件驱动的命令解析和分发系统
 void mainMenu(int clientfd)
 {
+    // 显示帮助信息
     help();
 
     char buffer[1024] = {0};
@@ -574,15 +621,29 @@ void loginout(int clientfd, string)
     }   
 }
 
-// 获取系统时间（聊天信息需要添加时间信息）
+// 获取系统当前时间（聊天信息需要添加时间戳）
+// 返回值：格式化的时间字符串，格式为"年-月-日 时:分:秒"
+// 使用C++11的chrono库获取系统时间，并用localtime和sprintf进行格式化
 string getCurrentTime()
 {
+    // std::chrono::system_clock::now() 获取当前系统时间点
+    // to_time_t() 将时间点转换为time_t类型（秒数）
     auto tt = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    
+    // localtime() 将time_t转换为本地时区的tm结构体
     struct tm *ptm = localtime(&tt);
+    
+    // 缓冲区，用于存储格式化后的时间字符串
     char date[60] = {0};
+    
+    // sprintf() 格式化时间，%02d表示两位整数，不足补零
+    // tm_year是从1900年开始计算的，所以要+1900
+    // tm_mon是从0开始的，所以要+1
     sprintf(date, "%d-%02d-%02d %02d:%02d:%02d",
             (int)ptm->tm_year + 1900, (int)ptm->tm_mon + 1, (int)ptm->tm_mday,
             (int)ptm->tm_hour, (int)ptm->tm_min, (int)ptm->tm_sec);
+    
+    // 将C风格字符串转换为C++ string并返回
     return std::string(date);
 }
 

@@ -1,0 +1,795 @@
+#include "chatclient.h"
+#include "public.h"
+#include <QByteArray>
+#include <QDataStream>
+#include <QDebug>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QTimer>
+#include <QThread>
+#include <QRandomGenerator>
+#include <string>
+#include <arpa/inet.h>  // 用于ntohl函数
+
+// ChatClient类实现 - 客户端核心通信模块
+// 设计思路：采用事件驱动架构，基于Qt的信号槽机制实现异步网络通信
+// 主要职责：管理与服务器的连接、消息收发、用户认证和文件传输
+ChatClient::ChatClient(QObject *parent) : QObject(parent) {
+    socket = new QTcpSocket(this);
+    isConnected = false;
+    
+    // 连接信号和槽 - 实现异步事件处理模式
+    // 设计亮点：使用lambda表达式实现简洁的事件处理，提高代码可读性
+    qDebug() << "ChatClient: Setting up signal connections";
+    connect(socket, &QTcpSocket::connected, this, [=]() {
+        qDebug() << "ChatClient: Connected signal emitted";
+        isConnected = true;
+        emit connectionStateChanged(true);
+        qDebug() << "ChatClient: Connection state updated to true, socket state:" << socket->state();
+    });
+    
+    connect(socket, &QTcpSocket::disconnected, this, [=]() {
+        qDebug() << "ChatClient: Disconnected signal emitted";
+        isConnected = false;
+        emit connectionStateChanged(false);
+    });
+    
+    connect(socket, &QTcpSocket::readyRead, this, &ChatClient::onReadyRead);
+    
+    connect(socket, &QTcpSocket::errorOccurred, this, [=](QAbstractSocket::SocketError socketError) {
+        qDebug() << "ChatClient: Socket error:" << socketError << socket->errorString();
+        isConnected = false;
+        emit connectionStateChanged(false);
+    });
+    
+    // 连接到服务器
+    qDebug() << "ChatClient: Attempting to connect to server at 127.0.0.1:6000";
+    socket->connectToHost("127.0.0.1", 6000);
+    
+    // 等待连接
+    if (socket->waitForConnected(5000)) {
+        qDebug() << "ChatClient: Connection to server established successfully";
+        isConnected = true;
+        qDebug() << "ChatClient: Waiting for messages from server";
+    } else {
+        qDebug() << "ChatClient: Failed to connect to server, error:" << socket->errorString();
+        qDebug() << "ChatClient: Socket state after connection attempt:" << socket->state();
+    }
+    
+    qDebug() << "ChatClient: Signal connections set up successfully";
+    
+    // 连接成功后等待用户手动登录
+    qDebug() << "ChatClient: 等待用户手动登录...";
+}
+
+// 析构函数 - 实现RAII原则，确保资源正确释放
+// 设计亮点：优雅关闭网络连接，避免资源泄露
+ChatClient::~ChatClient() {
+    // 安全断开连接，处理不同连接状态
+    if (socket->state() == QTcpSocket::ConnectedState || socket->state() == QTcpSocket::ConnectingState) {
+        socket->disconnectFromHost();
+        if (socket->state() != QTcpSocket::UnconnectedState) {
+            socket->waitForDisconnected(1000);
+        }
+    }
+}
+
+// 连接服务器函数 - 提供可配置的服务器连接功能
+// 线程安全设计：使用QMutexLocker确保多线程环境下的安全访问
+// 健壮性保障：处理各种边缘情况，如已有连接存在、连接失败等
+bool ChatClient::connectToServer(const QString &host, quint16 port) {
+    QMutexLocker locker(&mutex);  // 线程安全锁，确保并发访问安全
+    
+    qDebug() << "ChatClient: Attempting to connect to server at" << host << ":" << port;
+    
+    // 避免重复连接，先断开现有连接
+    if (socket->isOpen()) {
+        qDebug() << "ChatClient: Socket already open, disconnecting first";
+        socket->disconnectFromHost();
+        // 修复：在调用waitForDisconnected前检查socket状态
+        if (socket->state() != QAbstractSocket::UnconnectedState) {
+            if (!socket->waitForDisconnected(1000)) {
+                qDebug() << "ChatClient: Force closing socket";
+                socket->abort();
+            }
+        } else {
+            qDebug() << "ChatClient: Socket already in UnconnectedState, skipping waitForDisconnected";
+        }
+    }
+    
+    isConnected = false;
+    socket->connectToHost(host, port);
+    bool connected = socket->waitForConnected(5000);
+    
+    if (connected) {
+        qDebug() << "ChatClient: Successfully connected to server";
+        isConnected = true;
+        emit connectionStateChanged(true);
+        qDebug() << "ChatClient: Connection established, socket state:" << socket->state() << "connected:" << socket->isOpen();
+    } else {
+        qDebug() << "ChatClient: Failed to connect to server, error:" << socket->errorString();
+        qDebug() << "ChatClient: Socket state after connection attempt:" << socket->state();
+    }
+    
+    return connected;
+}
+
+// 登录功能 - 用户身份认证
+// 设计思路：封装用户凭证，通过消息ID标识为登录请求
+void ChatClient::login(qint64 userId, const QString &password) {
+    qDebug() << "[CRITICAL] login called with userId:" << userId << "password:" << password;
+    this->currentUserId = userId; // 保存当前用户ID - 状态管理设计
+    QJsonObject message;
+    message["msgid"] = MsgType::LOGIN_MSG;
+    message["id"] = userId;
+    message["password"] = password;
+    sendJsonMessage(message);
+    qDebug() << "[CRITICAL] Login request sent successfully";
+}
+
+// 注册功能 - 创建新用户账户
+// 设计思路：封装用户信息，通过消息ID标识为注册请求
+void ChatClient::registerUser(const QString &userName, const QString &password) {
+    QJsonObject message;
+    message["msgid"] = MsgType::REG_MSG;
+    message["name"] = userName;
+    message["password"] = password;
+    sendJsonMessage(message);
+}
+
+// 登出功能 - 用户退出系统
+// 设计思路：简化的请求格式，仅包含用户ID和消息类型
+void ChatClient::logout(int userId) {
+    QJsonObject message;
+    message["msgid"] = MsgType::LOGINOUT_MSG;
+    message["id"] = userId;
+    sendJsonMessage(message);
+}
+
+// 发送私聊消息 - 实现一对一通信
+// 设计思路：封装消息接收方ID和内容，支持用户间私密通信
+void ChatClient::sendMessage(int toId, const QString &message) {
+    QJsonObject msgObj;
+    msgObj["msgid"] = MsgType::ONE_CHAT_MSG;
+    msgObj["from"] = -1; // 将由服务器填充 - 安全性设计，防止伪造发送者
+    msgObj["to"] = toId;
+    msgObj["msg"] = message;
+    sendJsonMessage(msgObj);
+}
+
+// 发送群聊消息 - 实现一对多通信
+// 设计思路：通过群组ID标识目标群组，实现广播式消息分发
+void ChatClient::sendGroupMessage(int groupId, const QString &message) {
+    QJsonObject msgObj;
+    msgObj["msgid"] = MsgType::GROUP_CHAT_MSG;
+    msgObj["from"] = -1; // 将由服务器填充
+    msgObj["groupid"] = groupId;
+    msgObj["msg"] = message;
+    sendJsonMessage(msgObj);
+}
+
+void ChatClient::addFriend(int userId, int friendId) {
+    QJsonObject message;
+    message["msgid"] = MsgType::ADD_FRIEND_MSG;
+    message["id"] = userId;
+    message["friendid"] = friendId;
+    sendJsonMessage(message);
+}
+
+void ChatClient::createGroup(int userId, const QString &groupName, const QString &groupDesc) {
+    QJsonObject message;
+    message["msgid"] = MsgType::CREATE_GROUP_MSG;
+    message["id"] = userId;
+    message["groupname"] = groupName;
+    message["groupdesc"] = groupDesc;
+    sendJsonMessage(message);
+}
+
+void ChatClient::joinGroup(int userId, int groupId) {
+    QJsonObject message;
+    message["msgid"] = MsgType::ADD_GROUP_MSG;
+    message["id"] = userId;
+    message["groupid"] = groupId;
+    sendJsonMessage(message);
+}
+
+void ChatClient::requestFriendList(int userId) {
+    qDebug() << "[CRITICAL] requestFriendList called with userId:" << userId;
+    QJsonObject message;
+    message["msgid"] = MsgType::QUERY_FRIEND_MSG;
+    message["id"] = userId;
+    sendJsonMessage(message);
+    qDebug() << "[CRITICAL] Friend list request sent successfully";
+}
+
+void ChatClient::requestGroupList(int userId) {
+    qDebug() << "[CRITICAL] requestGroupList called with userId:" << userId;
+    QJsonObject message;
+    message["msgid"] = MsgType::QUERY_GROUP_MSG;
+    message["id"] = userId;
+    sendJsonMessage(message);
+    qDebug() << "[CRITICAL] Group list request sent successfully";
+}
+
+// 生成唯一的文件ID
+QString ChatClient::generateFileId() {
+    // 使用时间戳和随机数组合生成唯一ID
+    QString timestamp = QString::number(QDateTime::currentMSecsSinceEpoch());
+    QString randomNum = QString::number(qrand() % 10000);
+    return timestamp + "_" + randomNum;
+}
+
+// 文件传输相关函数实现
+void ChatClient::sendFileRequest(int fromId, int toId, const QString &filename, long long filesize) {
+    QJsonObject message;
+    message["type"] = MsgType::FILE_TRANSFER_REQ;
+    message["from"] = fromId;
+    message["to"] = toId;
+    message["filename"] = filename;
+    message["filesize"] = filesize;
+    sendJsonMessage(message);
+}
+
+void ChatClient::sendFileTransferComplete(int fromId, int toId, const QString &fileId, bool success) {
+    QJsonObject message;
+    message["type"] = MsgType::FILE_TRANSFER_COMPLETE;
+    message["from"] = fromId;
+    message["to"] = toId;
+    message["fileId"] = fileId;
+    message["success"] = success;
+    sendJsonMessage(message);
+}
+
+void ChatClient::acceptFileTransfer(const QString &fileId, bool accept) {
+    QJsonObject message;
+    message["type"] = MsgType::FILE_TRANSFER_ACK;
+    message["fileId"] = fileId;
+    message["accept"] = accept;
+    sendJsonMessage(message);
+}
+
+void ChatClient::sendFileData(int fromId, int toId, const QString &fileId, int chunkIndex, const QByteArray &data) {
+    QJsonObject message;
+    message["type"] = MsgType::FILE_TRANSFER_DATA;
+    message["from"] = fromId;
+    message["to"] = toId;
+    message["fileId"] = fileId;
+    message["chunkIndex"] = chunkIndex;
+    message["data"] = QString::fromUtf8(data.toBase64());
+    sendJsonMessage(message);
+}
+
+// 发送JSON消息 - 客户端核心通信方法
+// 设计亮点：
+// 1. 线程安全实现：使用QMutexLocker确保多线程环境下的安全发送
+// 2. 兼容性处理：自动设置type字段与msgid保持一致，确保与服务器兼容
+// 3. 可靠传输：使用换行符作为消息分隔符，解决粘包问题
+// 4. 延迟机制：增加等待时间确保数据写入和消息分离
+void ChatClient::sendJsonMessage(const QJsonObject &message) {
+    QMutexLocker locker(&mutex); // 线程安全锁，确保并发发送安全
+    
+    // 健壮性检查：确保socket可用
+    if (!socket || !socket->isOpen() || !socket->isWritable()) {
+        qDebug() << "ChatClient: Cannot send message, socket not ready";
+        return;
+    }
+    
+    // 兼容性处理：确保同时设置type字段
+    // 设计思路：解决客户端与服务器端消息格式差异，增强系统健壮性
+    QJsonObject msgCopy = message;
+    if (msgCopy.contains("msgid")) {
+        int msgId = msgCopy["msgid"].toInt();
+        msgCopy["type"] = msgId;
+        qDebug() << "Setting 'type' field to match 'msgid':" << msgId;
+    }
+    
+    QJsonDocument doc(msgCopy);
+    QByteArray data = doc.toJson(QJsonDocument::Compact);
+    
+    // 使用换行符作为分隔符，解决TCP粘包问题
+    data.append('\n');
+    
+    // 发送带分隔符的JSON数据
+    qint64 bytesWritten = socket->write(data);
+    
+    // 强制刷新socket缓冲区，确保数据立即发送
+    socket->flush();
+    
+    // 增加等待时间，确保数据完全写入操作系统缓冲区
+    bool bytesWrittenSuccess = socket->waitForBytesWritten(500); // 增加到500ms
+    qDebug() << "Message sent, msgid:" << message["msgid"].toInt() << 
+                "length:" << data.size() << "bytes written:" << bytesWritten << "success:" << bytesWrittenSuccess;
+    
+    // 增加延迟时间，确保两条连续消息不会被合并 - 时序控制优化
+    QThread::msleep(50); // 增加到50ms
+}
+
+// 处理消息 - 消息解析与路由核心实现
+// 设计亮点：
+// 1. 命令模式实现：基于消息类型分发到不同处理逻辑
+// 2. 健壮性设计：支持多种数据格式解析，包括嵌套JSON字符串处理
+// 3. 降级处理：当JSON解析失败时，使用正则表达式进行备选解析
+// 4. 信号通知：处理完成后通过信号通知UI层更新
+void ChatClient::processMessage(const QJsonObject &message) {
+    qDebug() << "Processing message with keys:" << message.keys();
+    
+    // 消息类型检测 - 支持两种格式以增强兼容性
+    // 健壮性设计：同时检查msgid和type字段，确保消息能正确识别
+    int msgType = -1;
+    if (message.contains("msgid")) {
+        msgType = message["msgid"].toInt();
+    } else if (message.contains("type")) {
+        msgType = message["type"].toInt();
+    }
+    
+    // 根据消息类型分发处理 - 命令模式实现
+    switch (msgType) {
+    case MsgType::LOGIN_MSG_ACK: {
+        qDebug() << "Processing LOGIN_MSG_ACK";
+        // 登录响应处理 - 安全认证与状态管理
+        // 设计思路：通过errno判断登录成功状态，获取用户基本信息
+        // 安全性保障：验证服务器返回的用户ID与请求一致
+        int errno_val = message["errno"].toInt();
+        if (errno_val != 0) {
+            // 登录失败处理
+            QString errorMsg = message["errmsg"].toString();
+            qDebug() << "Login failed with error:" << errorMsg;
+            emit loginResponse(false, errorMsg);
+        } else {
+            // 登录成功处理
+            qint64 userId = message["id"].toVariant().toLongLong();
+            QString userName = message["name"].toString();
+            qDebug() << "Login successful for user:" << userId << "(" << userName << ")";
+            
+            // 验证用户ID一致性 - 安全验证设计
+            if (userId != this->currentUserId && this->currentUserId != 0) {
+                qWarning() << "Security warning: User ID mismatch in login response!";
+            }
+            
+            // 更新当前用户状态
+            this->currentUserId = userId;
+            // 保存用户ID即可，用户名可以从服务器获取
+            
+            // 通知UI层登录成功
+            emit loginResponse(true, "登录成功");
+            
+            // 登录成功后，自动请求好友列表 - 简化用户操作体验
+            requestFriendList(userId);
+        }
+        break;
+    }
+    
+    case MsgType::REG_MSG_ACK: {
+        qDebug() << "Processing REG_MSG_ACK";
+        // 注册响应处理 - 新用户创建反馈
+        // 设计思路：通过errno判断注册成功状态，返回新用户ID
+        int errno_val = message["errno"].toInt();
+        if (errno_val != 0) {
+            // 注册失败处理
+            QString errorMsg = message["errmsg"].toString();
+            qDebug() << "Registration failed with error:" << errorMsg;
+            emit loginResponse(false, errorMsg);
+        } else {
+            // 注册成功处理
+            qint64 userId = message["id"].toVariant().toLongLong();
+            QString userName = message["name"].toString();
+            qDebug() << "Registration successful for user:" << userId << "(" << userName << ")";
+            
+            // 通知UI层注册成功
+            emit loginResponse(true, "注册成功");
+        }
+        break;
+    }
+    
+    case MsgType::ONE_CHAT_MSG: {
+        qDebug() << "Processing ONE_CHAT_MSG";
+        // 私聊消息处理 - 点对点通信实现
+        // 设计思路：提取发送者信息和消息内容，转发给UI层展示
+        qint64 fromId = message["from"].toVariant().toLongLong();
+        QString fromName = message["fromName"].toString();
+        QString msgContent = message["msg"].toString();
+        qint64 toId = message["to"].toVariant().toLongLong();
+        
+        // 消息过滤 - 只处理发给当前用户的消息
+        if (toId == this->currentUserId) {
+            qDebug() << "Received private message from" << fromId << ":" << msgContent;
+            emit messageReceived(fromId, msgContent, false);
+        }
+        break;
+    }
+    
+    case MsgType::GROUP_CHAT_MSG: {
+        qDebug() << "Processing GROUP_CHAT_MSG";
+        // 群聊消息处理 - 群组通信实现
+        // 设计思路：提取群组信息、发送者信息和消息内容，转发给UI层展示
+        int groupId = message["groupid"].toInt();
+        qint64 fromId = message["from"].toVariant().toLongLong();
+        QString fromName = message["fromName"].toString();
+        QString msgContent = message["msg"].toString();
+        
+        qDebug() << "Received group message from" << fromId << "in group" << groupId << ":" << msgContent;
+        emit groupMessageReceived(groupId, fromId, fromName, msgContent);
+        break;
+    }
+    
+    case MsgType::QUERY_FRIEND_MSG_ACK: {
+        qDebug() << "Processing QUERY_FRIEND_MSG_ACK";
+        // 好友列表查询响应处理 - 关系数据管理
+        // 设计思路：
+        // 1. 支持多种数据格式：处理JSON数组和字符串两种表示形式
+        // 2. 降级解析：当JSON解析失败时，使用正则表达式作为备选方案
+        // 3. 健壮性保障：对特殊字符进行转义处理，确保数据完整性
+        
+        // 检查好友列表数据是否存在
+        if (message.contains("friends")) {
+            QList<User> friendList;
+            
+            // 处理两种可能的数据格式：直接JSON数组或字符串形式的JSON数组
+            if (message["friends"].isArray()) {
+                // 直接处理JSON数组格式
+                qDebug() << "Processing friends as JSON array";
+                QJsonArray friendsArray = message["friends"].toArray();
+                for (const QJsonValue &value : friendsArray) {
+                    if (value.isObject()) {
+                        QJsonObject friendObj = value.toObject();
+                        User friendInfo;
+                        friendInfo.setId(friendObj["id"].toVariant().toLongLong());
+                        friendInfo.setName(friendObj["name"].toString().toStdString());
+                        friendInfo.setState(friendObj["state"].toString().toStdString());
+                        friendList.append(friendInfo);
+                    }
+                }
+            } else if (message["friends"].isString()) {
+                // 处理字符串形式的JSON数组 - 增强兼容性设计
+                qDebug() << "Processing friends as JSON string";
+                QString friendsJsonString = message["friends"].toString();
+                
+                // 移除可能的外部引号，处理转义字符 - 数据清洗设计
+                friendsJsonString = friendsJsonString.replace("\"", "\\\"").replace("\\\\", "\\\\\\\\");
+                friendsJsonString = friendsJsonString.mid(1, friendsJsonString.length() - 2);
+                
+                // 尝试直接解析JSON
+                QString fullJsonString = "[" + friendsJsonString + "]";
+                QJsonDocument doc = QJsonDocument::fromJson(fullJsonString.toUtf8());
+                if (doc.isArray()) {
+                    QJsonArray friendsArray = doc.array();
+                    for (const QJsonValue &value : friendsArray) {
+                        if (value.isObject()) {
+                            QJsonObject friendObj = value.toObject();
+                            User friendInfo;
+                            friendInfo.setId(friendObj["id"].toVariant().toLongLong());
+                            friendInfo.setName(friendObj["name"].toString().toStdString());
+                            friendInfo.setState(friendObj["state"].toString().toStdString());
+                            friendList.append(friendInfo);
+                        }
+                    }
+                } else {
+                    // 降级方案：使用正则表达式解析 - 健壮性保障
+                    qDebug() << "Falling back to regex parsing for friends data";
+                    QRegularExpression regex("\\{[^}]*\\}");
+                    QRegularExpressionMatchIterator matchIterator = regex.globalMatch(friendsJsonString);
+                    
+                    while (matchIterator.hasNext()) {
+                        QRegularExpressionMatch match = matchIterator.next();
+                        QString jsonObjectStr = match.captured(0);
+                        
+                        // 解析单个好友对象
+                        QJsonDocument objDoc = QJsonDocument::fromJson(jsonObjectStr.toUtf8());
+                        if (objDoc.isObject()) {
+                            QJsonObject friendObj = objDoc.object();
+                            User friendInfo;
+                            friendInfo.setId(friendObj["id"].toVariant().toLongLong());
+                            friendInfo.setName(friendObj["name"].toString().toStdString());
+                            friendInfo.setState(friendObj["state"].toString().toStdString());
+                            friendList.append(friendInfo);
+                        }
+                    }
+                }
+            }
+            
+            qDebug() << "Received friend list with" << friendList.size() << "friends";
+            emit friendListUpdated(friendList);
+            
+            // 好友列表更新后，自动请求群组列表 - 优化用户体验
+            requestGroupList(this->currentUserId);
+        }
+        break;
+    }
+    
+    case MsgType::QUERY_GROUP_MSG_ACK: {
+        qDebug() << "Processing QUERY_GROUP_MSG_ACK";
+        // 群组列表查询响应处理 - 群组数据管理
+        // 设计思路：
+        // 1. 支持多种数据格式：处理JSON数组和字符串两种表示形式
+        // 2. 数据嵌套解析：处理群组信息和群组成员列表的嵌套结构
+        // 3. 降级处理：当JSON解析失败时，使用正则表达式作为备选方案
+        
+        // 检查群组列表数据是否存在
+        if (message.contains("groups")) {
+            QList<Group> groupList;
+            
+            // 处理两种可能的数据格式：直接JSON数组或字符串形式的JSON数组
+            if (message["groups"].isArray()) {
+                // 直接处理JSON数组格式
+                qDebug() << "Processing groups as JSON array";
+                QJsonArray groupsArray = message["groups"].toArray();
+                for (const QJsonValue &value : groupsArray) {
+                    if (value.isObject()) {
+                        QJsonObject groupObj = value.toObject();
+                        Group groupInfo;
+                        groupInfo.setId(groupObj["id"].toInt());
+                        groupInfo.setName(groupObj["name"].toString().toStdString());
+                        groupInfo.setDesc(groupObj["desc"].toString().toStdString());
+                        
+                        // 解析群组成员列表
+                        if (groupObj.contains("users") && groupObj["users"].isArray()) {
+                            QJsonArray usersArray = groupObj["users"].toArray();
+                            for (const QJsonValue &userValue : usersArray) {
+                                if (userValue.isObject()) {
+                                    QJsonObject userObj = userValue.toObject();
+                                    GroupUser user;
+                                    user.setId(userObj["id"].toVariant().toLongLong());
+                                    user.setName(userObj["name"].toString().toStdString());
+                                    user.setState(userObj["state"].toString().toStdString());
+                                    user.setRole(userObj["role"].toString().toStdString());
+                                    groupInfo.getUsers().push_back(user);
+                                }
+                            }
+                        }
+                        
+                        groupList.append(groupInfo);
+                    }
+                }
+            } else if (message["groups"].isString()) {
+                // 处理字符串形式的JSON数组 - 增强兼容性设计
+                qDebug() << "Processing groups as JSON string";
+                QString groupsJsonString = message["groups"].toString();
+                
+                // 移除可能的外部引号，处理转义字符 - 数据清洗设计
+                groupsJsonString = groupsJsonString.replace("\"", "\\\"").replace("\\\\", "\\\\\\\\");
+                groupsJsonString = groupsJsonString.mid(1, groupsJsonString.length() - 2);
+                
+                // 尝试直接解析JSON
+                QString fullJsonString = "[" + groupsJsonString + "]";
+                QJsonDocument doc = QJsonDocument::fromJson(fullJsonString.toUtf8());
+                if (doc.isArray()) {
+                    QJsonArray groupsArray = doc.array();
+                    for (const QJsonValue &value : groupsArray) {
+                        if (value.isObject()) {
+                            QJsonObject groupObj = value.toObject();
+                            Group groupInfo;
+                            groupInfo.setId(groupObj["id"].toInt());
+                            groupInfo.setName(groupObj["name"].toString().toStdString());
+                            groupInfo.setDesc(groupObj["desc"].toString().toStdString());
+                            
+                            // 解析群组成员列表
+                            if (groupObj.contains("users") && groupObj["users"].isString()) {
+                                QString usersStr = groupObj["users"].toString();
+                                // 解析成员字符串
+                                QRegularExpression userRegex("\\{[^}]*\\}");
+                                QRegularExpressionMatchIterator userIterator = userRegex.globalMatch(usersStr);
+                                
+                                while (userIterator.hasNext()) {
+                                    QRegularExpressionMatch match = userIterator.next();
+                                    QString userObjStr = match.captured(0);
+                                    QJsonDocument userDoc = QJsonDocument::fromJson(userObjStr.toUtf8());
+                                    
+                                    if (userDoc.isObject()) {
+                                        QJsonObject userObj = userDoc.object();
+                                        GroupUser user;
+                                        user.setId(userObj["id"].toVariant().toLongLong());
+                                        user.setName(userObj["name"].toString().toStdString());
+                                        user.setState(userObj["state"].toString().toStdString());
+                                        user.setRole(userObj["role"].toString().toStdString());
+                                        groupInfo.getUsers().push_back(user);
+                                    }
+                                }
+                            }
+                            
+                            groupList.append(groupInfo);
+                        }
+                    }
+                } else {
+                    // 降级方案：使用正则表达式解析 - 健壮性保障
+                    qDebug() << "Falling back to regex parsing for groups data";
+                    QRegularExpression regex("\\{[^}]*\\}");
+                    QRegularExpressionMatchIterator matchIterator = regex.globalMatch(groupsJsonString);
+                    
+                    while (matchIterator.hasNext()) {
+                        QRegularExpressionMatch match = matchIterator.next();
+                        QString jsonObjectStr = match.captured(0);
+                        
+                        // 解析单个群组对象
+                        QJsonDocument objDoc = QJsonDocument::fromJson(jsonObjectStr.toUtf8());
+                        if (objDoc.isObject()) {
+                            QJsonObject groupObj = objDoc.object();
+                            Group groupInfo;
+                            groupInfo.setId(groupObj["id"].toInt());
+                            groupInfo.setName(groupObj["name"].toString().toStdString());
+                            groupInfo.setDesc(groupObj["desc"].toString().toStdString());
+                            
+                            groupList.append(groupInfo);
+                        }
+                    }
+                }
+            }
+            
+            qDebug() << "Received group list with" << groupList.size() << "groups";
+            emit groupListUpdated(groupList);
+        }
+        break;
+    }
+    
+    // 文件传输相关消息处理
+    case MsgType::FILE_TRANSFER_REQ: {
+        qDebug() << "Processing FILE_TRANSFER_REQ";
+        // 文件传输请求处理 - 实现文件传输的协商阶段
+        // 设计思路：提取文件信息，发送确认请求给用户
+        int fromId = message["from"].toInt();
+        QString fromName = message["fromName"].toString();
+        QString filename = message["filename"].toString();
+        qint64 filesize = message["filesize"].toVariant().toLongLong();
+        QString fileId = message["fileid"].toString();
+        
+        qDebug() << "Received file transfer request from" << fromId << ":" << filename << "(" << filesize << " bytes)";
+        emit fileTransferRequestReceived(fromId, filename, filesize, fileId);
+        break;
+    }
+    
+    case MsgType::FILE_TRANSFER_DATA: {
+        qDebug() << "Processing FILE_TRANSFER_DATA";
+        // 文件数据传输处理 - 实现文件数据的接收
+        // 设计思路：接收并解码文件数据块，按序重组
+        int fromId = message["from"].toInt();
+        QString fileId = message["fileid"].toString();
+        int chunkIndex = message["chunkindex"].toInt();
+        QByteArray data = QByteArray::fromBase64(message["data"].toString().toUtf8());
+        
+        qDebug() << "Received file data chunk" << chunkIndex << "for fileId:" << fileId;
+        emit fileTransferDataReceived(fileId, chunkIndex, data);
+        break;
+    }
+    
+    case MsgType::FILE_TRANSFER_COMPLETE: {
+        qDebug() << "Processing FILE_TRANSFER_COMPLETE";
+        // 文件传输完成通知处理 - 实现文件传输的收尾
+        // 设计思路：通知用户文件传输状态，便于清理资源
+        int fromId = message["from"].toInt();
+        QString fileId = message["fileid"].toString();
+        bool success = message["success"].toBool();
+        
+        qDebug() << "File transfer complete for fileId:" << fileId << "success:" << success;
+        emit fileTransferCompleteReceived(fileId, success);
+        break;
+    }
+    
+    case MsgType::FILE_TRANSFER_ACK: {
+        qDebug() << "Processing FILE_TRANSFER_ACK";
+        // 文件传输确认处理 - 处理用户对文件传输请求的响应
+        // 设计思路：根据用户选择，决定是否继续文件传输
+        QString fileId = message["fileid"].toString();
+        bool accept = message["accept"].toBool();
+        
+        qDebug() << "File transfer" << (accept ? "accepted" : "rejected") << "for fileId:" << fileId;
+        emit fileTransferAccepted(fileId, accept);
+        break;
+    }
+    
+    default: {
+        // 未知消息类型处理 - 增强系统健壮性
+        qWarning() << "Unknown message type:" << msgType;
+        break;
+    }
+    }
+}
+
+void ChatClient::onConnected() {
+    qDebug() << "Connected to server";
+    isConnected = true;
+    emit connectionStateChanged(true);
+}
+
+void ChatClient::onDisconnected() {
+    qDebug() << "Disconnected from server";
+    isConnected = false;
+    emit connectionStateChanged(false);
+}
+
+void ChatClient::onReadyRead() {
+    static QByteArray buffer;
+    
+    // 读取所有可用数据
+    QByteArray newData = socket->readAll();
+    if (newData.isEmpty()) {
+        return;
+    }
+    
+    // 添加到缓冲区
+    buffer.append(newData);
+    qDebug() << "[CRITICAL] Received data, buffer size:" << buffer.size();
+    
+    // 尝试直接解析JSON数据（服务器期望的格式）
+    while (!buffer.isEmpty()) {
+        qDebug() << "[CRITICAL] Trying to parse JSON from buffer";
+        
+        // 尝试在缓冲区中找到JSON对象
+        int jsonStart = buffer.indexOf('{');
+        int jsonEnd = -1;
+        int braceCount = 0;
+        bool inString = false;
+        
+        if (jsonStart != -1) {
+            qDebug() << "[CRITICAL] Found JSON start at position:" << jsonStart;
+            // 尝试找到匹配的结束括号
+            for (int i = jsonStart; i < buffer.size(); i++) {
+                if (buffer[i] == '"' && (i == 0 || buffer[i-1] != '\\')) {
+                    inString = !inString;
+                }
+                
+                if (!inString) {
+                    if (buffer[i] == '{') {
+                        braceCount++;
+                    } else if (buffer[i] == '}') {
+                        braceCount--;
+                        if (braceCount == 0) {
+                            jsonEnd = i;
+                            qDebug() << "[CRITICAL] Found matching JSON end at position:" << jsonEnd;
+                            break;
+                        }
+                    }
+                }
+            }
+        } else {
+            qDebug() << "[CRITICAL] No JSON start found in buffer";
+            // 如果没有找到JSON开始，可能缓冲区数据不完整，等待更多数据
+            break;
+        }
+        
+        // 如果找到完整的JSON数据
+        if (jsonStart != -1 && jsonEnd != -1 && jsonStart < jsonEnd) {
+            QByteArray jsonData = buffer.mid(jsonStart, jsonEnd - jsonStart + 1);
+            buffer.remove(0, jsonEnd + 1);
+            
+            qDebug() << "[CRITICAL] Extracted JSON data of length:" << jsonData.size();
+            qDebug() << "[CRITICAL] JSON data content:" << jsonData.mid(0, 100) << (jsonData.size() > 100 ? "..." : "");
+            
+            QJsonParseError error;
+            QJsonDocument doc = QJsonDocument::fromJson(jsonData, &error);
+            if (error.error == QJsonParseError::NoError && doc.isObject()) {
+                QJsonObject message = doc.object();
+                qDebug() << "[CRITICAL] Successfully parsed JSON with keys:" << message.keys();
+                
+                // 特别标记处理好友列表和群组列表数据的调试信息
+                if (message.contains("friends") || message.contains("groups") || 
+                    (message.contains("type") && (message["type"].toInt() == MsgType::QUERY_FRIEND_MSG_ACK || 
+                                                 message["type"].toInt() == MsgType::QUERY_GROUP_MSG_ACK))) {
+                    qDebug() << "[CRITICAL] Processing friend/group list data";
+                }
+                
+                processMessage(message);
+                
+                // 继续处理缓冲区中的下一条消息
+                qDebug() << "[CRITICAL] Processed message, remaining buffer size:" << buffer.size();
+                continue;
+            } else {
+                qDebug() << "[CRITICAL] Error parsing JSON:" << error.errorString();
+                // 如果解析失败，可能是JSON格式问题，尝试跳过一些字节继续查找
+                buffer.remove(0, jsonStart + 1);
+                qDebug() << "[CRITICAL] Skipping problematic JSON start, trying again";
+            }
+        } else {
+            qDebug() << "[CRITICAL] No complete JSON found in buffer, waiting for more data";
+            // 没有找到完整的JSON，等待更多数据
+            break;
+        }
+    }
+}
+
+void ChatClient::onError(QAbstractSocket::SocketError socketError) {
+    qDebug() << "Socket error:" << socketError << socket->errorString();
+    if (isConnected) {
+        isConnected = false;
+        emit connectionStateChanged(false);
+    }
+}

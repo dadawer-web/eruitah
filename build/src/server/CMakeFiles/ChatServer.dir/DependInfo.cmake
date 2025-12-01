@@ -8,6 +8,9 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
+  "" "src/server/ChatServer_autogen/timestamp" "custom" "src/server/ChatServer_autogen/deps"
+  "/home/xmy/code/build/src/server/ChatServer_autogen/mocs_compilation.cpp" "src/server/CMakeFiles/ChatServer.dir/ChatServer_autogen/mocs_compilation.cpp.o" "gcc" "src/server/CMakeFiles/ChatServer.dir/ChatServer_autogen/mocs_compilation.cpp.o.d"
+  "/home/xmy/code/src/chatserver.cpp" "src/server/CMakeFiles/ChatServer.dir/__/chatserver.cpp.o" "gcc" "src/server/CMakeFiles/ChatServer.dir/__/chatserver.cpp.o.d"
   "/home/xmy/code/src/server/chatserver.cpp" "src/server/CMakeFiles/ChatServer.dir/chatserver.cpp.o" "gcc" "src/server/CMakeFiles/ChatServer.dir/chatserver.cpp.o.d"
   "/home/xmy/code/src/server/chatservice.cpp" "src/server/CMakeFiles/ChatServer.dir/chatservice.cpp.o" "gcc" "src/server/CMakeFiles/ChatServer.dir/chatservice.cpp.o.d"
   "/home/xmy/code/src/server/db/db.cpp" "src/server/CMakeFiles/ChatServer.dir/db/db.cpp.o" "gcc" "src/server/CMakeFiles/ChatServer.dir/db/db.cpp.o.d"

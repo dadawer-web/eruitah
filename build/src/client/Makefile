@@ -130,6 +130,445 @@ ChatClient/fast:
 	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/build
 .PHONY : ChatClient/fast
 
+# Convenience name for target.
+src/client/CMakeFiles/QtChat.dir/rule:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/client/CMakeFiles/QtChat.dir/rule
+.PHONY : src/client/CMakeFiles/QtChat.dir/rule
+
+# Convenience name for target.
+QtChat: src/client/CMakeFiles/QtChat.dir/rule
+.PHONY : QtChat
+
+# fast build rule for target.
+QtChat/fast:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/build
+.PHONY : QtChat/fast
+
+# Convenience name for target.
+src/client/CMakeFiles/ChatClient_autogen_timestamp_deps.dir/rule:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/client/CMakeFiles/ChatClient_autogen_timestamp_deps.dir/rule
+.PHONY : src/client/CMakeFiles/ChatClient_autogen_timestamp_deps.dir/rule
+
+# Convenience name for target.
+ChatClient_autogen_timestamp_deps: src/client/CMakeFiles/ChatClient_autogen_timestamp_deps.dir/rule
+.PHONY : ChatClient_autogen_timestamp_deps
+
+# fast build rule for target.
+ChatClient_autogen_timestamp_deps/fast:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient_autogen_timestamp_deps.dir/build.make src/client/CMakeFiles/ChatClient_autogen_timestamp_deps.dir/build
+.PHONY : ChatClient_autogen_timestamp_deps/fast
+
+# Convenience name for target.
+src/client/CMakeFiles/ChatClient_autogen.dir/rule:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/client/CMakeFiles/ChatClient_autogen.dir/rule
+.PHONY : src/client/CMakeFiles/ChatClient_autogen.dir/rule
+
+# Convenience name for target.
+ChatClient_autogen: src/client/CMakeFiles/ChatClient_autogen.dir/rule
+.PHONY : ChatClient_autogen
+
+# fast build rule for target.
+ChatClient_autogen/fast:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient_autogen.dir/build.make src/client/CMakeFiles/ChatClient_autogen.dir/build
+.PHONY : ChatClient_autogen/fast
+
+# Convenience name for target.
+src/client/CMakeFiles/QtChat_autogen_timestamp_deps.dir/rule:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/client/CMakeFiles/QtChat_autogen_timestamp_deps.dir/rule
+.PHONY : src/client/CMakeFiles/QtChat_autogen_timestamp_deps.dir/rule
+
+# Convenience name for target.
+QtChat_autogen_timestamp_deps: src/client/CMakeFiles/QtChat_autogen_timestamp_deps.dir/rule
+.PHONY : QtChat_autogen_timestamp_deps
+
+# fast build rule for target.
+QtChat_autogen_timestamp_deps/fast:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat_autogen_timestamp_deps.dir/build.make src/client/CMakeFiles/QtChat_autogen_timestamp_deps.dir/build
+.PHONY : QtChat_autogen_timestamp_deps/fast
+
+# Convenience name for target.
+src/client/CMakeFiles/QtChat_autogen.dir/rule:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/client/CMakeFiles/QtChat_autogen.dir/rule
+.PHONY : src/client/CMakeFiles/QtChat_autogen.dir/rule
+
+# Convenience name for target.
+QtChat_autogen: src/client/CMakeFiles/QtChat_autogen.dir/rule
+.PHONY : QtChat_autogen
+
+# fast build rule for target.
+QtChat_autogen/fast:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat_autogen.dir/build.make src/client/CMakeFiles/QtChat_autogen.dir/build
+.PHONY : QtChat_autogen/fast
+
+ChatClient_autogen/mocs_compilation.o: ChatClient_autogen/mocs_compilation.cpp.o
+.PHONY : ChatClient_autogen/mocs_compilation.o
+
+# target to build an object file
+ChatClient_autogen/mocs_compilation.cpp.o:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/ChatClient_autogen/mocs_compilation.cpp.o
+.PHONY : ChatClient_autogen/mocs_compilation.cpp.o
+
+ChatClient_autogen/mocs_compilation.i: ChatClient_autogen/mocs_compilation.cpp.i
+.PHONY : ChatClient_autogen/mocs_compilation.i
+
+# target to preprocess a source file
+ChatClient_autogen/mocs_compilation.cpp.i:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/ChatClient_autogen/mocs_compilation.cpp.i
+.PHONY : ChatClient_autogen/mocs_compilation.cpp.i
+
+ChatClient_autogen/mocs_compilation.s: ChatClient_autogen/mocs_compilation.cpp.s
+.PHONY : ChatClient_autogen/mocs_compilation.s
+
+# target to generate assembly for a file
+ChatClient_autogen/mocs_compilation.cpp.s:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/ChatClient_autogen/mocs_compilation.cpp.s
+.PHONY : ChatClient_autogen/mocs_compilation.cpp.s
+
+QtChat_autogen/mocs_compilation.o: QtChat_autogen/mocs_compilation.cpp.o
+.PHONY : QtChat_autogen/mocs_compilation.o
+
+# target to build an object file
+QtChat_autogen/mocs_compilation.cpp.o:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/QtChat_autogen/mocs_compilation.cpp.o
+.PHONY : QtChat_autogen/mocs_compilation.cpp.o
+
+QtChat_autogen/mocs_compilation.i: QtChat_autogen/mocs_compilation.cpp.i
+.PHONY : QtChat_autogen/mocs_compilation.i
+
+# target to preprocess a source file
+QtChat_autogen/mocs_compilation.cpp.i:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/QtChat_autogen/mocs_compilation.cpp.i
+.PHONY : QtChat_autogen/mocs_compilation.cpp.i
+
+QtChat_autogen/mocs_compilation.s: QtChat_autogen/mocs_compilation.cpp.s
+.PHONY : QtChat_autogen/mocs_compilation.s
+
+# target to generate assembly for a file
+QtChat_autogen/mocs_compilation.cpp.s:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/QtChat_autogen/mocs_compilation.cpp.s
+.PHONY : QtChat_autogen/mocs_compilation.cpp.s
+
+__/chatclient.o: __/chatclient.cpp.o
+.PHONY : __/chatclient.o
+
+# target to build an object file
+__/chatclient.cpp.o:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/__/chatclient.cpp.o
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/chatclient.cpp.o
+.PHONY : __/chatclient.cpp.o
+
+__/chatclient.i: __/chatclient.cpp.i
+.PHONY : __/chatclient.i
+
+# target to preprocess a source file
+__/chatclient.cpp.i:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/__/chatclient.cpp.i
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/chatclient.cpp.i
+.PHONY : __/chatclient.cpp.i
+
+__/chatclient.s: __/chatclient.cpp.s
+.PHONY : __/chatclient.s
+
+# target to generate assembly for a file
+__/chatclient.cpp.s:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/__/chatclient.cpp.s
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/chatclient.cpp.s
+.PHONY : __/chatclient.cpp.s
+
+__/chatserver.o: __/chatserver.cpp.o
+.PHONY : __/chatserver.o
+
+# target to build an object file
+__/chatserver.cpp.o:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/__/chatserver.cpp.o
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/chatserver.cpp.o
+.PHONY : __/chatserver.cpp.o
+
+__/chatserver.i: __/chatserver.cpp.i
+.PHONY : __/chatserver.i
+
+# target to preprocess a source file
+__/chatserver.cpp.i:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/__/chatserver.cpp.i
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/chatserver.cpp.i
+.PHONY : __/chatserver.cpp.i
+
+__/chatserver.s: __/chatserver.cpp.s
+.PHONY : __/chatserver.s
+
+# target to generate assembly for a file
+__/chatserver.cpp.s:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/__/chatserver.cpp.s
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/chatserver.cpp.s
+.PHONY : __/chatserver.cpp.s
+
+__/chatwindow.o: __/chatwindow.cpp.o
+.PHONY : __/chatwindow.o
+
+# target to build an object file
+__/chatwindow.cpp.o:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/__/chatwindow.cpp.o
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/chatwindow.cpp.o
+.PHONY : __/chatwindow.cpp.o
+
+__/chatwindow.i: __/chatwindow.cpp.i
+.PHONY : __/chatwindow.i
+
+# target to preprocess a source file
+__/chatwindow.cpp.i:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/__/chatwindow.cpp.i
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/chatwindow.cpp.i
+.PHONY : __/chatwindow.cpp.i
+
+__/chatwindow.s: __/chatwindow.cpp.s
+.PHONY : __/chatwindow.s
+
+# target to generate assembly for a file
+__/chatwindow.cpp.s:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/__/chatwindow.cpp.s
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/chatwindow.cpp.s
+.PHONY : __/chatwindow.cpp.s
+
+__/loginwindow.o: __/loginwindow.cpp.o
+.PHONY : __/loginwindow.o
+
+# target to build an object file
+__/loginwindow.cpp.o:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/__/loginwindow.cpp.o
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/loginwindow.cpp.o
+.PHONY : __/loginwindow.cpp.o
+
+__/loginwindow.i: __/loginwindow.cpp.i
+.PHONY : __/loginwindow.i
+
+# target to preprocess a source file
+__/loginwindow.cpp.i:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/__/loginwindow.cpp.i
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/loginwindow.cpp.i
+.PHONY : __/loginwindow.cpp.i
+
+__/loginwindow.s: __/loginwindow.cpp.s
+.PHONY : __/loginwindow.s
+
+# target to generate assembly for a file
+__/loginwindow.cpp.s:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/__/loginwindow.cpp.s
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/loginwindow.cpp.s
+.PHONY : __/loginwindow.cpp.s
+
+__/main.o: __/main.cpp.o
+.PHONY : __/main.o
+
+# target to build an object file
+__/main.cpp.o:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/main.cpp.o
+.PHONY : __/main.cpp.o
+
+__/main.i: __/main.cpp.i
+.PHONY : __/main.i
+
+# target to preprocess a source file
+__/main.cpp.i:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/main.cpp.i
+.PHONY : __/main.cpp.i
+
+__/main.s: __/main.cpp.s
+.PHONY : __/main.s
+
+# target to generate assembly for a file
+__/main.cpp.s:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/main.cpp.s
+.PHONY : __/main.cpp.s
+
+__/mainwindow.o: __/mainwindow.cpp.o
+.PHONY : __/mainwindow.o
+
+# target to build an object file
+__/mainwindow.cpp.o:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/__/mainwindow.cpp.o
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/mainwindow.cpp.o
+.PHONY : __/mainwindow.cpp.o
+
+__/mainwindow.i: __/mainwindow.cpp.i
+.PHONY : __/mainwindow.i
+
+# target to preprocess a source file
+__/mainwindow.cpp.i:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/__/mainwindow.cpp.i
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/mainwindow.cpp.i
+.PHONY : __/mainwindow.cpp.i
+
+__/mainwindow.s: __/mainwindow.cpp.s
+.PHONY : __/mainwindow.s
+
+# target to generate assembly for a file
+__/mainwindow.cpp.s:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/__/mainwindow.cpp.s
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/mainwindow.cpp.s
+.PHONY : __/mainwindow.cpp.s
+
+__/server/db/db.o: __/server/db/db.cpp.o
+.PHONY : __/server/db/db.o
+
+# target to build an object file
+__/server/db/db.cpp.o:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/__/server/db/db.cpp.o
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/server/db/db.cpp.o
+.PHONY : __/server/db/db.cpp.o
+
+__/server/db/db.i: __/server/db/db.cpp.i
+.PHONY : __/server/db/db.i
+
+# target to preprocess a source file
+__/server/db/db.cpp.i:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/__/server/db/db.cpp.i
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/server/db/db.cpp.i
+.PHONY : __/server/db/db.cpp.i
+
+__/server/db/db.s: __/server/db/db.cpp.s
+.PHONY : __/server/db/db.s
+
+# target to generate assembly for a file
+__/server/db/db.cpp.s:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/__/server/db/db.cpp.s
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/server/db/db.cpp.s
+.PHONY : __/server/db/db.cpp.s
+
+__/server/model/friendmodel.o: __/server/model/friendmodel.cpp.o
+.PHONY : __/server/model/friendmodel.o
+
+# target to build an object file
+__/server/model/friendmodel.cpp.o:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/__/server/model/friendmodel.cpp.o
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/server/model/friendmodel.cpp.o
+.PHONY : __/server/model/friendmodel.cpp.o
+
+__/server/model/friendmodel.i: __/server/model/friendmodel.cpp.i
+.PHONY : __/server/model/friendmodel.i
+
+# target to preprocess a source file
+__/server/model/friendmodel.cpp.i:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/__/server/model/friendmodel.cpp.i
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/server/model/friendmodel.cpp.i
+.PHONY : __/server/model/friendmodel.cpp.i
+
+__/server/model/friendmodel.s: __/server/model/friendmodel.cpp.s
+.PHONY : __/server/model/friendmodel.s
+
+# target to generate assembly for a file
+__/server/model/friendmodel.cpp.s:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/__/server/model/friendmodel.cpp.s
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/server/model/friendmodel.cpp.s
+.PHONY : __/server/model/friendmodel.cpp.s
+
+__/server/model/groupmodel.o: __/server/model/groupmodel.cpp.o
+.PHONY : __/server/model/groupmodel.o
+
+# target to build an object file
+__/server/model/groupmodel.cpp.o:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/__/server/model/groupmodel.cpp.o
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/server/model/groupmodel.cpp.o
+.PHONY : __/server/model/groupmodel.cpp.o
+
+__/server/model/groupmodel.i: __/server/model/groupmodel.cpp.i
+.PHONY : __/server/model/groupmodel.i
+
+# target to preprocess a source file
+__/server/model/groupmodel.cpp.i:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/__/server/model/groupmodel.cpp.i
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/server/model/groupmodel.cpp.i
+.PHONY : __/server/model/groupmodel.cpp.i
+
+__/server/model/groupmodel.s: __/server/model/groupmodel.cpp.s
+.PHONY : __/server/model/groupmodel.s
+
+# target to generate assembly for a file
+__/server/model/groupmodel.cpp.s:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/__/server/model/groupmodel.cpp.s
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/server/model/groupmodel.cpp.s
+.PHONY : __/server/model/groupmodel.cpp.s
+
+__/server/model/offlinemessagemodel.o: __/server/model/offlinemessagemodel.cpp.o
+.PHONY : __/server/model/offlinemessagemodel.o
+
+# target to build an object file
+__/server/model/offlinemessagemodel.cpp.o:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/__/server/model/offlinemessagemodel.cpp.o
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/server/model/offlinemessagemodel.cpp.o
+.PHONY : __/server/model/offlinemessagemodel.cpp.o
+
+__/server/model/offlinemessagemodel.i: __/server/model/offlinemessagemodel.cpp.i
+.PHONY : __/server/model/offlinemessagemodel.i
+
+# target to preprocess a source file
+__/server/model/offlinemessagemodel.cpp.i:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/__/server/model/offlinemessagemodel.cpp.i
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/server/model/offlinemessagemodel.cpp.i
+.PHONY : __/server/model/offlinemessagemodel.cpp.i
+
+__/server/model/offlinemessagemodel.s: __/server/model/offlinemessagemodel.cpp.s
+.PHONY : __/server/model/offlinemessagemodel.s
+
+# target to generate assembly for a file
+__/server/model/offlinemessagemodel.cpp.s:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/__/server/model/offlinemessagemodel.cpp.s
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/server/model/offlinemessagemodel.cpp.s
+.PHONY : __/server/model/offlinemessagemodel.cpp.s
+
+__/server/model/usermodel.o: __/server/model/usermodel.cpp.o
+.PHONY : __/server/model/usermodel.o
+
+# target to build an object file
+__/server/model/usermodel.cpp.o:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/__/server/model/usermodel.cpp.o
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/server/model/usermodel.cpp.o
+.PHONY : __/server/model/usermodel.cpp.o
+
+__/server/model/usermodel.i: __/server/model/usermodel.cpp.i
+.PHONY : __/server/model/usermodel.i
+
+# target to preprocess a source file
+__/server/model/usermodel.cpp.i:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/__/server/model/usermodel.cpp.i
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/server/model/usermodel.cpp.i
+.PHONY : __/server/model/usermodel.cpp.i
+
+__/server/model/usermodel.s: __/server/model/usermodel.cpp.s
+.PHONY : __/server/model/usermodel.s
+
+# target to generate assembly for a file
+__/server/model/usermodel.cpp.s:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/__/server/model/usermodel.cpp.s
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/server/model/usermodel.cpp.s
+.PHONY : __/server/model/usermodel.cpp.s
+
+__/server/redis/redis.o: __/server/redis/redis.cpp.o
+.PHONY : __/server/redis/redis.o
+
+# target to build an object file
+__/server/redis/redis.cpp.o:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/__/server/redis/redis.cpp.o
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/server/redis/redis.cpp.o
+.PHONY : __/server/redis/redis.cpp.o
+
+__/server/redis/redis.i: __/server/redis/redis.cpp.i
+.PHONY : __/server/redis/redis.i
+
+# target to preprocess a source file
+__/server/redis/redis.cpp.i:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/__/server/redis/redis.cpp.i
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/server/redis/redis.cpp.i
+.PHONY : __/server/redis/redis.cpp.i
+
+__/server/redis/redis.s: __/server/redis/redis.cpp.s
+.PHONY : __/server/redis/redis.s
+
+# target to generate assembly for a file
+__/server/redis/redis.cpp.s:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/ChatClient.dir/build.make src/client/CMakeFiles/ChatClient.dir/__/server/redis/redis.cpp.s
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/client/CMakeFiles/QtChat.dir/build.make src/client/CMakeFiles/QtChat.dir/__/server/redis/redis.cpp.s
+.PHONY : __/server/redis/redis.cpp.s
+
 main.o: main.cpp.o
 .PHONY : main.o
 
@@ -162,7 +601,54 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
+	@echo "... ChatClient_autogen"
+	@echo "... ChatClient_autogen_timestamp_deps"
+	@echo "... QtChat_autogen"
+	@echo "... QtChat_autogen_timestamp_deps"
 	@echo "... ChatClient"
+	@echo "... QtChat"
+	@echo "... ChatClient_autogen/mocs_compilation.o"
+	@echo "... ChatClient_autogen/mocs_compilation.i"
+	@echo "... ChatClient_autogen/mocs_compilation.s"
+	@echo "... QtChat_autogen/mocs_compilation.o"
+	@echo "... QtChat_autogen/mocs_compilation.i"
+	@echo "... QtChat_autogen/mocs_compilation.s"
+	@echo "... __/chatclient.o"
+	@echo "... __/chatclient.i"
+	@echo "... __/chatclient.s"
+	@echo "... __/chatserver.o"
+	@echo "... __/chatserver.i"
+	@echo "... __/chatserver.s"
+	@echo "... __/chatwindow.o"
+	@echo "... __/chatwindow.i"
+	@echo "... __/chatwindow.s"
+	@echo "... __/loginwindow.o"
+	@echo "... __/loginwindow.i"
+	@echo "... __/loginwindow.s"
+	@echo "... __/main.o"
+	@echo "... __/main.i"
+	@echo "... __/main.s"
+	@echo "... __/mainwindow.o"
+	@echo "... __/mainwindow.i"
+	@echo "... __/mainwindow.s"
+	@echo "... __/server/db/db.o"
+	@echo "... __/server/db/db.i"
+	@echo "... __/server/db/db.s"
+	@echo "... __/server/model/friendmodel.o"
+	@echo "... __/server/model/friendmodel.i"
+	@echo "... __/server/model/friendmodel.s"
+	@echo "... __/server/model/groupmodel.o"
+	@echo "... __/server/model/groupmodel.i"
+	@echo "... __/server/model/groupmodel.s"
+	@echo "... __/server/model/offlinemessagemodel.o"
+	@echo "... __/server/model/offlinemessagemodel.i"
+	@echo "... __/server/model/offlinemessagemodel.s"
+	@echo "... __/server/model/usermodel.o"
+	@echo "... __/server/model/usermodel.i"
+	@echo "... __/server/model/usermodel.s"
+	@echo "... __/server/redis/redis.o"
+	@echo "... __/server/redis/redis.i"
+	@echo "... __/server/redis/redis.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"

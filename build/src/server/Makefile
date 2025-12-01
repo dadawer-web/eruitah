@@ -130,6 +130,82 @@ ChatServer/fast:
 	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/server/CMakeFiles/ChatServer.dir/build.make src/server/CMakeFiles/ChatServer.dir/build
 .PHONY : ChatServer/fast
 
+# Convenience name for target.
+src/server/CMakeFiles/ChatServer_autogen_timestamp_deps.dir/rule:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/server/CMakeFiles/ChatServer_autogen_timestamp_deps.dir/rule
+.PHONY : src/server/CMakeFiles/ChatServer_autogen_timestamp_deps.dir/rule
+
+# Convenience name for target.
+ChatServer_autogen_timestamp_deps: src/server/CMakeFiles/ChatServer_autogen_timestamp_deps.dir/rule
+.PHONY : ChatServer_autogen_timestamp_deps
+
+# fast build rule for target.
+ChatServer_autogen_timestamp_deps/fast:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/server/CMakeFiles/ChatServer_autogen_timestamp_deps.dir/build.make src/server/CMakeFiles/ChatServer_autogen_timestamp_deps.dir/build
+.PHONY : ChatServer_autogen_timestamp_deps/fast
+
+# Convenience name for target.
+src/server/CMakeFiles/ChatServer_autogen.dir/rule:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/server/CMakeFiles/ChatServer_autogen.dir/rule
+.PHONY : src/server/CMakeFiles/ChatServer_autogen.dir/rule
+
+# Convenience name for target.
+ChatServer_autogen: src/server/CMakeFiles/ChatServer_autogen.dir/rule
+.PHONY : ChatServer_autogen
+
+# fast build rule for target.
+ChatServer_autogen/fast:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/server/CMakeFiles/ChatServer_autogen.dir/build.make src/server/CMakeFiles/ChatServer_autogen.dir/build
+.PHONY : ChatServer_autogen/fast
+
+ChatServer_autogen/mocs_compilation.o: ChatServer_autogen/mocs_compilation.cpp.o
+.PHONY : ChatServer_autogen/mocs_compilation.o
+
+# target to build an object file
+ChatServer_autogen/mocs_compilation.cpp.o:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/server/CMakeFiles/ChatServer.dir/build.make src/server/CMakeFiles/ChatServer.dir/ChatServer_autogen/mocs_compilation.cpp.o
+.PHONY : ChatServer_autogen/mocs_compilation.cpp.o
+
+ChatServer_autogen/mocs_compilation.i: ChatServer_autogen/mocs_compilation.cpp.i
+.PHONY : ChatServer_autogen/mocs_compilation.i
+
+# target to preprocess a source file
+ChatServer_autogen/mocs_compilation.cpp.i:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/server/CMakeFiles/ChatServer.dir/build.make src/server/CMakeFiles/ChatServer.dir/ChatServer_autogen/mocs_compilation.cpp.i
+.PHONY : ChatServer_autogen/mocs_compilation.cpp.i
+
+ChatServer_autogen/mocs_compilation.s: ChatServer_autogen/mocs_compilation.cpp.s
+.PHONY : ChatServer_autogen/mocs_compilation.s
+
+# target to generate assembly for a file
+ChatServer_autogen/mocs_compilation.cpp.s:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/server/CMakeFiles/ChatServer.dir/build.make src/server/CMakeFiles/ChatServer.dir/ChatServer_autogen/mocs_compilation.cpp.s
+.PHONY : ChatServer_autogen/mocs_compilation.cpp.s
+
+__/chatserver.o: __/chatserver.cpp.o
+.PHONY : __/chatserver.o
+
+# target to build an object file
+__/chatserver.cpp.o:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/server/CMakeFiles/ChatServer.dir/build.make src/server/CMakeFiles/ChatServer.dir/__/chatserver.cpp.o
+.PHONY : __/chatserver.cpp.o
+
+__/chatserver.i: __/chatserver.cpp.i
+.PHONY : __/chatserver.i
+
+# target to preprocess a source file
+__/chatserver.cpp.i:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/server/CMakeFiles/ChatServer.dir/build.make src/server/CMakeFiles/ChatServer.dir/__/chatserver.cpp.i
+.PHONY : __/chatserver.cpp.i
+
+__/chatserver.s: __/chatserver.cpp.s
+.PHONY : __/chatserver.s
+
+# target to generate assembly for a file
+__/chatserver.cpp.s:
+	cd /home/xmy/code/build && $(MAKE) $(MAKESILENT) -f src/server/CMakeFiles/ChatServer.dir/build.make src/server/CMakeFiles/ChatServer.dir/__/chatserver.cpp.s
+.PHONY : __/chatserver.cpp.s
+
 chatserver.o: chatserver.cpp.o
 .PHONY : chatserver.o
 
@@ -354,7 +430,15 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
+	@echo "... ChatServer_autogen"
+	@echo "... ChatServer_autogen_timestamp_deps"
 	@echo "... ChatServer"
+	@echo "... ChatServer_autogen/mocs_compilation.o"
+	@echo "... ChatServer_autogen/mocs_compilation.i"
+	@echo "... ChatServer_autogen/mocs_compilation.s"
+	@echo "... __/chatserver.o"
+	@echo "... __/chatserver.i"
+	@echo "... __/chatserver.s"
 	@echo "... chatserver.o"
 	@echo "... chatserver.i"
 	@echo "... chatserver.s"

@@ -5,12 +5,12 @@
 #include<muduo/net/EventLoop.h>
 #include<unordered_map>
 #include<functional>
-#include"UserModel.hpp"
+#include"server/model/usermodel.hpp"
 #include<mutex>
 #include"redis.hpp"
-#include"offlinemessagemodel.hpp"
-#include"friendmodel.hpp"
-#include"groupmodel.hpp"
+#include"server/model/offlinemessagemodel.hpp"
+#include"server/model/friendmodel.hpp"
+#include"server/model/groupmodel.hpp"
 using namespace muduo;
 using namespace std;
 using namespace muduo::net;
@@ -38,6 +38,16 @@ public:
   void groupChat(const TcpConnectionPtr& conn,json& js,Timestamp time);
   //处理注销业务
   void loginout(const TcpConnectionPtr& conn,json& js,Timestamp time);
+  
+  // 文件传输相关业务
+  void fileTransferRequest(const TcpConnectionPtr& conn,json& js,Timestamp time);
+  void fileTransferData(const TcpConnectionPtr& conn,json& js,Timestamp time);
+  void fileTransferComplete(const TcpConnectionPtr& conn,json& js,Timestamp time);
+  
+  // 查询好友和群组列表业务
+  void queryFriendList(const TcpConnectionPtr& conn,json& js,Timestamp time);
+  void queryGroupList(const TcpConnectionPtr& conn,json& js,Timestamp time);
+  
   //处理客户端异常退出
   void clientCloseException(const TcpConnectionPtr& conn);
   
@@ -47,7 +57,7 @@ public:
     //获取消息对应的处理器
   MsgHandler getHandler(int msgid);
   //从redis消息队列中获取订阅的信息
-  void handleRedisSubscribeMessage(int,string);
+  void handleRedisSubscribeMessage(long long,string);
 private:
     ChatService();
      //存储消息id和其对应的业务处理方法
