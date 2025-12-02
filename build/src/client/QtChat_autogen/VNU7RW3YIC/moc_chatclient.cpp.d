@@ -3,6 +3,7 @@
   /home/xmy/code/src/models/group.h \
   /home/xmy/code/src/models/groupuser.h \
   /home/xmy/code/src/models/user.h \
+  /home/xmy/code/src/public.h \
   /usr/include/asm-generic/errno-base.h \
   /usr/include/asm-generic/errno.h \
   /usr/include/assert.h \

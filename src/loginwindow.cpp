@@ -191,9 +191,7 @@ void LoginWindow::handleLoginResponse(bool success, const QString &message) {
     
     if (success) {
         // 发送登录成功信号，传递用户ID和名称
-        int userId = idLineEdit->text().toInt();
-        
-        // 尝试从消息中解析JSON以获取用户名
+        int userId = -1;
         QString userName = "未知用户";
         
         // 移除可能的特殊字符前缀
@@ -202,18 +200,28 @@ void LoginWindow::handleLoginResponse(bool success, const QString &message) {
             cleanMessage = cleanMessage.mid(1);
         }
         
-        // 尝试解析JSON
+        // 尝试解析JSON，获取用户ID和名称
         QJsonDocument doc = QJsonDocument::fromJson(cleanMessage.toUtf8());
         if (doc.isObject()) {
             QJsonObject obj = doc.object();
+            // 从JSON中获取用户ID
+            if (obj.contains("id")) {
+                userId = obj["id"].toVariant().toLongLong();
+                qDebug() << "[CRITICAL] Successfully parsed userId:" << userId;
+            }
+            // 从JSON中获取用户名
             if (obj.contains("name")) {
                 userName = obj["name"].toString();
                 qDebug() << "[CRITICAL] Successfully parsed username:" << userName;
-            } else {
-                qDebug() << "[CRITICAL] JSON does not contain 'name' field";
             }
         } else {
             qDebug() << "[CRITICAL] Failed to parse JSON from message";
+        }
+        
+        // 如果从JSON中没有获取到userId，尝试从idLineEdit获取（登录情况）
+        if (userId == -1) {
+            userId = idLineEdit->text().toInt();
+            qDebug() << "[CRITICAL] Using userId from idLineEdit:" << userId;
         }
         
         // 如果JSON解析失败，使用一个默认值或者从用户输入中获取
@@ -254,7 +262,8 @@ void LoginWindow::handleLoginResponse(bool success, const QString &message) {
             chatClient->requestGroupList(userId);
         });
 
-        QMessageBox::information(this, "成功", message);
+        // 移除登录成功消息框，避免干扰窗口跳转
+        // QMessageBox::information(this, "成功", message);
     } else {
         QMessageBox::warning(this, "失败", message);
         qDebug() << "[CRITICAL] Login failed, showing error message";

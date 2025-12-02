@@ -362,9 +362,9 @@ src/client/CMakeFiles/QtChat.dir/__/main.cpp.o: \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/qmap.h \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/QMutex \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/qmutex.h \
- /home/xmy/code/src/models/user.h /home/xmy/code/src/models/group.h \
- /home/xmy/code/src/models/groupuser.h /home/xmy/code/src/models/user.h \
- /home/xmy/code/src/chatwindow.h \
+ /home/xmy/code/src/public.h /home/xmy/code/src/models/user.h \
+ /home/xmy/code/src/models/group.h /home/xmy/code/src/models/groupuser.h \
+ /home/xmy/code/src/models/user.h /home/xmy/code/src/chatwindow.h \
  /usr/include/x86_64-linux-gnu/qt5/QtWidgets/QTreeWidget \
  /usr/include/x86_64-linux-gnu/qt5/QtWidgets/qtreewidget.h \
  /usr/include/x86_64-linux-gnu/qt5/QtWidgets/qtreeview.h \

@@ -117,9 +117,9 @@ int main(int argc, char *argv[]) {
             return; // 结束函数执行
         }
         
-        // 隐藏登录窗口
-        loginWindow.hide();
-        qDebug() << "[CRITICAL] main.cpp: 登录窗口已隐藏";
+        // 关闭登录窗口，而不是隐藏，确保事件循环能继续运行
+        loginWindow.close();
+        qDebug() << "[CRITICAL] main.cpp: 登录窗口已关闭";
         
         // 直接获取ChatClient实例
         ChatClient *client = loginWindow.getChatClient();
@@ -140,6 +140,18 @@ int main(int argc, char *argv[]) {
             chatWindow = new ChatWindow(userId, userName, client);
             qDebug() << "[CRITICAL] main.cpp: ChatWindow实例创建成功，地址:" << chatWindow;
             
+            // 当ChatWindow发出logout信号时，关闭聊天窗口并重新显示登录窗口
+            QObject::connect(chatWindow, &ChatWindow::logout, [&loginWindow, &chatWindow]() {
+                if (chatWindow) {
+                    chatWindow->close();
+                    delete chatWindow;
+                    chatWindow = nullptr;
+                    // 重新创建ChatClient实例，确保LoginWindow有一个有效的ChatClient指针
+                    loginWindow.resetChatClient();
+                    loginWindow.show();
+                }
+            });
+            
             // 设置窗口属性，确保能够正确显示
             // Qt::WA_ShowWithoutActivating: 显示窗口时不激活它
             chatWindow->setAttribute(Qt::WA_ShowWithoutActivating, false);
@@ -156,6 +168,11 @@ int main(int argc, char *argv[]) {
             chatWindow->activateWindow(); // 激活窗口
             qDebug() << "[CRITICAL] 执行activateWindow()";
             
+            // 设置窗口位置和大小，确保可见
+            chatWindow->resize(800, 600);
+            chatWindow->move(100, 100);
+            qDebug() << "[CRITICAL] 执行resize(800, 600)和move(100, 100)";
+            
             // 强制应用窗口更新
             chatWindow->repaint(); // 立即重绘窗口
             qDebug() << "[CRITICAL] 执行repaint()";
@@ -167,21 +184,38 @@ int main(int argc, char *argv[]) {
             // 验证是否显示成功
             if (chatWindow->isVisible()) {
                 qDebug() << "[CRITICAL] main.cpp: ChatWindow显示成功 - SUCCESS";
+                qDebug() << "[CRITICAL] ChatWindow大小: " << chatWindow->size();
+                qDebug() << "[CRITICAL] ChatWindow位置: " << chatWindow->pos();
+                qDebug() << "[CRITICAL] ChatWindow可见性: " << chatWindow->isVisible();
+                qDebug() << "[CRITICAL] ChatWindow窗口状态: " << chatWindow->windowState();
                 // 移除置顶属性，恢复正常窗口行为
                 chatWindow->setWindowFlags(chatWindow->windowFlags() & ~Qt::WindowStaysOnTopHint);
+                chatWindow->show(); // 重新显示，因为修改windowFlags后需要重新show
                 
                 // 记录日志
                 if (logFile.open(QIODevice::Append | QIODevice::Text)) {
                     QTextStream out(&logFile);
+                    QSize size = chatWindow->size();
+                    QPoint pos = chatWindow->pos();
                     out << "[" << QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss.zzz") << "] " 
                         << "main.cpp: ChatWindow显示成功，跳转完成" << Qt::endl;
+                    out << "[" << QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss.zzz") << "] " 
+                        << "main.cpp: ChatWindow大小: " << QString("(%1, %2)").arg(size.width()).arg(size.height()) << Qt::endl;
+                    out << "[" << QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss.zzz") << "] " 
+                        << "main.cpp: ChatWindow位置: " << QString("(%1, %2)").arg(pos.x()).arg(pos.y()) << Qt::endl;
                     logFile.close();
                 }
             } else {
                 qDebug() << "[CRITICAL] main.cpp: ChatWindow创建但未显示，立即重试";
+                qDebug() << "[CRITICAL] ChatWindow大小: " << chatWindow->size();
+                qDebug() << "[CRITICAL] ChatWindow位置: " << chatWindow->pos();
+                qDebug() << "[CRITICAL] ChatWindow可见性: " << chatWindow->isVisible();
+                qDebug() << "[CRITICAL] ChatWindow窗口状态: " << chatWindow->windowState();
                 
                 // 立即重试显示窗口
                 chatWindow->showNormal(); // 以正常状态显示
+                chatWindow->resize(800, 600);
+                chatWindow->move(100, 100);
                 chatWindow->raise();
                 chatWindow->activateWindow();
                 chatWindow->repaint();
@@ -190,18 +224,29 @@ int main(int argc, char *argv[]) {
                 // 再次检查是否显示成功
                 if (chatWindow->isVisible()) {
                     qDebug() << "[CRITICAL] main.cpp: 立即重试显示ChatWindow成功";
+                    qDebug() << "[CRITICAL] ChatWindow大小: " << chatWindow->size();
+                    qDebug() << "[CRITICAL] ChatWindow位置: " << chatWindow->pos();
                     // 移除置顶属性
                     chatWindow->setWindowFlags(chatWindow->windowFlags() & ~Qt::WindowStaysOnTopHint);
+                    chatWindow->show(); // 重新显示，因为修改windowFlags后需要重新show
                     
                     // 记录日志
-                    if (logFile.open(QIODevice::Append | QIODevice::Text)) {
-                        QTextStream out(&logFile);
-                        out << "[" << QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss.zzz") << "] " 
-                            << "main.cpp: 立即重试显示ChatWindow成功" << Qt::endl;
-                        logFile.close();
-                    }
+                if (logFile.open(QIODevice::Append | QIODevice::Text)) {
+                    QTextStream out(&logFile);
+                    QSize size = chatWindow->size();
+                    QPoint pos = chatWindow->pos();
+                    out << "[" << QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss.zzz") << "] " 
+                        << "main.cpp: 立即重试显示ChatWindow成功" << Qt::endl;
+                    out << "[" << QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss.zzz") << "] " 
+                        << "main.cpp: ChatWindow大小: " << QString("(%1, %2)").arg(size.width()).arg(size.height()) << Qt::endl;
+                    out << "[" << QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss.zzz") << "] " 
+                        << "main.cpp: ChatWindow位置: " << QString("(%1, %2)").arg(pos.x()).arg(pos.y()) << Qt::endl;
+                    logFile.close();
+                }
                 } else {
                     qDebug() << "[CRITICAL] main.cpp: 立即重试显示ChatWindow失败，使用定时器再次尝试";
+                    qDebug() << "[CRITICAL] ChatWindow大小: " << chatWindow->size();
+                    qDebug() << "[CRITICAL] ChatWindow位置: " << chatWindow->pos();
                     
                     // 设置定时器延时100毫秒后再次尝试
                     // QTimer::singleShot是一次性定时器，只触发一次
@@ -211,6 +256,8 @@ int main(int argc, char *argv[]) {
                         qDebug() << "[CRITICAL] main.cpp: 定时器重试显示ChatWindow...";
                         // 再次尝试显示窗口
                         chatWindow->showNormal();
+                        chatWindow->resize(800, 600);
+                        chatWindow->move(100, 100);
                         chatWindow->raise();
                         chatWindow->activateWindow();
                         chatWindow->repaint();
@@ -219,20 +266,32 @@ int main(int argc, char *argv[]) {
                         // 检查是否显示成功
                         if (chatWindow->isVisible()) {
                             qDebug() << "[CRITICAL] main.cpp: 定时器重试显示ChatWindow成功";
+                            qDebug() << "[CRITICAL] ChatWindow大小: " << chatWindow->size();
+                            qDebug() << "[CRITICAL] ChatWindow位置: " << chatWindow->pos();
                             // 移除置顶属性
                             chatWindow->setWindowFlags(chatWindow->windowFlags() & ~Qt::WindowStaysOnTopHint);
+                            chatWindow->show(); // 重新显示，因为修改windowFlags后需要重新show
                             
                             // 记录日志
-                            if (logFile.open(QIODevice::Append | QIODevice::Text)) {
-                                QTextStream out(&logFile);
-                                out << "[" << QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss.zzz") << "] " 
-                                    << "main.cpp: 定时器重试显示ChatWindow成功" << Qt::endl;
-                                logFile.close();
-                            }
+                    if (logFile.open(QIODevice::Append | QIODevice::Text)) {
+                        QTextStream out(&logFile);
+                        QSize size = chatWindow->size();
+                        QPoint pos = chatWindow->pos();
+                        out << "[" << QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss.zzz") << "] " 
+                            << "main.cpp: 定时器重试显示ChatWindow成功" << Qt::endl;
+                        out << "[" << QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss.zzz") << "] " 
+                            << "main.cpp: ChatWindow大小: " << QString("(%1, %2)").arg(size.width()).arg(size.height()) << Qt::endl;
+                        out << "[" << QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss.zzz") << "] " 
+                            << "main.cpp: ChatWindow位置: " << QString("(%1, %2)").arg(pos.x()).arg(pos.y()) << Qt::endl;
+                        logFile.close();
+                    }
                         } else {
                             qDebug() << "[CRITICAL] main.cpp: 定时器重试显示ChatWindow失败";
+                            qDebug() << "[CRITICAL] ChatWindow大小: " << chatWindow->size();
+                            qDebug() << "[CRITICAL] ChatWindow位置: " << chatWindow->pos();
                             // 即使失败，也移除置顶属性
                             chatWindow->setWindowFlags(chatWindow->windowFlags() & ~Qt::WindowStaysOnTopHint);
+                            chatWindow->show(); // 重新显示，因为修改windowFlags后需要重新show
                         }
                     });
                 }

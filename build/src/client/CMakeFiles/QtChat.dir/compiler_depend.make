@@ -524,6 +524,7 @@ src/client/CMakeFiles/QtChat.dir/QtChat_autogen/mocs_compilation.cpp.o: src/clie
   /home/xmy/code/src/models/offlinemessagemodel.h \
   /home/xmy/code/src/models/user.h \
   /home/xmy/code/src/models/usermodel.h \
+  /home/xmy/code/src/public.h \
   src/client/QtChat_autogen/VNU7RW3YIC/moc_chatclient.cpp \
   src/client/QtChat_autogen/VNU7RW3YIC/moc_chatserver.cpp \
   src/client/QtChat_autogen/VNU7RW3YIC/moc_chatwindow.cpp \
@@ -1719,6 +1720,7 @@ src/client/CMakeFiles/QtChat.dir/__/chatwindow.cpp.o: /home/xmy/code/src/chatwin
   /home/xmy/code/src/models/group.h \
   /home/xmy/code/src/models/groupuser.h \
   /home/xmy/code/src/models/user.h \
+  /home/xmy/code/src/public.h \
   /usr/include/alloca.h \
   /usr/include/asm-generic/errno-base.h \
   /usr/include/asm-generic/errno.h \
@@ -2179,6 +2181,7 @@ src/client/CMakeFiles/QtChat.dir/__/loginwindow.cpp.o: /home/xmy/code/src/loginw
   /home/xmy/code/src/models/group.h \
   /home/xmy/code/src/models/groupuser.h \
   /home/xmy/code/src/models/user.h \
+  /home/xmy/code/src/public.h \
   /usr/include/alloca.h \
   /usr/include/asm-generic/errno-base.h \
   /usr/include/asm-generic/errno.h \
@@ -2585,6 +2588,7 @@ src/client/CMakeFiles/QtChat.dir/__/main.cpp.o: /home/xmy/code/src/main.cpp \
   /home/xmy/code/src/models/group.h \
   /home/xmy/code/src/models/groupuser.h \
   /home/xmy/code/src/models/user.h \
+  /home/xmy/code/src/public.h \
   /usr/include/alloca.h \
   /usr/include/asm-generic/errno-base.h \
   /usr/include/asm-generic/errno.h \
@@ -3047,6 +3051,7 @@ src/client/CMakeFiles/QtChat.dir/__/mainwindow.cpp.o: /home/xmy/code/src/mainwin
   /home/xmy/code/src/models/offlinemessagemodel.h \
   /home/xmy/code/src/models/user.h \
   /home/xmy/code/src/models/usermodel.h \
+  /home/xmy/code/src/public.h \
   /usr/include/alloca.h \
   /usr/include/asm-generic/errno-base.h \
   /usr/include/asm-generic/errno.h \
@@ -3775,6 +3780,7 @@ src/client/CMakeFiles/QtChat.dir/__/server/model/friendmodel.cpp.o: /home/xmy/co
   /usr/include/c++/13/cstddef \
   /usr/include/c++/13/cstdio \
   /usr/include/c++/13/cstdlib \
+  /usr/include/c++/13/cstring \
   /usr/include/c++/13/cwchar \
   /usr/include/c++/13/debug/assertions.h \
   /usr/include/c++/13/debug/debug.h \
@@ -3815,6 +3821,8 @@ src/client/CMakeFiles/QtChat.dir/__/server/model/friendmodel.cpp.o: /home/xmy/co
   /usr/include/stdint.h \
   /usr/include/stdio.h \
   /usr/include/stdlib.h \
+  /usr/include/string.h \
+  /usr/include/strings.h \
   /usr/include/wchar.h \
   /usr/include/x86_64-linux-gnu/asm/errno.h \
   /usr/include/x86_64-linux-gnu/bits/atomic_wide_counter.h \
@@ -5607,6 +5615,8 @@ src/client/QtChat_autogen/VNU7RW3YIC/moc_chatclient.cpp:
 /home/xmy/code/src/models/group.h:
 
 /usr/include/x86_64-linux-gnu/c++/13/bits/cpu_defines.h:
+
+/usr/include/c++/13/cstring:
 
 /usr/include/mysql/my_command.h:
 

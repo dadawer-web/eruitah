@@ -55,9 +55,16 @@ private:
     // 防止重复处理登录响应的标志
     bool loginHandled; // 添加此标志以防止重复处理登录响应
     
+    // 标记是否正在处理登出，用于区分正常登出和意外断开连接
+    bool isLoggingOut; // 用于防止登出时的冲突
+    
     // 联系人数据
     QMap<int, User> friendMap;
     QMap<int, Group> groupMap;
+    
+    // 状态标志
+    bool friendListLoaded; // 标记好友列表是否已加载
+    bool offlineMessagesProcessed; // 标记离线消息是否已处理
     
     // 联系人树根节点
     QTreeWidgetItem *friendRoot;
@@ -96,7 +103,7 @@ public slots:
     
     // 消息相关槽函数
     void onSendMessage();
-    void onReceiveMessage(int fromId, const QString &message, bool isGroup = false, int groupId = -1);
+    void onReceiveMessage(int fromId, const QString &message, const QString &fromName = "", bool isGroup = false, int groupId = -1);
     void onReceiveGroupMessage(int groupId, int fromId, const QString &userName, const QString &message);
     
     // 列表更新槽函数

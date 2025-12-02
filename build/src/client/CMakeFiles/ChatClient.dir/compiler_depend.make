@@ -524,6 +524,7 @@ src/client/CMakeFiles/ChatClient.dir/ChatClient_autogen/mocs_compilation.cpp.o: 
   /home/xmy/code/src/models/offlinemessagemodel.h \
   /home/xmy/code/src/models/user.h \
   /home/xmy/code/src/models/usermodel.h \
+  /home/xmy/code/src/public.h \
   src/client/ChatClient_autogen/VNU7RW3YIC/moc_chatclient.cpp \
   src/client/ChatClient_autogen/VNU7RW3YIC/moc_chatserver.cpp \
   src/client/ChatClient_autogen/VNU7RW3YIC/moc_chatwindow.cpp \
@@ -1719,6 +1720,7 @@ src/client/CMakeFiles/ChatClient.dir/__/chatwindow.cpp.o: /home/xmy/code/src/cha
   /home/xmy/code/src/models/group.h \
   /home/xmy/code/src/models/groupuser.h \
   /home/xmy/code/src/models/user.h \
+  /home/xmy/code/src/public.h \
   /usr/include/alloca.h \
   /usr/include/asm-generic/errno-base.h \
   /usr/include/asm-generic/errno.h \
@@ -2179,6 +2181,7 @@ src/client/CMakeFiles/ChatClient.dir/__/loginwindow.cpp.o: /home/xmy/code/src/lo
   /home/xmy/code/src/models/group.h \
   /home/xmy/code/src/models/groupuser.h \
   /home/xmy/code/src/models/user.h \
+  /home/xmy/code/src/public.h \
   /usr/include/alloca.h \
   /usr/include/asm-generic/errno-base.h \
   /usr/include/asm-generic/errno.h \
@@ -2590,6 +2593,7 @@ src/client/CMakeFiles/ChatClient.dir/__/mainwindow.cpp.o: /home/xmy/code/src/mai
   /home/xmy/code/src/models/offlinemessagemodel.h \
   /home/xmy/code/src/models/user.h \
   /home/xmy/code/src/models/usermodel.h \
+  /home/xmy/code/src/public.h \
   /usr/include/alloca.h \
   /usr/include/asm-generic/errno-base.h \
   /usr/include/asm-generic/errno.h \
@@ -3318,6 +3322,7 @@ src/client/CMakeFiles/ChatClient.dir/__/server/model/friendmodel.cpp.o: /home/xm
   /usr/include/c++/13/cstddef \
   /usr/include/c++/13/cstdio \
   /usr/include/c++/13/cstdlib \
+  /usr/include/c++/13/cstring \
   /usr/include/c++/13/cwchar \
   /usr/include/c++/13/debug/assertions.h \
   /usr/include/c++/13/debug/debug.h \
@@ -3358,6 +3363,8 @@ src/client/CMakeFiles/ChatClient.dir/__/server/model/friendmodel.cpp.o: /home/xm
   /usr/include/stdint.h \
   /usr/include/stdio.h \
   /usr/include/stdlib.h \
+  /usr/include/string.h \
+  /usr/include/strings.h \
   /usr/include/wchar.h \
   /usr/include/x86_64-linux-gnu/asm/errno.h \
   /usr/include/x86_64-linux-gnu/bits/atomic_wide_counter.h \

@@ -133,4 +133,5 @@ src/server/CMakeFiles/ChatServer.dir/model/friendmodel.cpp.o: \
  /usr/include/mysql/client_plugin.h /usr/include/c++/13/stdlib.h \
  /usr/include/mysql/plugin_auth_common.h \
  /usr/include/mysql/mysql_version.h /usr/include/mysql/mysql_time.h \
- /usr/include/mysql/errmsg.h
+ /usr/include/mysql/errmsg.h /usr/include/c++/13/cstring \
+ /usr/include/string.h /usr/include/strings.h

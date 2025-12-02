@@ -42,7 +42,13 @@ ChatServer::ChatServer(EventLoop* loop,
         json js=json::parse(buf);
         //达到的目的：完全解耦网络模块的代码和业务模块的代码
         //通过js["msgid"]获取=>业务handler=>conn js time
-        auto msgHandler=ChatService::instance()->getHandler(js["msgid"].get<int>());
+        int msgid = -1;
+        if (js.contains("msgid") && js["msgid"].is_number()) {
+            msgid = js["msgid"].get<int>();
+        } else {
+            return;
+        }
+        auto msgHandler=ChatService::instance()->getHandler(msgid);
         //回调消息绑定好的事件处理器，来执行相应的业务处理
         msgHandler(conn,js,time);
     }

@@ -14,7 +14,7 @@
 #include <QCoreApplication>
 #include <QThread>
 
-ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, QWidget *parent) : QMainWindow(parent), userId(userId), userName(userName), chatClient(client), loginHandled(false) {
+ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, QWidget *parent) : QMainWindow(parent), userId(userId), userName(userName), chatClient(client), loginHandled(false), friendListLoaded(false), offlineMessagesProcessed(false), isLoggingOut(false) {
     // 设置窗口标题
     setWindowTitle(QString("Qt Chat - %1").arg(userName));
     setMinimumSize(800, 600);
@@ -112,6 +112,9 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     addFriendDialog->setLayout(addFriendLayout);
     connect(addFriendOkButton, &QPushButton::clicked, this, &ChatWindow::onAddFriendConfirmed);
     connect(addFriendCancelButton, &QPushButton::clicked, addFriendDialog, &QDialog::close);
+    
+    // 处理存储的离线消息 - 移到构造函数末尾，确保所有UI元素都已初始化
+    chatClient->processStoredOfflineMessages();
 
     // 初始化创建群组对话框
     createGroupDialog = new QDialog(this);
@@ -297,7 +300,7 @@ void ChatWindow::onJoinGroupConfirmed() {
     joinGroupIdEdit->clear();
 }
 
-void ChatWindow::onReceiveMessage(int fromId, const QString &message, bool isGroup, int groupId) {
+void ChatWindow::onReceiveMessage(int fromId, const QString &message, const QString &fromName, bool isGroup, int groupId) {
     QString chatName;
     int chatId;
     
@@ -308,44 +311,135 @@ void ChatWindow::onReceiveMessage(int fromId, const QString &message, bool isGro
         }
     } else {
         chatId = fromId;
-        if (friendMap.contains(fromId)) {
+        // 使用信号中提供的发送者名称，否则从friendMap获取，最后使用默认名称
+        if (!fromName.isEmpty()) {
+            chatName = fromName;
+        } else if (friendMap.contains(fromId)) {
             chatName = QString::fromStdString(friendMap[fromId].getName());
+        } else {
+            chatName = QString("用户 %1").arg(fromId);
         }
     }
 
     // 查找或创建对应的聊天窗口
     QTextEdit *chatEdit = nullptr;
+    QWidget *chatWidget = nullptr;
+    
+    // 查找是否已存在聊天窗口
     for (int i = 0; i < chatTabWidget->count(); ++i) {
         if (chatTabWidget->widget(i)->property("chatId").toInt() == chatId &&
             chatTabWidget->widget(i)->property("isGroup").toBool() == isGroup) {
-            chatEdit = qobject_cast<QTextEdit*>(chatTabWidget->widget(i)->layout()->itemAt(0)->widget());
+            chatWidget = chatTabWidget->widget(i);
+            chatEdit = qobject_cast<QTextEdit*>(chatWidget->layout()->itemAt(0)->widget());
             break;
         }
+    }
+
+    // 如果聊天窗口不存在，创建一个新的
+    if (!chatEdit) {
+        // 创建新的聊天窗口
+        chatWidget = new QWidget;
+        QVBoxLayout *chatLayout = new QVBoxLayout;
+        
+        chatEdit = new QTextEdit;
+        chatEdit->setReadOnly(true);
+        chatEdit->setMinimumHeight(400);
+        chatLayout->addWidget(chatEdit);
+        
+        QHBoxLayout *inputLayout = new QHBoxLayout;
+        QLineEdit *inputEdit = new QLineEdit;
+        inputEdit->setMinimumWidth(400);
+        QPushButton *sendButton = new QPushButton("发送");
+        connect(sendButton, &QPushButton::clicked, this, &ChatWindow::onSendMessage);
+        connect(inputEdit, &QLineEdit::returnPressed, this, &ChatWindow::onSendMessage);
+        
+        inputLayout->addWidget(inputEdit);
+        inputLayout->addWidget(sendButton);
+        chatLayout->addLayout(inputLayout);
+        
+        chatWidget->setLayout(chatLayout);
+        chatWidget->setProperty("chatId", chatId);
+        chatWidget->setProperty("isGroup", isGroup);
+        
+        chatTabWidget->addTab(chatWidget, chatName);
     }
 
     // 显示接收到的消息
     if (chatEdit) {
         QString timeStr = QDateTime::currentDateTime().toString("hh:mm:ss");
         chatEdit->append(chatName + " [" + timeStr + "]: " + message);
+        // 确保聊天窗口可见
+        for (int i = 0; i < chatTabWidget->count(); ++i) {
+            if (chatTabWidget->widget(i) == chatWidget) {
+                chatTabWidget->setCurrentIndex(i);
+                break;
+            }
+        }
     }
 }
 
 void ChatWindow::onReceiveGroupMessage(int groupId, int fromId, const QString &userName, const QString &message) {
+    QString groupName;
+    if (groupMap.contains(groupId)) {
+        groupName = QString::fromStdString(groupMap[groupId].getName());
+    } else {
+        groupName = QString("群组 %1").arg(groupId);
+    }
+
     // 查找或创建对应的群聊窗口
     QTextEdit *chatEdit = nullptr;
+    QWidget *chatWidget = nullptr;
+    
+    // 查找是否已存在聊天窗口
     for (int i = 0; i < chatTabWidget->count(); ++i) {
         if (chatTabWidget->widget(i)->property("chatId").toInt() == groupId &&
             chatTabWidget->widget(i)->property("isGroup").toBool() == true) {
-            chatEdit = qobject_cast<QTextEdit*>(chatTabWidget->widget(i)->layout()->itemAt(0)->widget());
+            chatWidget = chatTabWidget->widget(i);
+            chatEdit = qobject_cast<QTextEdit*>(chatWidget->layout()->itemAt(0)->widget());
             break;
         }
+    }
+
+    // 如果聊天窗口不存在，创建一个新的
+    if (!chatEdit) {
+        // 创建新的群聊窗口
+        chatWidget = new QWidget;
+        QVBoxLayout *chatLayout = new QVBoxLayout;
+        
+        chatEdit = new QTextEdit;
+        chatEdit->setReadOnly(true);
+        chatEdit->setMinimumHeight(400);
+        chatLayout->addWidget(chatEdit);
+        
+        QHBoxLayout *inputLayout = new QHBoxLayout;
+        QLineEdit *inputEdit = new QLineEdit;
+        inputEdit->setMinimumWidth(400);
+        QPushButton *sendButton = new QPushButton("发送");
+        connect(sendButton, &QPushButton::clicked, this, &ChatWindow::onSendMessage);
+        connect(inputEdit, &QLineEdit::returnPressed, this, &ChatWindow::onSendMessage);
+        
+        inputLayout->addWidget(inputEdit);
+        inputLayout->addWidget(sendButton);
+        chatLayout->addLayout(inputLayout);
+        
+        chatWidget->setLayout(chatLayout);
+        chatWidget->setProperty("chatId", groupId);
+        chatWidget->setProperty("isGroup", true);
+        
+        chatTabWidget->addTab(chatWidget, groupName);
     }
 
     // 显示群消息
     if (chatEdit) {
         QString timeStr = QDateTime::currentDateTime().toString("hh:mm:ss");
-        QString groupName = QString::fromStdString(groupMap[groupId].getName());
         chatEdit->append("[" + groupName + "] " + userName + " [" + timeStr + "]: " + message);
+        // 确保聊天窗口可见
+        for (int i = 0; i < chatTabWidget->count(); ++i) {
+            if (chatTabWidget->widget(i) == chatWidget) {
+                chatTabWidget->setCurrentIndex(i);
+                break;
+            }
+        }
     }
 }
 
@@ -414,6 +508,10 @@ void ChatWindow::onFriendListUpdated(const QList<User> &friends) {
     
     // 刷新UI
     contactTreeWidget->update();
+    contactTreeWidget->repaint();
+    
+    // 标记好友列表已加载
+    friendListLoaded = true;
     contactTreeWidget->repaint();
     qDebug() << "[CRITICAL] Friend list UI updated, expanded and repainted";
 }
@@ -552,12 +650,33 @@ void ChatWindow::onConnected() {
 
 void ChatWindow::onDisconnected() {
     qDebug() << "ChatWindow disconnected from server";
+    
+    // If we're actively logging out, don't show the message box or close the window
+    // The logout signal will handle the cleanup and transition to login page
+    if (isLoggingOut) {
+        qDebug() << "ChatWindow: Disconnection during logout, skipping message box and close";
+        return;
+    }
+    
+    // For unexpected disconnections, show message and close
     QMessageBox::warning(this, "连接断开", "与服务器的连接已断开，请重新登录");
     close();
 }
 
 void ChatWindow::onLogout() {
+    // Mark as logging out to prevent onDisconnected from interfering
+    isLoggingOut = true;
+    
+    // Send logout message to server
     chatClient->logout(userId);
+    
+    // Disconnect all signals from chatClient to prevent race conditions
+    disconnect(chatClient, nullptr, this, nullptr);
+    
+    // Close the chat window
+    this->close();
+    
+    // Emit logout signal immediately, without delay
     emit logout();
 }
 
@@ -696,7 +815,7 @@ void ChatWindow::onFileTransferRequestReceived(int fromId, const QString &filena
         // 选择保存位置
         QString savePath = QFileDialog::getSaveFileName(this, "保存文件", filename);
         if (savePath.isEmpty()) {
-            chatClient->acceptFileTransfer(fileId, false);
+            chatClient->acceptFileTransfer(userId, fromId, fileId, false);
             return;
         }
         
@@ -704,7 +823,7 @@ void ChatWindow::onFileTransferRequestReceived(int fromId, const QString &filena
         QFile *file = new QFile(savePath);
         if (!file->open(QIODevice::WriteOnly)) {
             QMessageBox::warning(this, "错误", "无法打开文件进行写入");
-            chatClient->acceptFileTransfer(fileId, false);
+            chatClient->acceptFileTransfer(userId, fromId, fileId, false);
             delete file;
             return;
         }
@@ -731,10 +850,10 @@ void ChatWindow::onFileTransferRequestReceived(int fromId, const QString &filena
         fileProgressDialogs[fileId] = progressDialog;
         
         // 接受文件传输
-        chatClient->acceptFileTransfer(fileId, true);
+        chatClient->acceptFileTransfer(userId, fromId, fileId, true);
     } else {
         // 拒绝文件传输
-        chatClient->acceptFileTransfer(fileId, false);
+        chatClient->acceptFileTransfer(userId, fromId, fileId, false);
     }
 }
 

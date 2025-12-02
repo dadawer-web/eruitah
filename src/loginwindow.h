@@ -22,6 +22,14 @@ public:
     
     // 获取ChatClient实例
     ChatClient *getChatClient() { return chatClient; }
+    
+    // 重置ChatClient实例（用于登出后重新创建）
+    void resetChatClient() {
+        delete chatClient;
+        chatClient = new ChatClient(this);
+        connect(chatClient, &ChatClient::loginResponse, this, &LoginWindow::handleLoginResponse);
+        connect(chatClient, &ChatClient::registerResponse, this, &LoginWindow::handleRegisterResponse);
+    }
 
 private:
     // 防止重复处理登录响应（避免消息框/窗口重复弹出）

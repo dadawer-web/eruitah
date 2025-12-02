@@ -282,9 +282,9 @@ src/client/CMakeFiles/QtChat.dir/__/chatclient.cpp.o: \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/qmap.h \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/QMutex \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/qmutex.h \
- /home/xmy/code/src/models/user.h /home/xmy/code/src/models/group.h \
- /home/xmy/code/src/models/groupuser.h /home/xmy/code/src/models/user.h \
- /home/xmy/code/src/public.h \
+ /home/xmy/code/src/public.h /home/xmy/code/src/models/user.h \
+ /home/xmy/code/src/models/group.h /home/xmy/code/src/models/groupuser.h \
+ /home/xmy/code/src/models/user.h \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/QByteArray \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/qbytearray.h \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/QDataStream \

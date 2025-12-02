@@ -223,39 +223,42 @@ QString ChatClient::generateFileId() {
 // 文件传输相关函数实现
 void ChatClient::sendFileRequest(int fromId, int toId, const QString &filename, long long filesize) {
     QJsonObject message;
-    message["type"] = MsgType::FILE_TRANSFER_REQ;
+    message["msgid"] = MsgType::FILE_TRANSFER_REQ;
     message["from"] = fromId;
     message["to"] = toId;
     message["filename"] = filename;
     message["filesize"] = filesize;
+    message["fileid"] = generateFileId(); // 生成唯一文件ID
     sendJsonMessage(message);
 }
 
 void ChatClient::sendFileTransferComplete(int fromId, int toId, const QString &fileId, bool success) {
     QJsonObject message;
-    message["type"] = MsgType::FILE_TRANSFER_COMPLETE;
+    message["msgid"] = MsgType::FILE_TRANSFER_COMPLETE;
     message["from"] = fromId;
     message["to"] = toId;
-    message["fileId"] = fileId;
+    message["fileid"] = fileId;
     message["success"] = success;
     sendJsonMessage(message);
 }
 
-void ChatClient::acceptFileTransfer(const QString &fileId, bool accept) {
+void ChatClient::acceptFileTransfer(int fromId, int toId, const QString &fileId, bool accept) {
     QJsonObject message;
-    message["type"] = MsgType::FILE_TRANSFER_ACK;
-    message["fileId"] = fileId;
-    message["accept"] = accept;
+    message["msgid"] = MsgType::FILE_TRANSFER_ACK;
+    message["from"] = fromId;
+    message["to"] = toId;
+    message["fileid"] = fileId;
+    message["accepted"] = accept;
     sendJsonMessage(message);
 }
 
 void ChatClient::sendFileData(int fromId, int toId, const QString &fileId, int chunkIndex, const QByteArray &data) {
     QJsonObject message;
-    message["type"] = MsgType::FILE_TRANSFER_DATA;
+    message["msgid"] = MsgType::FILE_TRANSFER_DATA;
     message["from"] = fromId;
     message["to"] = toId;
-    message["fileId"] = fileId;
-    message["chunkIndex"] = chunkIndex;
+    message["fileid"] = fileId;
+    message["chunkindex"] = chunkIndex;
     message["data"] = QString::fromUtf8(data.toBase64());
     sendJsonMessage(message);
 }
@@ -296,13 +299,21 @@ void ChatClient::sendJsonMessage(const QJsonObject &message) {
     // 强制刷新socket缓冲区，确保数据立即发送
     socket->flush();
     
-    // 增加等待时间，确保数据完全写入操作系统缓冲区
-    bool bytesWrittenSuccess = socket->waitForBytesWritten(500); // 增加到500ms
-    qDebug() << "Message sent, msgid:" << message["msgid"].toInt() << 
-                "length:" << data.size() << "bytes written:" << bytesWritten << "success:" << bytesWrittenSuccess;
-    
-    // 增加延迟时间，确保两条连续消息不会被合并 - 时序控制优化
-    QThread::msleep(50); // 增加到50ms
+    // 对于登出消息，不要阻塞等待写入完成，因为服务器会立即关闭连接
+    int msgid = message["msgid"].toInt();
+    if (msgid != MsgType::LOGINOUT_MSG) {
+        // 对于普通消息，等待写入完成
+        bool bytesWrittenSuccess = socket->waitForBytesWritten(500); // 增加到500ms
+        qDebug() << "Message sent, msgid:" << msgid << 
+                    "length:" << data.size() << "bytes written:" << bytesWritten << "success:" << bytesWrittenSuccess;
+        
+        // 增加延迟时间，确保两条连续消息不会被合并 - 时序控制优化
+        QThread::msleep(50); // 增加到50ms
+    } else {
+        // 对于登出消息，立即返回，不等待，因为服务器会立即关闭连接
+        qDebug() << "Logout message sent, msgid:" << msgid << 
+                    "length:" << data.size() << "bytes written:" << bytesWritten;
+    }
 }
 
 // 处理消息 - 消息解析与路由核心实现
@@ -351,11 +362,93 @@ void ChatClient::processMessage(const QJsonObject &message) {
             this->currentUserId = userId;
             // 保存用户ID即可，用户名可以从服务器获取
             
+            // 处理登录响应中的好友列表
+            if (message.contains("friends")) {
+                QList<User> friendList;
+                if (message["friends"].isArray()) {
+                    QJsonArray friendsArray = message["friends"].toArray();
+                    for (const QJsonValue &value : friendsArray) {
+                        if (value.isObject()) {
+                            QJsonObject friendObj = value.toObject();
+                            User friendInfo;
+                            friendInfo.setId(friendObj["id"].toVariant().toLongLong());
+                            friendInfo.setName(friendObj["name"].toString().toStdString());
+                            friendInfo.setState(friendObj["state"].toString().toStdString());
+                            friendList.append(friendInfo);
+                        } else if (value.isString()) {
+                            // 处理字符串形式的好友信息
+                            QString friendStr = value.toString();
+                            QJsonDocument doc = QJsonDocument::fromJson(friendStr.toUtf8());
+                            if (doc.isObject()) {
+                                QJsonObject friendObj = doc.object();
+                                User friendInfo;
+                                friendInfo.setId(friendObj["id"].toVariant().toLongLong());
+                                friendInfo.setName(friendObj["name"].toString().toStdString());
+                                friendInfo.setState(friendObj["state"].toString().toStdString());
+                                friendList.append(friendInfo);
+                            }
+                        }
+                    }
+                    qDebug() << "Received friend list from login response with" << friendList.size() << "friends";
+                    emit friendListUpdated(friendList);
+                }
+            }
+            
+            // 处理登录响应中的群组列表
+            if (message.contains("groups")) {
+                QList<Group> groupList;
+                if (message["groups"].isArray()) {
+                    QJsonArray groupsArray = message["groups"].toArray();
+                    for (const QJsonValue &value : groupsArray) {
+                        if (value.isObject()) {
+                            QJsonObject groupObj = value.toObject();
+                            Group groupInfo;
+                            groupInfo.setId(groupObj["id"].toInt());
+                            groupInfo.setName(groupObj["groupname"].toString().toStdString());
+                            groupInfo.setDesc(groupObj["groupdesc"].toString().toStdString());
+                            groupList.append(groupInfo);
+                        } else if (value.isString()) {
+                            // 处理字符串形式的群组信息
+                            QString groupStr = value.toString();
+                            QJsonDocument doc = QJsonDocument::fromJson(groupStr.toUtf8());
+                            if (doc.isObject()) {
+                                QJsonObject groupObj = doc.object();
+                                Group groupInfo;
+                                groupInfo.setId(groupObj["id"].toInt());
+                                groupInfo.setName(groupObj["groupname"].toString().toStdString());
+                                groupInfo.setDesc(groupObj["groupdesc"].toString().toStdString());
+                                groupList.append(groupInfo);
+                            }
+                        }
+                    }
+                    qDebug() << "Received group list from login response with" << groupList.size() << "groups";
+                    emit groupListUpdated(groupList);
+                }
+            }
+            
+            // 处理登录响应中的离线消息
+            if (message.contains("offlinemsg")) {
+                if (message["offlinemsg"].isArray()) {
+                    QJsonArray offlineMsgsArray = message["offlinemsg"].toArray();
+                    for (const QJsonValue &value : offlineMsgsArray) {
+                        if (value.isObject()) {
+                            QJsonObject offlineMsgObj = value.toObject();
+                            processOfflineMessage(offlineMsgObj);
+                        } else if (value.isString()) {
+                            // 处理字符串形式的离线消息
+                            QString offlineMsgStr = value.toString();
+                            QJsonDocument doc = QJsonDocument::fromJson(offlineMsgStr.toUtf8());
+                            if (doc.isObject()) {
+                                QJsonObject offlineMsgObj = doc.object();
+                                processOfflineMessage(offlineMsgObj);
+                            }
+                        }
+                    }
+                }
+            }
+
             // 通知UI层登录成功
             emit loginResponse(true, "登录成功");
-            
-            // 登录成功后，自动请求好友列表 - 简化用户操作体验
-            requestFriendList(userId);
         }
         break;
     }
@@ -376,8 +469,15 @@ void ChatClient::processMessage(const QJsonObject &message) {
             QString userName = message["name"].toString();
             qDebug() << "Registration successful for user:" << userId << "(" << userName << ")";
             
-            // 通知UI层注册成功
-            emit loginResponse(true, "注册成功");
+            // 构建包含用户信息的JSON消息
+            QJsonObject responseObj;
+            responseObj["id"] = userId;
+            responseObj["name"] = userName;
+            QJsonDocument doc(responseObj);
+            QString jsonMessage = doc.toJson(QJsonDocument::Compact);
+            
+            // 通知UI层注册成功，传递包含用户信息的JSON
+            emit loginResponse(true, jsonMessage);
         }
         break;
     }
@@ -387,14 +487,14 @@ void ChatClient::processMessage(const QJsonObject &message) {
         // 私聊消息处理 - 点对点通信实现
         // 设计思路：提取发送者信息和消息内容，转发给UI层展示
         qint64 fromId = message["from"].toVariant().toLongLong();
-        QString fromName = message["fromName"].toString();
+        QString fromName = message.contains("fromName") ? message["fromName"].toString() : message["name"].toString();
         QString msgContent = message["msg"].toString();
         qint64 toId = message["to"].toVariant().toLongLong();
         
         // 消息过滤 - 只处理发给当前用户的消息
         if (toId == this->currentUserId) {
-            qDebug() << "Received private message from" << fromId << ":" << msgContent;
-            emit messageReceived(fromId, msgContent, false);
+            qDebug() << "Received private message from" << fromId << "(" << fromName << "):" << msgContent;
+            emit messageReceived(fromId, msgContent, fromName, false);
         }
         break;
     }
@@ -413,8 +513,9 @@ void ChatClient::processMessage(const QJsonObject &message) {
         break;
     }
     
-    case MsgType::QUERY_FRIEND_MSG_ACK: {
-        qDebug() << "Processing QUERY_FRIEND_MSG_ACK";
+    case MsgType::QUERY_FRIEND_MSG_ACK: 
+    case 9: { // 处理服务器返回的好友列表响应，服务器使用的消息类型是9
+        qDebug() << "Processing QUERY_FRIEND_MSG_ACK (message type:" << msgType << ")";
         // 好友列表查询响应处理 - 关系数据管理
         // 设计思路：
         // 1. 支持多种数据格式：处理JSON数组和字符串两种表示形式
@@ -438,6 +539,18 @@ void ChatClient::processMessage(const QJsonObject &message) {
                         friendInfo.setName(friendObj["name"].toString().toStdString());
                         friendInfo.setState(friendObj["state"].toString().toStdString());
                         friendList.append(friendInfo);
+                    } else if (value.isString()) {
+                        // 处理字符串形式的好友信息
+                        QString friendStr = value.toString();
+                        QJsonDocument doc = QJsonDocument::fromJson(friendStr.toUtf8());
+                        if (doc.isObject()) {
+                            QJsonObject friendObj = doc.object();
+                            User friendInfo;
+                            friendInfo.setId(friendObj["id"].toVariant().toLongLong());
+                            friendInfo.setName(friendObj["name"].toString().toStdString());
+                            friendInfo.setState(friendObj["state"].toString().toStdString());
+                            friendList.append(friendInfo);
+                        }
                     }
                 }
             } else if (message["friends"].isString()) {
@@ -445,13 +558,8 @@ void ChatClient::processMessage(const QJsonObject &message) {
                 qDebug() << "Processing friends as JSON string";
                 QString friendsJsonString = message["friends"].toString();
                 
-                // 移除可能的外部引号，处理转义字符 - 数据清洗设计
-                friendsJsonString = friendsJsonString.replace("\"", "\\\"").replace("\\\\", "\\\\\\\\");
-                friendsJsonString = friendsJsonString.mid(1, friendsJsonString.length() - 2);
-                
                 // 尝试直接解析JSON
-                QString fullJsonString = "[" + friendsJsonString + "]";
-                QJsonDocument doc = QJsonDocument::fromJson(fullJsonString.toUtf8());
+                QJsonDocument doc = QJsonDocument::fromJson(friendsJsonString.toUtf8());
                 if (doc.isArray()) {
                     QJsonArray friendsArray = doc.array();
                     for (const QJsonValue &value : friendsArray) {
@@ -462,27 +570,102 @@ void ChatClient::processMessage(const QJsonObject &message) {
                             friendInfo.setName(friendObj["name"].toString().toStdString());
                             friendInfo.setState(friendObj["state"].toString().toStdString());
                             friendList.append(friendInfo);
+                        } else if (value.isString()) {
+                            // 处理字符串形式的好友信息
+                            QString friendStr = value.toString();
+                            QJsonDocument doc = QJsonDocument::fromJson(friendStr.toUtf8());
+                            if (doc.isObject()) {
+                                QJsonObject friendObj = doc.object();
+                                User friendInfo;
+                                friendInfo.setId(friendObj["id"].toVariant().toLongLong());
+                                friendInfo.setName(friendObj["name"].toString().toStdString());
+                                friendInfo.setState(friendObj["state"].toString().toStdString());
+                                friendList.append(friendInfo);
+                            }
                         }
                     }
                 } else {
-                    // 降级方案：使用正则表达式解析 - 健壮性保障
-                    qDebug() << "Falling back to regex parsing for friends data";
-                    QRegularExpression regex("\\{[^}]*\\}");
-                    QRegularExpressionMatchIterator matchIterator = regex.globalMatch(friendsJsonString);
-                    
-                    while (matchIterator.hasNext()) {
-                        QRegularExpressionMatch match = matchIterator.next();
-                        QString jsonObjectStr = match.captured(0);
-                        
-                        // 解析单个好友对象
-                        QJsonDocument objDoc = QJsonDocument::fromJson(jsonObjectStr.toUtf8());
-                        if (objDoc.isObject()) {
-                            QJsonObject friendObj = objDoc.object();
+                    // 尝试移除可能的外部引号，处理转义字符 - 数据清洗设计
+                    QString cleanJsonString = friendsJsonString;
+                    if (cleanJsonString.startsWith("[")) {
+                        // 尝试直接解析
+                        QJsonDocument doc = QJsonDocument::fromJson(cleanJsonString.toUtf8());
+                        if (doc.isArray()) {
+                            QJsonArray friendsArray = doc.array();
+                            for (const QJsonValue &value : friendsArray) {
+                                if (value.isObject()) {
+                                    QJsonObject friendObj = value.toObject();
+                                    User friendInfo;
+                                    friendInfo.setId(friendObj["id"].toVariant().toLongLong());
+                                    friendInfo.setName(friendObj["name"].toString().toStdString());
+                                    friendInfo.setState(friendObj["state"].toString().toStdString());
+                                    friendList.append(friendInfo);
+                                } else if (value.isString()) {
+                                    // 处理字符串形式的好友信息
+                                    QString friendStr = value.toString();
+                                    QJsonDocument doc = QJsonDocument::fromJson(friendStr.toUtf8());
+                                    if (doc.isObject()) {
+                                        QJsonObject friendObj = doc.object();
+                                        User friendInfo;
+                                        friendInfo.setId(friendObj["id"].toVariant().toLongLong());
+                                        friendInfo.setName(friendObj["name"].toString().toStdString());
+                                        friendInfo.setState(friendObj["state"].toString().toStdString());
+                                        friendList.append(friendInfo);
+                                    }
+                                }
+                            }
+                        } else {
+                            // 降级方案：使用正则表达式解析 - 健壮性保障
+                            qDebug() << "Falling back to regex parsing for friends data";
+                            QRegularExpression regex("\\{[^}]*\\}");
+                            QRegularExpressionMatchIterator matchIterator = regex.globalMatch(cleanJsonString);
+                            
+                            while (matchIterator.hasNext()) {
+                                QRegularExpressionMatch match = matchIterator.next();
+                                QString jsonObjectStr = match.captured(0);
+                                
+                                // 解析单个好友对象
+                                QJsonDocument objDoc = QJsonDocument::fromJson(jsonObjectStr.toUtf8());
+                                if (objDoc.isObject()) {
+                                    QJsonObject friendObj = objDoc.object();
+                                    User friendInfo;
+                                    friendInfo.setId(friendObj["id"].toVariant().toLongLong());
+                                    friendInfo.setName(friendObj["name"].toString().toStdString());
+                                    friendInfo.setState(friendObj["state"].toString().toStdString());
+                                    friendList.append(friendInfo);
+                                }
+                            }
+                        }
+                    } else {
+                        // 处理单个好友对象字符串
+                        QJsonDocument doc = QJsonDocument::fromJson(cleanJsonString.toUtf8());
+                        if (doc.isObject()) {
+                            QJsonObject friendObj = doc.object();
                             User friendInfo;
                             friendInfo.setId(friendObj["id"].toVariant().toLongLong());
                             friendInfo.setName(friendObj["name"].toString().toStdString());
                             friendInfo.setState(friendObj["state"].toString().toStdString());
                             friendList.append(friendInfo);
+                        } else {
+                            // 尝试解析包含多个好友对象的字符串
+                            QRegularExpression regex("\\{[^}]*\\}");
+                            QRegularExpressionMatchIterator matchIterator = regex.globalMatch(cleanJsonString);
+                            
+                            while (matchIterator.hasNext()) {
+                                QRegularExpressionMatch match = matchIterator.next();
+                                QString jsonObjectStr = match.captured(0);
+                                
+                                // 解析单个好友对象
+                                QJsonDocument objDoc = QJsonDocument::fromJson(jsonObjectStr.toUtf8());
+                                if (objDoc.isObject()) {
+                                    QJsonObject friendObj = objDoc.object();
+                                    User friendInfo;
+                                    friendInfo.setId(friendObj["id"].toVariant().toLongLong());
+                                    friendInfo.setName(friendObj["name"].toString().toStdString());
+                                    friendInfo.setState(friendObj["state"].toString().toStdString());
+                                    friendList.append(friendInfo);
+                                }
+                            }
                         }
                     }
                 }
@@ -490,15 +673,13 @@ void ChatClient::processMessage(const QJsonObject &message) {
             
             qDebug() << "Received friend list with" << friendList.size() << "friends";
             emit friendListUpdated(friendList);
-            
-            // 好友列表更新后，自动请求群组列表 - 优化用户体验
-            requestGroupList(this->currentUserId);
         }
         break;
     }
     
-    case MsgType::QUERY_GROUP_MSG_ACK: {
-        qDebug() << "Processing QUERY_GROUP_MSG_ACK";
+    case MsgType::QUERY_GROUP_MSG_ACK: 
+    case 11: { // 处理服务器返回的群组列表响应，服务器使用的消息类型是11
+        qDebug() << "Processing QUERY_GROUP_MSG_ACK (message type:" << msgType << ")";
         // 群组列表查询响应处理 - 群组数据管理
         // 设计思路：
         // 1. 支持多种数据格式：处理JSON数组和字符串两种表示形式
@@ -519,8 +700,8 @@ void ChatClient::processMessage(const QJsonObject &message) {
                         QJsonObject groupObj = value.toObject();
                         Group groupInfo;
                         groupInfo.setId(groupObj["id"].toInt());
-                        groupInfo.setName(groupObj["name"].toString().toStdString());
-                        groupInfo.setDesc(groupObj["desc"].toString().toStdString());
+                        groupInfo.setName(groupObj["groupname"].toString().toStdString());
+                        groupInfo.setDesc(groupObj["groupdesc"].toString().toStdString());
                         
                         // 解析群组成员列表
                         if (groupObj.contains("users") && groupObj["users"].isArray()) {
@@ -539,6 +720,18 @@ void ChatClient::processMessage(const QJsonObject &message) {
                         }
                         
                         groupList.append(groupInfo);
+                    } else if (value.isString()) {
+                        // 处理字符串形式的群组信息
+                        QString groupStr = value.toString();
+                        QJsonDocument doc = QJsonDocument::fromJson(groupStr.toUtf8());
+                        if (doc.isObject()) {
+                            QJsonObject groupObj = doc.object();
+                            Group groupInfo;
+                            groupInfo.setId(groupObj["id"].toInt());
+                            groupInfo.setName(groupObj["groupname"].toString().toStdString());
+                            groupInfo.setDesc(groupObj["groupdesc"].toString().toStdString());
+                            groupList.append(groupInfo);
+                        }
                     }
                 }
             } else if (message["groups"].isString()) {
@@ -546,13 +739,8 @@ void ChatClient::processMessage(const QJsonObject &message) {
                 qDebug() << "Processing groups as JSON string";
                 QString groupsJsonString = message["groups"].toString();
                 
-                // 移除可能的外部引号，处理转义字符 - 数据清洗设计
-                groupsJsonString = groupsJsonString.replace("\"", "\\\"").replace("\\\\", "\\\\\\\\");
-                groupsJsonString = groupsJsonString.mid(1, groupsJsonString.length() - 2);
-                
                 // 尝试直接解析JSON
-                QString fullJsonString = "[" + groupsJsonString + "]";
-                QJsonDocument doc = QJsonDocument::fromJson(fullJsonString.toUtf8());
+                QJsonDocument doc = QJsonDocument::fromJson(groupsJsonString.toUtf8());
                 if (doc.isArray()) {
                     QJsonArray groupsArray = doc.array();
                     for (const QJsonValue &value : groupsArray) {
@@ -560,62 +748,115 @@ void ChatClient::processMessage(const QJsonObject &message) {
                             QJsonObject groupObj = value.toObject();
                             Group groupInfo;
                             groupInfo.setId(groupObj["id"].toInt());
-                            groupInfo.setName(groupObj["name"].toString().toStdString());
-                            groupInfo.setDesc(groupObj["desc"].toString().toStdString());
-                            
-                            // 解析群组成员列表
-                            if (groupObj.contains("users") && groupObj["users"].isString()) {
-                                QString usersStr = groupObj["users"].toString();
-                                // 解析成员字符串
-                                QRegularExpression userRegex("\\{[^}]*\\}");
-                                QRegularExpressionMatchIterator userIterator = userRegex.globalMatch(usersStr);
-                                
-                                while (userIterator.hasNext()) {
-                                    QRegularExpressionMatch match = userIterator.next();
-                                    QString userObjStr = match.captured(0);
-                                    QJsonDocument userDoc = QJsonDocument::fromJson(userObjStr.toUtf8());
-                                    
-                                    if (userDoc.isObject()) {
-                                        QJsonObject userObj = userDoc.object();
-                                        GroupUser user;
-                                        user.setId(userObj["id"].toVariant().toLongLong());
-                                        user.setName(userObj["name"].toString().toStdString());
-                                        user.setState(userObj["state"].toString().toStdString());
-                                        user.setRole(userObj["role"].toString().toStdString());
-                                        groupInfo.getUsers().push_back(user);
-                                    }
-                                }
-                            }
-                            
+                            groupInfo.setName(groupObj["groupname"].toString().toStdString());
+                            groupInfo.setDesc(groupObj["groupdesc"].toString().toStdString());
                             groupList.append(groupInfo);
+                        } else if (value.isString()) {
+                            // 处理字符串形式的群组信息
+                            QString groupStr = value.toString();
+                            QJsonDocument doc = QJsonDocument::fromJson(groupStr.toUtf8());
+                            if (doc.isObject()) {
+                                QJsonObject groupObj = doc.object();
+                                Group groupInfo;
+                                groupInfo.setId(groupObj["id"].toInt());
+                                groupInfo.setName(groupObj["groupname"].toString().toStdString());
+                                groupInfo.setDesc(groupObj["groupdesc"].toString().toStdString());
+                                groupList.append(groupInfo);
+                            }
                         }
                     }
                 } else {
-                    // 降级方案：使用正则表达式解析 - 健壮性保障
-                    qDebug() << "Falling back to regex parsing for groups data";
-                    QRegularExpression regex("\\{[^}]*\\}");
-                    QRegularExpressionMatchIterator matchIterator = regex.globalMatch(groupsJsonString);
-                    
-                    while (matchIterator.hasNext()) {
-                        QRegularExpressionMatch match = matchIterator.next();
-                        QString jsonObjectStr = match.captured(0);
-                        
-                        // 解析单个群组对象
-                        QJsonDocument objDoc = QJsonDocument::fromJson(jsonObjectStr.toUtf8());
-                        if (objDoc.isObject()) {
-                            QJsonObject groupObj = objDoc.object();
+                    // 尝试移除可能的外部引号，处理转义字符 - 数据清洗设计
+                    QString cleanJsonString = groupsJsonString;
+                    if (cleanJsonString.startsWith("[")) {
+                        // 尝试直接解析
+                        QJsonDocument doc = QJsonDocument::fromJson(cleanJsonString.toUtf8());
+                        if (doc.isArray()) {
+                            QJsonArray groupsArray = doc.array();
+                            for (const QJsonValue &value : groupsArray) {
+                                if (value.isObject()) {
+                                    QJsonObject groupObj = value.toObject();
+                                    Group groupInfo;
+                                    groupInfo.setId(groupObj["id"].toInt());
+                                    groupInfo.setName(groupObj["groupname"].toString().toStdString());
+                                    groupInfo.setDesc(groupObj["groupdesc"].toString().toStdString());
+                                    groupList.append(groupInfo);
+                                } else if (value.isString()) {
+                                    // 处理字符串形式的群组信息
+                                    QString groupStr = value.toString();
+                                    QJsonDocument doc = QJsonDocument::fromJson(groupStr.toUtf8());
+                                    if (doc.isObject()) {
+                                        QJsonObject groupObj = doc.object();
+                                        Group groupInfo;
+                                        groupInfo.setId(groupObj["id"].toInt());
+                                        groupInfo.setName(groupObj["groupname"].toString().toStdString());
+                                        groupInfo.setDesc(groupObj["groupdesc"].toString().toStdString());
+                                        groupList.append(groupInfo);
+                                    }
+                                }
+                            }
+                        } else {
+                            // 降级方案：使用正则表达式解析 - 健壮性保障
+                            qDebug() << "Falling back to regex parsing for groups data";
+                            QRegularExpression regex("\\{[^}]*\\}");
+                            QRegularExpressionMatchIterator matchIterator = regex.globalMatch(cleanJsonString);
+                            
+                            while (matchIterator.hasNext()) {
+                                QRegularExpressionMatch match = matchIterator.next();
+                                QString jsonObjectStr = match.captured(0);
+                                
+                                // 解析单个群组对象
+                                QJsonDocument objDoc = QJsonDocument::fromJson(jsonObjectStr.toUtf8());
+                                if (objDoc.isObject()) {
+                                    QJsonObject groupObj = objDoc.object();
+                                    Group groupInfo;
+                                    groupInfo.setId(groupObj["id"].toInt());
+                                    groupInfo.setName(groupObj["groupname"].toString().toStdString());
+                                    groupInfo.setDesc(groupObj["groupdesc"].toString().toStdString());
+                                    groupList.append(groupInfo);
+                                }
+                            }
+                        }
+                    } else {
+                        // 处理单个群组对象字符串
+                        QJsonDocument doc = QJsonDocument::fromJson(cleanJsonString.toUtf8());
+                        if (doc.isObject()) {
+                            QJsonObject groupObj = doc.object();
                             Group groupInfo;
                             groupInfo.setId(groupObj["id"].toInt());
-                            groupInfo.setName(groupObj["name"].toString().toStdString());
-                            groupInfo.setDesc(groupObj["desc"].toString().toStdString());
-                            
+                            groupInfo.setName(groupObj["groupname"].toString().toStdString());
+                            groupInfo.setDesc(groupObj["groupdesc"].toString().toStdString());
                             groupList.append(groupInfo);
+                        } else {
+                            // 尝试解析包含多个群组对象的字符串
+                            QRegularExpression regex("\\{[^}]*\\}");
+                            QRegularExpressionMatchIterator matchIterator = regex.globalMatch(cleanJsonString);
+                            
+                            while (matchIterator.hasNext()) {
+                                QRegularExpressionMatch match = matchIterator.next();
+                                QString jsonObjectStr = match.captured(0);
+                                
+                                // 解析单个群组对象
+                                QJsonDocument objDoc = QJsonDocument::fromJson(jsonObjectStr.toUtf8());
+                                if (objDoc.isObject()) {
+                                    QJsonObject groupObj = objDoc.object();
+                                    Group groupInfo;
+                                    groupInfo.setId(groupObj["id"].toInt());
+                                    groupInfo.setName(groupObj["groupname"].toString().toStdString());
+                                    groupInfo.setDesc(groupObj["groupdesc"].toString().toStdString());
+                                    groupList.append(groupInfo);
+                                }
+                            }
                         }
                     }
                 }
             }
             
             qDebug() << "Received group list with" << groupList.size() << "groups";
+            // 输出群组列表的详细信息，便于调试
+            for (const Group &group : groupList) {
+                qDebug() << "Group ID:" << group.getId() << "Name:" << QString::fromStdString(group.getName()) << "Desc:" << QString::fromStdString(group.getDesc());
+            }
             emit groupListUpdated(groupList);
         }
         break;
@@ -669,7 +910,7 @@ void ChatClient::processMessage(const QJsonObject &message) {
         // 文件传输确认处理 - 处理用户对文件传输请求的响应
         // 设计思路：根据用户选择，决定是否继续文件传输
         QString fileId = message["fileid"].toString();
-        bool accept = message["accept"].toBool();
+        bool accept = message["accepted"].toBool();
         
         qDebug() << "File transfer" << (accept ? "accepted" : "rejected") << "for fileId:" << fileId;
         emit fileTransferAccepted(fileId, accept);
@@ -681,6 +922,59 @@ void ChatClient::processMessage(const QJsonObject &message) {
         qWarning() << "Unknown message type:" << msgType;
         break;
     }
+    }
+}
+
+// 处理离线消息
+// 设计思路：将离线消息存储在队列中，等待ChatWindow准备就绪后再发送
+void ChatClient::processOfflineMessage(const QJsonObject &message) {
+    qDebug() << "Processing offline message with keys:" << message.keys();
+    
+    // Store the offline message in the queue to process later
+    offlineMessages.append(message);
+    qDebug() << "Stored offline message, queue size:" << offlineMessages.size();
+}
+
+// Process stored offline messages
+// This method should be called after ChatWindow has connected its signal handlers
+void ChatClient::processStoredOfflineMessages() {
+    qDebug() << "Processing stored offline messages, count:" << offlineMessages.size();
+    
+    // Process all stored offline messages
+    while (!offlineMessages.isEmpty()) {
+        QJsonObject message = offlineMessages.takeFirst();
+        qDebug() << "Processing queued offline message with keys:" << message.keys();
+        
+        int msgType = message["msgid"].toInt();
+        
+        switch (msgType) {
+        case MsgType::ONE_CHAT_MSG:
+        {
+            // 处理离线私聊消息
+            qint64 fromId = message["from"].toVariant().toLongLong();
+            QString msgContent = message["msg"].toString();
+            QString fromName = message["name"].toString();
+            
+            qDebug() << "Processing queued offline private message from" << fromId << "(" << fromName << "):" << msgContent;
+            emit messageReceived(fromId, msgContent, fromName, false);
+            break;
+        }
+        case MsgType::GROUP_CHAT_MSG:
+        {
+            // 处理离线群聊消息
+            int groupId = message["groupid"].toInt();
+            qint64 fromId = message["from"].toVariant().toLongLong();
+            QString msgContent = message["msg"].toString();
+            QString fromName = message.contains("fromName") ? message["fromName"].toString() : message["name"].toString();
+            
+            qDebug() << "Processing queued offline group message from" << fromId << "(" << fromName << ") in group" << groupId << ":" << msgContent;
+            emit groupMessageReceived(groupId, fromId, fromName, msgContent);
+            break;
+        }
+        default:
+            qDebug() << "Unknown offline message type:" << msgType;
+            break;
+        }
     }
 }
 

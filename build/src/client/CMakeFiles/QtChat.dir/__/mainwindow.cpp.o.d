@@ -375,7 +375,8 @@ src/client/CMakeFiles/QtChat.dir/__/mainwindow.cpp.o: \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/qjsonobject.h \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/QJsonArray \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/qjsonarray.h \
- /home/xmy/code/src/models/user.h /home/xmy/code/src/models/group.h \
+ /home/xmy/code/src/public.h /home/xmy/code/src/models/user.h \
+ /home/xmy/code/src/models/group.h \
  /usr/include/x86_64-linux-gnu/qt5/QtWidgets/QGridLayout \
  /usr/include/x86_64-linux-gnu/qt5/QtWidgets/qgridlayout.h \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/QDateTime \

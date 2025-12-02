@@ -8,6 +8,7 @@
 #include <QJsonArray>
 #include <QMap>
 #include <QMutex>
+#include "public.h"
 #include "models/user.h"
 #include "models/group.h"
 
@@ -141,10 +142,12 @@ public:
     
     /**
      * @brief Respond to a file transfer request
+     * @param fromId Sender's user ID
+     * @param toId Recipient's user ID
      * @param fileId Unique identifier for the file transfer
      * @param accept Whether to accept the file transfer
      */
-    void acceptFileTransfer(const QString &fileId, bool accept);
+    void acceptFileTransfer(int fromId, int toId, const QString &fileId, bool accept);
 
     /**
      * @brief Set the current user ID
@@ -159,44 +162,11 @@ public:
     int getUserId() const { return currentUserId; }
 
 private:
-    /**
-     * @brief Message type enumeration
-     * 
-     * These message types must be kept consistent with the server-side implementation.
-     */
-    enum MsgType {
-        LOGIN_MSG = 1,
-        LOGIN_MSG_ACK = 2,
-        LOGINOUT_MSG = 3,
-        REG_MSG = 4,
-        REG_MSG_ACK = 5,
-        ONE_CHAT_MSG = 6,
-        ADD_FRIEND_MSG = 7,
-        CREATE_GROUP_MSG = 8,
-        ADD_GROUP_MSG = 9,
-        GROUP_CHAT_MSG = 10,
-        // Client-specific message types
-        ONE_CHAT_MSG_ACK = 11,
-        GROUP_CHAT_MSG_ACK = 12,
-        ADD_FRIEND_MSG_ACK = 13,
-        QUERY_FRIEND_MSG = 14,
-        QUERY_FRIEND_MSG_ACK = 15,
-        QUERY_GROUP_MSG = 16,
-        QUERY_GROUP_MSG_ACK = 17,
-        ADD_GROUP_MSG_ACK = 18,
-        CREATE_GROUP_MSG_ACK = 19,
-        // File transfer related message types
-        FILE_TRANSFER_REQ = 20,
-        FILE_TRANSFER_ACK = 21,
-        FILE_TRANSFER_DATA = 22,
-        FILE_TRANSFER_COMPLETE = 23,
-        FILE_TRANSFER_ERROR = 24
-    };
-private:
     QTcpSocket *socket;          // TCP socket for server communication
     QMutex mutex;                // Mutex to protect socket operations
     bool isConnected;            // Flag indicating connection status
     int currentUserId;           // Currently logged-in user ID
+    QList<QJsonObject> offlineMessages; // Queue to store offline messages until ChatWindow is ready
 
 public:
     /**
@@ -218,6 +188,22 @@ public:
      * This method routes messages based on their type and emits appropriate signals.
      */
     void processMessage(const QJsonObject &message);
+    
+    /**
+     * @brief Process an offline message from the server
+     * @param message JSON object containing the offline message data
+     * 
+     * This method handles offline messages received during login and emits appropriate signals.
+     */
+    void processOfflineMessage(const QJsonObject &message);
+    
+    /**
+     * @brief Process all stored offline messages
+     * 
+     * This method should be called after the ChatWindow has connected its signal handlers.
+     * It processes all offline messages stored in the queue.
+     */
+    void processStoredOfflineMessages();
 
 private slots:
     /**
@@ -252,7 +238,7 @@ private slots:
     void loginResponse(bool success, const QString &message);  // Response to login attempt
 
     // Message related signals
-    void messageReceived(int fromId, const QString &message, bool isGroup = false, int groupId = -1);
+    void messageReceived(int fromId, const QString &message, const QString &fromName = "", bool isGroup = false, int groupId = -1);
     void groupMessageReceived(int groupId, int fromId, const QString &userName, const QString &message);
 
     // Friend related signals

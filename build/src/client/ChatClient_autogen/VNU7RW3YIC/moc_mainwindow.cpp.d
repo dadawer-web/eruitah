@@ -10,6 +10,7 @@
   /home/xmy/code/src/models/offlinemessagemodel.h \
   /home/xmy/code/src/models/user.h \
   /home/xmy/code/src/models/usermodel.h \
+  /home/xmy/code/src/public.h \
   /usr/include/asm-generic/errno-base.h \
   /usr/include/asm-generic/errno.h \
   /usr/include/assert.h \

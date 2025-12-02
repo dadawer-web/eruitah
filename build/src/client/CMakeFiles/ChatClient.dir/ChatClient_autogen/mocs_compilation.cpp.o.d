@@ -284,6 +284,7 @@ src/client/CMakeFiles/ChatClient.dir/ChatClient_autogen/mocs_compilation.cpp.o: 
  /usr/include/x86_64-linux-gnu/qt5/QtCore/qmap.h \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/QMutex \
  /usr/include/x86_64-linux-gnu/qt5/QtCore/qmutex.h \
+ /home/xmy/code/build/src/client/ChatClient_autogen/VNU7RW3YIC/../../../../../src/public.h \
  /home/xmy/code/build/src/client/ChatClient_autogen/VNU7RW3YIC/../../../../../src/models/user.h \
  /home/xmy/code/build/src/client/ChatClient_autogen/VNU7RW3YIC/../../../../../src/models/group.h \
  /home/xmy/code/build/src/client/ChatClient_autogen/VNU7RW3YIC/../../../../../src/models/groupuser.h \

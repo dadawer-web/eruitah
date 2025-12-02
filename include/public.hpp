@@ -29,7 +29,9 @@ enum EnMsgType
     QUERY_GROUP_MSG_ACK,    // Query group list response message
 
     CREATE_GROUP_MSG,       // Create group request message
+    CREATE_GROUP_MSG_ACK,   // Create group response message
     ADD_GROUP_MSG,          // Join group request message
+    ADD_GROUP_MSG_ACK,      // Join group response message
     GROUP_CHAT_MSG,         // Group chat message
     
     // File transfer related message types

@@ -1,17 +1,26 @@
 #include"friendmodel.hpp"
 #include"db.h"
+#include <cstring>
 
 // 添加好友关系 - 社交关系管理
 // 业务逻辑：建立用户之间的好友关系，支持双向好友系统的数据基础
 void FriendModel::insert(int userid,int friendid){
     // SQL语句构造 - 关系数据持久化
     char sql[1024]={0};
+    
+    // 双向好友关系：A添加B为好友，B也添加A为好友
+    // 第一次插入：userid -> friendid
     sprintf(sql,"insert into friend values(%d,%d)",userid,friendid);
     
     // 数据库连接和操作 - 事务一致性保障
     MySQL mysql;
     if(mysql.connect()){
-        // 执行插入操作 - 社交关系建立
+        // 执行第一次插入操作 - 社交关系建立
+        mysql.update(sql);
+        
+        // 第二次插入：friendid -> userid
+        memset(sql, 0, sizeof(sql));
+        sprintf(sql,"insert into friend values(%d,%d)",friendid,userid);
         mysql.update(sql);
     }
 }

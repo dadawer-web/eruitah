@@ -10,6 +10,7 @@ bool GroupModel::createGroup(Group &group){
     
     // 数据库操作执行
     MySQL mysql;
+    
     if(mysql.connect()){
         // 执行插入操作 - 群组创建
         if(mysql.update(sql)){
@@ -28,6 +29,7 @@ bool GroupModel::createGroup(Group &group){
 // 业务逻辑：将用户添加到指定群组，设置用户在群组中的角色权限
 void GroupModel::addGroup(int userid,int groupid,string role){
     // SQL语句构造 - 成员关系建立
+    // Correct parameter order: groupid first, then userid (matches table schema)
     char sql[1024]={0};
     sprintf(sql,"insert into groupuser values(%d,%d,'%s')",groupid,userid,role.c_str());
     

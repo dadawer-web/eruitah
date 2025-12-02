@@ -41,6 +41,7 @@ public:
   
   // 文件传输相关业务
   void fileTransferRequest(const TcpConnectionPtr& conn,json& js,Timestamp time);
+  void fileTransferAck(const TcpConnectionPtr& conn,json& js,Timestamp time);
   void fileTransferData(const TcpConnectionPtr& conn,json& js,Timestamp time);
   void fileTransferComplete(const TcpConnectionPtr& conn,json& js,Timestamp time);
   
