@@ -17,7 +17,42 @@
 ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, QWidget *parent) : QMainWindow(parent), userId(userId), userName(userName), chatClient(client), loginHandled(false), friendListLoaded(false), offlineMessagesProcessed(false), isLoggingOut(false) {
     // 设置窗口标题
     setWindowTitle(QString("Qt Chat - %1").arg(userName));
+    setObjectName("chatWindow");
     setMinimumSize(800, 600);
+
+    // 应用样式表
+    QFile styleFile("/home/xmy/code/src/styles.qss");
+    if (styleFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QString styleSheet = styleFile.readAll();
+        setStyleSheet(styleSheet);
+        styleFile.close();
+        qDebug() << "样式表加载成功";
+    } else {
+        qDebug() << "样式表加载失败，使用默认样式";
+        // 如果样式表文件无法加载，使用不包含Qt不支持属性的内联样式
+        QString inlineStyle = ""
+            "QMainWindow[objectName='chatWindow'] { background-color: #f5f5f5; }" 
+            "QTreeWidget { background-color: white; border: none; border-right: 1px solid #eee; }" 
+            "QTreeWidget::item { height: 40px; padding: 0 10px; border-radius: 6px; margin: 2px 8px; }" 
+            "QTreeWidget::item:hover { background-color: #f0f0f0; }" 
+            "QTreeWidget::item:selected { background-color: #e3f2fd; color: #1976d2; }" 
+            "QTabWidget::pane { background-color: white; border: none; }" 
+            "QTabBar::tab { background-color: #f5f5f5; border: none; border-bottom: 2px solid transparent; padding: 10px 20px; margin-right: 2px; border-radius: 8px 8px 0 0; font-weight: 500; }" 
+            "QTabBar::tab:selected { background-color: white; border-bottom-color: #3498db; color: #3498db; }" 
+            "QTextBrowser { background-color: #fafafa; border: none; padding: 10px; border-radius: 8px; }" 
+            "QLineEdit { height: 40px; border: 1px solid #ddd; border-radius: 8px; padding: 0 12px; font-size: 14px; background-color: white; }" 
+            "QLineEdit:focus { border-color: #3498db; }" 
+            "QPushButton { height: 40px; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; padding: 0 20px; }" 
+            "QPushButton[class='primaryButton'] { background-color: #3498db; color: white; }" 
+            "QPushButton[class='primaryButton']:hover { background-color: #2980b9; }" 
+            "QPushButton[class='primaryButton']:pressed { background-color: #2471a3; }" 
+            "QPushButton[class='secondaryButton'] { background-color: #ecf0f1; color: #333; border: 1px solid #ddd; }" 
+            "QPushButton[class='secondaryButton']:hover { background-color: #d5dbdb; }" 
+            "QPushButton[class='secondaryButton']:pressed { background-color: #bdc3c7; }" 
+            "QSplitter::handle { background-color: #eee; width: 1px; }" 
+            "QFrame[class='separator'] { background-color: #eee; height: 1px; margin: 10px 0; }";
+        setStyleSheet(inlineStyle);
+    }
 
     // 使用传入的ChatClient实例或创建新实例
     if (client) {
@@ -30,8 +65,6 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     // 连接信号槽
     connect(chatClient, &ChatClient::connected, this, &ChatWindow::onConnected);
     connect(chatClient, &ChatClient::disconnected, this, &ChatWindow::onDisconnected);
-    // 移除loginResponse信号连接，因为onLoginResponse槽函数不存在，且登录响应已在LoginWindow中处理
-    //connect(chatClient, &ChatClient::loginResponse, this, &ChatWindow::onLoginResponse);
     connect(chatClient, &ChatClient::messageReceived, this, &ChatWindow::onReceiveMessage);
     connect(chatClient, &ChatClient::groupMessageReceived, this, &ChatWindow::onReceiveGroupMessage);
     connect(chatClient, &ChatClient::friendListUpdated, this, &ChatWindow::onFriendListUpdated);
@@ -71,7 +104,8 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     mainSplitter = new QSplitter(Qt::Horizontal);
     mainSplitter->addWidget(contactTreeWidget);
     mainSplitter->addWidget(chatTabWidget);
-    mainSplitter->setSizes({200, 600});
+    mainSplitter->setSizes({250, 550});
+    mainSplitter->setHandleWidth(1);
 
     // 设置状态栏
     statusBarLabel = new QLabel(QString("已登录: %1").arg(userName));
@@ -79,11 +113,16 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
 
     // 创建工具栏
     QToolBar *toolBar = addToolBar("工具栏");
-    QAction *addFriendAction = toolBar->addAction("添加好友");
-    QAction *createGroupAction = toolBar->addAction("创建群组");
-    QAction *joinGroupAction = toolBar->addAction("加入群组");
-    QAction *sendFileAction = toolBar->addAction("发送文件");
-    QAction *logoutAction = toolBar->addAction("注销");
+    toolBar->setMovable(false);
+    toolBar->setFloatable(false);
+    
+    QAction *addFriendAction = toolBar->addAction(QIcon(), "添加好友");
+    QAction *createGroupAction = toolBar->addAction(QIcon(), "创建群组");
+    QAction *joinGroupAction = toolBar->addAction(QIcon(), "加入群组");
+    toolBar->addSeparator();
+    QAction *sendFileAction = toolBar->addAction(QIcon(), "发送文件");
+    toolBar->addSeparator();
+    QAction *logoutAction = toolBar->addAction(QIcon(), "注销");
 
     connect(addFriendAction, &QAction::triggered, this, &ChatWindow::onAddFriend);
     connect(createGroupAction, &QAction::triggered, this, &ChatWindow::onCreateGroup);
@@ -99,16 +138,37 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     // 初始化添加好友对话框
     addFriendDialog = new QDialog(this);
     addFriendDialog->setWindowTitle("添加好友");
+    addFriendDialog->setFixedSize(320, 180);
+    
     QVBoxLayout *addFriendLayout = new QVBoxLayout;
+    addFriendLayout->setContentsMargins(20, 20, 20, 20);
+    addFriendLayout->setSpacing(15);
+    
+    QLabel *addFriendTitle = new QLabel("添加好友");
+    QFont font = addFriendTitle->font();
+    font.setPointSize(16);
+    font.setBold(true);
+    addFriendTitle->setFont(font);
+    addFriendTitle->setAlignment(Qt::AlignCenter);
+    
+    addFriendLayout->addWidget(addFriendTitle);
     addFriendLayout->addWidget(new QLabel("好友ID:"));
     addFriendIdEdit = new QLineEdit;
     addFriendLayout->addWidget(addFriendIdEdit);
+    
     QHBoxLayout *addFriendButtonLayout = new QHBoxLayout;
+    addFriendButtonLayout->setSpacing(10);
+    
     QPushButton *addFriendOkButton = new QPushButton("确定");
+    addFriendOkButton->setProperty("class", "primaryButton");
+    
     QPushButton *addFriendCancelButton = new QPushButton("取消");
+    addFriendCancelButton->setProperty("class", "secondaryButton");
+    
     addFriendButtonLayout->addWidget(addFriendOkButton);
     addFriendButtonLayout->addWidget(addFriendCancelButton);
     addFriendLayout->addLayout(addFriendButtonLayout);
+    
     addFriendDialog->setLayout(addFriendLayout);
     connect(addFriendOkButton, &QPushButton::clicked, this, &ChatWindow::onAddFriendConfirmed);
     connect(addFriendCancelButton, &QPushButton::clicked, addFriendDialog, &QDialog::close);
@@ -119,19 +179,37 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     // 初始化创建群组对话框
     createGroupDialog = new QDialog(this);
     createGroupDialog->setWindowTitle("创建群组");
+    createGroupDialog->setFixedSize(350, 220);
+    
     QVBoxLayout *createGroupLayout = new QVBoxLayout;
+    createGroupLayout->setContentsMargins(20, 20, 20, 20);
+    createGroupLayout->setSpacing(15);
+    
+    QLabel *createGroupTitle = new QLabel("创建群组");
+    createGroupTitle->setFont(font);
+    createGroupTitle->setAlignment(Qt::AlignCenter);
+    
+    createGroupLayout->addWidget(createGroupTitle);
     createGroupLayout->addWidget(new QLabel("群组名称:"));
     groupNameEdit = new QLineEdit;
     createGroupLayout->addWidget(groupNameEdit);
     createGroupLayout->addWidget(new QLabel("群组描述:"));
     groupDescEdit = new QLineEdit;
     createGroupLayout->addWidget(groupDescEdit);
+    
     QHBoxLayout *createGroupButtonLayout = new QHBoxLayout;
+    createGroupButtonLayout->setSpacing(10);
+    
     QPushButton *createGroupOkButton = new QPushButton("确定");
+    createGroupOkButton->setProperty("class", "primaryButton");
+    
     QPushButton *createGroupCancelButton = new QPushButton("取消");
+    createGroupCancelButton->setProperty("class", "secondaryButton");
+    
     createGroupButtonLayout->addWidget(createGroupOkButton);
     createGroupButtonLayout->addWidget(createGroupCancelButton);
     createGroupLayout->addLayout(createGroupButtonLayout);
+    
     createGroupDialog->setLayout(createGroupLayout);
     connect(createGroupOkButton, &QPushButton::clicked, this, &ChatWindow::onCreateGroupConfirmed);
     connect(createGroupCancelButton, &QPushButton::clicked, createGroupDialog, &QDialog::close);
@@ -139,13 +217,30 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     // 初始化加入群组对话框
     joinGroupDialog = new QDialog(this);
     joinGroupDialog->setWindowTitle("加入群组");
+    joinGroupDialog->setFixedSize(320, 180);
+    
     QVBoxLayout *joinGroupLayout = new QVBoxLayout;
+    joinGroupLayout->setContentsMargins(20, 20, 20, 20);
+    joinGroupLayout->setSpacing(15);
+    
+    QLabel *joinGroupTitle = new QLabel("加入群组");
+    joinGroupTitle->setFont(font);
+    joinGroupTitle->setAlignment(Qt::AlignCenter);
+    
+    joinGroupLayout->addWidget(joinGroupTitle);
     joinGroupLayout->addWidget(new QLabel("群组ID:"));
     joinGroupIdEdit = new QLineEdit;
     joinGroupLayout->addWidget(joinGroupIdEdit);
+    
     QHBoxLayout *joinGroupButtonLayout = new QHBoxLayout;
+    joinGroupButtonLayout->setSpacing(10);
+    
     QPushButton *joinGroupOkButton = new QPushButton("确定");
+    joinGroupOkButton->setProperty("class", "primaryButton");
+    
     QPushButton *joinGroupCancelButton = new QPushButton("取消");
+    joinGroupCancelButton->setProperty("class", "secondaryButton");
+    
     joinGroupButtonLayout->addWidget(joinGroupOkButton);
     joinGroupButtonLayout->addWidget(joinGroupCancelButton);
     joinGroupLayout->addLayout(joinGroupButtonLayout);
@@ -172,18 +267,19 @@ void ChatWindow::onSendMessage() {
     QWidget *currentWidget = chatTabWidget->currentWidget();
     if (!currentWidget) return;
 
-    QVBoxLayout *layout = qobject_cast<QVBoxLayout*>(currentWidget->layout());
-    if (!layout || layout->count() < 2) return;
-
-    QTextEdit *chatEdit = qobject_cast<QTextEdit*>(layout->itemAt(0)->widget());
-    QLineEdit *inputEdit = qobject_cast<QLineEdit*>(layout->itemAt(1)->layout()->itemAt(0)->widget());
+    // 从映射中获取聊天组件
+    if (!chatComponents.contains(currentWidget) || !inputLineEdits.contains(currentWidget)) return;
     
-    QString message = inputEdit->text();
+    ChatComponents components = chatComponents[currentWidget];
+    QTextEdit *chatEdit = components.chatEdit;
+    QLineEdit *inputEdit = inputLineEdits[currentWidget];
+    
+    QString message = inputEdit->text().trimmed();
     if (message.isEmpty()) return;
 
     // 获取标签页的用户数据（好友ID或群组ID）
-    int chatId = chatTabWidget->currentWidget()->property("chatId").toInt();
-    bool isGroup = chatTabWidget->currentWidget()->property("isGroup").toBool();
+    int chatId = currentWidget->property("chatId").toInt();
+    bool isGroup = currentWidget->property("isGroup").toBool();
 
     // 显示自己发送的消息
     QString timeStr = QDateTime::currentDateTime().toString("hh:mm:ss");
@@ -198,6 +294,117 @@ void ChatWindow::onSendMessage() {
     }
 }
 
+void ChatWindow::createChatWidget(int chatId, const QString &chatName, bool isGroup) {
+    // 检查是否已经打开了该聊天窗口
+    for (int i = 0; i < chatTabWidget->count(); ++i) {
+        if (chatTabWidget->widget(i)->property("chatId").toInt() == chatId &&
+            chatTabWidget->widget(i)->property("isGroup").toBool() == isGroup) {
+            // 直接删除现有窗口，重新创建
+            chatTabWidget->removeTab(i);
+            break;
+        }
+    }
+
+    // 创建新的聊天窗口
+    QWidget *chatWidget = new QWidget;
+    chatWidget->setStyleSheet("background-color: white;");
+    
+    // 使用QVBoxLayout作为主布局
+    QVBoxLayout *mainLayout = new QVBoxLayout;
+    mainLayout->setContentsMargins(0, 0, 0, 0);
+    mainLayout->setSpacing(0);
+    
+    // 聊天记录区域
+    QTextEdit *chatEdit = new QTextEdit;
+    chatEdit->setReadOnly(true);
+    chatEdit->setMinimumHeight(400);
+    chatEdit->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+    chatEdit->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    chatEdit->setStyleSheet("border: none; background-color: #fafafa; padding: 10px;");
+    mainLayout->addWidget(chatEdit);
+    
+    // 分隔线
+    QFrame *separator = new QFrame;
+    separator->setFrameShape(QFrame::HLine);
+    separator->setFrameShadow(QFrame::Sunken);
+    separator->setStyleSheet("background-color: #eee;");
+    mainLayout->addWidget(separator);
+    
+    // 输入区域
+    QWidget *inputWidget = new QWidget;
+    inputWidget->setStyleSheet("background-color: white;");
+    QVBoxLayout *inputLayout = new QVBoxLayout;
+    inputLayout->setContentsMargins(10, 10, 10, 10);
+    inputLayout->setSpacing(10);
+    
+    // 输入框
+    QLineEdit *inputEdit = new QLineEdit;
+    inputEdit->setMinimumHeight(40);
+    inputEdit->setStyleSheet("border: 1px solid #ddd; border-radius: 8px; padding: 0 12px;");
+    inputLayout->addWidget(inputEdit);
+    
+    // 按钮区域
+    QHBoxLayout *buttonLayout = new QHBoxLayout;
+    buttonLayout->setContentsMargins(0, 0, 0, 0);
+    buttonLayout->setSpacing(10);
+    buttonLayout->setAlignment(Qt::AlignRight);
+    
+    // 创建发送按钮
+    QPushButton *sendButton = new QPushButton("发送");
+    sendButton->setMinimumHeight(40);
+    sendButton->setFixedWidth(100);
+    sendButton->setStyleSheet(
+        "QPushButton { background-color: #3498db; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; }"
+        "QPushButton:hover { background-color: #2980b9; }"
+        "QPushButton:pressed { background-color: #2471a3; }"
+    );
+    
+    // 创建发送文件按钮
+    QPushButton *sendFileButton = new QPushButton("发送文件");
+    sendFileButton->setMinimumHeight(40);
+    sendFileButton->setFixedWidth(100);
+    sendFileButton->setStyleSheet(
+        "QPushButton { background-color: #ecf0f1; color: #333; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-weight: 500; }"
+        "QPushButton:hover { background-color: #d5dbdb; }"
+        "QPushButton:pressed { background-color: #bdc3c7; }"
+    );
+    
+    // 添加按钮到布局
+    buttonLayout->addWidget(sendButton);
+    buttonLayout->addWidget(sendFileButton);
+    
+    // 将按钮布局添加到输入布局
+    inputLayout->addLayout(buttonLayout);
+    
+    // 将输入布局添加到输入部件
+    inputWidget->setLayout(inputLayout);
+    
+    // 将输入部件添加到主布局
+    mainLayout->addWidget(inputWidget);
+    
+    // 将主布局设置到聊天部件
+    chatWidget->setLayout(mainLayout);
+    
+    // 设置属性
+    chatWidget->setProperty("chatId", chatId);
+    chatWidget->setProperty("isGroup", isGroup);
+    
+    // 存储聊天组件的映射关系
+    chatComponents[chatWidget] = {chatEdit, nullptr};
+    
+    // 连接信号
+    connect(sendButton, &QPushButton::clicked, this, &ChatWindow::onSendMessage);
+    connect(inputEdit, &QLineEdit::returnPressed, this, &ChatWindow::onSendMessage);
+    connect(sendFileButton, &QPushButton::clicked, this, &ChatWindow::onSendFile);
+    
+    // 存储输入框的映射关系
+    inputLineEdits[chatWidget] = inputEdit;
+    
+    // 添加到标签页
+    chatTabWidget->addTab(chatWidget, chatName);
+    chatTabWidget->setCurrentWidget(chatWidget);
+}
+
 void ChatWindow::onContactSelected() {
     QTreeWidgetItem *item = contactTreeWidget->currentItem();
     if (!item || !item->parent()) return; // 忽略根节点
@@ -206,41 +413,66 @@ void ChatWindow::onContactSelected() {
     int chatId = item->data(0, Qt::UserRole).toInt();
     QString chatName = item->text(0);
 
-    // 检查是否已经打开了该聊天窗口
+    // 首先修复所有现有窗口
     for (int i = 0; i < chatTabWidget->count(); ++i) {
-        if (chatTabWidget->widget(i)->property("chatId").toInt() == chatId &&
-            chatTabWidget->widget(i)->property("isGroup").toBool() == isGroup) {
-            chatTabWidget->setCurrentIndex(i);
-            return;
+        QWidget *existingWidget = chatTabWidget->widget(i);
+        
+        // 检查现有窗口是否有发送按钮，如果没有则修复
+        QVBoxLayout *chatLayout = qobject_cast<QVBoxLayout*>(existingWidget->layout());
+        if (chatLayout) {
+            QWidget *inputWidget = chatLayout->itemAt(2)->widget();
+            if (inputWidget) {
+                QHBoxLayout *inputLayout = qobject_cast<QHBoxLayout*>(inputWidget->layout());
+                if (inputLayout) {
+                    // 检查是否有发送按钮
+                    bool hasSendButton = false;
+                    bool hasSendFileButton = false;
+                    
+                    // 遍历输入布局中的所有控件
+                    for (int j = 0; j < inputLayout->count(); ++j) {
+                        QWidget *widget = inputLayout->itemAt(j)->widget();
+                        if (QPushButton *button = qobject_cast<QPushButton*>(widget)) {
+                            if (button->text() == "发送") {
+                                hasSendButton = true;
+                            } else if (button->text() == "发送文件") {
+                                hasSendFileButton = true;
+                            }
+                        }
+                    }
+                    
+                    // 如果缺少发送按钮，添加它
+                    if (!hasSendButton) {
+                        QPushButton *sendButton = new QPushButton("发送");
+                        sendButton->setProperty("class", "primaryButton");
+                        sendButton->setFixedWidth(80);
+                        
+                        // 在发送文件按钮之前插入发送按钮
+                        if (hasSendFileButton) {
+                            // 找到发送文件按钮的位置
+                            for (int j = 0; j < inputLayout->count(); ++j) {
+                                QWidget *widget = inputLayout->itemAt(j)->widget();
+                                if (QPushButton *button = qobject_cast<QPushButton*>(widget)) {
+                                    if (button->text() == "发送文件") {
+                                        inputLayout->insertWidget(j, sendButton);
+                                        break;
+                                    }
+                                }
+                            }
+                        } else {
+                            // 如果没有发送文件按钮，添加到末尾
+                            inputLayout->addWidget(sendButton);
+                        }
+                        
+                        // 连接信号
+                        connect(sendButton, &QPushButton::clicked, this, &ChatWindow::onSendMessage);
+                    }
+                }
+            }
         }
     }
-
-    // 创建新的聊天窗口
-    QWidget *chatWidget = new QWidget;
-    QVBoxLayout *chatLayout = new QVBoxLayout;
     
-    QTextEdit *chatEdit = new QTextEdit;
-    chatEdit->setReadOnly(true);
-    chatEdit->setMinimumHeight(400);
-    chatLayout->addWidget(chatEdit);
-    
-    QHBoxLayout *inputLayout = new QHBoxLayout;
-    QLineEdit *inputEdit = new QLineEdit;
-    inputEdit->setMinimumWidth(400);
-    QPushButton *sendButton = new QPushButton("发送");
-    connect(sendButton, &QPushButton::clicked, this, &ChatWindow::onSendMessage);
-    connect(inputEdit, &QLineEdit::returnPressed, this, &ChatWindow::onSendMessage);
-    
-    inputLayout->addWidget(inputEdit);
-    inputLayout->addWidget(sendButton);
-    chatLayout->addLayout(inputLayout);
-    
-    chatWidget->setLayout(chatLayout);
-    chatWidget->setProperty("chatId", chatId);
-    chatWidget->setProperty("isGroup", isGroup);
-    
-    chatTabWidget->addTab(chatWidget, chatName);
-    chatTabWidget->setCurrentWidget(chatWidget);
+    // 然后创建或切换到目标聊天窗口
+    createChatWidget(chatId, chatName, isGroup);
 }
 
 void ChatWindow::onAddFriend() {
@@ -300,7 +532,7 @@ void ChatWindow::onJoinGroupConfirmed() {
     joinGroupIdEdit->clear();
 }
 
-void ChatWindow::onReceiveMessage(int fromId, const QString &message, const QString &fromName, bool isGroup, int groupId) {
+void ChatWindow::onReceiveMessage(int fromId, const QString &message, const QString &fromName, bool isGroup, int groupId, const QString &timestamp) {
     QString chatName;
     int chatId;
     
@@ -337,36 +569,79 @@ void ChatWindow::onReceiveMessage(int fromId, const QString &message, const QStr
 
     // 如果聊天窗口不存在，创建一个新的
     if (!chatEdit) {
-        // 创建新的聊天窗口
-        chatWidget = new QWidget;
-        QVBoxLayout *chatLayout = new QVBoxLayout;
+        createChatWidget(chatId, chatName, isGroup);
         
-        chatEdit = new QTextEdit;
-        chatEdit->setReadOnly(true);
-        chatEdit->setMinimumHeight(400);
-        chatLayout->addWidget(chatEdit);
-        
-        QHBoxLayout *inputLayout = new QHBoxLayout;
-        QLineEdit *inputEdit = new QLineEdit;
-        inputEdit->setMinimumWidth(400);
-        QPushButton *sendButton = new QPushButton("发送");
-        connect(sendButton, &QPushButton::clicked, this, &ChatWindow::onSendMessage);
-        connect(inputEdit, &QLineEdit::returnPressed, this, &ChatWindow::onSendMessage);
-        
-        inputLayout->addWidget(inputEdit);
-        inputLayout->addWidget(sendButton);
-        chatLayout->addLayout(inputLayout);
-        
-        chatWidget->setLayout(chatLayout);
-        chatWidget->setProperty("chatId", chatId);
-        chatWidget->setProperty("isGroup", isGroup);
-        
-        chatTabWidget->addTab(chatWidget, chatName);
+        // 查找刚创建的聊天窗口
+        for (int i = 0; i < chatTabWidget->count(); ++i) {
+            if (chatTabWidget->widget(i)->property("chatId").toInt() == chatId &&
+                chatTabWidget->widget(i)->property("isGroup").toBool() == isGroup) {
+                chatWidget = chatTabWidget->widget(i);
+                chatEdit = qobject_cast<QTextEdit*>(chatWidget->layout()->itemAt(0)->widget());
+                break;
+            }
+        }
     }
 
     // 显示接收到的消息
     if (chatEdit) {
-        QString timeStr = QDateTime::currentDateTime().toString("hh:mm:ss");
+        QString timeStr;
+        // 如果有时间戳，使用它，否则使用当前时间
+        qDebug() << "[DEBUG] Received timestamp:" << timestamp << "isEmpty:" << timestamp.isEmpty();
+        if (!timestamp.isEmpty()) {
+            // 将服务器返回的UTC时间转换为本地时间显示
+            qDebug() << "[DEBUG] Original timestamp:" << timestamp;
+            
+            // 解析服务器返回的UTC时间（格式: YYYYMMDD HH:MM:SS.mmmmmm）
+            // 先尝试使用完整格式解析
+            QString timeOnly = timestamp;
+            QString dateOnly = timestamp;
+            int spacePos = timestamp.indexOf(' ');
+            if (spacePos != -1) {
+                dateOnly = timestamp.left(spacePos);
+                timeOnly = timestamp.mid(spacePos + 1);
+            }
+            
+            // 去掉毫秒部分
+            int dotPos = timeOnly.indexOf('.');
+            if (dotPos != -1) {
+                timeOnly = timeOnly.left(dotPos);
+            }
+            
+            // 拼接成新的时间字符串（YYYYMMDD HH:MM:SS）
+            QString datetimeStr = dateOnly + " " + timeOnly;
+            
+            // 使用简化格式解析
+            QDateTime utcDateTime = QDateTime::fromString(datetimeStr, "yyyyMMdd HH:mm:ss");
+            
+            qDebug() << "[DEBUG] Original timestamp:" << timestamp;
+            qDebug() << "[DEBUG] Date only:" << dateOnly;
+            qDebug() << "[DEBUG] Time only:" << timeOnly;
+            qDebug() << "[DEBUG] DateTime string:" << datetimeStr;
+            qDebug() << "[DEBUG] Parsed datetime:" << utcDateTime << "isValid:" << utcDateTime.isValid();
+            
+            if (utcDateTime.isValid()) {
+                // 设置为UTC时区
+                utcDateTime.setTimeSpec(Qt::UTC);
+                
+                // 转换为本地时间
+                QDateTime localDateTime = utcDateTime.toLocalTime();
+                
+                // 提取时间部分（HH:MM:SS）
+                timeStr = localDateTime.toString("hh:mm:ss");
+                
+                qDebug() << "[DEBUG] UTC time:" << utcDateTime;
+                qDebug() << "[DEBUG] Local time:" << localDateTime;
+                qDebug() << "[DEBUG] Using local timestamp:" << timeStr;
+            } else {
+                // 如果解析失败，直接使用提取的时间部分
+                timeStr = timeOnly;
+                qDebug() << "[DEBUG] Failed to parse timestamp, using extracted time:" << timeStr;
+            }
+        } else {
+            timeStr = QDateTime::currentDateTime().toString("hh:mm:ss");
+            qDebug() << "[DEBUG] No timestamp, using current time:" << timeStr;
+        }
+        
         chatEdit->append(chatName + " [" + timeStr + "]: " + message);
         // 确保聊天窗口可见
         for (int i = 0; i < chatTabWidget->count(); ++i) {
@@ -378,7 +653,7 @@ void ChatWindow::onReceiveMessage(int fromId, const QString &message, const QStr
     }
 }
 
-void ChatWindow::onReceiveGroupMessage(int groupId, int fromId, const QString &userName, const QString &message) {
+void ChatWindow::onReceiveGroupMessage(int groupId, int fromId, const QString &userName, const QString &message, const QString &timestamp) {
     QString groupName;
     if (groupMap.contains(groupId)) {
         groupName = QString::fromStdString(groupMap[groupId].getName());
@@ -402,36 +677,79 @@ void ChatWindow::onReceiveGroupMessage(int groupId, int fromId, const QString &u
 
     // 如果聊天窗口不存在，创建一个新的
     if (!chatEdit) {
-        // 创建新的群聊窗口
-        chatWidget = new QWidget;
-        QVBoxLayout *chatLayout = new QVBoxLayout;
+        createChatWidget(groupId, groupName, true);
         
-        chatEdit = new QTextEdit;
-        chatEdit->setReadOnly(true);
-        chatEdit->setMinimumHeight(400);
-        chatLayout->addWidget(chatEdit);
-        
-        QHBoxLayout *inputLayout = new QHBoxLayout;
-        QLineEdit *inputEdit = new QLineEdit;
-        inputEdit->setMinimumWidth(400);
-        QPushButton *sendButton = new QPushButton("发送");
-        connect(sendButton, &QPushButton::clicked, this, &ChatWindow::onSendMessage);
-        connect(inputEdit, &QLineEdit::returnPressed, this, &ChatWindow::onSendMessage);
-        
-        inputLayout->addWidget(inputEdit);
-        inputLayout->addWidget(sendButton);
-        chatLayout->addLayout(inputLayout);
-        
-        chatWidget->setLayout(chatLayout);
-        chatWidget->setProperty("chatId", groupId);
-        chatWidget->setProperty("isGroup", true);
-        
-        chatTabWidget->addTab(chatWidget, groupName);
+        // 查找刚创建的聊天窗口
+        for (int i = 0; i < chatTabWidget->count(); ++i) {
+            if (chatTabWidget->widget(i)->property("chatId").toInt() == groupId &&
+                chatTabWidget->widget(i)->property("isGroup").toBool() == true) {
+                chatWidget = chatTabWidget->widget(i);
+                chatEdit = qobject_cast<QTextEdit*>(chatWidget->layout()->itemAt(0)->widget());
+                break;
+            }
+        }
     }
 
     // 显示群消息
     if (chatEdit) {
-        QString timeStr = QDateTime::currentDateTime().toString("hh:mm:ss");
+        QString timeStr;
+        // 如果有时间戳，使用它，否则使用当前时间
+        qDebug() << "[DEBUG] Group message received timestamp:" << timestamp << "isEmpty:" << timestamp.isEmpty();
+        if (!timestamp.isEmpty()) {
+            // 将服务器返回的UTC时间转换为本地时间显示
+            qDebug() << "[DEBUG] Group message original timestamp:" << timestamp;
+            
+            // 解析服务器返回的UTC时间（格式: YYYYMMDD HH:MM:SS.mmmmmm）
+            // 先尝试使用完整格式解析
+            QString timeOnly = timestamp;
+            QString dateOnly = timestamp;
+            int spacePos = timestamp.indexOf(' ');
+            if (spacePos != -1) {
+                dateOnly = timestamp.left(spacePos);
+                timeOnly = timestamp.mid(spacePos + 1);
+            }
+            
+            // 去掉毫秒部分
+            int dotPos = timeOnly.indexOf('.');
+            if (dotPos != -1) {
+                timeOnly = timeOnly.left(dotPos);
+            }
+            
+            // 拼接成新的时间字符串（YYYYMMDD HH:MM:SS）
+            QString datetimeStr = dateOnly + " " + timeOnly;
+            
+            // 使用简化格式解析
+            QDateTime utcDateTime = QDateTime::fromString(datetimeStr, "yyyyMMdd HH:mm:ss");
+            
+            qDebug() << "[DEBUG] Group message original timestamp:" << timestamp;
+            qDebug() << "[DEBUG] Group message date only:" << dateOnly;
+            qDebug() << "[DEBUG] Group message time only:" << timeOnly;
+            qDebug() << "[DEBUG] Group message datetime string:" << datetimeStr;
+            qDebug() << "[DEBUG] Group message parsed datetime:" << utcDateTime << "isValid:" << utcDateTime.isValid();
+            
+            if (utcDateTime.isValid()) {
+                // 设置为UTC时区
+                utcDateTime.setTimeSpec(Qt::UTC);
+                
+                // 转换为本地时间
+                QDateTime localDateTime = utcDateTime.toLocalTime();
+                
+                // 提取时间部分（HH:MM:SS）
+                timeStr = localDateTime.toString("hh:mm:ss");
+                
+                qDebug() << "[DEBUG] Group message UTC time:" << utcDateTime;
+                qDebug() << "[DEBUG] Group message local time:" << localDateTime;
+                qDebug() << "[DEBUG] Group message using local timestamp:" << timeStr;
+            } else {
+                // 如果解析失败，直接使用提取的时间部分
+                timeStr = timeOnly;
+                qDebug() << "[DEBUG] Group message failed to parse timestamp, using extracted time:" << timeStr;
+            }
+        } else {
+            timeStr = QDateTime::currentDateTime().toString("hh:mm:ss");
+            qDebug() << "[DEBUG] Group message no timestamp, using current time:" << timeStr;
+        }
+        
         chatEdit->append("[" + groupName + "] " + userName + " [" + timeStr + "]: " + message);
         // 确保聊天窗口可见
         for (int i = 0; i < chatTabWidget->count(); ++i) {

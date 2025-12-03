@@ -238,8 +238,8 @@ private slots:
     void loginResponse(bool success, const QString &message);  // Response to login attempt
 
     // Message related signals
-    void messageReceived(int fromId, const QString &message, const QString &fromName = "", bool isGroup = false, int groupId = -1);
-    void groupMessageReceived(int groupId, int fromId, const QString &userName, const QString &message);
+    void messageReceived(int fromId, const QString &message, const QString &fromName = "", bool isGroup = false, int groupId = -1, const QString &timestamp = "");
+    void groupMessageReceived(int groupId, int fromId, const QString &userName, const QString &message, const QString &timestamp = "");
 
     // Friend related signals
     void friendListUpdated(const QList<User> &friends);        // New friend list available

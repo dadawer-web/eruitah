@@ -346,6 +346,8 @@ MsgHandler ChatService::getHandler(int msgid){
        js["name"] = sender.getName();
        
        LOG_INFO << "Sending message from user " << fromId << " (" << sender.getName() << ") to " << toid;
+       // Add timestamp to the message in ISO format
+        js["timestamp"] = time.toFormattedString(true);
         {
         lock_guard<mutex> lock(_connMutex);
         auto it=_userConnMap.find(toid);
@@ -371,7 +373,9 @@ MsgHandler ChatService::getHandler(int msgid){
        }
 
       //toid用户不在线，存储离线消息
-        _offlineMsgModel.insert(toid,js.dump());
+        string offlineMsg = js.dump();
+        LOG_INFO << "Storing offline message: " << offlineMsg;
+        _offlineMsgModel.insert(toid, offlineMsg);
         LOG_INFO << "User " << toid << " is offline, message stored";
 }
   //添加好友业务 msgid id friendid 此业务加好友不需要对方去同意，后面可以去扩展！！id和friendid是联合主键，不会重复添加
@@ -578,10 +582,13 @@ MsgHandler ChatService::getHandler(int msgid){
          js["from"] = userid;
          
          // Get sender name and add to JSON
-         User sender = _userModel.query(userid);
-         js["fromName"] = sender.getName();
-         
-         //查询群组用户id列表，除userid自己之外，主要用于群聊业务给群组其他成员群发消息,在线直接接收到信息，离线存储离线消息
+        User sender = _userModel.query(userid);
+        js["fromName"] = sender.getName();
+        
+        // Add timestamp to the message in ISO format
+        js["timestamp"] = time.toFormattedString(true);
+        
+        //查询群组用户id列表，除userid自己之外，主要用于群聊业务给群组其他成员群发消息,在线直接接收到信息，离线存储离线消息
          vector<int> useridVec=_groupModel.queryGroupUsers(userid,groupid);
 
          lock_guard<mutex> lock(_connMutex);
@@ -599,7 +606,9 @@ MsgHandler ChatService::getHandler(int msgid){
                 }
                 else{
                     //存储离线消息
-                 _offlineMsgModel.insert(id,js.dump());
+                    string offlineMsg = js.dump();
+                    LOG_INFO << "Storing group offline message: " << offlineMsg;
+                    _offlineMsgModel.insert(id, offlineMsg);
                  } 
              }
          }

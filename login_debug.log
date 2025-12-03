@@ -560,3 +560,204 @@
 [2025-12-02 23:49:47.662] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
 [2025-12-02 23:49:47.662] main.cpp: ChatWindowå¤§å°: (800, 600)
 [2025-12-02 23:49:47.662] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-03 00:18:47.771] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 00:18:53.468] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-03 00:18:53.468] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:22 userName:用户22
+[2025-12-03 00:18:53.551] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-03 00:18:53.551] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-03 00:18:53.551] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-03 00:23:38.430] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 00:23:48.081] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-03 00:23:48.081] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:22 userName:用户22
+[2025-12-03 00:23:48.231] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-03 00:23:48.231] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-03 00:23:48.231] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-03 00:34:46.666] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 00:35:00.438] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-03 00:35:00.438] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:22 userName:用户22
+[2025-12-03 00:35:00.564] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-03 00:35:00.564] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-03 00:35:00.564] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-03 00:39:56.777] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 00:40:01.742] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-03 00:40:01.743] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:22 userName:用户22
+[2025-12-03 00:40:01.887] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-03 00:40:01.887] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-03 00:40:01.887] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-03 00:49:29.620] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 00:50:34.106] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-03 00:50:34.107] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:22 userName:用户22
+[2025-12-03 00:50:34.214] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-03 00:50:34.214] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-03 00:50:34.214] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-03 01:02:01.809] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 01:02:09.730] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-03 01:02:09.731] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:22 userName:用户22
+[2025-12-03 01:02:09.860] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-03 01:02:09.860] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-03 01:02:09.860] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-03 01:05:20.598] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 01:05:26.642] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-03 01:05:26.642] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:22 userName:用户22
+[2025-12-03 01:05:26.765] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-03 01:05:26.765] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-03 01:05:26.765] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-03 01:08:20.661] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 01:08:25.750] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-03 01:08:25.750] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:22 userName:用户22
+[2025-12-03 01:08:25.872] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-03 01:08:25.872] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-03 01:08:25.872] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-03 01:10:40.587] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 01:10:45.074] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-03 01:10:45.074] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:22 userName:用户22
+[2025-12-03 01:10:45.169] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-03 01:10:45.170] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-03 01:10:45.171] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-03 01:15:13.927] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 01:15:19.724] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-03 01:15:19.725] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:22 userName:用户22
+[2025-12-03 01:15:19.827] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-03 01:15:19.827] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-03 01:15:19.828] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-03 01:17:14.531] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 01:17:19.509] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-03 01:17:19.509] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:22 userName:用户22
+[2025-12-03 01:17:19.626] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-03 01:17:19.626] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-03 01:17:19.626] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-03 01:19:27.981] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 01:19:32.644] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-03 01:19:32.644] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:22 userName:用户22
+[2025-12-03 01:19:32.766] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-03 01:19:32.766] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-03 01:19:32.766] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-03 01:21:19.287] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 01:21:23.894] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-03 01:21:23.894] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:22 userName:用户22
+[2025-12-03 01:21:23.998] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-03 01:21:23.998] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-03 01:21:23.999] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-03 01:21:45.664] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        [2025-12-03 12:42:38.508] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 12:42:43.594] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-03 12:42:43.594] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:22 userName:用户22
+[2025-12-03 12:42:43.665] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-03 12:42:43.665] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-03 12:42:43.665] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-03 12:42:51.919] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 12:42:56.903] LoginWindow: emitting loginSuccess signal with userId:31 userName:用户31
+[2025-12-03 12:42:56.903] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:31 userName:用户31
+[2025-12-03 12:42:56.962] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-03 12:42:56.963] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-03 12:42:56.963] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-03 12:45:16.735] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 12:49:10.470] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 12:49:24.401] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-03 12:49:24.401] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:26 userName:用户26
+[2025-12-03 12:49:24.464] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-03 12:49:24.464] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-03 12:49:24.464] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-03 12:52:18.559] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 12:56:56.691] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 12:57:04.584] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-03 12:57:04.584] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:22 userName:用户22
+[2025-12-03 12:57:04.643] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-03 12:57:04.643] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-03 12:57:04.643] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-03 12:57:52.427] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 12:57:57.361] LoginWindow: emitting loginSuccess signal with userId:31 userName:用户31
+[2025-12-03 12:57:57.361] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:31 userName:用户31
+[2025-12-03 12:57:57.423] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-03 12:57:57.423] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-03 12:57:57.423] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-03 13:11:18.802] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 13:11:22.390] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-03 13:11:22.390] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:22 userName:用户22
+[2025-12-03 13:11:22.450] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-03 13:11:22.450] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-03 13:11:22.450] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-03 13:13:37.310] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 13:13:43.026] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-03 13:13:43.026] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:26 userName:用户26
+[2025-12-03 13:13:43.090] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-03 13:13:43.090] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-03 13:13:43.090] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-03 13:38:14.004] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 13:38:19.028] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-03 13:38:19.028] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:22 userName:用户22
+[2025-12-03 13:38:19.087] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-03 13:38:19.087] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-03 13:38:19.087] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-03 13:38:49.042] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 13:38:55.353] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-03 13:38:55.353] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:26 userName:用户26
+[2025-12-03 13:38:55.417] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-03 13:38:55.418] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-03 13:38:55.418] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-03 13:44:10.695] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 13:44:14.825] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-03 13:44:14.825] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:22 userName:用户22
+[2025-12-03 13:44:14.888] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-03 13:44:14.888] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-03 13:44:14.888] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-03 13:44:46.432] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 13:44:54.414] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-03 13:44:54.414] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:26 userName:用户26
+[2025-12-03 13:44:54.476] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-03 13:44:54.476] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-03 13:44:54.476] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-03 16:18:04.393] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 16:18:08.381] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-03 16:18:08.381] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:22 userName:用户22
+[2025-12-03 16:18:08.440] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-03 16:18:08.440] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-03 16:18:08.440] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-03 16:18:57.651] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 16:19:06.920] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-03 16:19:06.920] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:26 userName:用户26
+[2025-12-03 16:19:06.982] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-03 16:19:06.982] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-03 16:19:06.982] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-03 16:27:43.384] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 16:27:47.633] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-03 16:27:47.633] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:22 userName:用户22
+[2025-12-03 16:27:47.693] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-03 16:27:47.693] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-03 16:27:47.693] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-03 16:29:04.730] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 16:31:06.378] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-03 16:31:06.378] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:26 userName:用户26
+[2025-12-03 16:31:06.443] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-03 16:31:06.443] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-03 16:31:06.443] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-03 16:39:28.933] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 16:39:33.167] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-03 16:39:33.167] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:22 userName:用户22
+[2025-12-03 16:39:33.226] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-03 16:39:33.226] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-03 16:39:33.226] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-03 16:40:04.122] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 16:40:10.199] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-03 16:40:10.199] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:26 userName:用户26
+[2025-12-03 16:40:10.260] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-03 16:40:10.260] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-03 16:40:10.260] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-03 16:45:11.978] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 16:45:15.674] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-03 16:45:15.674] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:22 userName:用户22
+[2025-12-03 16:45:15.733] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-03 16:45:15.733] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-03 16:45:15.733] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-03 16:45:53.434] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 16:46:02.027] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-03 16:46:02.027] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:26 userName:用户26
+[2025-12-03 16:46:02.089] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-03 16:46:02.089] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-03 16:46:02.089] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-03 16:47:51.541] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-03 16:47:56.460] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-03 16:47:56.460] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:26 userName:用户26
+[2025-12-03 16:47:56.523] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-03 16:47:56.523] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-03 16:47:56.523] main.cpp: ChatWindowä½ç½®: (100, 100)

@@ -79,6 +79,18 @@ private:
     QDialog *joinGroupDialog;
     QLineEdit *joinGroupIdEdit;
     
+    // 聊天组件结构体
+    typedef struct {
+        QTextEdit *chatEdit;    // 聊天记录显示区域
+        QTextEdit *inputEdit;   // 消息输入区域
+    } ChatComponents;
+
+    // 聊天组件映射
+    QMap<QWidget*, ChatComponents> chatComponents;
+    
+    // 输入框映射
+    QMap<QWidget*, QLineEdit*> inputLineEdits;
+
     // 文件传输相关成员变量
     QMap<QString, QFile*> receivingFiles;    // 接收中的文件映射 (fileId -> QFile*)
     QMap<QString, qint64> receivedFilesSize; // 已接收的文件大小映射 (fileId -> size)
@@ -92,6 +104,9 @@ private:
     // 查找联系人方法
     QString getUserNameById(int userId);
     QString getGroupNameById(int groupId);
+    
+    // 创建聊天窗口的辅助方法
+    void createChatWidget(int chatId, const QString &chatName, bool isGroup);
 
 public slots:
     // 连接相关槽函数
@@ -103,8 +118,8 @@ public slots:
     
     // 消息相关槽函数
     void onSendMessage();
-    void onReceiveMessage(int fromId, const QString &message, const QString &fromName = "", bool isGroup = false, int groupId = -1);
-    void onReceiveGroupMessage(int groupId, int fromId, const QString &userName, const QString &message);
+    void onReceiveMessage(int fromId, const QString &message, const QString &fromName = "", bool isGroup = false, int groupId = -1, const QString &timestamp = "");
+    void onReceiveGroupMessage(int groupId, int fromId, const QString &userName, const QString &message, const QString &timestamp = "");
     
     // 列表更新槽函数
     void onFriendListUpdated(const QList<User> &friends);

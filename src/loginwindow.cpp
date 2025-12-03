@@ -5,88 +5,255 @@
 LoginWindow::LoginWindow(QWidget *parent) : QMainWindow(parent) {
     // 设置窗口标题和大小
     setWindowTitle("Qt Chat - 登录");
-    setFixedSize(400, 300);
+    setFixedSize(420, 380);
+    setObjectName("loginWindow");
+    
 
-    // 登录窗口初始化
+
+    // 应用样式表
+    QFile styleFile("/home/xmy/code/src/styles.qss");
+    if (styleFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QString styleSheet = styleFile.readAll();
+        setStyleSheet(styleSheet);
+        styleFile.close();
+        qDebug() << "样式表加载成功";
+    } else {
+        qDebug() << "样式表加载失败，使用默认样式";
+        // 如果样式表文件无法加载，使用不包含Qt不支持属性的内联样式
+        QString inlineStyle = ""
+            "QWidget { font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; font-size: 14px; color: #333; background-color: #f5f5f5; }" 
+            "QLabel[class='titleLabel'] { font-size: 24px; font-weight: 600; color: #2c3e50; margin-bottom: 20px; }" 
+            "QWidget[class='card'] { background-color: white; border-radius: 12px; padding: 30px; }" 
+            "QLineEdit { height: 40px; border: 1px solid #ddd; border-radius: 8px; padding: 0 12px; font-size: 14px; background-color: white; }" 
+            "QLineEdit:focus { border-color: #3498db; }" 
+            "QPushButton { height: 40px; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; padding: 0 20px; }" 
+            "QPushButton[class='primaryButton'] { background-color: #3498db; color: white; }" 
+            "QPushButton[class='primaryButton']:hover { background-color: #2980b9; }" 
+            "QPushButton[class='primaryButton']:pressed { background-color: #2471a3; }" 
+            "QPushButton[class='secondaryButton'] { background-color: #ecf0f1; color: #333; border: 1px solid #ddd; }" 
+            "QPushButton[class='secondaryButton']:hover { background-color: #d5dbdb; }" 
+            "QPushButton[class='secondaryButton']:pressed { background-color: #bdc3c7; }";
+        setStyleSheet(inlineStyle);
+    }
 
     // 创建聊天客户端实例
     chatClient = new ChatClient(this);
     connect(chatClient, &ChatClient::loginResponse, this, &LoginWindow::handleLoginResponse);
     connect(chatClient, &ChatClient::registerResponse, this, &LoginWindow::handleRegisterResponse);
 
+    // 创建主容器
+    QWidget *mainWidget = new QWidget;
+    QVBoxLayout *mainLayout = new QVBoxLayout;
+    mainLayout->setAlignment(Qt::AlignCenter);
+    mainLayout->setContentsMargins(20, 20, 20, 20);
+    mainWidget->setLayout(mainLayout);
+    setCentralWidget(mainWidget);
+
     // 初始化登录界面
     loginWidget = new QWidget;
+    loginWidget->setStyleSheet(
+        "background-color: white; "
+        "border-radius: 16px; "
+        "padding: 40px 30px;"
+    );
+    
     loginTitleLabel = new QLabel("用户登录");
-    QFont font = loginTitleLabel->font();
-    font.setPointSize(18);
-    font.setBold(true);
-    loginTitleLabel->setFont(font);
+    QFont titleFont = loginTitleLabel->font();
+    titleFont.setPointSize(24);
+    titleFont.setBold(true);
+    loginTitleLabel->setFont(titleFont);
+    loginTitleLabel->setStyleSheet(
+        "color: #2c3e50; "
+        "margin-bottom: 25px; "
+        "text-align: center;"
+    );
     loginTitleLabel->setAlignment(Qt::AlignCenter);
 
-    idLabel = new QLabel("用户ID:");
+    // 用户ID输入框
+    idLabel = new QLabel("用户ID");
+    idLabel->setStyleSheet(
+        "color: #666; "
+        "font-weight: 500; "
+        "margin-bottom: 8px;"
+    );
+    
     idLineEdit = new QLineEdit;
-    passwordLabel = new QLabel("密码:");
+    idLineEdit->setStyleSheet(
+        "height: 44px; "
+        "border: 1px solid #e0e0e0; "
+        "border-radius: 8px; "
+        "padding: 0 15px; "
+        "font-size: 14px; "
+        "background-color: #fafafa;"
+    );
+    
+    // 密码输入框
+    passwordLabel = new QLabel("密码");
+    passwordLabel->setStyleSheet(
+        "color: #666; "
+        "font-weight: 500; "
+        "margin-top: 18px; "
+        "margin-bottom: 8px;"
+    );
+    
     passwordLineEdit = new QLineEdit;
     passwordLineEdit->setEchoMode(QLineEdit::Password);
+    passwordLineEdit->setStyleSheet(
+        "height: 44px; "
+        "border: 1px solid #e0e0e0; "
+        "border-radius: 8px; "
+        "padding: 0 15px; "
+        "font-size: 14px; "
+        "background-color: #fafafa;"
+    );
 
+    // 按钮
     loginButton = new QPushButton("登录");
+    loginButton->setStyleSheet(
+        "height: 44px; "
+        "background-color: #3498db; "
+        "color: white; "
+        "border: none; "
+        "border-radius: 8px; "
+        "font-size: 16px; "
+        "font-weight: 500;"
+    );
+    
     registerButton = new QPushButton("注册");
+    registerButton->setStyleSheet(
+        "height: 44px; "
+        "background-color: white; "
+        "color: #3498db; "
+        "border: 1px solid #3498db; "
+        "border-radius: 8px; "
+        "font-size: 16px; "
+        "font-weight: 500;"
+    );
 
+    // 布局
     QVBoxLayout *loginLayout = new QVBoxLayout;
+    loginLayout->setContentsMargins(0, 0, 0, 0);
+    loginLayout->setSpacing(0);
+    
     loginLayout->addWidget(loginTitleLabel);
-    loginLayout->addSpacing(20);
-
-    QHBoxLayout *idLayout = new QHBoxLayout;
-    idLayout->addWidget(idLabel);
-    idLayout->addWidget(idLineEdit);
-    loginLayout->addLayout(idLayout);
-
-    QHBoxLayout *passwordLayout = new QHBoxLayout;
-    passwordLayout->addWidget(passwordLabel);
-    passwordLayout->addWidget(passwordLineEdit);
-    loginLayout->addLayout(passwordLayout);
-    loginLayout->addSpacing(20);
-
+    
+    // 用户ID部分
+    loginLayout->addWidget(idLabel);
+    loginLayout->addWidget(idLineEdit);
+    
+    // 密码部分
+    loginLayout->addWidget(passwordLabel);
+    loginLayout->addWidget(passwordLineEdit);
+    
+    // 按钮部分
+    loginLayout->addSpacing(25);
+    
     QHBoxLayout *buttonLayout = new QHBoxLayout;
-    buttonLayout->addWidget(loginButton);
-    buttonLayout->addWidget(registerButton);
+    buttonLayout->setSpacing(12);
+    buttonLayout->addWidget(loginButton, 1);
+    buttonLayout->addWidget(registerButton, 1);
     loginLayout->addLayout(buttonLayout);
 
     loginWidget->setLayout(loginLayout);
 
     // 初始化注册界面
     registerWidget = new QWidget;
+    registerWidget->setStyleSheet(
+        "background-color: white; "
+        "border-radius: 16px; "
+        "padding: 40px 30px;"
+    );
+    
     registerTitleLabel = new QLabel("用户注册");
-    registerTitleLabel->setFont(font);
+    registerTitleLabel->setFont(titleFont);
+    registerTitleLabel->setStyleSheet(
+        "color: #2c3e50; "
+        "margin-bottom: 25px; "
+        "text-align: center;"
+    );
     registerTitleLabel->setAlignment(Qt::AlignCenter);
 
-    registerNameLabel = new QLabel("用户名:");
+    // 用户名输入框
+    registerNameLabel = new QLabel("用户名");
+    registerNameLabel->setStyleSheet(
+        "color: #666; "
+        "font-weight: 500; "
+        "margin-bottom: 8px;"
+    );
     registerNameLineEdit = new QLineEdit;
-    registerPasswordLabel = new QLabel("密码:");
+    registerNameLineEdit->setStyleSheet(
+        "height: 44px; "
+        "border: 1px solid #e0e0e0; "
+        "border-radius: 8px; "
+        "padding: 0 15px; "
+        "font-size: 14px; "
+        "background-color: #fafafa;"
+    );
+    
+    // 密码输入框
+    registerPasswordLabel = new QLabel("密码");
+    registerPasswordLabel->setStyleSheet(
+        "color: #666; "
+        "font-weight: 500; "
+        "margin-top: 18px; "
+        "margin-bottom: 8px;"
+    );
     registerPasswordLineEdit = new QLineEdit;
     registerPasswordLineEdit->setEchoMode(QLineEdit::Password);
+    registerPasswordLineEdit->setStyleSheet(
+        "height: 44px; "
+        "border: 1px solid #e0e0e0; "
+        "border-radius: 8px; "
+        "padding: 0 15px; "
+        "font-size: 14px; "
+        "background-color: #fafafa;"
+    );
 
+    // 按钮
     registerSubmitButton = new QPushButton("注册");
+    registerSubmitButton->setStyleSheet(
+        "height: 44px; "
+        "background-color: #3498db; "
+        "color: white; "
+        "border: none; "
+        "border-radius: 8px; "
+        "font-size: 16px; "
+        "font-weight: 500;"
+    );
+    
     backToLoginButton = new QPushButton("返回登录");
+    backToLoginButton->setStyleSheet(
+        "height: 44px; "
+        "background-color: white; "
+        "color: #3498db; "
+        "border: 1px solid #3498db; "
+        "border-radius: 8px; "
+        "font-size: 16px; "
+        "font-weight: 500;"
+    );
 
+    // 布局
     QVBoxLayout *registerLayout = new QVBoxLayout;
+    registerLayout->setContentsMargins(0, 0, 0, 0);
+    registerLayout->setSpacing(0);
+    
     registerLayout->addWidget(registerTitleLabel);
-    registerLayout->addSpacing(20);
-
-    QHBoxLayout *nameLayout = new QHBoxLayout;
-    nameLayout->addWidget(registerNameLabel);
-    nameLayout->addWidget(registerNameLineEdit);
-    registerLayout->addLayout(nameLayout);
-
-    QHBoxLayout *regPasswordLayout = new QHBoxLayout;
-    regPasswordLayout->addWidget(registerPasswordLabel);
-    regPasswordLayout->addWidget(registerPasswordLineEdit);
-    registerLayout->addLayout(regPasswordLayout);
-    registerLayout->addSpacing(20);
-
+    
+    // 用户名部分
+    registerLayout->addWidget(registerNameLabel);
+    registerLayout->addWidget(registerNameLineEdit);
+    
+    // 密码部分
+    registerLayout->addWidget(registerPasswordLabel);
+    registerLayout->addWidget(registerPasswordLineEdit);
+    
+    // 按钮部分
+    registerLayout->addSpacing(25);
+    
     QHBoxLayout *regButtonLayout = new QHBoxLayout;
-    regButtonLayout->addWidget(registerSubmitButton);
-    regButtonLayout->addWidget(backToLoginButton);
+    regButtonLayout->setSpacing(12);
+    regButtonLayout->addWidget(registerSubmitButton, 1);
+    regButtonLayout->addWidget(backToLoginButton, 1);
     registerLayout->addLayout(regButtonLayout);
 
     registerWidget->setLayout(registerLayout);
@@ -95,8 +262,9 @@ LoginWindow::LoginWindow(QWidget *parent) : QMainWindow(parent) {
     stackedWidget = new QStackedWidget;
     stackedWidget->addWidget(loginWidget);
     stackedWidget->addWidget(registerWidget);
-
-    setCentralWidget(stackedWidget);
+    
+    mainLayout->addWidget(stackedWidget);
+    mainLayout->setAlignment(stackedWidget, Qt::AlignCenter);
 
     // 连接信号和槽
     connect(loginButton, &QPushButton::clicked, this, &LoginWindow::handleLogin);

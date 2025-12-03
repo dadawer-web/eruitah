@@ -430,17 +430,24 @@ void ChatClient::processMessage(const QJsonObject &message) {
             if (message.contains("offlinemsg")) {
                 if (message["offlinemsg"].isArray()) {
                     QJsonArray offlineMsgsArray = message["offlinemsg"].toArray();
+                    qDebug() << "[DEBUG] Found offline messages array, size:" << offlineMsgsArray.size();
                     for (const QJsonValue &value : offlineMsgsArray) {
                         if (value.isObject()) {
                             QJsonObject offlineMsgObj = value.toObject();
+                            qDebug() << "[DEBUG] Processing offline message object:" << offlineMsgObj;
                             processOfflineMessage(offlineMsgObj);
                         } else if (value.isString()) {
                             // 处理字符串形式的离线消息
                             QString offlineMsgStr = value.toString();
-                            QJsonDocument doc = QJsonDocument::fromJson(offlineMsgStr.toUtf8());
-                            if (doc.isObject()) {
+                            qDebug() << "[DEBUG] Processing offline message string:" << offlineMsgStr;
+                            QJsonParseError error;
+                            QJsonDocument doc = QJsonDocument::fromJson(offlineMsgStr.toUtf8(), &error);
+                            if (error.error == QJsonParseError::NoError && doc.isObject()) {
                                 QJsonObject offlineMsgObj = doc.object();
+                                qDebug() << "[DEBUG] Parsed offline message object:" << offlineMsgObj;
                                 processOfflineMessage(offlineMsgObj);
+                            } else {
+                                qDebug() << "[DEBUG] Failed to parse offline message string:" << error.errorString();
                             }
                         }
                     }
@@ -490,11 +497,12 @@ void ChatClient::processMessage(const QJsonObject &message) {
         QString fromName = message.contains("fromName") ? message["fromName"].toString() : message["name"].toString();
         QString msgContent = message["msg"].toString();
         qint64 toId = message["to"].toVariant().toLongLong();
+        QString timestamp = message.contains("timestamp") ? message["timestamp"].toString() : "";
         
         // 消息过滤 - 只处理发给当前用户的消息
         if (toId == this->currentUserId) {
-            qDebug() << "Received private message from" << fromId << "(" << fromName << "):" << msgContent;
-            emit messageReceived(fromId, msgContent, fromName, false);
+            qDebug() << "Received private message from" << fromId << "(" << fromName << "):" << msgContent << "at" << timestamp;
+            emit messageReceived(fromId, msgContent, fromName, false, -1, timestamp);
         }
         break;
     }
@@ -507,9 +515,10 @@ void ChatClient::processMessage(const QJsonObject &message) {
         qint64 fromId = message["from"].toVariant().toLongLong();
         QString fromName = message["fromName"].toString();
         QString msgContent = message["msg"].toString();
+        QString timestamp = message.contains("timestamp") ? message["timestamp"].toString() : "";
         
-        qDebug() << "Received group message from" << fromId << "in group" << groupId << ":" << msgContent;
-        emit groupMessageReceived(groupId, fromId, fromName, msgContent);
+        qDebug() << "Received group message from" << fromId << "in group" << groupId << ":" << msgContent << "at" << timestamp;
+        emit groupMessageReceived(groupId, fromId, fromName, msgContent, timestamp);
         break;
     }
     
@@ -954,9 +963,10 @@ void ChatClient::processStoredOfflineMessages() {
             qint64 fromId = message["from"].toVariant().toLongLong();
             QString msgContent = message["msg"].toString();
             QString fromName = message["name"].toString();
+            QString timestamp = message.contains("timestamp") ? message["timestamp"].toString() : "";
             
-            qDebug() << "Processing queued offline private message from" << fromId << "(" << fromName << "):" << msgContent;
-            emit messageReceived(fromId, msgContent, fromName, false);
+            qDebug() << "[DEBUG] Processing queued offline private message from" << fromId << "(" << fromName << "):" << msgContent << "with timestamp:" << timestamp;
+            emit messageReceived(fromId, msgContent, fromName, false, -1, timestamp);
             break;
         }
         case MsgType::GROUP_CHAT_MSG:
@@ -966,9 +976,10 @@ void ChatClient::processStoredOfflineMessages() {
             qint64 fromId = message["from"].toVariant().toLongLong();
             QString msgContent = message["msg"].toString();
             QString fromName = message.contains("fromName") ? message["fromName"].toString() : message["name"].toString();
+            QString timestamp = message.contains("timestamp") ? message["timestamp"].toString() : "";
             
-            qDebug() << "Processing queued offline group message from" << fromId << "(" << fromName << ") in group" << groupId << ":" << msgContent;
-            emit groupMessageReceived(groupId, fromId, fromName, msgContent);
+            qDebug() << "[DEBUG] Processing queued offline group message from" << fromId << "(" << fromName << ") in group" << groupId << ":" << msgContent << "with timestamp:" << timestamp;
+            emit groupMessageReceived(groupId, fromId, fromName, msgContent, timestamp);
             break;
         }
         default:

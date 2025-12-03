@@ -23,8 +23,8 @@ QT_BEGIN_MOC_NAMESPACE
 QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 struct qt_meta_stringdata_ChatClient_t {
-    QByteArrayData data[49];
-    char stringdata0[641];
+    QByteArrayData data[50];
+    char stringdata0[651];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -48,49 +48,50 @@ QT_MOC_LITERAL(11, 119, 6), // "fromId"
 QT_MOC_LITERAL(12, 126, 8), // "fromName"
 QT_MOC_LITERAL(13, 135, 7), // "isGroup"
 QT_MOC_LITERAL(14, 143, 7), // "groupId"
-QT_MOC_LITERAL(15, 151, 20), // "groupMessageReceived"
-QT_MOC_LITERAL(16, 172, 8), // "userName"
-QT_MOC_LITERAL(17, 181, 17), // "friendListUpdated"
-QT_MOC_LITERAL(18, 199, 11), // "QList<User>"
-QT_MOC_LITERAL(19, 211, 7), // "friends"
-QT_MOC_LITERAL(20, 219, 11), // "friendAdded"
-QT_MOC_LITERAL(21, 231, 17), // "addFriendResponse"
-QT_MOC_LITERAL(22, 249, 16), // "groupListUpdated"
-QT_MOC_LITERAL(23, 266, 12), // "QList<Group>"
-QT_MOC_LITERAL(24, 279, 6), // "groups"
-QT_MOC_LITERAL(25, 286, 12), // "groupCreated"
-QT_MOC_LITERAL(26, 299, 11), // "groupJoined"
-QT_MOC_LITERAL(27, 311, 19), // "createGroupResponse"
-QT_MOC_LITERAL(28, 331, 16), // "addGroupResponse"
-QT_MOC_LITERAL(29, 348, 27), // "fileTransferRequestReceived"
-QT_MOC_LITERAL(30, 376, 8), // "filename"
-QT_MOC_LITERAL(31, 385, 8), // "filesize"
-QT_MOC_LITERAL(32, 394, 6), // "fileId"
-QT_MOC_LITERAL(33, 401, 20), // "fileTransferAccepted"
-QT_MOC_LITERAL(34, 422, 8), // "accepted"
-QT_MOC_LITERAL(35, 431, 24), // "fileTransferDataReceived"
-QT_MOC_LITERAL(36, 456, 10), // "chunkIndex"
-QT_MOC_LITERAL(37, 467, 4), // "data"
-QT_MOC_LITERAL(38, 472, 28), // "fileTransferCompleteReceived"
-QT_MOC_LITERAL(39, 501, 17), // "fileTransferError"
-QT_MOC_LITERAL(40, 519, 9), // "errorCode"
-QT_MOC_LITERAL(41, 529, 16), // "registerResponse"
-QT_MOC_LITERAL(42, 546, 6), // "userId"
-QT_MOC_LITERAL(43, 553, 11), // "onConnected"
-QT_MOC_LITERAL(44, 565, 14), // "onDisconnected"
-QT_MOC_LITERAL(45, 580, 11), // "onReadyRead"
-QT_MOC_LITERAL(46, 592, 7), // "onError"
-QT_MOC_LITERAL(47, 600, 28), // "QAbstractSocket::SocketError"
-QT_MOC_LITERAL(48, 629, 11) // "socketError"
+QT_MOC_LITERAL(15, 151, 9), // "timestamp"
+QT_MOC_LITERAL(16, 161, 20), // "groupMessageReceived"
+QT_MOC_LITERAL(17, 182, 8), // "userName"
+QT_MOC_LITERAL(18, 191, 17), // "friendListUpdated"
+QT_MOC_LITERAL(19, 209, 11), // "QList<User>"
+QT_MOC_LITERAL(20, 221, 7), // "friends"
+QT_MOC_LITERAL(21, 229, 11), // "friendAdded"
+QT_MOC_LITERAL(22, 241, 17), // "addFriendResponse"
+QT_MOC_LITERAL(23, 259, 16), // "groupListUpdated"
+QT_MOC_LITERAL(24, 276, 12), // "QList<Group>"
+QT_MOC_LITERAL(25, 289, 6), // "groups"
+QT_MOC_LITERAL(26, 296, 12), // "groupCreated"
+QT_MOC_LITERAL(27, 309, 11), // "groupJoined"
+QT_MOC_LITERAL(28, 321, 19), // "createGroupResponse"
+QT_MOC_LITERAL(29, 341, 16), // "addGroupResponse"
+QT_MOC_LITERAL(30, 358, 27), // "fileTransferRequestReceived"
+QT_MOC_LITERAL(31, 386, 8), // "filename"
+QT_MOC_LITERAL(32, 395, 8), // "filesize"
+QT_MOC_LITERAL(33, 404, 6), // "fileId"
+QT_MOC_LITERAL(34, 411, 20), // "fileTransferAccepted"
+QT_MOC_LITERAL(35, 432, 8), // "accepted"
+QT_MOC_LITERAL(36, 441, 24), // "fileTransferDataReceived"
+QT_MOC_LITERAL(37, 466, 10), // "chunkIndex"
+QT_MOC_LITERAL(38, 477, 4), // "data"
+QT_MOC_LITERAL(39, 482, 28), // "fileTransferCompleteReceived"
+QT_MOC_LITERAL(40, 511, 17), // "fileTransferError"
+QT_MOC_LITERAL(41, 529, 9), // "errorCode"
+QT_MOC_LITERAL(42, 539, 16), // "registerResponse"
+QT_MOC_LITERAL(43, 556, 6), // "userId"
+QT_MOC_LITERAL(44, 563, 11), // "onConnected"
+QT_MOC_LITERAL(45, 575, 14), // "onDisconnected"
+QT_MOC_LITERAL(46, 590, 11), // "onReadyRead"
+QT_MOC_LITERAL(47, 602, 7), // "onError"
+QT_MOC_LITERAL(48, 610, 28), // "QAbstractSocket::SocketError"
+QT_MOC_LITERAL(49, 639, 11) // "socketError"
 
     },
     "ChatClient\0connected\0\0disconnected\0"
     "error\0errorMsg\0connectionStateChanged\0"
     "loginResponse\0success\0message\0"
     "messageReceived\0fromId\0fromName\0isGroup\0"
-    "groupId\0groupMessageReceived\0userName\0"
-    "friendListUpdated\0QList<User>\0friends\0"
-    "friendAdded\0addFriendResponse\0"
+    "groupId\0timestamp\0groupMessageReceived\0"
+    "userName\0friendListUpdated\0QList<User>\0"
+    "friends\0friendAdded\0addFriendResponse\0"
     "groupListUpdated\0QList<Group>\0groups\0"
     "groupCreated\0groupJoined\0createGroupResponse\0"
     "addGroupResponse\0fileTransferRequestReceived\0"
@@ -110,44 +111,46 @@ static const uint qt_meta_data_ChatClient[] = {
        8,       // revision
        0,       // classname
        0,    0, // classinfo
-      28,   14, // methods
+      30,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
        0,       // flags
-      24,       // signalCount
+      26,       // signalCount
 
  // signals: name, argc, parameters, tag, flags
-       1,    0,  154,    2, 0x06 /* Public */,
-       3,    0,  155,    2, 0x06 /* Public */,
-       4,    1,  156,    2, 0x06 /* Public */,
-       6,    1,  159,    2, 0x06 /* Public */,
-       7,    2,  162,    2, 0x06 /* Public */,
-      10,    5,  167,    2, 0x06 /* Public */,
-      10,    4,  178,    2, 0x26 /* Public | MethodCloned */,
-      10,    3,  187,    2, 0x26 /* Public | MethodCloned */,
-      10,    2,  194,    2, 0x26 /* Public | MethodCloned */,
-      15,    4,  199,    2, 0x06 /* Public */,
-      17,    1,  208,    2, 0x06 /* Public */,
-      20,    2,  211,    2, 0x06 /* Public */,
-      21,    2,  216,    2, 0x06 /* Public */,
-      22,    1,  221,    2, 0x06 /* Public */,
-      25,    2,  224,    2, 0x06 /* Public */,
-      26,    2,  229,    2, 0x06 /* Public */,
-      27,    2,  234,    2, 0x06 /* Public */,
-      28,    2,  239,    2, 0x06 /* Public */,
-      29,    4,  244,    2, 0x06 /* Public */,
-      33,    2,  253,    2, 0x06 /* Public */,
-      35,    3,  258,    2, 0x06 /* Public */,
-      38,    2,  265,    2, 0x06 /* Public */,
-      39,    3,  270,    2, 0x06 /* Public */,
-      41,    3,  277,    2, 0x06 /* Public */,
+       1,    0,  164,    2, 0x06 /* Public */,
+       3,    0,  165,    2, 0x06 /* Public */,
+       4,    1,  166,    2, 0x06 /* Public */,
+       6,    1,  169,    2, 0x06 /* Public */,
+       7,    2,  172,    2, 0x06 /* Public */,
+      10,    6,  177,    2, 0x06 /* Public */,
+      10,    5,  190,    2, 0x26 /* Public | MethodCloned */,
+      10,    4,  201,    2, 0x26 /* Public | MethodCloned */,
+      10,    3,  210,    2, 0x26 /* Public | MethodCloned */,
+      10,    2,  217,    2, 0x26 /* Public | MethodCloned */,
+      16,    5,  222,    2, 0x06 /* Public */,
+      16,    4,  233,    2, 0x26 /* Public | MethodCloned */,
+      18,    1,  242,    2, 0x06 /* Public */,
+      21,    2,  245,    2, 0x06 /* Public */,
+      22,    2,  250,    2, 0x06 /* Public */,
+      23,    1,  255,    2, 0x06 /* Public */,
+      26,    2,  258,    2, 0x06 /* Public */,
+      27,    2,  263,    2, 0x06 /* Public */,
+      28,    2,  268,    2, 0x06 /* Public */,
+      29,    2,  273,    2, 0x06 /* Public */,
+      30,    4,  278,    2, 0x06 /* Public */,
+      34,    2,  287,    2, 0x06 /* Public */,
+      36,    3,  292,    2, 0x06 /* Public */,
+      39,    2,  299,    2, 0x06 /* Public */,
+      40,    3,  304,    2, 0x06 /* Public */,
+      42,    3,  311,    2, 0x06 /* Public */,
 
  // slots: name, argc, parameters, tag, flags
-      43,    0,  284,    2, 0x08 /* Private */,
-      44,    0,  285,    2, 0x08 /* Private */,
-      45,    0,  286,    2, 0x08 /* Private */,
-      46,    1,  287,    2, 0x08 /* Private */,
+      44,    0,  318,    2, 0x08 /* Private */,
+      45,    0,  319,    2, 0x08 /* Private */,
+      46,    0,  320,    2, 0x08 /* Private */,
+      47,    1,  321,    2, 0x08 /* Private */,
 
  // signals: parameters
     QMetaType::Void,
@@ -155,31 +158,33 @@ static const uint qt_meta_data_ChatClient[] = {
     QMetaType::Void, QMetaType::QString,    5,
     QMetaType::Void, QMetaType::Bool,    1,
     QMetaType::Void, QMetaType::Bool, QMetaType::QString,    8,    9,
+    QMetaType::Void, QMetaType::Int, QMetaType::QString, QMetaType::QString, QMetaType::Bool, QMetaType::Int, QMetaType::QString,   11,    9,   12,   13,   14,   15,
     QMetaType::Void, QMetaType::Int, QMetaType::QString, QMetaType::QString, QMetaType::Bool, QMetaType::Int,   11,    9,   12,   13,   14,
     QMetaType::Void, QMetaType::Int, QMetaType::QString, QMetaType::QString, QMetaType::Bool,   11,    9,   12,   13,
     QMetaType::Void, QMetaType::Int, QMetaType::QString, QMetaType::QString,   11,    9,   12,
     QMetaType::Void, QMetaType::Int, QMetaType::QString,   11,    9,
-    QMetaType::Void, QMetaType::Int, QMetaType::Int, QMetaType::QString, QMetaType::QString,   14,   11,   16,    9,
-    QMetaType::Void, 0x80000000 | 18,   19,
+    QMetaType::Void, QMetaType::Int, QMetaType::Int, QMetaType::QString, QMetaType::QString, QMetaType::QString,   14,   11,   17,    9,   15,
+    QMetaType::Void, QMetaType::Int, QMetaType::Int, QMetaType::QString, QMetaType::QString,   14,   11,   17,    9,
+    QMetaType::Void, 0x80000000 | 19,   20,
     QMetaType::Void, QMetaType::Bool, QMetaType::QString,    8,    9,
     QMetaType::Void, QMetaType::Bool, QMetaType::QString,    8,    9,
-    QMetaType::Void, 0x80000000 | 23,   24,
+    QMetaType::Void, 0x80000000 | 24,   25,
     QMetaType::Void, QMetaType::Bool, QMetaType::QString,    8,    9,
     QMetaType::Void, QMetaType::Bool, QMetaType::QString,    8,    9,
     QMetaType::Void, QMetaType::Bool, QMetaType::QString,    8,    9,
     QMetaType::Void, QMetaType::Bool, QMetaType::QString,    8,    9,
-    QMetaType::Void, QMetaType::Int, QMetaType::QString, QMetaType::LongLong, QMetaType::QString,   11,   30,   31,   32,
-    QMetaType::Void, QMetaType::QString, QMetaType::Bool,   32,   34,
-    QMetaType::Void, QMetaType::QString, QMetaType::Int, QMetaType::QByteArray,   32,   36,   37,
-    QMetaType::Void, QMetaType::QString, QMetaType::Bool,   32,    8,
-    QMetaType::Void, QMetaType::QString, QMetaType::Int, QMetaType::QString,   32,   40,    5,
-    QMetaType::Void, QMetaType::Bool, QMetaType::Int, QMetaType::QString,    8,   42,    9,
+    QMetaType::Void, QMetaType::Int, QMetaType::QString, QMetaType::LongLong, QMetaType::QString,   11,   31,   32,   33,
+    QMetaType::Void, QMetaType::QString, QMetaType::Bool,   33,   35,
+    QMetaType::Void, QMetaType::QString, QMetaType::Int, QMetaType::QByteArray,   33,   37,   38,
+    QMetaType::Void, QMetaType::QString, QMetaType::Bool,   33,    8,
+    QMetaType::Void, QMetaType::QString, QMetaType::Int, QMetaType::QString,   33,   41,    5,
+    QMetaType::Void, QMetaType::Bool, QMetaType::Int, QMetaType::QString,    8,   43,    9,
 
  // slots: parameters
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
-    QMetaType::Void, 0x80000000 | 47,   48,
+    QMetaType::Void, 0x80000000 | 48,   49,
 
        0        // eod
 };
@@ -195,35 +200,37 @@ void ChatClient::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 2: _t->error((*reinterpret_cast< const QString(*)>(_a[1]))); break;
         case 3: _t->connectionStateChanged((*reinterpret_cast< bool(*)>(_a[1]))); break;
         case 4: _t->loginResponse((*reinterpret_cast< bool(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2]))); break;
-        case 5: _t->messageReceived((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2])),(*reinterpret_cast< const QString(*)>(_a[3])),(*reinterpret_cast< bool(*)>(_a[4])),(*reinterpret_cast< int(*)>(_a[5]))); break;
-        case 6: _t->messageReceived((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2])),(*reinterpret_cast< const QString(*)>(_a[3])),(*reinterpret_cast< bool(*)>(_a[4]))); break;
-        case 7: _t->messageReceived((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2])),(*reinterpret_cast< const QString(*)>(_a[3]))); break;
-        case 8: _t->messageReceived((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2]))); break;
-        case 9: _t->groupMessageReceived((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2])),(*reinterpret_cast< const QString(*)>(_a[3])),(*reinterpret_cast< const QString(*)>(_a[4]))); break;
-        case 10: _t->friendListUpdated((*reinterpret_cast< const QList<User>(*)>(_a[1]))); break;
-        case 11: _t->friendAdded((*reinterpret_cast< bool(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2]))); break;
-        case 12: _t->addFriendResponse((*reinterpret_cast< bool(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2]))); break;
-        case 13: _t->groupListUpdated((*reinterpret_cast< const QList<Group>(*)>(_a[1]))); break;
-        case 14: _t->groupCreated((*reinterpret_cast< bool(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2]))); break;
-        case 15: _t->groupJoined((*reinterpret_cast< bool(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2]))); break;
-        case 16: _t->createGroupResponse((*reinterpret_cast< bool(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2]))); break;
-        case 17: _t->addGroupResponse((*reinterpret_cast< bool(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2]))); break;
-        case 18: _t->fileTransferRequestReceived((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2])),(*reinterpret_cast< qint64(*)>(_a[3])),(*reinterpret_cast< const QString(*)>(_a[4]))); break;
-        case 19: _t->fileTransferAccepted((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< bool(*)>(_a[2]))); break;
-        case 20: _t->fileTransferDataReceived((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2])),(*reinterpret_cast< const QByteArray(*)>(_a[3]))); break;
-        case 21: _t->fileTransferCompleteReceived((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< bool(*)>(_a[2]))); break;
-        case 22: _t->fileTransferError((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2])),(*reinterpret_cast< const QString(*)>(_a[3]))); break;
-        case 23: _t->registerResponse((*reinterpret_cast< bool(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2])),(*reinterpret_cast< const QString(*)>(_a[3]))); break;
-        case 24: _t->onConnected(); break;
-        case 25: _t->onDisconnected(); break;
-        case 26: _t->onReadyRead(); break;
-        case 27: _t->onError((*reinterpret_cast< QAbstractSocket::SocketError(*)>(_a[1]))); break;
+        case 5: _t->messageReceived((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2])),(*reinterpret_cast< const QString(*)>(_a[3])),(*reinterpret_cast< bool(*)>(_a[4])),(*reinterpret_cast< int(*)>(_a[5])),(*reinterpret_cast< const QString(*)>(_a[6]))); break;
+        case 6: _t->messageReceived((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2])),(*reinterpret_cast< const QString(*)>(_a[3])),(*reinterpret_cast< bool(*)>(_a[4])),(*reinterpret_cast< int(*)>(_a[5]))); break;
+        case 7: _t->messageReceived((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2])),(*reinterpret_cast< const QString(*)>(_a[3])),(*reinterpret_cast< bool(*)>(_a[4]))); break;
+        case 8: _t->messageReceived((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2])),(*reinterpret_cast< const QString(*)>(_a[3]))); break;
+        case 9: _t->messageReceived((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2]))); break;
+        case 10: _t->groupMessageReceived((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2])),(*reinterpret_cast< const QString(*)>(_a[3])),(*reinterpret_cast< const QString(*)>(_a[4])),(*reinterpret_cast< const QString(*)>(_a[5]))); break;
+        case 11: _t->groupMessageReceived((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2])),(*reinterpret_cast< const QString(*)>(_a[3])),(*reinterpret_cast< const QString(*)>(_a[4]))); break;
+        case 12: _t->friendListUpdated((*reinterpret_cast< const QList<User>(*)>(_a[1]))); break;
+        case 13: _t->friendAdded((*reinterpret_cast< bool(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2]))); break;
+        case 14: _t->addFriendResponse((*reinterpret_cast< bool(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2]))); break;
+        case 15: _t->groupListUpdated((*reinterpret_cast< const QList<Group>(*)>(_a[1]))); break;
+        case 16: _t->groupCreated((*reinterpret_cast< bool(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2]))); break;
+        case 17: _t->groupJoined((*reinterpret_cast< bool(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2]))); break;
+        case 18: _t->createGroupResponse((*reinterpret_cast< bool(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2]))); break;
+        case 19: _t->addGroupResponse((*reinterpret_cast< bool(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2]))); break;
+        case 20: _t->fileTransferRequestReceived((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2])),(*reinterpret_cast< qint64(*)>(_a[3])),(*reinterpret_cast< const QString(*)>(_a[4]))); break;
+        case 21: _t->fileTransferAccepted((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< bool(*)>(_a[2]))); break;
+        case 22: _t->fileTransferDataReceived((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2])),(*reinterpret_cast< const QByteArray(*)>(_a[3]))); break;
+        case 23: _t->fileTransferCompleteReceived((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< bool(*)>(_a[2]))); break;
+        case 24: _t->fileTransferError((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2])),(*reinterpret_cast< const QString(*)>(_a[3]))); break;
+        case 25: _t->registerResponse((*reinterpret_cast< bool(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2])),(*reinterpret_cast< const QString(*)>(_a[3]))); break;
+        case 26: _t->onConnected(); break;
+        case 27: _t->onDisconnected(); break;
+        case 28: _t->onReadyRead(); break;
+        case 29: _t->onError((*reinterpret_cast< QAbstractSocket::SocketError(*)>(_a[1]))); break;
         default: ;
         }
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
         switch (_id) {
         default: *reinterpret_cast<int*>(_a[0]) = -1; break;
-        case 27:
+        case 29:
             switch (*reinterpret_cast<int*>(_a[1])) {
             default: *reinterpret_cast<int*>(_a[0]) = -1; break;
             case 0:
@@ -269,114 +276,114 @@ void ChatClient::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
             }
         }
         {
-            using _t = void (ChatClient::*)(int , const QString & , const QString & , bool , int );
+            using _t = void (ChatClient::*)(int , const QString & , const QString & , bool , int , const QString & );
             if (*reinterpret_cast<_t *>(_a[1]) == static_cast<_t>(&ChatClient::messageReceived)) {
                 *result = 5;
                 return;
             }
         }
         {
-            using _t = void (ChatClient::*)(int , int , const QString & , const QString & );
+            using _t = void (ChatClient::*)(int , int , const QString & , const QString & , const QString & );
             if (*reinterpret_cast<_t *>(_a[1]) == static_cast<_t>(&ChatClient::groupMessageReceived)) {
-                *result = 9;
+                *result = 10;
                 return;
             }
         }
         {
             using _t = void (ChatClient::*)(const QList<User> & );
             if (*reinterpret_cast<_t *>(_a[1]) == static_cast<_t>(&ChatClient::friendListUpdated)) {
-                *result = 10;
+                *result = 12;
                 return;
             }
         }
         {
             using _t = void (ChatClient::*)(bool , const QString & );
             if (*reinterpret_cast<_t *>(_a[1]) == static_cast<_t>(&ChatClient::friendAdded)) {
-                *result = 11;
-                return;
-            }
-        }
-        {
-            using _t = void (ChatClient::*)(bool , const QString & );
-            if (*reinterpret_cast<_t *>(_a[1]) == static_cast<_t>(&ChatClient::addFriendResponse)) {
-                *result = 12;
-                return;
-            }
-        }
-        {
-            using _t = void (ChatClient::*)(const QList<Group> & );
-            if (*reinterpret_cast<_t *>(_a[1]) == static_cast<_t>(&ChatClient::groupListUpdated)) {
                 *result = 13;
                 return;
             }
         }
         {
             using _t = void (ChatClient::*)(bool , const QString & );
-            if (*reinterpret_cast<_t *>(_a[1]) == static_cast<_t>(&ChatClient::groupCreated)) {
+            if (*reinterpret_cast<_t *>(_a[1]) == static_cast<_t>(&ChatClient::addFriendResponse)) {
                 *result = 14;
                 return;
             }
         }
         {
-            using _t = void (ChatClient::*)(bool , const QString & );
-            if (*reinterpret_cast<_t *>(_a[1]) == static_cast<_t>(&ChatClient::groupJoined)) {
+            using _t = void (ChatClient::*)(const QList<Group> & );
+            if (*reinterpret_cast<_t *>(_a[1]) == static_cast<_t>(&ChatClient::groupListUpdated)) {
                 *result = 15;
                 return;
             }
         }
         {
             using _t = void (ChatClient::*)(bool , const QString & );
-            if (*reinterpret_cast<_t *>(_a[1]) == static_cast<_t>(&ChatClient::createGroupResponse)) {
+            if (*reinterpret_cast<_t *>(_a[1]) == static_cast<_t>(&ChatClient::groupCreated)) {
                 *result = 16;
                 return;
             }
         }
         {
             using _t = void (ChatClient::*)(bool , const QString & );
-            if (*reinterpret_cast<_t *>(_a[1]) == static_cast<_t>(&ChatClient::addGroupResponse)) {
+            if (*reinterpret_cast<_t *>(_a[1]) == static_cast<_t>(&ChatClient::groupJoined)) {
                 *result = 17;
+                return;
+            }
+        }
+        {
+            using _t = void (ChatClient::*)(bool , const QString & );
+            if (*reinterpret_cast<_t *>(_a[1]) == static_cast<_t>(&ChatClient::createGroupResponse)) {
+                *result = 18;
+                return;
+            }
+        }
+        {
+            using _t = void (ChatClient::*)(bool , const QString & );
+            if (*reinterpret_cast<_t *>(_a[1]) == static_cast<_t>(&ChatClient::addGroupResponse)) {
+                *result = 19;
                 return;
             }
         }
         {
             using _t = void (ChatClient::*)(int , const QString & , qint64 , const QString & );
             if (*reinterpret_cast<_t *>(_a[1]) == static_cast<_t>(&ChatClient::fileTransferRequestReceived)) {
-                *result = 18;
-                return;
-            }
-        }
-        {
-            using _t = void (ChatClient::*)(const QString & , bool );
-            if (*reinterpret_cast<_t *>(_a[1]) == static_cast<_t>(&ChatClient::fileTransferAccepted)) {
-                *result = 19;
-                return;
-            }
-        }
-        {
-            using _t = void (ChatClient::*)(const QString & , int , const QByteArray & );
-            if (*reinterpret_cast<_t *>(_a[1]) == static_cast<_t>(&ChatClient::fileTransferDataReceived)) {
                 *result = 20;
                 return;
             }
         }
         {
             using _t = void (ChatClient::*)(const QString & , bool );
-            if (*reinterpret_cast<_t *>(_a[1]) == static_cast<_t>(&ChatClient::fileTransferCompleteReceived)) {
+            if (*reinterpret_cast<_t *>(_a[1]) == static_cast<_t>(&ChatClient::fileTransferAccepted)) {
                 *result = 21;
+                return;
+            }
+        }
+        {
+            using _t = void (ChatClient::*)(const QString & , int , const QByteArray & );
+            if (*reinterpret_cast<_t *>(_a[1]) == static_cast<_t>(&ChatClient::fileTransferDataReceived)) {
+                *result = 22;
+                return;
+            }
+        }
+        {
+            using _t = void (ChatClient::*)(const QString & , bool );
+            if (*reinterpret_cast<_t *>(_a[1]) == static_cast<_t>(&ChatClient::fileTransferCompleteReceived)) {
+                *result = 23;
                 return;
             }
         }
         {
             using _t = void (ChatClient::*)(const QString & , int , const QString & );
             if (*reinterpret_cast<_t *>(_a[1]) == static_cast<_t>(&ChatClient::fileTransferError)) {
-                *result = 22;
+                *result = 24;
                 return;
             }
         }
         {
             using _t = void (ChatClient::*)(bool , int , const QString & );
             if (*reinterpret_cast<_t *>(_a[1]) == static_cast<_t>(&ChatClient::registerResponse)) {
-                *result = 23;
+                *result = 25;
                 return;
             }
         }
@@ -412,13 +419,13 @@ int ChatClient::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 28)
+        if (_id < 30)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 28;
+        _id -= 30;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 28)
+        if (_id < 30)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 28;
+        _id -= 30;
     }
     return _id;
 }
@@ -457,115 +464,115 @@ void ChatClient::loginResponse(bool _t1, const QString & _t2)
 }
 
 // SIGNAL 5
-void ChatClient::messageReceived(int _t1, const QString & _t2, const QString & _t3, bool _t4, int _t5)
+void ChatClient::messageReceived(int _t1, const QString & _t2, const QString & _t3, bool _t4, int _t5, const QString & _t6)
 {
-    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t2))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t3))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t4))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t5))) };
+    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t2))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t3))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t4))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t5))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t6))) };
     QMetaObject::activate(this, &staticMetaObject, 5, _a);
 }
 
-// SIGNAL 9
-void ChatClient::groupMessageReceived(int _t1, int _t2, const QString & _t3, const QString & _t4)
-{
-    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t2))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t3))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t4))) };
-    QMetaObject::activate(this, &staticMetaObject, 9, _a);
-}
-
 // SIGNAL 10
-void ChatClient::friendListUpdated(const QList<User> & _t1)
+void ChatClient::groupMessageReceived(int _t1, int _t2, const QString & _t3, const QString & _t4, const QString & _t5)
 {
-    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))) };
+    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t2))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t3))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t4))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t5))) };
     QMetaObject::activate(this, &staticMetaObject, 10, _a);
 }
 
-// SIGNAL 11
-void ChatClient::friendAdded(bool _t1, const QString & _t2)
-{
-    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t2))) };
-    QMetaObject::activate(this, &staticMetaObject, 11, _a);
-}
-
 // SIGNAL 12
-void ChatClient::addFriendResponse(bool _t1, const QString & _t2)
+void ChatClient::friendListUpdated(const QList<User> & _t1)
 {
-    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t2))) };
+    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))) };
     QMetaObject::activate(this, &staticMetaObject, 12, _a);
 }
 
 // SIGNAL 13
-void ChatClient::groupListUpdated(const QList<Group> & _t1)
+void ChatClient::friendAdded(bool _t1, const QString & _t2)
 {
-    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))) };
+    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t2))) };
     QMetaObject::activate(this, &staticMetaObject, 13, _a);
 }
 
 // SIGNAL 14
-void ChatClient::groupCreated(bool _t1, const QString & _t2)
+void ChatClient::addFriendResponse(bool _t1, const QString & _t2)
 {
     void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t2))) };
     QMetaObject::activate(this, &staticMetaObject, 14, _a);
 }
 
 // SIGNAL 15
-void ChatClient::groupJoined(bool _t1, const QString & _t2)
+void ChatClient::groupListUpdated(const QList<Group> & _t1)
 {
-    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t2))) };
+    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))) };
     QMetaObject::activate(this, &staticMetaObject, 15, _a);
 }
 
 // SIGNAL 16
-void ChatClient::createGroupResponse(bool _t1, const QString & _t2)
+void ChatClient::groupCreated(bool _t1, const QString & _t2)
 {
     void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t2))) };
     QMetaObject::activate(this, &staticMetaObject, 16, _a);
 }
 
 // SIGNAL 17
-void ChatClient::addGroupResponse(bool _t1, const QString & _t2)
+void ChatClient::groupJoined(bool _t1, const QString & _t2)
 {
     void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t2))) };
     QMetaObject::activate(this, &staticMetaObject, 17, _a);
 }
 
 // SIGNAL 18
-void ChatClient::fileTransferRequestReceived(int _t1, const QString & _t2, qint64 _t3, const QString & _t4)
+void ChatClient::createGroupResponse(bool _t1, const QString & _t2)
 {
-    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t2))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t3))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t4))) };
+    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t2))) };
     QMetaObject::activate(this, &staticMetaObject, 18, _a);
 }
 
 // SIGNAL 19
-void ChatClient::fileTransferAccepted(const QString & _t1, bool _t2)
+void ChatClient::addGroupResponse(bool _t1, const QString & _t2)
 {
     void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t2))) };
     QMetaObject::activate(this, &staticMetaObject, 19, _a);
 }
 
 // SIGNAL 20
-void ChatClient::fileTransferDataReceived(const QString & _t1, int _t2, const QByteArray & _t3)
+void ChatClient::fileTransferRequestReceived(int _t1, const QString & _t2, qint64 _t3, const QString & _t4)
 {
-    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t2))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t3))) };
+    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t2))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t3))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t4))) };
     QMetaObject::activate(this, &staticMetaObject, 20, _a);
 }
 
 // SIGNAL 21
-void ChatClient::fileTransferCompleteReceived(const QString & _t1, bool _t2)
+void ChatClient::fileTransferAccepted(const QString & _t1, bool _t2)
 {
     void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t2))) };
     QMetaObject::activate(this, &staticMetaObject, 21, _a);
 }
 
 // SIGNAL 22
-void ChatClient::fileTransferError(const QString & _t1, int _t2, const QString & _t3)
+void ChatClient::fileTransferDataReceived(const QString & _t1, int _t2, const QByteArray & _t3)
 {
     void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t2))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t3))) };
     QMetaObject::activate(this, &staticMetaObject, 22, _a);
 }
 
 // SIGNAL 23
+void ChatClient::fileTransferCompleteReceived(const QString & _t1, bool _t2)
+{
+    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t2))) };
+    QMetaObject::activate(this, &staticMetaObject, 23, _a);
+}
+
+// SIGNAL 24
+void ChatClient::fileTransferError(const QString & _t1, int _t2, const QString & _t3)
+{
+    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t2))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t3))) };
+    QMetaObject::activate(this, &staticMetaObject, 24, _a);
+}
+
+// SIGNAL 25
 void ChatClient::registerResponse(bool _t1, int _t2, const QString & _t3)
 {
     void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t2))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t3))) };
-    QMetaObject::activate(this, &staticMetaObject, 23, _a);
+    QMetaObject::activate(this, &staticMetaObject, 25, _a);
 }
 QT_WARNING_POP
 QT_END_MOC_NAMESPACE
