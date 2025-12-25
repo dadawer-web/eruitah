@@ -34,7 +34,7 @@ ChatService::ChatService(){
     _msgHandlerMap.insert({ADD_GROUP_MSG ,std::bind(&ChatService::addGroup,this,_1,_2,_3)});
     _msgHandlerMap.insert({GROUP_CHAT_MSG,std::bind(&ChatService::groupChat,this,_1,_2,_3)});
     
-    // 文件传输相关事件处理回调注册 - 扩展功能支持
+    // 文件传输相关事件处理回调注册
     _msgHandlerMap.insert({FILE_TRANSFER_REQ,std::bind(&ChatService::fileTransferRequest,this,_1,_2,_3)});
     _msgHandlerMap.insert({FILE_TRANSFER_ACK,std::bind(&ChatService::fileTransferAck,this,_1,_2,_3)});
     _msgHandlerMap.insert({FILE_TRANSFER_DATA,std::bind(&ChatService::fileTransferData,this,_1,_2,_3)});
@@ -43,6 +43,10 @@ ChatService::ChatService(){
     // 查询好友和群组列表相关事件处理回调注册
     _msgHandlerMap.insert({QUERY_FRIEND_MSG,std::bind(&ChatService::queryFriendList,this,_1,_2,_3)});
     _msgHandlerMap.insert({QUERY_GROUP_MSG,std::bind(&ChatService::queryGroupList,this,_1,_2,_3)});
+    
+    // 表情包相关事件处理回调注册
+    _msgHandlerMap.insert({UPLOAD_EMOJI_MSG,std::bind(&ChatService::uploadEmoji,this,_1,_2,_3)});
+    _msgHandlerMap.insert({QUERY_EMOJI_LIST_MSG,std::bind(&ChatService::queryEmojiList,this,_1,_2,_3)});
     
     // 添加对客户端使用的消息类型的支持
     // 客户端使用的消息类型值与服务器端定义的不一致，需要添加映射
@@ -101,12 +105,30 @@ MsgHandler ChatService::getHandler(int msgid){
             } catch (const json::exception& e) {
                 // 捕获JSON类型转换异常
                 LOG_ERROR << "JSON exception in message handling: " << e.what();
+                // 发送错误响应给客户端
+                json response;
+                response["msgid"] = 999; // 自定义错误消息类型
+                response["errno"] = 5;
+                response["errmsg"] = "JSON parse error: " + std::string(e.what());
+                conn->send(response.dump() + "\n");
             } catch (const std::exception& e) {
                 // 捕获其他所有异常
                 LOG_ERROR << "Exception in message handling: " << e.what();
+                // 发送错误响应给客户端
+                json response;
+                response["msgid"] = 999; // 自定义错误消息类型
+                response["errno"] = 6;
+                response["errmsg"] = "Internal server error: " + std::string(e.what());
+                conn->send(response.dump() + "\n");
             } catch (...) {
                 // 捕获未知异常
                 LOG_ERROR << "Unknown exception in message handling";
+                // 发送错误响应给客户端
+                json response;
+                response["msgid"] = 999; // 自定义错误消息类型
+                response["errno"] = 7;
+                response["errmsg"] = "Unknown server error";
+                conn->send(response.dump() + "\n");
             }
         };
     }
@@ -345,15 +367,31 @@ MsgHandler ChatService::getHandler(int msgid){
        User sender = _userModel.query(fromId);
        js["name"] = sender.getName();
        
-       LOG_INFO << "Sending message from user " << fromId << " (" << sender.getName() << ") to " << toid;
        // Add timestamp to the message in ISO format
-        js["timestamp"] = time.toFormattedString(true);
+       js["timestamp"] = time.toFormattedString(true);
+       
+       // 消息大小限制：防止大文件导致服务器崩溃
+       const size_t MAX_MESSAGE_SIZE = 1024 * 1024; // 1MB
+       string msgStr = js.dump();
+       if (msgStr.size() > MAX_MESSAGE_SIZE) {
+           LOG_ERROR << "Message too large from user " << fromId << ", size: " << msgStr.size() << " bytes, max allowed: " << MAX_MESSAGE_SIZE;
+           // 回复发送方，消息过大
+           json response;
+           response["msgid"] = 999; // 自定义错误消息类型
+           response["errno"] = 4;
+           response["errmsg"] = "Message too large, max size is 1MB";
+           conn->send(response.dump());
+           return;
+       }
+       
+       LOG_INFO << "Sending message from user " << fromId << " (" << sender.getName() << ") to " << toid;
+       
         {
         lock_guard<mutex> lock(_connMutex);
         auto it=_userConnMap.find(toid);
         if(it!=_userConnMap.end()){
             //toid在线，转发消息 服务器主动发送消息给toid用户
-            it->second->send(js.dump());
+            it->second->send(msgStr);
             LOG_INFO << "Message sent directly to online user " << toid;
             return;
             }
@@ -364,7 +402,7 @@ MsgHandler ChatService::getHandler(int msgid){
      LOG_INFO << "User " << toid << " state: " << user.getState();
        if(user.getState()=="online"){
           LOG_INFO << "Publishing message to Redis for user " << toid;
-            if(_redis.publish(toid,js.dump())){
+            if(_redis.publish(toid,msgStr)){
              LOG_INFO << "Message published to Redis successfully";
          }else{
              LOG_ERROR << "Failed to publish message to Redis";
@@ -373,9 +411,8 @@ MsgHandler ChatService::getHandler(int msgid){
        }
 
       //toid用户不在线，存储离线消息
-        string offlineMsg = js.dump();
-        LOG_INFO << "Storing offline message: " << offlineMsg;
-        _offlineMsgModel.insert(toid, offlineMsg);
+        LOG_INFO << "Storing offline message for user " << toid;
+        _offlineMsgModel.insert(toid, msgStr);
         LOG_INFO << "User " << toid << " is offline, message stored";
 }
   //添加好友业务 msgid id friendid 此业务加好友不需要对方去同意，后面可以去扩展！！id和friendid是联合主键，不会重复添加
@@ -942,5 +979,107 @@ void ChatService::queryGroupList(const TcpConnectionPtr& conn, json& js, Timesta
     
     string responseStr = response.dump();
     cout << "[DEBUG] Sending group list response: " << responseStr << endl;
+    conn->send(responseStr);
+}
+
+// 上传表情包业务处理
+void ChatService::uploadEmoji(const TcpConnectionPtr& conn, json& js, Timestamp time) {
+    LOG_INFO << "do upload emoji service!";
+    
+    // 安全检查：确保所有必要字段存在且类型正确
+    if (!js.contains("id") || !js["id"].is_number() || 
+        !js.contains("name") || !js["name"].is_string() ||
+        !js.contains("imageData") || !js["imageData"].is_string()) {
+        LOG_ERROR << "Upload emoji request missing required fields or invalid types";
+        json response;
+        response["msgid"] = UPLOAD_EMOJI_MSG_ACK;
+        response["errno"] = 1;
+        response["errmsg"] = "Invalid upload emoji request format";
+        conn->send(response.dump());
+        return;
+    }
+    
+    // 获取表情包信息
+    long long userId = js["id"].get<long long>();
+    string name = js["name"];
+    string imageData = js["imageData"];
+    
+    // 消息大小限制：防止大文件导致服务器崩溃
+    const size_t MAX_EMOJI_SIZE = 1024 * 1024; // 1MB
+    if (imageData.size() > MAX_EMOJI_SIZE) {
+        LOG_ERROR << "Emoji too large from user " << userId << ", size: " << imageData.size() << " bytes, max allowed: " << MAX_EMOJI_SIZE;
+        json response;
+        response["msgid"] = UPLOAD_EMOJI_MSG_ACK;
+        response["errno"] = 2;
+        response["errmsg"] = "Emoji too large, max size is 1MB";
+        conn->send(response.dump());
+        return;
+    }
+    
+    // 创建Emoji对象并保存到数据库
+    Emoji emoji(userId, name, imageData);
+    if (_emojiModel.insert(emoji)) {
+        // 上传成功
+        json response;
+        response["msgid"] = UPLOAD_EMOJI_MSG_ACK;
+        response["errno"] = 0;
+        response["emojiId"] = emoji.getId();
+        response["name"] = name;
+        response["errmsg"] = "Upload emoji success";
+        conn->send(response.dump());
+        LOG_INFO << "Upload emoji success for user " << userId;
+    } else {
+        // 上传失败
+        json response;
+        response["msgid"] = UPLOAD_EMOJI_MSG_ACK;
+        response["errno"] = 3;
+        response["errmsg"] = "Upload emoji failed";
+        conn->send(response.dump());
+        LOG_ERROR << "Upload emoji failed for user " << userId;
+    }
+}
+
+// 查询表情包列表业务处理
+void ChatService::queryEmojiList(const TcpConnectionPtr& conn, json& js, Timestamp time) {
+    LOG_INFO << "do query emoji list service!";
+    
+    // 安全检查：确保id字段存在且类型正确
+    if (!js.contains("id") || !js["id"].is_number()) {
+        LOG_ERROR << "Query emoji list request missing required field 'id' or invalid type";
+        json response;
+        response["msgid"] = QUERY_EMOJI_LIST_MSG_ACK;
+        response["errno"] = 1;
+        response["errmsg"] = "Invalid request format";
+        conn->send(response.dump());
+        return;
+    }
+    
+    long long userId = js["id"].get<long long>();
+    LOG_INFO << "Querying emoji list for user: " << userId;
+    
+    // 查询该用户的表情包列表
+    vector<Emoji> emojiList = _emojiModel.queryByUserId(userId);
+    LOG_INFO << "Found " << emojiList.size() << " emojis for user: " << userId;
+    
+    json response;
+    response["msgid"] = QUERY_EMOJI_LIST_MSG_ACK;
+    response["errno"] = 0;
+    
+    if (!emojiList.empty()) {
+        vector<string> vec;
+        for (Emoji& emoji : emojiList) {
+            json emojiJson;
+            emojiJson["id"] = emoji.getId();
+            emojiJson["userId"] = emoji.getUserId();
+            emojiJson["name"] = emoji.getName();
+            emojiJson["imageData"] = emoji.getImageData();
+            emojiJson["createTime"] = emoji.getCreateTime();
+            vec.push_back(emojiJson.dump());
+        }
+        response["emojis"] = vec;
+    }
+    
+    string responseStr = response.dump();
+    LOG_INFO << "Sending emoji list response for user " << userId;
     conn->send(responseStr);
 }

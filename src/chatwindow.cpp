@@ -13,6 +13,9 @@
 #include <QFileInfo>
 #include <QCoreApplication>
 #include <QThread>
+#include <QBuffer>
+#include <QImage>
+#include <QImageReader>
 
 ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, QWidget *parent) : QMainWindow(parent), userId(userId), userName(userName), chatClient(client), loginHandled(false), friendListLoaded(false), offlineMessagesProcessed(false), isLoggingOut(false) {
     // 设置窗口标题
@@ -21,7 +24,8 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     setMinimumSize(800, 600);
 
     // 应用样式表
-    QFile styleFile("/home/xmy/code/src/styles.qss");
+    QString styleFilePath = QCoreApplication::applicationDirPath() + "/styles.qss";
+    QFile styleFile(styleFilePath);
     if (styleFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
         QString styleSheet = styleFile.readAll();
         setStyleSheet(styleSheet);
@@ -72,13 +76,19 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     connect(chatClient, &ChatClient::addFriendResponse, this, &ChatWindow::onAddFriendResponse);
     connect(chatClient, &ChatClient::addGroupResponse, this, &ChatWindow::onAddGroupResponse);
     connect(chatClient, &ChatClient::createGroupResponse, this, &ChatWindow::onCreateGroupResponse);
-    // 文件传输相关信号连接
+
+    connect(chatClient, &ChatClient::emojiListUpdated, this, &ChatWindow::onEmojiListUpdated);
+
     connect(chatClient, &ChatClient::fileTransferRequestReceived, this, &ChatWindow::onFileTransferRequestReceived);
     connect(chatClient, &ChatClient::fileTransferAccepted, this, &ChatWindow::onFileTransferAccepted);
     connect(chatClient, &ChatClient::fileTransferDataReceived, this, &ChatWindow::onFileTransferDataReceived);
     connect(chatClient, &ChatClient::fileTransferCompleteReceived, this, &ChatWindow::onFileTransferCompleteReceived);
     connect(chatClient, &ChatClient::fileTransferError, this, &ChatWindow::onFileTransferError);
 
+    // 初始化表情包相关成员变量
+    isLoadingEmojis = false;
+    currentEmojiDialog = nullptr;
+    
     // 初始化左侧联系人树
     contactTreeWidget = new QTreeWidget;
     contactTreeWidget->setHeaderLabel("联系人");
@@ -120,14 +130,14 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     QAction *createGroupAction = toolBar->addAction(QIcon(), "创建群组");
     QAction *joinGroupAction = toolBar->addAction(QIcon(), "加入群组");
     toolBar->addSeparator();
-    QAction *sendFileAction = toolBar->addAction(QIcon(), "发送文件");
-    toolBar->addSeparator();
+    //QAction *sendFileAction = toolBar->addAction(QIcon(), "发送文件");
+    //toolBar->addSeparator();
     QAction *logoutAction = toolBar->addAction(QIcon(), "注销");
 
     connect(addFriendAction, &QAction::triggered, this, &ChatWindow::onAddFriend);
     connect(createGroupAction, &QAction::triggered, this, &ChatWindow::onCreateGroup);
     connect(joinGroupAction, &QAction::triggered, this, &ChatWindow::onJoinGroup);
-    connect(sendFileAction, &QAction::triggered, this, &ChatWindow::onSendFile);
+    //connect(sendFileAction, &QAction::triggered, this, &ChatWindow::onSendFile);
     connect(logoutAction, &QAction::triggered, this, &ChatWindow::onLogout);
 
     setCentralWidget(mainSplitter);
@@ -262,6 +272,32 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
 ChatWindow::~ChatWindow() {
 }
 
+// 生成聊天键
+QString ChatWindow::generateChatKey(int chatId, bool isGroup) {
+    return QString("%1_%2").arg(chatId).arg(isGroup ? "group" : "friend");
+}
+
+// 更新标签页文本，显示小红点
+void ChatWindow::updateTabText(int chatId, bool isGroup, const QString &chatName) {
+    QString key = generateChatKey(chatId, isGroup);
+    int unreadCount = unreadMessageCounts.value(key, 0);
+    
+    // 查找对应的标签页
+    for (int i = 0; i < chatTabWidget->count(); ++i) {
+        QWidget *widget = chatTabWidget->widget(i);
+        if (widget->property("chatId").toInt() == chatId &&
+            widget->property("isGroup").toBool() == isGroup) {
+            // 根据未读消息数量更新标签页文本
+            if (unreadCount > 0) {
+                chatTabWidget->setTabText(i, QString("%1 %2").arg(chatName).arg(QString("<span style='background-color: #ff4444; color: white; border-radius: 8px; padding: 2px 6px; font-size: 10px;'>%3</span>").arg(unreadCount)));
+            } else {
+                chatTabWidget->setTabText(i, chatName);
+            }
+            break;
+        }
+    }
+}
+
 void ChatWindow::onSendMessage() {
     // 获取当前聊天窗口的相关组件
     QWidget *currentWidget = chatTabWidget->currentWidget();
@@ -299,9 +335,9 @@ void ChatWindow::createChatWidget(int chatId, const QString &chatName, bool isGr
     for (int i = 0; i < chatTabWidget->count(); ++i) {
         if (chatTabWidget->widget(i)->property("chatId").toInt() == chatId &&
             chatTabWidget->widget(i)->property("isGroup").toBool() == isGroup) {
-            // 直接删除现有窗口，重新创建
-            chatTabWidget->removeTab(i);
-            break;
+            // 已经存在该聊天窗口，直接切换到它
+            chatTabWidget->setCurrentIndex(i);
+            return;
         }
     }
 
@@ -369,9 +405,34 @@ void ChatWindow::createChatWidget(int chatId, const QString &chatName, bool isGr
         "QPushButton:pressed { background-color: #bdc3c7; }"
     );
     
+    // 创建发送图片按钮
+    QPushButton *sendImageButton = new QPushButton("发送图片");
+    sendImageButton->setMinimumHeight(40);
+    sendImageButton->setFixedWidth(100);
+    sendImageButton->setStyleSheet(
+        "QPushButton { background-color: #ecf0f1; color: #333; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-weight: 500; }"
+        "QPushButton:hover { background-color: #d5dbdb; }"
+        "QPushButton:pressed { background-color: #bdc3c7; }"
+    );
+    
+    // 创建表情包按钮
+    QPushButton *sendEmojiButton = new QPushButton("表情包");
+    sendEmojiButton->setMinimumHeight(40);
+    sendEmojiButton->setFixedWidth(80);
+    sendEmojiButton->setStyleSheet(
+        "QPushButton { background-color: #ecf0f1; color: #333; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-weight: 500; }"
+        "QPushButton:hover { background-color: #d5dbdb; }"
+        "QPushButton:pressed { background-color: #bdc3c7; }"
+    );
+    
     // 添加按钮到布局
     buttonLayout->addWidget(sendButton);
+    buttonLayout->addWidget(sendEmojiButton);
+    buttonLayout->addWidget(sendImageButton);
     buttonLayout->addWidget(sendFileButton);
+    
+    // 连接表情包按钮信号
+    connect(sendEmojiButton, &QPushButton::clicked, this, &ChatWindow::onSendEmoji);
     
     // 将按钮布局添加到输入布局
     inputLayout->addLayout(buttonLayout);
@@ -395,6 +456,7 @@ void ChatWindow::createChatWidget(int chatId, const QString &chatName, bool isGr
     // 连接信号
     connect(sendButton, &QPushButton::clicked, this, &ChatWindow::onSendMessage);
     connect(inputEdit, &QLineEdit::returnPressed, this, &ChatWindow::onSendMessage);
+    connect(sendImageButton, &QPushButton::clicked, this, &ChatWindow::onSendImage);
     connect(sendFileButton, &QPushButton::clicked, this, &ChatWindow::onSendFile);
     
     // 存储输入框的映射关系
@@ -403,6 +465,9 @@ void ChatWindow::createChatWidget(int chatId, const QString &chatName, bool isGr
     // 添加到标签页
     chatTabWidget->addTab(chatWidget, chatName);
     chatTabWidget->setCurrentWidget(chatWidget);
+    
+    // 更新标签页文本，可能包含未读消息小红点
+    updateTabText(chatId, isGroup, chatName);
 }
 
 void ChatWindow::onContactSelected() {
@@ -471,8 +536,15 @@ void ChatWindow::onContactSelected() {
         }
     }
     
+    // 清除未读计数
+    QString key = generateChatKey(chatId, isGroup);
+    unreadMessageCounts.remove(key);
+    
     // 然后创建或切换到目标聊天窗口
     createChatWidget(chatId, chatName, isGroup);
+    
+    // 更新标签页文本，清除小红点
+    updateTabText(chatId, isGroup, chatName);
 }
 
 void ChatWindow::onAddFriend() {
@@ -642,14 +714,136 @@ void ChatWindow::onReceiveMessage(int fromId, const QString &message, const QStr
             qDebug() << "[DEBUG] No timestamp, using current time:" << timeStr;
         }
         
-        chatEdit->append(chatName + " [" + timeStr + "]: " + message);
-        // 确保聊天窗口可见
+        // 检查是否是图片消息
+        if (message.startsWith("[IMAGE]")) {
+            // 解析图片消息
+            QString imageDataStr = message.mid(7); // 去掉 [IMAGE] 前缀
+            int commaIndex = imageDataStr.indexOf(',');
+            if (commaIndex != -1) {
+                // 正确解析图片类型
+                QString imageType = imageDataStr.left(commaIndex).toLower();
+                QString imageBase64 = imageDataStr.mid(commaIndex + 1);
+                
+                // 使用正确的图片类型，默认为png
+                if (imageType.isEmpty() || (imageType != "png" && imageType != "jpg" && imageType != "jpeg" && imageType != "gif" && imageType != "webp")) {
+                    imageType = "png";
+                }
+                
+                // 重要：无论接收到的图片类型是什么，都转换为PNG格式显示
+                // 因为Qt的QTextBrowser对WebP支持有限，统一使用PNG确保显示
+                QImage receivedImage;
+                QByteArray imageData = QByteArray::fromBase64(imageBase64.toUtf8());
+                
+                // 确保图片正确加载，尤其是WebP格式
+                bool loaded = false;
+                if (imageType == "webp") {
+                    // 使用QImageReader显式指定图片格式为WebP
+                    QBuffer buffer(&imageData);
+                    buffer.open(QIODevice::ReadOnly);
+                    QImageReader reader(&buffer, "webp");
+                    receivedImage = reader.read();
+                    loaded = !receivedImage.isNull();
+                    buffer.close();
+                } else {
+                    // 其他格式直接加载
+                    loaded = receivedImage.loadFromData(imageData);
+                }
+                
+                if (loaded && !receivedImage.isNull()) {
+                    // 将图片转换为PNG格式
+                    QByteArray pngData;
+                    QBuffer pngBuffer(&pngData);
+                    pngBuffer.open(QIODevice::WriteOnly);
+                    bool saveSuccess = receivedImage.save(&pngBuffer, "PNG");
+                    pngBuffer.close();
+                    
+                    if (saveSuccess && !pngData.isEmpty()) {
+                        // 使用PNG格式显示图片
+                        QString pngBase64 = QString::fromLatin1(pngData.toBase64());
+                        QString htmlImage = QString("<div style='text-align:left;'><strong>%1 [%2]:</strong><br/><img src='data:image/png;base64,%3' alt='图片' style='max-width:200px; max-height:200px; margin:5px 0; border-radius:5px; border:1px solid #ddd;' /></div>")
+                            .arg(chatName).arg(timeStr).arg(pngBase64);
+                        
+                        // 确保图片能正确显示
+                        chatEdit->append(htmlImage);
+                    } else {
+                        // 图片转换失败
+                        chatEdit->append(chatName + " [" + timeStr + "]: [图片加载失败]");
+                    }
+                } else {
+                    // 图片加载失败
+                    chatEdit->append(chatName + " [" + timeStr + "]: [图片加载失败]");
+                }
+            } else {
+                // 无效的图片消息格式
+                chatEdit->append(chatName + " [" + timeStr + "]: [无效图片]");
+            }
+        } else if (message.startsWith("[EMOJI_DATA:") && message.endsWith("]")) {
+            // 处理表情数据消息 - 直接包含图片数据
+            QString base64Image = message.mid(12, message.length() - 13);
+            
+            // 在聊天窗口中显示表情
+            QTextCursor cursor = chatEdit->textCursor();
+            cursor.movePosition(QTextCursor::End);
+            
+            // 插入发送者名称和时间
+            QString senderInfo = QString("%1 [%2]: ").arg(chatName).arg(timeStr);
+            cursor.insertText(senderInfo);
+            
+            // 直接显示图片
+            QString htmlImage = QString("<img src='data:image/png;base64,%1' style='width:80px;height:80px;vertical-align:middle;'>").arg(base64Image);
+            cursor.insertHtml(htmlImage);
+            
+            // 换行
+            cursor.insertText("\n");
+        } else if (message.startsWith("[EMOJI:") && message.endsWith("]")) {
+            // 处理旧格式的表情消息（兼容旧版本）
+            QString emojiIdStr = message.mid(7, message.length() - 8);
+            int emojiId = emojiIdStr.toInt();
+            
+            // 在聊天窗口中显示表情
+            QTextCursor cursor = chatEdit->textCursor();
+            cursor.movePosition(QTextCursor::End);
+            
+            // 插入发送者名称和时间
+            QString senderInfo = QString("%1 [%2]: ").arg(chatName).arg(timeStr);
+            cursor.insertText(senderInfo);
+            
+            // 插入表情图片
+            if (emojiList.contains(emojiId)) {
+                QByteArray imageBytes = emojiList[emojiId];
+                if (!imageBytes.isEmpty()) {
+                    QString base64Image = QString::fromLatin1(imageBytes.toBase64());
+                    QString htmlImage = QString("<img src='data:image/png;base64,%1' style='width:80px;height:80px;vertical-align:middle;'>").arg(base64Image);
+                    cursor.insertHtml(htmlImage);
+                } else {
+                    cursor.insertText(QString("[表情:%1]").arg(emojiId));
+                }
+            } else {
+                cursor.insertText(QString("[表情:%1]").arg(emojiId));
+            }
+            
+            // 换行
+            cursor.insertText("\n");
+        } else {
+            // 普通文本消息
+            chatEdit->append(chatName + " [" + timeStr + "]: " + message);
+        }
+        
+        // 检查消息是否在当前聊天窗口中显示，如果不是则增加未读计数
+        if (chatTabWidget->currentWidget() != chatWidget) {
+        QString key = generateChatKey(chatId, isGroup);
+        int count = unreadMessageCounts.value(key, 0);
+        unreadMessageCounts[key] = count + 1;
+        updateTabText(chatId, isGroup, chatName);
+    } else {
+        // 如果是当前窗口，直接显示
         for (int i = 0; i < chatTabWidget->count(); ++i) {
             if (chatTabWidget->widget(i) == chatWidget) {
                 chatTabWidget->setCurrentIndex(i);
                 break;
             }
         }
+    }
     }
 }
 
@@ -750,14 +944,135 @@ void ChatWindow::onReceiveGroupMessage(int groupId, int fromId, const QString &u
             qDebug() << "[DEBUG] Group message no timestamp, using current time:" << timeStr;
         }
         
-        chatEdit->append("[" + groupName + "] " + userName + " [" + timeStr + "]: " + message);
-        // 确保聊天窗口可见
+        // 检查是否是图片消息
+        if (message.startsWith("[IMAGE]")) {
+            // 解析图片消息
+            QString imageDataStr = message.mid(7); // 去掉 [IMAGE] 前缀
+            int commaIndex = imageDataStr.indexOf(',');
+            if (commaIndex != -1) {
+                // 正确解析图片类型
+                QString imageType = imageDataStr.left(commaIndex).toLower();
+                QString imageBase64 = imageDataStr.mid(commaIndex + 1);
+                
+                // 使用正确的图片类型，默认为png
+                if (imageType.isEmpty() || (imageType != "png" && imageType != "jpg" && imageType != "jpeg" && imageType != "gif" && imageType != "webp")) {
+                    imageType = "png";
+                }
+                
+                // 重要：无论接收到的图片类型是什么，都转换为PNG格式显示
+                // 因为Qt的QTextBrowser对WebP支持有限，统一使用PNG确保显示
+                QImage receivedImage;
+                QByteArray imageData = QByteArray::fromBase64(imageBase64.toUtf8());
+                
+                // 确保图片正确加载，尤其是WebP格式
+                bool loaded = false;
+                if (imageType == "webp") {
+                    // 使用QImageReader显式指定图片格式为WebP
+                    QBuffer buffer(&imageData);
+                    buffer.open(QIODevice::ReadOnly);
+                    QImageReader reader(&buffer, "webp");
+                    receivedImage = reader.read();
+                    loaded = !receivedImage.isNull();
+                    buffer.close();
+                } else {
+                    // 其他格式直接加载
+                    loaded = receivedImage.loadFromData(imageData);
+                }
+                
+                if (loaded && !receivedImage.isNull()) {
+                    // 将图片转换为PNG格式
+                    QByteArray pngData;
+                    QBuffer pngBuffer(&pngData);
+                    pngBuffer.open(QIODevice::WriteOnly);
+                    bool saveSuccess = receivedImage.save(&pngBuffer, "PNG");
+                    pngBuffer.close();
+                    
+                    if (saveSuccess && !pngData.isEmpty()) {
+                        // 使用PNG格式显示图片
+                        QString pngBase64 = QString::fromLatin1(pngData.toBase64());
+                        QString htmlImage = QString("<div style='text-align:left;'><strong>[%1] %2 [%3]:</strong><br/><img src='data:image/png;base64,%4' alt='图片' style='max-width:200px; max-height:200px; margin:5px 0; border-radius:5px; border:1px solid #ddd;' /></div>")
+                            .arg(groupName).arg(userName).arg(timeStr).arg(pngBase64);
+                        
+                        // 确保图片能正确显示
+                        chatEdit->append(htmlImage);
+                    } else {
+                        // 图片转换失败
+                        chatEdit->append("[" + groupName + "] " + userName + " [" + timeStr + "]: [图片加载失败]");
+                    }
+                } else {
+                    // 图片加载失败
+                    chatEdit->append("[" + groupName + "] " + userName + " [" + timeStr + "]: [图片加载失败]");
+                }
+            } else {
+                // 无效的图片消息格式
+                chatEdit->append("[" + groupName + "] " + userName + " [" + timeStr + "]: [无效图片]");
+            }
+        } else if (message.startsWith("[EMOJI_DATA:") && message.endsWith("]")) {
+            // 处理表情数据消息 - 直接包含图片数据
+            QString base64Image = message.mid(12, message.length() - 13);
+            
+            // 在聊天窗口中显示表情
+            QTextCursor cursor = chatEdit->textCursor();
+            cursor.movePosition(QTextCursor::End);
+            
+            // 插入发送者名称和时间
+            QString senderInfo = QString("[%1] %2 [%3]: ").arg(groupName).arg(userName).arg(timeStr);
+            cursor.insertText(senderInfo);
+            
+            // 直接显示图片
+            QString htmlImage = QString("<img src='data:image/png;base64,%1' style='width:80px;height:80px;vertical-align:middle;'>").arg(base64Image);
+            cursor.insertHtml(htmlImage);
+            
+            // 换行
+            cursor.insertText("\n");
+        } else if (message.startsWith("[EMOJI:") && message.endsWith("]")) {
+            // 处理旧格式的表情消息（兼容旧版本）
+            QString emojiIdStr = message.mid(7, message.length() - 8);
+            int emojiId = emojiIdStr.toInt();
+            
+            // 在聊天窗口中显示表情
+            QTextCursor cursor = chatEdit->textCursor();
+            cursor.movePosition(QTextCursor::End);
+            
+            // 插入发送者名称和时间
+            QString senderInfo = QString("[%1] %2 [%3]: ").arg(groupName).arg(userName).arg(timeStr);
+            cursor.insertText(senderInfo);
+            
+            // 插入表情图片
+            if (emojiList.contains(emojiId)) {
+                QByteArray imageBytes = emojiList[emojiId];
+                if (!imageBytes.isEmpty()) {
+                    QString base64Image = QString::fromLatin1(imageBytes.toBase64());
+                    QString htmlImage = QString("<img src='data:image/png;base64,%1' style='width:80px;height:80px;vertical-align:middle;'>").arg(base64Image);
+                    cursor.insertHtml(htmlImage);
+                } else {
+                    cursor.insertText(QString("[表情:%1]").arg(emojiId));
+                }
+            } else {
+                cursor.insertText(QString("[表情:%1]").arg(emojiId));
+            }
+            
+            // 换行
+            cursor.insertText("\n");
+        } else {
+            // 普通文本消息
+            chatEdit->append("[" + groupName + "] " + userName + " [" + timeStr + "]: " + message);
+        }
+        // 检查消息是否在当前聊天窗口中显示，如果不是则增加未读计数
+    if (chatTabWidget->currentWidget() != chatWidget) {
+        QString key = generateChatKey(groupId, true);
+        int count = unreadMessageCounts.value(key, 0);
+        unreadMessageCounts[key] = count + 1;
+        updateTabText(groupId, true, groupName);
+    } else {
+        // 如果是当前窗口，直接显示
         for (int i = 0; i < chatTabWidget->count(); ++i) {
             if (chatTabWidget->widget(i) == chatWidget) {
                 chatTabWidget->setCurrentIndex(i);
                 break;
             }
         }
+    }
     }
 }
 
@@ -1055,6 +1370,479 @@ void ChatWindow::closeEvent(QCloseEvent *event) {
     }
 }
 
+// 发送图片
+void ChatWindow::onSendImage() {
+    // 检查当前是否有选中的好友
+    QWidget *currentWidget = chatTabWidget->currentWidget();
+    if (!currentWidget) {
+        QMessageBox::warning(this, "警告", "请先选择一个好友进行聊天");
+        return;
+    }
+    
+    int chatId = currentWidget->property("chatId").toInt();
+    bool isGroup = currentWidget->property("isGroup").toBool();
+    
+    if (isGroup) {
+        QMessageBox::warning(this, "警告", "暂不支持向群组发送图片");
+        return;
+    }
+    
+    // 选择图片文件，支持更多格式
+    QString imagePath = QFileDialog::getOpenFileName(
+        this, 
+        "选择要发送的图片", 
+        "", 
+        "图片文件 (*.png *.jpg *.jpeg *.bmp *.gif *.tiff *.tif *.webp *.svg *.ppm *.pgm *.pbm *.xpm *.ico);;所有文件 (*.*)"
+    );
+    
+    if (imagePath.isEmpty()) {
+        return;
+    }
+    
+    // 读取图片并转换为Base64编码
+    QFile imageFile(imagePath);
+    if (!imageFile.open(QIODevice::ReadOnly)) {
+        QMessageBox::warning(this, "错误", "无法打开图片文件");
+        return;
+    }
+    
+    QByteArray imageData = imageFile.readAll();
+    imageFile.close();
+    
+    // 获取图片类型
+    QFileInfo fileInfo(imagePath);
+    QString imageType = fileInfo.suffix().toLower();
+    
+    // 优化：对图片进行压缩，减小Base64编码后的大小
+    QImage image;
+    
+    // 确保图片正确加载
+    bool loaded = false;
+    
+    // 简化图片加载逻辑，直接使用QImage.loadFromData
+    // 这是最可靠的方式，能处理所有Qt支持的格式
+    loaded = image.loadFromData(imageData);
+    
+    // 检查图片是否加载成功
+    if (!loaded || image.isNull()) {
+        // 显示支持的图片格式，帮助用户了解支持的格式
+        QList<QByteArray> supportedFormats = QImageReader::supportedImageFormats();
+        QString supportedFormatsStr;
+        for (const QByteArray &format : supportedFormats) {
+            supportedFormatsStr += QString(format) + " ";
+        }
+        
+        qDebug() << "[DEBUG] Supported image formats:" << supportedFormatsStr;
+        qDebug() << "[DEBUG] Image type:" << imageType;
+        qDebug() << "[DEBUG] Image data size:" << imageData.size();
+        
+        QMessageBox::warning(this, "警告", QString("图片加载失败\n不支持的图片格式或文件损坏: %1\n\n当前系统支持的图片格式: %2").arg(imageType).arg(supportedFormatsStr));
+        return;
+    }
+    
+    // 如果图片太大，进行缩放
+    if (image.width() > 300 || image.height() > 300) {
+        image = image.scaled(300, 300, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    }
+    
+    // 压缩图片质量，减小文件大小
+    QByteArray compressedData;
+    QBuffer buffer(&compressedData);
+    buffer.open(QIODevice::WriteOnly);
+    
+    // 将所有格式统一转换为PNG格式，确保HTML支持
+    QString saveFormat = "PNG"; // 统一转换为PNG格式
+    bool saveSuccess = image.save(&buffer, saveFormat.toLatin1());
+    buffer.close();
+    
+    // 检查图片保存是否成功
+    if (!saveSuccess || compressedData.isEmpty()) {
+        QMessageBox::warning(this, "警告", "图片压缩失败，请尝试发送其他图片");
+        return;
+    }
+    
+    // 更新imageType为实际保存的格式
+    imageType = "png";
+    
+    // 重要：将image对象更新为转换后的PNG图片
+    QImage pngImage;
+    pngImage.loadFromData(compressedData);
+    image = pngImage;
+    
+    // 检查转换后的PNG图片是否有效
+    if (image.isNull()) {
+        QMessageBox::warning(this, "警告", "图片格式转换失败，请尝试发送其他图片");
+        return;
+    }
+    
+    // 构造图片消息格式: [IMAGE]imageType,base64data
+    // 确保使用转换后的png类型
+    QString imageMessage = QString("[IMAGE]%1,%2").arg(imageType).arg(QString(compressedData.toBase64()));
+    
+    // 进一步优化：将Base64编码后的大小限制为1MB，确保JSON能被服务器处理
+    const qint64 MAX_BASE64_SIZE = 1024 * 1024; // 1MB
+    
+    // 如果Base64编码后大小超过1MB，尝试进一步压缩
+    if (imageMessage.size() > MAX_BASE64_SIZE) {
+        // 尝试将质量降低到50%，进一步压缩
+        QByteArray moreCompressedData;
+        QBuffer moreCompressedBuffer(&moreCompressedData);
+        moreCompressedBuffer.open(QIODevice::WriteOnly);
+        
+        int lowerQuality = 50;
+        
+        // 由于已经转换为PNG格式，直接使用PNG压缩逻辑
+        // PNG格式不支持质量参数，尝试缩放图片
+        QImage scaledImage = image.scaled(
+            image.width() * 0.8, 
+            image.height() * 0.8, 
+            Qt::KeepAspectRatio, 
+            Qt::SmoothTransformation
+        );
+        scaledImage.save(&moreCompressedBuffer, "PNG");
+        
+        moreCompressedBuffer.close();
+        
+        // 重新生成Base64编码
+        QString moreCompressedImageMessage = QString("[IMAGE]%1,%2").arg(imageType).arg(QString(moreCompressedData.toBase64()));
+        
+        // 如果仍然超过大小限制，拒绝发送
+        if (moreCompressedImageMessage.size() > MAX_BASE64_SIZE) {
+            QMessageBox::warning(this, "错误", "图片过大，无法发送");
+            return;
+        }
+        
+        // 使用更压缩的图片
+        imageMessage = moreCompressedImageMessage;
+        compressedData = moreCompressedData;
+    }
+    
+    // 显示自己发送的图片，使用压缩后的图片数据
+    QTextEdit *chatEdit = chatComponents[currentWidget].chatEdit;
+    QString timeStr = QDateTime::currentDateTime().toString("hh:mm:ss");
+    
+    // 使用HTML格式显示图片，使用压缩后的PNG数据
+    QString htmlImage = QString("<div style='text-align:right;'><strong>我 [%1]:</strong><br/><img src='data:image/png;base64,%2' style='max-width:200px; max-height:200px; margin:5px 0; border-radius:5px; border:1px solid #ddd;' /></div>")
+        .arg(timeStr).arg(QString(compressedData.toBase64()));
+    
+    chatEdit->append(htmlImage);
+    chatEdit->ensureCursorVisible();
+    
+    // 发送图片消息 - 确保Base64编码数据在JSON中被正确处理
+    // 这里不需要特殊处理，因为QJsonDocument::toJson会自动处理特殊字符
+    chatClient->sendMessage(chatId, imageMessage);
+}
+
+// 发送表情包
+void ChatWindow::onSendEmoji() {
+    // 检查当前是否有选中的好友
+    QWidget *currentWidget = chatTabWidget->currentWidget();
+    if (!currentWidget) {
+        QMessageBox::warning(this, "警告", "请先选择一个好友进行聊天");
+        return;
+    }
+    
+    // 设置加载状态
+    isLoadingEmojis = true;
+    
+    // 请求最新的表情包列表
+    chatClient->requestEmojiList(userId);
+    
+    // 显示加载提示
+    statusBarLabel->setText("正在加载表情包...");
+    
+    // 直接显示表情包对话框，不使用模态加载对话框
+    // 表情包对话框会在onEmojiListUpdated中延迟显示
+}
+
+// 显示表情包对话框
+void ChatWindow::showEmojiDialog() {
+    // 检查当前是否有选中的好友
+    QWidget *currentWidget = chatTabWidget->currentWidget();
+    if (!currentWidget) {
+        return;
+    }
+    
+    int chatId = currentWidget->property("chatId").toInt();
+    bool isGroup = currentWidget->property("isGroup").toBool();
+    
+    // 创建表情包选择对话框
+    QDialog *emojiDialog = new QDialog(this);
+    emojiDialog->setWindowTitle("选择表情包");
+    emojiDialog->setFixedSize(400, 300);
+    
+    QVBoxLayout *mainLayout = new QVBoxLayout;
+    mainLayout->setContentsMargins(10, 10, 10, 10);
+    mainLayout->setSpacing(10);
+    
+    // 表情包显示区域
+    QWidget *emojiContainer = new QWidget;
+    QGridLayout *emojiLayout = new QGridLayout;
+    emojiLayout->setContentsMargins(0, 0, 0, 0);
+    emojiLayout->setSpacing(5);
+    
+    // 显示用户上传的图片表情
+    qDebug() << "Opening emoji dialog, emojiList size:" << emojiList.size();
+    int index = 0;
+    for (auto it = emojiList.constBegin(); it != emojiList.constEnd(); ++it) {
+        int emojiId = it.key();
+        const QByteArray &imageBytes = it.value();
+        
+        qDebug() << "Processing emoji:" << emojiId << "image size:" << imageBytes.size();
+        
+        // 创建表情按钮
+        QPushButton *emojiBtn = new QPushButton;
+        emojiBtn->setFixedSize(60, 60);
+        emojiBtn->setStyleSheet(
+            "QPushButton { background-color: #f0f0f0; border: 1px solid #ddd; border-radius: 4px; }"
+            "QPushButton:hover { background-color: #e0e0e0; }"
+            "QPushButton:pressed { background-color: #d0d0d0; }"
+        );
+        
+        // 加载图片到按钮
+        QPixmap pixmap;
+        if (pixmap.loadFromData(imageBytes)) {
+            // 缩放图片以适应按钮大小
+            QPixmap scaledPixmap = pixmap.scaled(50, 50, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+            emojiBtn->setIcon(QIcon(scaledPixmap));
+            emojiBtn->setIconSize(QSize(50, 50));
+            qDebug() << "Successfully loaded image for emoji:" << emojiId;
+        } else {
+            qDebug() << "Failed to load image for emoji:" << emojiId;
+            // 如果图片加载失败，显示表情ID
+            emojiBtn->setText(QString::number(emojiId));
+        }
+        
+        // 连接表情包按钮信号
+        connect(emojiBtn, &QPushButton::clicked, this, [=]() {
+            // 显示自己发送的表情
+            QTextEdit *chatEdit = chatComponents[currentWidget].chatEdit;
+            QString timeStr = QDateTime::currentDateTime().toString("hh:mm:ss");
+            
+            // 在聊天窗口中显示表情图片
+            QTextCursor cursor = chatEdit->textCursor();
+            cursor.insertText(QString("我 [%1]: ").arg(timeStr));
+            
+            // 插入图片
+            QPixmap pixmap;
+            if (pixmap.loadFromData(emojiList[emojiId])) {
+                // 缩放图片以适应聊天窗口
+                QPixmap scaledPixmap = pixmap.scaled(80, 80, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+                cursor.insertImage(scaledPixmap.toImage(), QString::number(emojiId));
+            }
+            cursor.insertText("\n");
+            
+            // 发送表情消息 - 直接包含图片数据
+            QByteArray imageBytes = emojiList[emojiId];
+            QString base64Image = QString::fromLatin1(imageBytes.toBase64());
+            QString emojiMsg = QString("[EMOJI_DATA:%1]").arg(base64Image);
+            if (isGroup) {
+                chatClient->sendGroupMessage(chatId, emojiMsg);
+            } else {
+                chatClient->sendMessage(chatId, emojiMsg);
+            }
+            
+            // 关闭对话框
+            emojiDialog->accept();
+        });
+        
+        // 添加到网格布局
+        int row = index / 5;
+        int col = index % 5;
+        emojiLayout->addWidget(emojiBtn, row, col);
+        
+        index++;
+    }
+    
+    // 如果没有用户上传的表情，显示提示信息
+    if (emojiList.isEmpty()) {
+        QLabel *noEmojiLabel = new QLabel("暂无表情包，点击下方上传按钮添加");
+        noEmojiLabel->setAlignment(Qt::AlignCenter);
+        emojiLayout->addWidget(noEmojiLabel, 0, 0, 1, 5);
+    }
+    
+    emojiContainer->setLayout(emojiLayout);
+    
+    // 添加滚动区域
+    QScrollArea *scrollArea = new QScrollArea;
+    scrollArea->setWidget(emojiContainer);
+    scrollArea->setWidgetResizable(true);
+    scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    
+    mainLayout->addWidget(scrollArea);
+    
+    // 底部按钮
+    QHBoxLayout *buttonLayout = new QHBoxLayout;
+    buttonLayout->setAlignment(Qt::AlignRight);
+    buttonLayout->setSpacing(10);
+    
+    // 上传表情包按钮
+    QPushButton *uploadBtn = new QPushButton("上传表情");
+    uploadBtn->setFixedWidth(80);
+    connect(uploadBtn, &QPushButton::clicked, this, [=]() {
+        // 选择图片文件
+        QString imagePath = QFileDialog::getOpenFileName(
+            this, 
+            "选择表情包图片", 
+            "", 
+            "图片文件 (*.png *.jpg *.jpeg *.gif *.bmp);;所有文件 (*.*)"
+        );
+        
+        if (!imagePath.isEmpty()) {
+            // 读取图片文件
+            QFile imageFile(imagePath);
+            if (imageFile.open(QIODevice::ReadOnly)) {
+                QByteArray imageData = imageFile.readAll();
+                imageFile.close();
+                
+                // 压缩图片大小，限制在100KB以内
+                QImage image;
+                if (image.loadFromData(imageData)) {
+                    // 缩放图片，最大边长不超过200像素
+                    if (image.width() > 200 || image.height() > 200) {
+                        image = image.scaled(200, 200, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+                    }
+                    
+                    // 保存为PNG格式
+                    QByteArray compressedData;
+                    QBuffer buffer(&compressedData);
+                    buffer.open(QIODevice::WriteOnly);
+                    image.save(&buffer, "PNG");
+                    buffer.close();
+                    
+                    // Base64编码
+                    QString base64Image = QString::fromLatin1(compressedData.toBase64());
+                    
+                    // 获取表情名称（使用文件名，不含扩展名）
+                    QFileInfo fileInfo(imagePath);
+                    QString emojiName = fileInfo.baseName();
+                    
+                    // 上传表情包到服务器
+                    chatClient->uploadEmoji(userId, emojiName, base64Image);
+                    
+                    QMessageBox::information(this, "成功", "表情包上传请求已发送");
+                }
+            }
+        }
+    });
+    
+    QPushButton *closeBtn = new QPushButton("关闭");
+    closeBtn->setFixedWidth(80);
+    connect(closeBtn, &QPushButton::clicked, emojiDialog, &QDialog::reject);
+    
+    buttonLayout->addWidget(uploadBtn);
+    buttonLayout->addWidget(closeBtn);
+    mainLayout->addLayout(buttonLayout);
+    
+    emojiDialog->setLayout(mainLayout);
+    emojiDialog->exec();
+}
+
+// 表情包列表更新
+void ChatWindow::onEmojiListUpdated(const QList<QJsonObject> &emojis) {
+    // 清空现有表情包列表
+    emojiList.clear();
+    
+    qDebug() << "Received emoji list with" << emojis.size() << "emojis from server";
+    
+    // 遍历接收到的表情包列表
+    for (const QJsonObject &emojiObj : emojis) {
+        qDebug() << "Processing emoji object:" << emojiObj;
+        
+        // 检查是否包含必要字段
+        if (emojiObj.contains("id") && emojiObj.contains("imageData")) {
+            int emojiId = emojiObj["id"].toInt();
+            QString imageData = emojiObj["imageData"].toString();
+            
+            qDebug() << "Emoji" << emojiId << "imageData size:" << imageData.size();
+            
+            // 将Base64编码的图片数据转换为QByteArray
+            QByteArray imageBytes = QByteArray::fromBase64(imageData.toLatin1());
+            
+            if (!imageBytes.isEmpty()) {
+                // 存储到表情包列表
+                emojiList[emojiId] = imageBytes;
+                qDebug() << "Added emoji" << emojiId << "to list, image size:" << imageBytes.size();
+            } else {
+                qDebug() << "Failed to decode image data for emoji" << emojiId;
+            }
+        } else {
+            qDebug() << "Emoji object missing required fields";
+        }
+    }
+    
+    qDebug() << "Updated emoji list with" << emojiList.size() << "emojis";
+    
+    // 清除加载提示
+    statusBarLabel->setText("表情包加载完成");
+    
+    // 重新渲染所有聊天窗口中的表情消息
+    for (int i = 0; i < chatTabWidget->count(); ++i) {
+        QWidget *chatWidget = chatTabWidget->widget(i);
+        if (chatComponents.contains(chatWidget)) {
+            QTextEdit *chatEdit = chatComponents[chatWidget].chatEdit;
+            
+            // 获取当前聊天内容
+            QString content = chatEdit->toHtml();
+            
+            // 替换所有[EMOJI:id]和[表情:id]为图片
+            QRegularExpression regex("\\[EMOJI:(\\d+)\\]|\\[表情:(\\d+)\\]");
+            QRegularExpressionMatchIterator matchIterator = regex.globalMatch(content);
+            
+            // 从后往前替换，避免索引偏移
+            QString newContent = content;
+            int offset = 0;
+            QList<QPair<int, int>> matches;
+            QList<int> emojiIds;
+            
+            // 先收集所有匹配项
+            while (matchIterator.hasNext()) {
+                QRegularExpressionMatch match = matchIterator.next();
+                int startPos = match.capturedStart() - offset;
+                int endPos = match.capturedEnd() - offset;
+                int emojiId = match.captured(1).toInt();
+                if (emojiId == 0) {
+                    emojiId = match.captured(2).toInt();
+                }
+                
+                matches.append(qMakePair(startPos, endPos));
+                emojiIds.append(emojiId);
+            }
+            
+            // 从后往前替换
+            for (int j = matches.size() - 1; j >= 0; --j) {
+                int startPos = matches[j].first;
+                int endPos = matches[j].second;
+                int emojiId = emojiIds[j];
+                
+                if (emojiList.contains(emojiId)) {
+                    QByteArray imageBytes = emojiList[emojiId];
+                    if (!imageBytes.isEmpty()) {
+                        QString base64Image = QString::fromLatin1(imageBytes.toBase64());
+                        QString htmlImage = QString("<img src='data:image/png;base64,%1' style='width:80px;height:80px;vertical-align:middle;'>").arg(base64Image);
+                        newContent.replace(startPos, endPos - startPos, htmlImage);
+                    }
+                }
+            }
+            
+            // 更新聊天内容
+            if (newContent != content) {
+                chatEdit->setHtml(newContent);
+            }
+        }
+    }
+    
+    // 如果正在加载表情包，显示表情包对话框
+    if (isLoadingEmojis) {
+        // 重置加载状态
+        isLoadingEmojis = false;
+        
+        // 延迟显示表情包对话框，确保事件循环正常运行
+        QTimer::singleShot(100, this, &ChatWindow::showEmojiDialog);
+    }
+}
+
 // 发送文件
 void ChatWindow::onSendFile() {
     // 检查当前是否有选中的好友
@@ -1082,25 +1870,32 @@ void ChatWindow::onSendFile() {
     QFileInfo fileInfo(filename);
     qint64 filesize = fileInfo.size();
     
-    // 显示发送确认对话框
-    QString message = QString("确定要将文件 '%1' (%2 KB) 发送给好友吗？")
-                      .arg(fileInfo.fileName())
-                      .arg(filesize / 1024.0, 0, 'f', 1);
+    QString displayName = fileInfo.fileName();
     
-    if (QMessageBox::question(this, "确认发送", message) != QMessageBox::Yes) {
+    // 获取对方名称
+    QString chatName = getUserNameById(chatId);
+    
+    // 显示确认对话框
+    if (QMessageBox::question(this, "确认发送", 
+                      QString("确定要将文件 '%1' (%2 KB) 发送给 %3 吗?")
+                      .arg(fileInfo.fileName())
+                      .arg(filesize / 1024.0, 0, 'f', 1)
+                      .arg(chatName)) != QMessageBox::Yes) {
         return;
     }
     
     // 创建进度对话框
     QProgressDialog *progressDialog = new QProgressDialog(this);
-    progressDialog->setWindowTitle("文件发送中");
+    progressDialog->setWindowTitle("文件传输");
     progressDialog->setLabelText(QString("正在发送 '%1'...").arg(fileInfo.fileName()));
     progressDialog->setRange(0, filesize);
+    progressDialog->setCancelButtonText("取消");
     progressDialog->setModal(true);
     
-    // 记录文件传输信息
+    // 保存文件传输信息
     FileTransferInfo info;
     info.filename = fileInfo.fileName();
+    info.filePath = filename; // 保存完整文件路径
     info.filesize = filesize;
     info.senderId = userId;
     info.receiverId = chatId;
@@ -1112,8 +1907,8 @@ void ChatWindow::onSendFile() {
     fileTransferInfo[fileId] = info;
     fileProgressDialogs[fileId] = progressDialog;
     
-    // 发送文件传输请求
-    chatClient->sendFileRequest(userId, chatId, fileInfo.fileName(), filesize);
+    // 发送文件传输请求，使用生成的fileId
+    chatClient->sendFileRequest(userId, chatId, fileInfo.fileName(), filesize, fileId);
 }
 
 // 处理收到的文件传输请求
@@ -1260,7 +2055,7 @@ void ChatWindow::onFileTransferDataReceived(const QString &fileId, int chunkInde
 
 // 处理文件传输完成的通知
 void ChatWindow::onFileTransferCompleteReceived(const QString &fileId, bool success) {
-    if (!fileTransferInfo.contains(fileId) || !fileProgressDialogs.contains(fileId)) {
+    if (!fileTransferInfo.contains(fileId)) {
         return;
     }
     
@@ -1268,14 +2063,43 @@ void ChatWindow::onFileTransferCompleteReceived(const QString &fileId, bool succ
     
     if (info.isSending) {
         // 文件发送方
-        fileProgressDialogs[fileId]->close();
-        delete fileProgressDialogs[fileId];
-        fileProgressDialogs.remove(fileId);
+        if (fileProgressDialogs.contains(fileId)) {
+            fileProgressDialogs[fileId]->close();
+            delete fileProgressDialogs[fileId];
+            fileProgressDialogs.remove(fileId);
+        }
         
         if (success) {
             QMessageBox::information(this, "成功", QString("文件 '%1' 发送成功").arg(info.filename));
         } else {
-            QMessageBox::warning(this, "失败", QString("文件 '%1' 发送失败").arg(info.filename));
+            QMessageBox::information(this, "取消", QString("文件 '%1' 发送已取消").arg(info.filename));
+        }
+        
+        info.isCompleted = true;
+        fileTransferInfo.remove(fileId);
+    } else {
+        // 文件接收方
+        if (fileProgressDialogs.contains(fileId)) {
+            fileProgressDialogs[fileId]->close();
+            delete fileProgressDialogs[fileId];
+            fileProgressDialogs.remove(fileId);
+        }
+        
+        if (receivingFiles.contains(fileId)) {
+            QFile *file = receivingFiles[fileId];
+            file->close();
+            delete file;
+            receivingFiles.remove(fileId);
+        }
+        
+        if (receivedFilesSize.contains(fileId)) {
+            receivedFilesSize.remove(fileId);
+        }
+        
+        if (success) {
+            QMessageBox::information(this, "成功", QString("文件 '%1' 接收成功").arg(info.filename));
+        } else {
+            QMessageBox::information(this, "取消", QString("文件 '%1' 接收已取消（发送方取消）").arg(info.filename));
         }
         
         info.isCompleted = true;
@@ -1307,13 +2131,17 @@ void ChatWindow::onFileTransferError(const QString &fileId, int errorCode, const
 
 // 发送文件内容
 void ChatWindow::sendFileContent(int toId, const QString &filename, const QString &fileId) {
-    // 获取文件完整路径（可能需要用户重新选择，因为我们只有文件名）
-    QString filePath = QFileDialog::getOpenFileName(this, "选择文件", QDir::homePath() + "/" + filename, 
-                                                 filename + ";;所有文件 (*)");
+    // 检查文件传输信息是否存在
+    if (!fileTransferInfo.contains(fileId)) {
+        return;
+    }
+    
+    // 获取保存的文件路径
+    QString filePath = fileTransferInfo[fileId].filePath;
     
     if (filePath.isEmpty()) {
         chatClient->sendFileTransferComplete(userId, toId, fileId, false);
-        QMessageBox::warning(this, "发送取消", "文件发送已取消");
+        QMessageBox::warning(this, "发送错误", "文件路径无效");
         // 清理资源
         if (fileProgressDialogs.contains(fileId)) {
             delete fileProgressDialogs[fileId];
@@ -1325,7 +2153,7 @@ void ChatWindow::sendFileContent(int toId, const QString &filename, const QStrin
     
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly)) {
-        QMessageBox::warning(this, "错误", "无法打开文件进行读取");
+        QMessageBox::warning(this, "错误", "无法打开文件进行读取: " + file.errorString());
         chatClient->sendFileTransferComplete(userId, toId, fileId, false);
         // 清理资源
         if (fileProgressDialogs.contains(fileId)) {
@@ -1336,12 +2164,13 @@ void ChatWindow::sendFileContent(int toId, const QString &filename, const QStrin
         return;
     }
     
-    // 分块发送文件内容，每块1024字节
-    const int chunkSize = 1024;
+    // 分块发送文件内容，增加块大小提高传输速度
+    const int chunkSize = 16384; // 从1024字节增加到16384字节
     int chunkIndex = 0;
     qint64 totalRead = 0;
+    bool isCancelled = false;
     
-    while (!file.atEnd()) {
+    while (!file.atEnd() && !isCancelled) {
         QByteArray chunk = file.read(chunkSize);
         chatClient->sendFileData(userId, toId, fileId, chunkIndex, chunk);
         
@@ -1351,11 +2180,33 @@ void ChatWindow::sendFileContent(int toId, const QString &filename, const QStrin
         // 更新进度条
         if (fileProgressDialogs.contains(fileId)) {
             fileProgressDialogs[fileId]->setValue(totalRead);
+            
+            // 检查是否取消
+            if (fileProgressDialogs[fileId]->wasCanceled()) {
+                isCancelled = true;
+                break;
+            }
         }
         
-        // 短暂延迟，避免发送过快
+        // 处理事件，确保界面响应
         QCoreApplication::processEvents();
-        QThread::msleep(50);
+        
+        // 减小延迟，提高传输速度
+        QThread::msleep(5); // 从50ms减少到5ms
+    }
+    
+    // 如果被取消，发送错误通知
+    if (isCancelled) {
+        chatClient->sendFileTransferComplete(userId, toId, fileId, false);
+        QMessageBox::information(this, "文件传输", "文件传输已取消");
+        
+        // 清理资源
+        if (fileProgressDialogs.contains(fileId)) {
+            delete fileProgressDialogs[fileId];
+            fileProgressDialogs.remove(fileId);
+        }
+        fileTransferInfo.remove(fileId);
+        return;
     }
     
     file.close();

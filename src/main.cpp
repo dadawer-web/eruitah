@@ -1,5 +1,6 @@
 // 包含Qt应用程序的核心头文件
 #include <QApplication>
+#include <QCoreApplication>
 // 包含文本编码相关的头文件
 #include <QTextCodec>
 // 包含定时器相关的头文件
@@ -11,10 +12,25 @@
 // 包含数据库操作的头文件
 #include "db/db.h"
 
+// 跨平台网络头文件处理
+#ifdef _WIN32
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+#endif
+
 // 程序入口函数
 // argc: 命令行参数数量
 // argv: 命令行参数数组
 int main(int argc, char *argv[]) {
+    // 初始化Winsock（Windows平台）
+    #ifdef _WIN32
+    WSADATA wsaData;
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+        qDebug() << "Winsock初始化失败";
+        return -1;
+    }
+    #endif
+    
     // 创建Qt应用程序实例
     // QApplication是Qt GUI应用程序的核心类，管理应用程序的资源、设置和事件循环
     QApplication a(argc, argv);
@@ -96,9 +112,11 @@ int main(int argc, char *argv[]) {
         qDebug() << "[CRITICAL] ==== 登录成功信号开始处理 ====";
         
         // 首先记录登录成功事件到日志文件
-        QFile logFile("/home/xmy/code/login_debug.log");
-        // 打开文件用于追加文本
-        if (logFile.open(QIODevice::Append | QIODevice::Text)) {
+            // 跨平台路径处理，使用应用程序所在目录
+            QString logFilePath = QCoreApplication::applicationDirPath() + "/login_debug.log";
+            QFile logFile(logFilePath);
+            // 打开文件用于追加文本
+            if (logFile.open(QIODevice::Append | QIODevice::Text)) {
             QTextStream out(&logFile);
             // 写入带时间戳的日志信息
             out << "[" << QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss.zzz") << "] " 
@@ -300,6 +318,8 @@ int main(int argc, char *argv[]) {
             // 捕获标准异常
             qDebug() << "[CRITICAL] main.cpp: 创建ChatWindow异常:" << e.what();
             // 记录异常日志
+            QString logFilePath = QCoreApplication::applicationDirPath() + "/login_debug.log";
+            QFile logFile(logFilePath);
             if (logFile.open(QIODevice::Append | QIODevice::Text)) {
                 QTextStream out(&logFile);
                 out << "[" << QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss.zzz") << "] " 
@@ -310,6 +330,8 @@ int main(int argc, char *argv[]) {
             // 捕获所有其他类型的异常
             qDebug() << "[CRITICAL] main.cpp: 创建ChatWindow未知异常";
             // 记录未知异常日志
+            QString logFilePath = QCoreApplication::applicationDirPath() + "/login_debug.log";
+            QFile logFile(logFilePath);
             if (logFile.open(QIODevice::Append | QIODevice::Text)) {
                 QTextStream out(&logFile);
                 out << "[" << QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss.zzz") << "] " 
@@ -321,7 +343,9 @@ int main(int argc, char *argv[]) {
     });
     
     // 记录信号槽连接结果到日志文件
-    QFile logFile("/home/xmy/code/login_debug.log");
+    // 跨平台路径处理，使用应用程序所在目录
+    QString logFilePath = QCoreApplication::applicationDirPath() + "/login_debug.log";
+    QFile logFile(logFilePath);
     if (logFile.open(QIODevice::Append | QIODevice::Text)) {
         QTextStream out(&logFile);
         out << "[" << QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss.zzz") << "] " 
@@ -342,6 +366,11 @@ int main(int argc, char *argv[]) {
     if (chatWindow) {
         delete chatWindow; // 释放ChatWindow对象
     }
+    
+    // 清理Winsock（Windows平台）
+    #ifdef _WIN32
+    WSACleanup();
+    #endif
     
     // 返回应用程序的退出代码
     return result;

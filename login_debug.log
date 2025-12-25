@@ -761,3 +761,144 @@
 [2025-12-03 16:47:56.523] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
 [2025-12-03 16:47:56.523] main.cpp: ChatWindowå¤§å°: (800, 600)
 [2025-12-03 16:47:56.523] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-04 10:16:04.398] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-04 10:16:08.171] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-04 10:16:08.171] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:22 userName:用户22
+[2025-12-04 10:16:08.249] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-04 10:16:08.249] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-04 10:16:08.249] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-04 10:18:45.832] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-04 10:18:48.571] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-04 10:18:48.571] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:22 userName:用户22
+[2025-12-04 10:18:48.633] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-04 10:18:48.633] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-04 10:18:48.633] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-04 10:37:21.217] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-04 10:37:29.338] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-04 10:37:29.339] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:22 userName:用户22
+[2025-12-04 10:37:29.408] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-04 10:37:29.408] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-04 10:37:29.408] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-04 10:38:17.333] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-04 10:38:22.071] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-04 10:38:22.071] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:26 userName:用户26
+[2025-12-04 10:38:22.134] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-04 10:38:22.135] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-04 10:38:22.135] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-04 10:53:37.534] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-04 10:53:42.033] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-04 10:53:42.033] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:22 userName:用户22
+[2025-12-04 10:53:42.124] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-04 10:53:42.124] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-04 10:53:42.124] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-04 10:54:03.943] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-04 10:54:08.234] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-04 10:54:08.234] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:26 userName:用户26
+[2025-12-04 10:54:08.296] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-04 10:54:08.296] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-04 10:54:08.296] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-04 10:55:11.819] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-04 10:55:16.676] LoginWindow: emitting loginSuccess signal with userId:30 userName:用户30
+[2025-12-04 10:55:16.676] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:30 userName:用户30
+[2025-12-04 10:55:16.744] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-04 10:55:16.744] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-04 10:55:16.744] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-04 11:00:06.137] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-04 11:01:21.810] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-04 11:01:21.810] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:22 userName:用户22
+[2025-12-04 11:01:21.873] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-04 11:01:21.873] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-04 11:01:21.873] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-04 11:02:26.069] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-04 11:02:46.969] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-04 11:02:46.969] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:22 userName:用户22
+[2025-12-04 11:02:47.032] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-04 11:02:47.033] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-04 11:02:47.033] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-04 11:21:34.201] main.cpp: ä¿¡å·æ§½è¿æ¥ç»æ:SUCCESS
+[2025-12-04 11:21:44.117] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-04 11:21:44.117] main.cpp: ç»å½æåä¿¡å·è§¦åï¼åå¤å¤çè·³è½¬ï¼userId:22 userName:用户22
+[2025-12-04 11:21:44.267] main.cpp: ChatWindowæ¾ç¤ºæåï¼è·³è½¬å®æ
+[2025-12-04 11:21:44.267] main.cpp: ChatWindowå¤§å°: (800, 600)
+[2025-12-04 11:21:44.268] main.cpp: ChatWindowä½ç½®: (100, 100)
+[2025-12-04 11:27:13.827] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-20 18:48:30.289] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-20 18:49:15.569] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-20 18:50:17.912] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-24 21:13:43.583] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-24 21:14:02.085] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-24 21:20:43.866] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-24 21:21:03.500] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-24 21:31:48.524] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-24 21:32:05.569] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-24 21:38:38.248] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-24 21:39:00.940] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-24 22:37:57.173] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-24 22:38:10.375] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-24 22:53:38.554] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-24 22:53:55.023] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-24 22:57:58.147] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-24 22:58:12.780] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-24 23:02:48.105] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-24 23:02:54.534] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-24 23:08:24.543] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-24 23:08:31.279] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-24 23:11:55.429] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-24 23:12:10.476] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-24 23:16:05.766] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-24 23:16:20.331] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-24 23:31:11.801] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-24 23:31:26.901] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-24 23:34:58.530] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-24 23:35:11.404] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-25 00:03:49.386] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-25 00:03:57.702] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-25 00:23:16.874] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-25 00:23:23.979] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-25 00:33:07.628] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-25 00:33:16.936] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-25 13:31:32.295] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-25 13:31:54.250] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-25 13:37:21.903] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-25 13:37:37.776] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-25 13:41:44.131] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-25 13:41:56.289] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-25 13:47:03.559] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-25 13:47:15.764] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-25 13:53:40.767] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-25 13:53:54.327] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-25 16:46:41.210] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-25 16:46:58.176] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-25 16:59:47.219] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-25 17:01:08.784] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-25 17:05:26.812] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-25 17:05:33.808] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-25 17:13:08.501] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-25 17:13:20.886] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-25 17:26:35.280] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-25 17:26:45.397] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-25 17:46:19.998] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-25 17:48:21.161] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-25 17:50:01.534] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-25 17:52:22.553] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-25 17:53:48.050] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-25 18:06:57.993] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-25 18:11:07.631] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-25 18:13:01.544] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-25 18:19:33.340] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-25 18:21:24.399] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-25 18:24:36.743] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-25 18:27:28.559] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-25 18:27:52.019] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-25 18:32:53.584] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-25 18:33:07.651] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-25 21:49:29.281] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-25 21:49:44.173] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-25 21:55:15.855] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-25 21:55:22.067] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-25 22:01:12.133] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-25 22:01:25.530] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-25 22:08:21.136] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-25 22:08:32.120] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2025-12-25 22:15:23.523] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2025-12-25 22:15:38.274] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26

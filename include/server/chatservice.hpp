@@ -11,6 +11,7 @@
 #include"server/model/offlinemessagemodel.hpp"
 #include"server/model/friendmodel.hpp"
 #include"server/model/groupmodel.hpp"
+#include"server/model/emojimodel.hpp"
 using namespace muduo;
 using namespace std;
 using namespace muduo::net;
@@ -49,6 +50,10 @@ public:
   void queryFriendList(const TcpConnectionPtr& conn,json& js,Timestamp time);
   void queryGroupList(const TcpConnectionPtr& conn,json& js,Timestamp time);
   
+  // 表情包相关业务
+  void uploadEmoji(const TcpConnectionPtr& conn,json& js,Timestamp time);
+  void queryEmojiList(const TcpConnectionPtr& conn,json& js,Timestamp time);
+  
   //处理客户端异常退出
   void clientCloseException(const TcpConnectionPtr& conn);
   
@@ -75,6 +80,7 @@ private:
     OfflineMsgModel _offlineMsgModel;
     FriendModel _friendModel;
     GroupModel _groupModel;
+    EmojiModel _emojiModel;
 
     //redis操作对象
     Redis _redis;

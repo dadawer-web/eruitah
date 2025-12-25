@@ -416,6 +416,7 @@ compiler_moc_header_make_all: build/moc/moc_chatclient.cpp build/moc/moc_chatser
 compiler_moc_header_clean:
 	-$(DEL_FILE) build/moc/moc_chatclient.cpp build/moc/moc_chatserver.cpp build/moc/moc_chatwindow.cpp build/moc/moc_loginwindow.cpp
 build/moc/moc_chatclient.cpp: src/chatclient.h \
+		src/public.h \
 		src/models/user.h \
 		src/models/group.h \
 		src/models/groupuser.h \
@@ -437,6 +438,7 @@ build/moc/moc_chatserver.cpp: src/chatserver.h \
 
 build/moc/moc_chatwindow.cpp: src/chatwindow.h \
 		src/chatclient.h \
+		src/public.h \
 		src/models/user.h \
 		src/models/group.h \
 		src/models/groupuser.h \
@@ -446,6 +448,7 @@ build/moc/moc_chatwindow.cpp: src/chatwindow.h \
 
 build/moc/moc_loginwindow.cpp: src/loginwindow.h \
 		src/chatclient.h \
+		src/public.h \
 		src/models/user.h \
 		src/models/group.h \
 		src/models/groupuser.h \
@@ -471,6 +474,7 @@ compiler_clean: compiler_rcc_clean compiler_moc_predefs_clean compiler_moc_heade
 
 build/obj/main.o: src/main.cpp src/loginwindow.h \
 		src/chatclient.h \
+		src/public.h \
 		src/models/user.h \
 		src/models/group.h \
 		src/models/groupuser.h \
@@ -479,10 +483,10 @@ build/obj/main.o: src/main.cpp src/loginwindow.h \
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/main.o src/main.cpp
 
 build/obj/chatclient.o: src/chatclient.cpp src/chatclient.h \
+		src/public.h \
 		src/models/user.h \
 		src/models/group.h \
-		src/models/groupuser.h \
-		src/public.h
+		src/models/groupuser.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o build/obj/chatclient.o src/chatclient.cpp
 
 build/obj/chatserver.o: src/chatserver.cpp src/chatserver.h \
@@ -498,6 +502,7 @@ build/obj/chatserver.o: src/chatserver.cpp src/chatserver.h \
 
 build/obj/chatwindow.o: src/chatwindow.cpp src/chatwindow.h \
 		src/chatclient.h \
+		src/public.h \
 		src/models/user.h \
 		src/models/group.h \
 		src/models/groupuser.h
@@ -505,6 +510,7 @@ build/obj/chatwindow.o: src/chatwindow.cpp src/chatwindow.h \
 
 build/obj/loginwindow.o: src/loginwindow.cpp src/loginwindow.h \
 		src/chatclient.h \
+		src/public.h \
 		src/models/user.h \
 		src/models/group.h \
 		src/models/groupuser.h

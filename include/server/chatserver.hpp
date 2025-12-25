@@ -4,6 +4,16 @@
 #ifndef CHATSERVER_H
 #define CHATSERVER_H
 
+// 包含必要的标准库头文件
+#include <map>
+#include <string>
+#include <cstring> // 用于memcpy
+#include <cstdint> // 用于uint32_t
+#include <arpa/inet.h> // 用于ntohl
+
+// 包含Muduo网络库的Logging头文件，用于日志功能
+#include <muduo/base/Logging.h>
+
 // 包含Muduo网络库的TcpServer头文件，用于实现TCP服务器功能
 #include <muduo/net/TcpServer.h>
 // 包含Muduo网络库的EventLoop头文件，用于事件循环管理
@@ -26,9 +36,7 @@ public:
     ChatServer(EventLoop *loop, const InetAddress& listenAddr, const string& nameArg);
     
     // 启动服务器
-    // 调用此方法后，服务器开始监听指定端口并接受客户端连接
     void start();
-    
 private:
     // 连接回调函数，当有新的客户端连接建立或断开时被调用
     // 参数conn: 连接对象的智能指针，封装了连接信息和操作方法
@@ -52,6 +60,11 @@ private:
     
     TcpServer _server; // 组合的Muduo库TcpServer对象
                       // TcpServer封装了TCP服务器的功能，包括监听端口、接受连接等
+    
+    // 为每个连接维护消息缓冲区，用于处理粘包问题
+    // 键：连接对象的智能指针
+    // 值：该连接对应的消息缓冲区
+    std::map<TcpConnectionPtr, std::string> _messageBuffers;
 };
 
 #endif // CHATSERVER_H  // 头文件保护宏结束标记

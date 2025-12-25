@@ -50,8 +50,8 @@
       if (mysql_query(_conn, sql.c_str()))
       {
          // 错误日志记录 - 便于问题排查和数据一致性监控
-         LOG_INFO << __FILE__ << ":" << __LINE__ << ":"
-         << sql << "更新失败!";
+         LOG_ERROR << __FILE__ << ":" << __LINE__ << ":"
+         << sql << "更新失败! MySQL错误: " << mysql_error(_conn) << ", 错误码: " << mysql_errno(_conn);
          return false;
       }
       

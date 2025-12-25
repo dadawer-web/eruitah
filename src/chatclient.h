@@ -77,6 +77,20 @@ public:
      * @param message Message content
      */
     void sendGroupMessage(int groupId, const QString &message);
+    
+    /**
+     * @brief Upload an emoji to the server
+     * @param userId Current user ID
+     * @param emojiName Emoji name
+     * @param imageData Base64 encoded image data
+     */
+    void uploadEmoji(int userId, const QString &emojiName, const QString &imageData);
+    
+    /**
+     * @brief Request user's emoji list from the server
+     * @param userId Current user ID
+     */
+    void requestEmojiList(int userId);
 
     /**
      * @brief Send friend request to another user
@@ -118,8 +132,9 @@ public:
      * @param toId Recipient user ID
      * @param filename Name of the file to transfer
      * @param filesize Size of the file in bytes
+     * @param fileId Unique identifier for the file transfer (optional, will be generated if not provided)
      */
-    void sendFileRequest(int fromId, int toId, const QString &filename, qint64 filesize);
+    void sendFileRequest(int fromId, int toId, const QString &filename, qint64 filesize, const QString &fileId = QString());
     
     /**
      * @brief Send chunk of file data during file transfer
@@ -260,6 +275,10 @@ private slots:
     void fileTransferCompleteReceived(const QString &fileId, bool success);
     void fileTransferError(const QString &fileId, int errorCode, const QString &errorMsg);
     void registerResponse(bool success, int userId, const QString &message);
+    
+    // Emoji related signals
+    void emojiUploadResponse(bool success, const QString &message);
+    void emojiListUpdated(const QList<QJsonObject> &emojis);
 };
 
 #endif // CHATCLIENT_H

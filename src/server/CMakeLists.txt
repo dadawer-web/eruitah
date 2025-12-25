@@ -3,6 +3,8 @@ set(MUDUO_ROOT_DIR "/home/xmy/muduo")
 #配置头文件搜索路径
 include_directories(${MUDUO_ROOT_DIR}/include)
 include_directories(${PROJECT_SOURCE_DIR}/src)
+include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(${PROJECT_SOURCE_DIR}/include/server)
 #配置库文件搜索路径
 link_directories(${MUDUO_ROOT_DIR}/build/lib)
 

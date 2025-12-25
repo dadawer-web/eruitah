@@ -4,6 +4,7 @@
 #include <QGridLayout>
 #include <QMessageBox>
 #include <QDateTime>
+#include <QCoreApplication>
 #include "chatwindow.h"
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
@@ -117,7 +118,8 @@ void MainWindow::stopServer() {
 
 void MainWindow::startClient() {
     // 写入日志文件，记录客户端启动
-    QFile logFile("/home/xmy/code/login_debug.log");
+    QString logFilePath = QCoreApplication::applicationDirPath() + "/login_debug.log";
+    QFile logFile(logFilePath);
     if (logFile.open(QIODevice::Append | QIODevice::Text)) {
         QTextStream out(&logFile);
         out << "[" << QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss") << "] " 
@@ -129,23 +131,27 @@ void MainWindow::startClient() {
         loginWindow = new LoginWindow();
         
         // 写入日志文件，记录LoginWindow创建
-        if (logFile.open(QIODevice::Append | QIODevice::Text)) {
-            QTextStream out(&logFile);
-            out << "[" << QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss") << "] " 
-                << "MainWindow::startClient(): created new LoginWindow at:" << (void*)loginWindow << Qt::endl;
-            logFile.close();
-        }
-        
-        // 连接登录成功信号到槽函数
-        bool connectResult = connect(loginWindow, &LoginWindow::loginSuccess, this, &MainWindow::handleLoginSuccess);
-        
-        // 写入日志文件，记录信号槽连接结果
-        if (logFile.open(QIODevice::Append | QIODevice::Text)) {
-            QTextStream out(&logFile);
-            out << "[" << QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss") << "] " 
-                << "MainWindow::startClient(): connect signal-slot result:" << (connectResult ? "SUCCESS" : "FAILED") << Qt::endl;
-            logFile.close();
-        }
+            QString logFilePath = QCoreApplication::applicationDirPath() + "/login_debug.log";
+            QFile logFile(logFilePath);
+            if (logFile.open(QIODevice::Append | QIODevice::Text)) {
+                QTextStream out(&logFile);
+                out << "[" << QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss") << "] " 
+                    << "MainWindow::startClient(): created new LoginWindow at:" << (void*)loginWindow << Qt::endl;
+                logFile.close();
+            }
+            
+            // 连接登录成功信号到槽函数
+            bool connectResult = connect(loginWindow, &LoginWindow::loginSuccess, this, &MainWindow::handleLoginSuccess);
+            
+            // 写入日志文件，记录信号槽连接结果
+            logFilePath = QCoreApplication::applicationDirPath() + "/login_debug.log";
+            logFile.setFileName(logFilePath);
+            if (logFile.open(QIODevice::Append | QIODevice::Text)) {
+                QTextStream out(&logFile);
+                out << "[" << QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss") << "] " 
+                    << "MainWindow::startClient(): connect signal-slot result:" << (connectResult ? "SUCCESS" : "FAILED") << Qt::endl;
+                logFile.close();
+            }
         
         // 直接在程序中添加日志输出
         addLog("信号槽连接: " + QString(connectResult ? "成功" : "失败"));
@@ -179,7 +185,8 @@ void MainWindow::onServerStopped() {
 
 void MainWindow::handleLoginSuccess(int userId, const QString &userName) {
     // 将调试信息写入文件，便于在无图形界面环境下诊断
-    QFile logFile("/home/xmy/code/login_debug.log");
+    QString logFilePath = QCoreApplication::applicationDirPath() + "/login_debug.log";
+    QFile logFile(logFilePath);
     if (logFile.open(QIODevice::Append | QIODevice::Text)) {
         QTextStream out(&logFile);
         out << "[" << QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss") << "] " 

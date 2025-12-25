@@ -18,6 +18,8 @@
 #include <QProgressDialog>
 #include <QFileDialog>
 #include <QFile>
+#include <QScrollArea>
+#include <QGridLayout>
 #include "chatclient.h"
 #include "models/user.h"
 #include "models/group.h"
@@ -25,6 +27,7 @@
 // 文件传输信息结构体
 struct FileTransferInfo {
     QString filename;     // 文件名
+    QString filePath;     // 文件完整路径
     qint64 filesize;      // 文件大小
     int senderId;         // 发送者ID
     int receiverId;       // 接收者ID
@@ -90,6 +93,14 @@ private:
     
     // 输入框映射
     QMap<QWidget*, QLineEdit*> inputLineEdits;
+    
+    // 未读消息计数映射 (chatId_isGroup -> count)
+    QMap<QString, int> unreadMessageCounts;
+    
+    // 表情包相关
+    QMap<int, QByteArray> emojiList; // 存储用户的表情包，key为表情ID，value为图片数据
+    bool isLoadingEmojis; // 标记是否正在加载表情包
+    QDialog *currentEmojiDialog; // 当前显示的表情包对话框
 
     // 文件传输相关成员变量
     QMap<QString, QFile*> receivingFiles;    // 接收中的文件映射 (fileId -> QFile*)
@@ -107,6 +118,10 @@ private:
     
     // 创建聊天窗口的辅助方法
     void createChatWidget(int chatId, const QString &chatName, bool isGroup);
+    
+    // 辅助方法
+    QString generateChatKey(int chatId, bool isGroup);
+    void updateTabText(int chatId, bool isGroup, const QString &chatName);
 
 public slots:
     // 连接相关槽函数
@@ -118,6 +133,8 @@ public slots:
     
     // 消息相关槽函数
     void onSendMessage();
+    void onSendImage();
+    void onSendEmoji();
     void onReceiveMessage(int fromId, const QString &message, const QString &fromName = "", bool isGroup = false, int groupId = -1, const QString &timestamp = "");
     void onReceiveGroupMessage(int groupId, int fromId, const QString &userName, const QString &message, const QString &timestamp = "");
     
@@ -152,6 +169,12 @@ public slots:
     void onContactSelected();
     void onLogout();
     void showContextMenu(const QPoint &pos);
+    
+    // 表情包相关槽函数
+    void onEmojiListUpdated(const QList<QJsonObject> &emojis);
+    
+    // 显示表情包对话框
+    void showEmojiDialog();
 
 protected:
     void closeEvent(QCloseEvent *event) override;

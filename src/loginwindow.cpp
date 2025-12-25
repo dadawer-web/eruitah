@@ -1,6 +1,7 @@
 #include "loginwindow.h"
 #include <QDebug>
 #include <QTimer>
+#include <QCoreApplication>
 
 LoginWindow::LoginWindow(QWidget *parent) : QMainWindow(parent) {
     // 设置窗口标题和大小
@@ -11,7 +12,9 @@ LoginWindow::LoginWindow(QWidget *parent) : QMainWindow(parent) {
 
 
     // 应用样式表
-    QFile styleFile("/home/xmy/code/src/styles.qss");
+    // 跨平台路径处理，使用应用程序所在目录
+    QString styleFilePath = QCoreApplication::applicationDirPath() + "/styles.qss";
+    QFile styleFile(styleFilePath);
     if (styleFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
         QString styleSheet = styleFile.readAll();
         setStyleSheet(styleSheet);
@@ -69,11 +72,31 @@ LoginWindow::LoginWindow(QWidget *parent) : QMainWindow(parent) {
     );
     loginTitleLabel->setAlignment(Qt::AlignCenter);
 
+    // 服务器地址输入框
+    serverLabel = new QLabel("服务器地址");
+    serverLabel->setStyleSheet(
+        "color: #666; "
+        "font-weight: 500; "
+        "margin-bottom: 8px;"
+    );
+    
+    serverLineEdit = new QLineEdit;
+    serverLineEdit->setText("127.0.0.1:6000"); // 默认值
+    serverLineEdit->setStyleSheet(
+        "height: 44px; "
+        "border: 1px solid #e0e0e0; "
+        "border-radius: 8px; "
+        "padding: 0 15px; "
+        "font-size: 14px; "
+        "background-color: #fafafa;"
+    );
+    
     // 用户ID输入框
     idLabel = new QLabel("用户ID");
     idLabel->setStyleSheet(
         "color: #666; "
         "font-weight: 500; "
+        "margin-top: 18px; "
         "margin-bottom: 8px;"
     );
     
@@ -136,6 +159,10 @@ LoginWindow::LoginWindow(QWidget *parent) : QMainWindow(parent) {
     loginLayout->setSpacing(0);
     
     loginLayout->addWidget(loginTitleLabel);
+    
+    // 服务器地址部分
+    loginLayout->addWidget(serverLabel);
+    loginLayout->addWidget(serverLineEdit);
     
     // 用户ID部分
     loginLayout->addWidget(idLabel);
@@ -298,9 +325,22 @@ void LoginWindow::handleLogin() {
         return;
     }
 
+    // 解析服务器地址
+    QString serverAddress = serverLineEdit->text().trimmed();
+    QString host = "127.0.0.1";
+    quint16 port = 6000;
+    
+    if (!serverAddress.isEmpty()) {
+        QStringList parts = serverAddress.split(":");
+        if (parts.size() == 2) {
+            host = parts[0].trimmed();
+            port = parts[1].toUShort();
+        }
+    }
+    
     // 先连接服务器，再登录
-    if (!chatClient->connectToServer("127.0.0.1", 6000)) {
-        QMessageBox::warning(this, "连接失败", "无法连接到服务器，请检查服务器是否运行");
+    if (!chatClient->connectToServer(host, port)) {
+        QMessageBox::warning(this, "连接失败", "无法连接到服务器，请检查服务器地址是否正确");
         return;
     }
 
@@ -319,9 +359,22 @@ void LoginWindow::handleRegister() {
         return;
     }
 
+    // 解析服务器地址
+    QString serverAddress = serverLineEdit->text().trimmed();
+    QString host = "127.0.0.1";
+    quint16 port = 6000;
+    
+    if (!serverAddress.isEmpty()) {
+        QStringList parts = serverAddress.split(":");
+        if (parts.size() == 2) {
+            host = parts[0].trimmed();
+            port = parts[1].toUShort();
+        }
+    }
+    
     // 先连接服务器，再注册
-    if (!chatClient->connectToServer("127.0.0.1", 6000)) {
-        QMessageBox::warning(this, "连接失败", "无法连接到服务器，请检查服务器是否运行");
+    if (!chatClient->connectToServer(host, port)) {
+        QMessageBox::warning(this, "连接失败", "无法连接到服务器，请检查服务器地址是否正确");
         return;
     }
 

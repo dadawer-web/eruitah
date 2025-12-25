@@ -10,7 +10,14 @@
 #include <QThread>
 #include <QRandomGenerator>
 #include <string>
-#include <arpa/inet.h>  // 用于ntohl函数
+
+// 跨平台网络头文件处理
+#ifdef _WIN32
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+#else
+    #include <arpa/inet.h>  // 用于ntohl函数
+#endif
 
 // ChatClient类实现 - 客户端核心通信模块
 // 设计思路：采用事件驱动架构，基于Qt的信号槽机制实现异步网络通信
@@ -43,19 +50,10 @@ ChatClient::ChatClient(QObject *parent) : QObject(parent) {
         emit connectionStateChanged(false);
     });
     
-    // 连接到服务器
-    qDebug() << "ChatClient: Attempting to connect to server at 127.0.0.1:6000";
-    socket->connectToHost("127.0.0.1", 6000);
-    
-    // 等待连接
-    if (socket->waitForConnected(5000)) {
-        qDebug() << "ChatClient: Connection to server established successfully";
-        isConnected = true;
-        qDebug() << "ChatClient: Waiting for messages from server";
-    } else {
-        qDebug() << "ChatClient: Failed to connect to server, error:" << socket->errorString();
-        qDebug() << "ChatClient: Socket state after connection attempt:" << socket->state();
-    }
+    // 连接到服务器 - 默认连接到本地，实际公网运行时会通过connectToServer方法重新连接
+    qDebug() << "ChatClient: Initializing socket, will connect to server later";
+    isConnected = false;
+    qDebug() << "ChatClient: Socket initialized, waiting for explicit connectToServer call";
     
     qDebug() << "ChatClient: Signal connections set up successfully";
     
@@ -169,6 +167,24 @@ void ChatClient::sendGroupMessage(int groupId, const QString &message) {
     sendJsonMessage(msgObj);
 }
 
+// 上传表情包到服务器
+void ChatClient::uploadEmoji(int userId, const QString &emojiName, const QString &imageData) {
+    QJsonObject message;
+    message["msgid"] = MsgType::UPLOAD_EMOJI_MSG; // 假设服务器支持的消息类型
+    message["id"] = userId;
+    message["name"] = emojiName;
+    message["imageData"] = imageData;
+    sendJsonMessage(message);
+}
+
+// 请求用户表情包列表
+void ChatClient::requestEmojiList(int userId) {
+    QJsonObject message;
+    message["msgid"] = MsgType::QUERY_EMOJI_LIST_MSG; // 假设服务器支持的消息类型
+    message["id"] = userId;
+    sendJsonMessage(message);
+}
+
 void ChatClient::addFriend(int userId, int friendId) {
     QJsonObject message;
     message["msgid"] = MsgType::ADD_FRIEND_MSG;
@@ -221,14 +237,15 @@ QString ChatClient::generateFileId() {
 }
 
 // 文件传输相关函数实现
-void ChatClient::sendFileRequest(int fromId, int toId, const QString &filename, long long filesize) {
+void ChatClient::sendFileRequest(int fromId, int toId, const QString &filename, long long filesize, const QString &fileId) {
     QJsonObject message;
     message["msgid"] = MsgType::FILE_TRANSFER_REQ;
     message["from"] = fromId;
     message["to"] = toId;
     message["filename"] = filename;
     message["filesize"] = filesize;
-    message["fileid"] = generateFileId(); // 生成唯一文件ID
+    message["fileid"] = fileId.isEmpty() ? generateFileId() : fileId; // 使用传入的fileId或生成新的
+    
     sendJsonMessage(message);
 }
 
@@ -267,7 +284,7 @@ void ChatClient::sendFileData(int fromId, int toId, const QString &fileId, int c
 // 设计亮点：
 // 1. 线程安全实现：使用QMutexLocker确保多线程环境下的安全发送
 // 2. 兼容性处理：自动设置type字段与msgid保持一致，确保与服务器兼容
-// 3. 可靠传输：使用换行符作为消息分隔符，解决粘包问题
+// 3. 可靠传输：使用长度前缀法，解决粘包问题
 // 4. 延迟机制：增加等待时间确保数据写入和消息分离
 void ChatClient::sendJsonMessage(const QJsonObject &message) {
     QMutexLocker locker(&mutex); // 线程安全锁，确保并发发送安全
@@ -288,12 +305,20 @@ void ChatClient::sendJsonMessage(const QJsonObject &message) {
     }
     
     QJsonDocument doc(msgCopy);
-    QByteArray data = doc.toJson(QJsonDocument::Compact);
+    QByteArray jsonData = doc.toJson(QJsonDocument::Compact);
     
-    // 使用换行符作为分隔符，解决TCP粘包问题
-    data.append('\n');
+    // 使用长度前缀法，在消息前添加4字节的长度信息，解决TCP粘包问题
+    // 注意：这里使用大端字节序，与服务器端保持一致
+    qint32 length = jsonData.size();
+    QByteArray lengthBytes;
+    QDataStream stream(&lengthBytes, QIODevice::WriteOnly);
+    stream.setByteOrder(QDataStream::BigEndian);
+    stream << length;
     
-    // 发送带分隔符的JSON数据
+    // 拼接长度前缀和JSON数据
+    QByteArray data = lengthBytes + jsonData;
+    
+    // 发送带长度前缀的JSON数据
     qint64 bytesWritten = socket->write(data);
     
     // 强制刷新socket缓冲区，确保数据立即发送
@@ -453,6 +478,9 @@ void ChatClient::processMessage(const QJsonObject &message) {
                     }
                 }
             }
+
+            // 登录成功后自动请求表情包列表
+            requestEmojiList(currentUserId);
 
             // 通知UI层登录成功
             emit loginResponse(true, "登录成功");
@@ -923,6 +951,54 @@ void ChatClient::processMessage(const QJsonObject &message) {
         
         qDebug() << "File transfer" << (accept ? "accepted" : "rejected") << "for fileId:" << fileId;
         emit fileTransferAccepted(fileId, accept);
+        break;
+    }
+    
+    case MsgType::UPLOAD_EMOJI_MSG_ACK: {
+        qDebug() << "Processing UPLOAD_EMOJI_MSG_ACK (message type:" << msgType << ")";
+        int errno_val = message["errno"].toInt();
+        if (errno_val != 0) {
+            QString errorMsg = message["errmsg"].toString();
+            qDebug() << "Emoji upload failed:" << errorMsg;
+            emit emojiUploadResponse(false, errorMsg);
+        } else {
+            // 获取表情包信息
+            long long emojiId = message["emojiId"].toVariant().toLongLong();
+            QString name = message["name"].toString();
+            qDebug() << "Emoji upload successful! ID:" << emojiId << "Name:" << name;
+            emit emojiUploadResponse(true, "");
+            // 上传成功后，应该刷新表情包列表
+            requestEmojiList(currentUserId);
+        }
+        break;
+    }
+    
+    case MsgType::QUERY_EMOJI_LIST_MSG_ACK: {
+        qDebug() << "Processing QUERY_EMOJI_LIST_MSG_ACK (message type:" << msgType << ")";
+        int errno_val = message["errno"].toInt();
+        if (errno_val == 0) {
+            if (message.contains("emojis")) {
+                QList<QJsonObject> emojiList;
+                if (message["emojis"].isArray()) {
+                    QJsonArray emojisArray = message["emojis"].toArray();
+                    for (const QJsonValue &value : emojisArray) {
+                        if (value.isString()) {
+                            // 处理字符串形式的表情包信息
+                            QString emojiStr = value.toString();
+                            QJsonDocument doc = QJsonDocument::fromJson(emojiStr.toUtf8());
+                            if (doc.isObject()) {
+                                emojiList.append(doc.object());
+                            }
+                        } else if (value.isObject()) {
+                            // 直接处理对象形式的表情包信息
+                            emojiList.append(value.toObject());
+                        }
+                    }
+                    qDebug() << "Received emoji list with" << emojiList.size() << "emojis";
+                    emit emojiListUpdated(emojiList);
+                }
+            }
+        }
         break;
     }
     

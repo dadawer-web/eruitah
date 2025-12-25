@@ -39,6 +39,8 @@ private:
     // 登录界面组件
     QWidget *loginWidget;
     QLabel *loginTitleLabel;
+    QLabel *serverLabel;
+    QLineEdit *serverLineEdit;
     QLabel *idLabel;
     QLineEdit *idLineEdit;
     QLabel *passwordLabel;

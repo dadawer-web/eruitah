@@ -39,6 +39,12 @@ enum EnMsgType
     FILE_TRANSFER_ACK,      // File transfer response
     FILE_TRANSFER_DATA,     // File data transfer
     FILE_TRANSFER_COMPLETE, // File transfer complete notification
-    FILE_TRANSFER_ERROR     // File transfer error notification
+    FILE_TRANSFER_ERROR,    // File transfer error notification
+    
+    // Emoji related message types
+    UPLOAD_EMOJI_MSG,       // Upload emoji request message
+    UPLOAD_EMOJI_MSG_ACK,   // Upload emoji response message
+    QUERY_EMOJI_LIST_MSG,   // Query emoji list request message
+    QUERY_EMOJI_LIST_MSG_ACK // Query emoji list response message
 };
 #endif
