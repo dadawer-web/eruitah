@@ -2,6 +2,8 @@
 #include <QDebug>
 #include <QTimer>
 #include <QCoreApplication>
+#include <QFileDialog>
+#include <QPixmap>
 
 LoginWindow::LoginWindow(QWidget *parent) : QMainWindow(parent) {
     // 设置窗口标题和大小
@@ -236,6 +238,41 @@ LoginWindow::LoginWindow(QWidget *parent) : QMainWindow(parent) {
         "background-color: #fafafa;"
     );
 
+    // 头像上传
+    registerAvatarLabel = new QLabel("头像");
+    registerAvatarLabel->setStyleSheet(
+        "color: #666; "
+        "font-weight: 500; "
+        "margin-top: 18px; "
+        "margin-bottom: 8px;"
+    );
+    
+    QHBoxLayout *avatarLayout = new QHBoxLayout;
+    
+    registerAvatarButton = new QPushButton("选择头像");
+    registerAvatarButton->setStyleSheet(
+        "height: 44px; "
+        "background-color: white; "
+        "color: #3498db; "
+        "border: 1px solid #3498db; "
+        "border-radius: 8px; "
+        "font-size: 14px; "
+        "font-weight: 500;"
+    );
+    
+    avatarPreviewLabel = new QLabel;
+    avatarPreviewLabel->setFixedSize(80, 80);
+    avatarPreviewLabel->setStyleSheet(
+        "border: 1px solid #e0e0e0; "
+        "border-radius: 40px; "
+        "background-color: #fafafa;"
+    );
+    avatarPreviewLabel->setAlignment(Qt::AlignCenter);
+    
+    avatarLayout->addWidget(registerAvatarButton);
+    avatarLayout->addWidget(avatarPreviewLabel);
+    avatarLayout->setSpacing(12);
+
     // 按钮
     registerSubmitButton = new QPushButton("注册");
     registerSubmitButton->setStyleSheet(
@@ -274,6 +311,10 @@ LoginWindow::LoginWindow(QWidget *parent) : QMainWindow(parent) {
     registerLayout->addWidget(registerPasswordLabel);
     registerLayout->addWidget(registerPasswordLineEdit);
     
+    // 头像部分
+    registerLayout->addWidget(registerAvatarLabel);
+    registerLayout->addLayout(avatarLayout);
+    
     // 按钮部分
     registerLayout->addSpacing(25);
     
@@ -298,6 +339,21 @@ LoginWindow::LoginWindow(QWidget *parent) : QMainWindow(parent) {
     connect(registerButton, &QPushButton::clicked, this, &LoginWindow::switchToRegister);
     connect(registerSubmitButton, &QPushButton::clicked, this, &LoginWindow::handleRegister);
     connect(backToLoginButton, &QPushButton::clicked, this, &LoginWindow::switchToLogin);
+    connect(registerAvatarButton, &QPushButton::clicked, this, [=]() {
+        QString filePath = QFileDialog::getOpenFileName(this, "选择头像", ".", "图像文件 (*.png *.jpg *.jpeg)");
+        if (!filePath.isEmpty()) {
+            avatarPath = filePath;
+            QPixmap pixmap(filePath);
+            QPixmap scaledPixmap = pixmap.scaled(avatarPreviewLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+            avatarPreviewLabel->setPixmap(scaledPixmap);
+        }
+    });
+    
+    // 连接头像相关信号
+    connect(chatClient, &ChatClient::userAvatarReceived, this, [=](const QString &avatarPath) {
+        qDebug() << "Received user avatar path:" << avatarPath;
+        // 这里可以处理头像更新，但登录窗口可能已经关闭，所以主要在ChatWindow中处理
+    });
     
     // 登录窗口初始化完成，等待用户手动登录
 }
@@ -378,8 +434,8 @@ void LoginWindow::handleRegister() {
         return;
     }
 
-    // 调用客户端注册方法
-    chatClient->registerUser(name, password);
+    // 调用客户端注册方法，传入头像路径
+    chatClient->registerUser(name, password, avatarPath);
 }
 
 void LoginWindow::switchToRegister() {
@@ -464,23 +520,31 @@ void LoginWindow::handleLoginResponse(bool success, const QString &message) {
             logFile.close();
         }
         
-        // 直接发出登录成功信号，不等待消息框
-        emit loginSuccess(userId, userName);
-        
-        // 注意：移除登录成功消息框，避免干扰窗口跳转
-        qDebug() << "[CRITICAL] Login success signal emitted, window switching should proceed";
+        // 延迟发出登录成功信号，确保ChatClient的processMessage方法已经处理完登录响应
+        // 这样ChatWindow创建时，currentUserAvatar已经被正确设置
+        QTimer::singleShot(200, this, [=]() {
+            // 检查头像数据是否已经被保存
+            QString avatarData = chatClient->getCurrentUserAvatar();
+            qDebug() << "[CRITICAL] Avatar data before emitting loginSuccess:" << avatarData.left(50) << (avatarData.length() > 50 ? "..." : "") << "length:" << avatarData.length();
+            
+            // 发出登录成功信号，传递用户ID和名称
+            emit loginSuccess(userId, userName);
+            
+            // 注意：移除登录成功消息框，避免干扰窗口跳转
+            qDebug() << "[CRITICAL] Login success signal emitted after delay, window switching should proceed";
 
-        // 在 ChatWindow 创建并连接信号槽后再请求好友和群组列表，避免丢失初始的列表更新信号
-        // 使用短延迟确保 ChatWindow 构造完成并连接完信号
-        QTimer::singleShot(100, this, [=]() {
-            qDebug() << "[CRITICAL] Requesting friend list after loginSuccess for userId:" << userId;
-            chatClient->requestFriendList(userId);
-        });
+            // 在 ChatWindow 创建并连接信号槽后再请求好友和群组列表，避免丢失初始的列表更新信号
+            // 使用短延迟确保 ChatWindow 构造完成并连接完信号
+            QTimer::singleShot(100, this, [=]() {
+                qDebug() << "[CRITICAL] Requesting friend list after loginSuccess for userId:" << userId;
+                chatClient->requestFriendList(userId);
+            });
 
-        // 请求群组列表稍后执行，避免网络消息合并
-        QTimer::singleShot(300, this, [=]() {
-            qDebug() << "[CRITICAL] Requesting group list after loginSuccess for userId:" << userId;
-            chatClient->requestGroupList(userId);
+            // 请求群组列表稍后执行，避免网络消息合并
+            QTimer::singleShot(300, this, [=]() {
+                qDebug() << "[CRITICAL] Requesting group list after loginSuccess for userId:" << userId;
+                chatClient->requestGroupList(userId);
+            });
         });
 
         // 移除登录成功消息框，避免干扰窗口跳转

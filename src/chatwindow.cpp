@@ -16,6 +16,12 @@
 #include <QBuffer>
 #include <QImage>
 #include <QImageReader>
+#include <QPixmap>
+#include <QPainter>
+#include <QBrush>
+#include <QFont>
+#include <QPainterPath>
+#include <QProcess>
 
 ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, QWidget *parent) : QMainWindow(parent), userId(userId), userName(userName), chatClient(client), loginHandled(false), friendListLoaded(false), offlineMessagesProcessed(false), isLoggingOut(false) {
     // 设置窗口标题
@@ -66,44 +72,38 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     } else {
         chatClient = new ChatClient(this);
     }
-    // 连接信号槽
-    connect(chatClient, &ChatClient::connected, this, &ChatWindow::onConnected);
-    connect(chatClient, &ChatClient::disconnected, this, &ChatWindow::onDisconnected);
-    connect(chatClient, &ChatClient::messageReceived, this, &ChatWindow::onReceiveMessage);
-    connect(chatClient, &ChatClient::groupMessageReceived, this, &ChatWindow::onReceiveGroupMessage);
-    connect(chatClient, &ChatClient::friendListUpdated, this, &ChatWindow::onFriendListUpdated);
-    connect(chatClient, &ChatClient::groupListUpdated, this, &ChatWindow::onGroupListUpdated);
-    connect(chatClient, &ChatClient::addFriendResponse, this, &ChatWindow::onAddFriendResponse);
-    connect(chatClient, &ChatClient::addGroupResponse, this, &ChatWindow::onAddGroupResponse);
-    connect(chatClient, &ChatClient::createGroupResponse, this, &ChatWindow::onCreateGroupResponse);
-
-    connect(chatClient, &ChatClient::emojiListUpdated, this, &ChatWindow::onEmojiListUpdated);
-
-    connect(chatClient, &ChatClient::fileTransferRequestReceived, this, &ChatWindow::onFileTransferRequestReceived);
-    connect(chatClient, &ChatClient::fileTransferAccepted, this, &ChatWindow::onFileTransferAccepted);
-    connect(chatClient, &ChatClient::fileTransferDataReceived, this, &ChatWindow::onFileTransferDataReceived);
-    connect(chatClient, &ChatClient::fileTransferCompleteReceived, this, &ChatWindow::onFileTransferCompleteReceived);
-    connect(chatClient, &ChatClient::fileTransferError, this, &ChatWindow::onFileTransferError);
-
     // 初始化表情包相关成员变量
     isLoadingEmojis = false;
     currentEmojiDialog = nullptr;
     
     // 初始化左侧联系人树
     contactTreeWidget = new QTreeWidget;
-    contactTreeWidget->setHeaderLabel("联系人");
     contactTreeWidget->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(contactTreeWidget, &QTreeWidget::itemClicked, this, &ChatWindow::onContactSelected);
     connect(contactTreeWidget, &QTreeWidget::customContextMenuRequested, this, &ChatWindow::showContextMenu);
+    
+    // 设置联系人树列数和表头
+    contactTreeWidget->setColumnCount(3);
+    QStringList headers;
+    headers << "头像" << "联系人" << "状态";
+    contactTreeWidget->setHeaderLabels(headers);
+    
+    // 设置列宽
+    contactTreeWidget->setColumnWidth(0, 50); // 头像列宽度
+    contactTreeWidget->setColumnWidth(1, 150); // 联系人列宽度
+    contactTreeWidget->setColumnWidth(2, 50); // 状态列宽度
+    contactTreeWidget->setIndentation(0); // 去除缩进
 
     // 创建好友和群组节点
     friendRoot = new QTreeWidgetItem(contactTreeWidget);
-    friendRoot->setText(0, "好友");
+    friendRoot->setText(1, "好友"); // 在联系人列显示标题
     friendRoot->setExpanded(true);
+    friendRoot->setFirstColumnSpanned(true); // 好友根节点跨列
     
     groupRoot = new QTreeWidgetItem(contactTreeWidget);
-    groupRoot->setText(0, "群组");
+    groupRoot->setText(1, "群组"); // 在联系人列显示标题
     groupRoot->setExpanded(true);
+    groupRoot->setFirstColumnSpanned(true); // 群组根节点跨列
 
     // 初始化聊天标签页
     chatTabWidget = new QTabWidget;
@@ -121,6 +121,532 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     statusBarLabel = new QLabel(QString("已登录: %1").arg(userName));
     statusBar()->addWidget(statusBarLabel);
 
+    // 创建顶部用户信息和头像区域
+    QWidget *topBar = new QWidget;
+    QHBoxLayout *topLayout = new QHBoxLayout(topBar);
+    topLayout->setContentsMargins(15, 10, 15, 10);
+    topLayout->setSpacing(15);
+    
+    // 用户头像
+    avatarLabel = new QLabel;
+    avatarLabel->setFixedSize(50, 50); // 调整头像大小为50x50
+    avatarLabel->setStyleSheet(
+        "border: 2px solid #3498db; "
+        "border-radius: 25px; "
+        "background-color: #f0f0f0;"
+    );
+    avatarLabel->setAlignment(Qt::AlignCenter);
+    
+    // 初始显示用户名首字母
+    QChar firstChar = userName.isEmpty() ? 'U' : userName[0];
+    avatarLabel->setText(firstChar.toUpper());
+    avatarLabel->setStyleSheet(avatarLabel->styleSheet() + 
+        "font-size: 20px; "
+        "font-weight: bold; "
+        "color: #3498db;"
+    );
+    
+    // 连接信号槽
+    connect(chatClient, &ChatClient::connected, this, &ChatWindow::onConnected);
+    connect(chatClient, &ChatClient::disconnected, this, &ChatWindow::onDisconnected);
+    connect(chatClient, &ChatClient::messageReceived, this, &ChatWindow::onReceiveMessage);
+    connect(chatClient, &ChatClient::groupMessageReceived, this, &ChatWindow::onReceiveGroupMessage);
+    connect(chatClient, &ChatClient::friendListUpdated, this, &ChatWindow::onFriendListUpdated);
+    connect(chatClient, &ChatClient::groupListUpdated, this, &ChatWindow::onGroupListUpdated);
+    connect(chatClient, &ChatClient::addFriendResponse, this, &ChatWindow::onAddFriendResponse);
+    connect(chatClient, &ChatClient::addGroupResponse, this, &ChatWindow::onAddGroupResponse);
+    connect(chatClient, &ChatClient::createGroupResponse, this, &ChatWindow::onCreateGroupResponse);
+
+    connect(chatClient, &ChatClient::emojiListUpdated, this, &ChatWindow::onEmojiListUpdated);
+    connect(chatClient, &ChatClient::avatarUpdated, this, [this](const QString &avatarData) {
+        // 更新当前用户头像（统一使用数据库处理）
+        qDebug() << "Updating user avatar from database, data length:" << avatarData.length();
+        if (!avatarData.isEmpty()) {
+            QPixmap pixmap;
+            QByteArray decodedData;
+            
+            // 直接处理Base64编码数据（统一从数据库获取）
+            bool loadSuccess = false;
+            // 检查是Data URL还是纯Base64编码数据
+            if (avatarData.startsWith("data:image/")) {
+                // Data URL格式：data:image/png;base64,...
+                int commaPos = avatarData.indexOf(',');
+                if (commaPos != -1) {
+                    QString base64Data = avatarData.mid(commaPos + 1);
+                    decodedData = QByteArray::fromBase64(base64Data.toUtf8());
+                    
+                    // 尝试检测图片格式或使用常见格式
+                    loadSuccess = pixmap.loadFromData(decodedData);
+                    if (!loadSuccess) {
+                        // 如果自动检测失败，尝试常见的图片格式
+                        loadSuccess = pixmap.loadFromData(decodedData, "PNG");
+                    }
+                    if (!loadSuccess) {
+                        loadSuccess = pixmap.loadFromData(decodedData, "JPEG");
+                    }
+                    if (!loadSuccess) {
+                        loadSuccess = pixmap.loadFromData(decodedData, "BMP");
+                    }
+                }
+            } else {
+                // 纯Base64编码数据
+                decodedData = QByteArray::fromBase64(avatarData.toUtf8());
+                
+                // 尝试检测图片格式或使用常见格式
+                loadSuccess = pixmap.loadFromData(decodedData);
+                if (!loadSuccess) {
+                    // 如果自动检测失败，尝试常见的图片格式
+                    loadSuccess = pixmap.loadFromData(decodedData, "PNG");
+                }
+                if (!loadSuccess) {
+                    loadSuccess = pixmap.loadFromData(decodedData, "JPEG");
+                }
+                if (!loadSuccess) {
+                    loadSuccess = pixmap.loadFromData(decodedData, "BMP");
+                }
+            }
+            
+            // 如果所有格式都尝试失败，记录错误并使用默认头像
+            if (!loadSuccess || pixmap.isNull()) {
+                qDebug() << "ChatWindow: Failed to load avatar image from database, all formats failed, using default avatar";
+                return;
+            }
+            
+            if (!pixmap.isNull()) {
+                // 头像图片加载成功
+                // 创建一个正方形的QPixmap，确保宽高相等
+                QSize avatarSize = avatarLabel->size();
+                int side = qMin(avatarSize.width(), avatarSize.height());
+                
+                // 缩放图片，保持宽高比，确保图片完全覆盖正方形区域
+                QPixmap scaledPixmap = pixmap.scaled(
+                    side, side, 
+                    Qt::KeepAspectRatioByExpanding, 
+                    Qt::SmoothTransformation
+                );
+                
+                // 创建一个带有圆形遮罩的QPixmap
+                QPixmap circularPixmap(side, side);
+                circularPixmap.fill(Qt::transparent);
+                
+                QPainter painter(&circularPixmap);
+                painter.setRenderHint(QPainter::Antialiasing, true);
+                painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+                
+                // 绘制圆形路径作为遮罩
+                QPainterPath path;
+                path.addEllipse(0, 0, side, side);
+                painter.setClipPath(path);
+                
+                // 在圆形遮罩内绘制图片，居中显示
+                painter.drawPixmap(
+                    (side - scaledPixmap.width()) / 2, 
+                    (side - scaledPixmap.height()) / 2, 
+                    scaledPixmap
+                );
+                
+                // 绘制边框
+                painter.setClipping(false);
+                QPen pen(QColor(52, 152, 219), 2);
+                painter.setPen(pen);
+                painter.drawEllipse(0, 0, side, side);
+                
+                avatarLabel->setPixmap(circularPixmap);
+                avatarLabel->setStyleSheet(
+                    "border-radius: 25px; "
+                    "background-color: transparent;"
+                );
+                qDebug() << "Avatar updated successfully from database";
+            } else {
+                // 头像图片加载失败，显示默认头像
+                qDebug() << "Failed to load avatar image from database, showing default avatar";
+                // 显示用户名首字母
+                QChar firstChar;
+                if (this->userName.isEmpty()) {
+                    firstChar = QChar('U');
+                } else {
+                    firstChar = this->userName[0];
+                }
+                QPixmap defaultPixmap(avatarLabel->size());
+                defaultPixmap.fill(Qt::transparent);
+                
+                QPainter painter(&defaultPixmap);
+                painter.setRenderHint(QPainter::Antialiasing, true);
+                
+                // 绘制蓝色圆形背景
+                QBrush brush(QColor(52, 152, 219)); // #3498db
+                painter.setBrush(brush);
+                painter.setPen(Qt::NoPen);
+                painter.drawEllipse(0, 0, avatarLabel->width(), avatarLabel->height());
+                
+                // 绘制白色文字
+                QFont font("Arial", 20, QFont::Bold);
+                painter.setFont(font);
+                painter.setPen(QColor(Qt::white));
+                painter.drawText(defaultPixmap.rect(), Qt::AlignCenter, firstChar.toUpper());
+                
+                avatarLabel->setPixmap(defaultPixmap);
+                avatarLabel->setStyleSheet(
+                    "border: 2px solid #3498db; "
+                    "border-radius: 25px;"
+                );
+            }
+        } else {
+            // 头像数据为空，显示默认头像
+            qDebug() << "Avatar data is empty, showing default avatar";
+            // 显示用户名首字母
+            QChar firstChar;
+            if (this->userName.isEmpty()) {
+                firstChar = QChar('U');
+            } else {
+                firstChar = this->userName[0];
+            }
+            QPixmap defaultPixmap(avatarLabel->size());
+            defaultPixmap.fill(Qt::transparent);
+            
+            QPainter painter(&defaultPixmap);
+            painter.setRenderHint(QPainter::Antialiasing, true);
+            
+            // 绘制蓝色圆形背景
+            QBrush brush(QColor(52, 152, 219)); // #3498db
+            painter.setBrush(brush);
+            painter.setPen(Qt::NoPen);
+            painter.drawEllipse(0, 0, avatarLabel->width(), avatarLabel->height());
+            
+            // 绘制白色文字
+            QFont font("Arial", 20, QFont::Bold);
+            painter.setFont(font);
+            painter.setPen(QColor(Qt::white));
+            painter.drawText(defaultPixmap.rect(), Qt::AlignCenter, firstChar.toUpper());
+            
+            avatarLabel->setPixmap(defaultPixmap);
+            avatarLabel->setStyleSheet(
+                "border: 2px solid #3498db; "
+                "border-radius: 25px;"
+            );
+        }
+    });
+    
+    // 延迟检查并应用当前用户头像（解决第二次登录时头像不显示的问题）
+    // 使用QTimer延迟执行，确保ChatClient::processMessage方法已经处理完LOGIN_MSG_ACK消息
+    QTimer::singleShot(100, this, [this]() {
+        QString currentAvatar = chatClient->getCurrentUserAvatar();
+        qDebug() << "ChatWindow: Checking stored avatar data after delay, length:" << currentAvatar.length();
+        
+        // 直接输出头像数据的前50个字符，查看数据格式
+        if (!currentAvatar.isEmpty()) {
+            qDebug() << "ChatWindow: Avatar data preview:" << currentAvatar.left(50) << (currentAvatar.length() > 50 ? "..." : "");
+        }
+        
+        if (!currentAvatar.isEmpty()) {
+            // 直接设置头像，不依赖信号机制
+            QPixmap pixmap;
+            QByteArray decodedData;
+            bool loadSuccess = false;
+            
+            // 直接处理Base64编码数据（统一从数据库获取）
+            qDebug() << "ChatWindow: Avatar is Base64 data from database, trying to decode...";
+            
+            // 检查是Data URL还是纯Base64编码数据
+            if (currentAvatar.startsWith("data:image/")) {
+                // Data URL格式：data:image/png;base64,...
+                qDebug() << "ChatWindow: Avatar is Data URL, extracting Base64 data...";
+                int commaPos = currentAvatar.indexOf(',');
+                if (commaPos != -1) {
+                    QString base64Data = currentAvatar.mid(commaPos + 1);
+                    qDebug() << "ChatWindow: Extracted Base64 data length:" << base64Data.length();
+                    decodedData = QByteArray::fromBase64(base64Data.toUtf8());
+                    qDebug() << "ChatWindow: Decoded data length:" << decodedData.length();
+                    loadSuccess = pixmap.loadFromData(decodedData);
+                } else {
+                    qDebug() << "ChatWindow: Invalid Data URL format, no comma found";
+                }
+            } else {
+                // 尝试解码Base64数据
+                decodedData = QByteArray::fromBase64(currentAvatar.toUtf8());
+                qDebug() << "ChatWindow: Decoded data length:" << decodedData.length();
+                
+                // 检查解码后的data是否是ASCII文本且看起来像Base64编码
+                bool isBase64Text = true;
+                for (char c : decodedData) {
+                    if (!isalnum(c) && c != '+' && c != '/' && c != '=' && !isspace(c)) {
+                        isBase64Text = false;
+                        break;
+                    }
+                }
+                
+                if (isBase64Text && decodedData.length() > 0 && decodedData.length() % 4 == 0) {
+                    qDebug() << "ChatWindow: Detected double Base64 encoding, decoding again...";
+                    QByteArray doubleDecoded = QByteArray::fromBase64(decodedData);
+                    qDebug() << "ChatWindow: Double decoded data length:" << doubleDecoded.length();
+                    qDebug() << "ChatWindow: Double decoded data header:" << doubleDecoded.left(20).toHex();
+                    
+                    // 使用再次解码后的数据
+                    decodedData = doubleDecoded;
+                }
+                
+                // 查看解码后的数据前20个字节，了解数据格式
+                QByteArray dataHeader = decodedData.left(20);
+                qDebug() << "ChatWindow: Decoded data header:" << dataHeader.toHex();
+                
+                // 检测图片格式
+                QString detectedFormat = "unknown";
+                if (dataHeader.startsWith("/9j/")) {
+                    detectedFormat = "JPEG"; // JPEG文件的典型开头
+                    qDebug() << "ChatWindow: Detected JPEG format from header";
+                } else if (dataHeader.startsWith("\x89PNG\r\n\x1a\n")) {
+                    detectedFormat = "PNG"; // PNG文件的典型开头
+                    qDebug() << "ChatWindow: Detected PNG format from header";
+                } else if (dataHeader.startsWith("BM")) {
+                    detectedFormat = "BMP"; // BMP文件的典型开头
+                    qDebug() << "ChatWindow: Detected BMP format from header";
+                }
+                
+                // 使用QImage直接加载数据，尝试明确指定JPEG格式
+                QImage image;
+                loadSuccess = image.loadFromData(decodedData, "JPEG");
+                qDebug() << "ChatWindow: Loaded image with QImage::loadFromData(JPEG), success:" << loadSuccess;
+                
+                if (!loadSuccess) {
+                    // 尝试自动检测格式
+                    loadSuccess = image.loadFromData(decodedData);
+                    qDebug() << "ChatWindow: Loaded image with QImage::loadFromData(auto), success:" << loadSuccess;
+                }
+                
+                if (loadSuccess) {
+                    // 将QImage转换为QPixmap
+                    pixmap = QPixmap::fromImage(image);
+                    qDebug() << "ChatWindow: Converted QImage to QPixmap, success:" << !pixmap.isNull();
+                } else {
+                    // QImage加载失败，尝试将数据保存到文件并使用外部工具检查
+                    QString tempFileName = QCoreApplication::applicationDirPath() + "/temp_avatar.jpg";
+                    QFile tempFile(tempFileName);
+                    if (tempFile.open(QIODevice::WriteOnly)) {
+                        qint64 bytesWritten = tempFile.write(decodedData);
+                        tempFile.close();
+                        qDebug() << "ChatWindow: Saved decoded avatar data to" << tempFileName << "bytes written:" << bytesWritten;
+                        
+                        // 尝试使用QImage从临时文件加载，明确指定JPEG格式
+                        QImage fileImage;
+                        loadSuccess = fileImage.load(tempFileName, "JPEG");
+                        qDebug() << "ChatWindow: Loaded avatar from temp file with QImage(JPEG), success:" << loadSuccess;
+                        
+                        if (!loadSuccess) {
+                            // 尝试自动检测格式
+                            loadSuccess = fileImage.load(tempFileName);
+                            qDebug() << "ChatWindow: Loaded avatar from temp file with QImage(auto), success:" << loadSuccess;
+                        }
+                        
+                        if (loadSuccess) {
+                            pixmap = QPixmap::fromImage(fileImage);
+                            qDebug() << "ChatWindow: Converted temp file QImage to QPixmap, success:" << !pixmap.isNull();
+                            QFile::remove(tempFileName);
+                            qDebug() << "ChatWindow: Removed temp avatar file";
+                        } else {
+                            // 保存原始数据用于手动分析
+                            QString rawTempFileName = QCoreApplication::applicationDirPath() + "/temp_avatar_raw.dat";
+                            QFile rawTempFile(rawTempFileName);
+                            if (rawTempFile.open(QIODevice::WriteOnly)) {
+                                rawTempFile.write(decodedData);
+                                rawTempFile.close();
+                                qDebug() << "ChatWindow: Saved raw avatar data to" << rawTempFileName << "for manual analysis";
+                            }
+                            
+                            // 检查文件是否可被外部工具打开
+                            QProcess process;
+                            process.start("file", QStringList() << tempFileName);
+                            process.waitForFinished();
+                            QString fileType = process.readAllStandardOutput();
+                            qDebug() << "ChatWindow: External file command output:" << fileType;
+                            
+                            // 检查文件是否可被外部工具识别为JPEG
+                            QProcess identifyProcess;
+                            identifyProcess.start("identify", QStringList() << tempFileName);
+                            identifyProcess.waitForFinished();
+                            QString identifyOutput = identifyProcess.readAllStandardOutput();
+                            QString identifyError = identifyProcess.readAllStandardError();
+                            qDebug() << "ChatWindow: External identify command output:" << identifyOutput;
+                            qDebug() << "ChatWindow: External identify command error:" << identifyError;
+                            
+                            // 输出更多调试信息
+                            qDebug() << "ChatWindow: Image data length:" << decodedData.length();
+                            qDebug() << "ChatWindow: Image data first 100 bytes:" << decodedData.left(100);
+                            qDebug() << "ChatWindow: Image data last 100 bytes:" << decodedData.right(100);
+                        }
+                    } else {
+                        qDebug() << "ChatWindow: Failed to create temp avatar file";
+                    }
+                }
+                
+                // 移除冗余的内存加载尝试，因为已经在前面的代码中处理了所有内存加载情况
+                // 如果到这里loadSuccess仍然为false，说明所有方法都失败了
+                if (!loadSuccess) {
+                    qDebug() << "ChatWindow: All avatar loading methods failed, using default avatar";
+                }
+            }
+            
+            qDebug() << "ChatWindow: Avatar load success:" << loadSuccess;
+            
+            if (loadSuccess && !pixmap.isNull()) {
+                // 头像图片加载成功
+                qDebug() << "ChatWindow: Avatar image loaded successfully, size:" << pixmap.size();
+                
+                // 创建一个正方形的QPixmap，确保宽高相等
+                QSize avatarSize = avatarLabel->size();
+                int side = qMin(avatarSize.width(), avatarSize.height());
+                qDebug() << "ChatWindow: Avatar label size:" << avatarSize << "side:" << side;
+                
+                // 缩放图片，保持宽高比，确保图片完全覆盖正方形区域
+                QPixmap scaledPixmap = pixmap.scaled(
+                    side, side, 
+                    Qt::KeepAspectRatioByExpanding, 
+                    Qt::SmoothTransformation
+                );
+                
+                // 创建一个带有圆形遮罩的QPixmap
+                QPixmap circularPixmap(side, side);
+                circularPixmap.fill(Qt::transparent);
+                
+                QPainter painter(&circularPixmap);
+                painter.setRenderHint(QPainter::Antialiasing, true);
+                painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+                
+                // 绘制圆形路径作为遮罩
+                QPainterPath path;
+                path.addEllipse(0, 0, side, side);
+                painter.setClipPath(path);
+                
+                // 在圆形遮罩内绘制图片，居中显示
+                painter.drawPixmap(
+                    (side - scaledPixmap.width()) / 2, 
+                    (side - scaledPixmap.height()) / 2, 
+                    scaledPixmap
+                );
+                
+                // 绘制边框
+                painter.setClipping(false);
+                QPen pen(QColor(52, 152, 219), 2);
+                painter.setPen(pen);
+                painter.drawEllipse(0, 0, side, side);
+                
+                avatarLabel->setPixmap(circularPixmap);
+                avatarLabel->setStyleSheet(
+                    "border-radius: 25px; "
+                    "background-color: transparent;"
+                );
+                qDebug() << "ChatWindow: Avatar updated successfully after delay";
+            } else {
+                // 头像图片加载失败，显示默认头像
+                qDebug() << "ChatWindow: Failed to load avatar image after delay, using default avatar";
+                // 显示用户名首字母
+                QChar firstChar;
+                if (this->userName.isEmpty()) {
+                    firstChar = QChar('U');
+                } else {
+                    firstChar = this->userName[0];
+                }
+                QPixmap defaultPixmap(avatarLabel->size());
+                defaultPixmap.fill(Qt::transparent);
+                
+                QPainter painter(&defaultPixmap);
+                painter.setRenderHint(QPainter::Antialiasing, true);
+                
+                // 绘制蓝色圆形背景
+                QBrush brush(QColor(52, 152, 219)); // #3498db
+                painter.setBrush(brush);
+                painter.setPen(Qt::NoPen);
+                painter.drawEllipse(0, 0, avatarLabel->width(), avatarLabel->height());
+                
+                // 绘制白色文字
+                QFont font("Arial", 20, QFont::Bold);
+                painter.setFont(font);
+                painter.setPen(QColor(Qt::white));
+                painter.drawText(defaultPixmap.rect(), Qt::AlignCenter, firstChar.toUpper());
+                
+                avatarLabel->setPixmap(defaultPixmap);
+                avatarLabel->setStyleSheet(
+                    "border: 2px solid #3498db; "
+                    "border-radius: 25px;"
+                );
+            }
+        } else {
+            qDebug() << "ChatWindow: No stored avatar data found after delay, showing default avatar";
+            // 显示用户名首字母
+            QChar firstChar;
+            if (this->userName.isEmpty()) {
+                firstChar = QChar('U');
+            } else {
+                firstChar = this->userName[0];
+            }
+            QPixmap defaultPixmap(avatarLabel->size());
+            defaultPixmap.fill(Qt::transparent);
+            
+            QPainter painter(&defaultPixmap);
+            painter.setRenderHint(QPainter::Antialiasing, true);
+            
+            // 绘制蓝色圆形背景
+            QBrush brush(QColor(52, 152, 219)); // #3498db
+            painter.setBrush(brush);
+            painter.setPen(Qt::NoPen);
+            painter.drawEllipse(0, 0, avatarLabel->width(), avatarLabel->height());
+            
+            // 绘制白色文字
+            QFont font("Arial", 20, QFont::Bold);
+            painter.setFont(font);
+            painter.setPen(QColor(Qt::white));
+            painter.drawText(defaultPixmap.rect(), Qt::AlignCenter, firstChar.toUpper());
+            
+            avatarLabel->setPixmap(defaultPixmap);
+            avatarLabel->setStyleSheet(
+                "border: 2px solid #3498db; "
+                "border-radius: 25px;"
+            );
+        }
+    });
+    
+    // 连接好友状态更新信号
+    connect(chatClient, &ChatClient::friendStateUpdated, this, &ChatWindow::onFriendStateUpdated);
+
+    connect(chatClient, &ChatClient::fileTransferRequestReceived, this, &ChatWindow::onFileTransferRequestReceived);
+    connect(chatClient, &ChatClient::fileTransferAccepted, this, &ChatWindow::onFileTransferAccepted);
+    connect(chatClient, &ChatClient::fileTransferDataReceived, this, &ChatWindow::onFileTransferDataReceived);
+    connect(chatClient, &ChatClient::fileTransferCompleteReceived, this, &ChatWindow::onFileTransferCompleteReceived);
+    connect(chatClient, &ChatClient::fileTransferError, this, &ChatWindow::onFileTransferError);
+    
+    // 用户信息
+    QVBoxLayout *userInfoLayout = new QVBoxLayout;
+    userInfoLayout->setSpacing(5);
+    QLabel *userNameLabel = new QLabel(userName);
+    userNameLabel->setStyleSheet(
+        "font-size: 16px; "
+        "font-weight: bold; "
+        "color: #2c3e50;"
+    );
+    QLabel *userIdLabel = new QLabel(QString("ID: %1").arg(userId));
+    userIdLabel->setStyleSheet(
+        "font-size: 12px; "
+        "color: #666;"
+    );
+    userInfoLayout->addWidget(userNameLabel);
+    userInfoLayout->addWidget(userIdLabel);
+    userInfoLayout->addStretch();
+    
+    // 修改头像按钮
+    changeAvatarButton = new QPushButton("修改头像");
+    changeAvatarButton->setStyleSheet(
+        "height: 32px; "
+        "background-color: white; "
+        "color: #3498db; "
+        "border: 1px solid #3498db; "
+        "border-radius: 16px; "
+        "font-size: 12px;"
+    );
+    
+    topLayout->addWidget(avatarLabel);
+    topLayout->addLayout(userInfoLayout);
+    topLayout->addStretch();
+    topLayout->addWidget(changeAvatarButton);
+    
     // 创建工具栏
     QToolBar *toolBar = addToolBar("工具栏");
     toolBar->setMovable(false);
@@ -139,8 +665,48 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     connect(joinGroupAction, &QAction::triggered, this, &ChatWindow::onJoinGroup);
     //connect(sendFileAction, &QAction::triggered, this, &ChatWindow::onSendFile);
     connect(logoutAction, &QAction::triggered, this, &ChatWindow::onLogout);
+    connect(changeAvatarButton, &QPushButton::clicked, this, [this, userId]() {
+        // 打开文件选择对话框
+        QString filePath = QFileDialog::getOpenFileName(
+            this, 
+            "选择头像", 
+            ".", 
+            "图像文件 (*.png *.jpg *.jpeg)"
+        );
+        if (!filePath.isEmpty()) {
+            // 上传头像
+            chatClient->updateAvatar(userId, filePath);
+            
+            // 本地预览头像
+            QPixmap pixmap(filePath);
+            QPixmap scaledPixmap = pixmap.scaled(
+                avatarLabel->size(), 
+                Qt::KeepAspectRatio, 
+                Qt::SmoothTransformation
+            );
+            avatarLabel->setPixmap(scaledPixmap);
+            avatarLabel->setStyleSheet(
+                "border: 2px solid #3498db; "
+                "border-radius: 30px; "
+                "background-color: #f0f0f0;"
+            );
+        }
+    });
 
-    setCentralWidget(mainSplitter);
+    // 创建主布局，将顶部栏和主分割器垂直排列
+    QVBoxLayout *mainLayout = new QVBoxLayout;
+    mainLayout->setContentsMargins(0, 0, 0, 0);
+    mainLayout->setSpacing(0);
+    
+    // 创建一个主窗口部件来容纳布局
+    QWidget *centralWidget = new QWidget;
+    centralWidget->setLayout(mainLayout);
+    
+    // 将顶部栏和主分割器添加到主布局
+    mainLayout->addWidget(topBar);
+    mainLayout->addWidget(mainSplitter);
+    
+    setCentralWidget(centralWidget);
     
     // 列表请求移至登录成功后执行，确保在正确的时机获取数据
     qDebug() << "ChatWindow initialized for userId:" << userId;
@@ -262,8 +828,10 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     qDebug() << "[CRITICAL] ChatWindow constructor: Directly requesting friend and group lists for userId:" << userId;
     // 首先发送好友列表请求
     chatClient->requestFriendList(userId);
-    // 增加延迟至500ms，确保消息不会在网络传输中合并
-    QTimer::singleShot(500, this, [this, userId]() {
+    // 立即发送群组列表请求，不需要延迟
+    chatClient->requestGroupList(userId);
+    // 再次发送群组列表请求，确保能收到响应
+    QTimer::singleShot(100, this, [this, userId]() {
         chatClient->requestGroupList(userId);
     });
     
@@ -357,7 +925,50 @@ void ChatWindow::createChatWidget(int chatId, const QString &chatName, bool isGr
     chatEdit->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     chatEdit->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     chatEdit->setStyleSheet("border: none; background-color: #fafafa; padding: 10px;");
-    mainLayout->addWidget(chatEdit);
+    
+    // 创建群组成员列表（仅群组聊天显示）
+    QWidget *memberWidget = nullptr;
+    QListWidget *memberListWidget = nullptr;
+    QVBoxLayout *memberLayout = nullptr;
+    
+    if (isGroup) {
+        // 创建成员列表部件
+        memberWidget = new QWidget;
+        memberWidget->setStyleSheet("background-color: #f8f9fa; border-left: 1px solid #eee;");
+        memberLayout = new QVBoxLayout;
+        memberLayout->setContentsMargins(10, 10, 10, 10);
+        memberLayout->setSpacing(10);
+        
+        // 成员列表标题
+        QLabel *memberTitle = new QLabel("群组成员");
+        memberTitle->setStyleSheet("font-weight: bold; font-size: 14px; color: #333;");
+        memberLayout->addWidget(memberTitle);
+        
+        // 成员列表
+        memberListWidget = new QListWidget;
+        memberListWidget->setStyleSheet(
+            "background-color: white; border: 1px solid #ddd; border-radius: 6px;"
+            "QListWidget::item { height: 30px; padding: 5px 10px; border-bottom: 1px solid #f0f0f0; }"
+            "QListWidget::item:last-child { border-bottom: none; }"
+        );
+        memberLayout->addWidget(memberListWidget);
+        
+        memberWidget->setLayout(memberLayout);
+        memberWidget->setFixedWidth(180);
+    }
+    
+    // 如果是群组聊天，使用分割器布局，包含聊天记录和成员列表
+    if (isGroup && memberWidget) {
+        QSplitter *chatSplitter = new QSplitter(Qt::Horizontal);
+        chatSplitter->addWidget(chatEdit);
+        chatSplitter->addWidget(memberWidget);
+        chatSplitter->setSizes({450, 180}); // 设置初始大小
+        chatSplitter->setHandleWidth(1);
+        mainLayout->addWidget(chatSplitter);
+    } else {
+        // 普通聊天，仅显示聊天记录
+        mainLayout->addWidget(chatEdit);
+    }
     
     // 分隔线
     QFrame *separator = new QFrame;
@@ -451,7 +1062,7 @@ void ChatWindow::createChatWidget(int chatId, const QString &chatName, bool isGr
     chatWidget->setProperty("isGroup", isGroup);
     
     // 存储聊天组件的映射关系
-    chatComponents[chatWidget] = {chatEdit, nullptr};
+    chatComponents[chatWidget] = {chatEdit, memberListWidget};
     
     // 连接信号
     connect(sendButton, &QPushButton::clicked, this, &ChatWindow::onSendMessage);
@@ -468,15 +1079,59 @@ void ChatWindow::createChatWidget(int chatId, const QString &chatName, bool isGr
     
     // 更新标签页文本，可能包含未读消息小红点
     updateTabText(chatId, isGroup, chatName);
+    
+    // 如果是群组聊天，加载并显示群组成员
+    if (isGroup) {
+        // 从groupMap中获取真实群组成员列表
+        memberListWidget->addItem("群组成员加载中...");
+        
+        QTimer::singleShot(50, this, [this, memberListWidget, chatId]() {
+            memberListWidget->clear();
+            
+            // 检查groupMap中是否有该群组的信息
+            if (groupMap.contains(chatId)) {
+                // 获取群组信息
+                Group group = groupMap.value(chatId);
+                const vector<GroupUser>& members = group.getUsers();
+                
+                // 添加真实成员名字
+                for (const GroupUser& member : members) {
+                    QString memberName = QString::fromStdString(member.getName());
+                    QString memberRole = QString::fromStdString(member.getRole());
+                    
+                    // 格式化成员显示，包含角色信息
+                    QString memberDisplay = memberName;
+                    if (memberRole == "creator") {
+                        memberDisplay += " (群主)";
+                    } else if (memberRole == "admin") {
+                        memberDisplay += " (管理员)";
+                    }
+                    
+                    memberListWidget->addItem(memberDisplay);
+                }
+                
+                if (members.empty()) {
+                    memberListWidget->addItem("暂无成员");
+                }
+            } else {
+                // 如果没有找到群组信息，显示提示
+                memberListWidget->addItem("无法获取群组成员信息");
+                
+                // 可以考虑重新请求群组列表
+                qDebug() << "Group information not found in groupMap, requesting group list again";
+                chatClient->requestGroupList(userId);
+            }
+        });
+    }
 }
 
 void ChatWindow::onContactSelected() {
     QTreeWidgetItem *item = contactTreeWidget->currentItem();
     if (!item || !item->parent()) return; // 忽略根节点
 
-    bool isGroup = (item->parent()->text(0) == "群组");
-    int chatId = item->data(0, Qt::UserRole).toInt();
-    QString chatName = item->text(0);
+    bool isGroup = (item->parent()->text(1) == "群组");
+    int chatId = item->data(1, Qt::UserRole).toInt();
+    QString chatName = item->text(1);
 
     // 首先修复所有现有窗口
     for (int i = 0; i < chatTabWidget->count(); ++i) {
@@ -487,49 +1142,98 @@ void ChatWindow::onContactSelected() {
         if (chatLayout) {
             QWidget *inputWidget = chatLayout->itemAt(2)->widget();
             if (inputWidget) {
-                QHBoxLayout *inputLayout = qobject_cast<QHBoxLayout*>(inputWidget->layout());
+                QVBoxLayout *inputLayout = qobject_cast<QVBoxLayout*>(inputWidget->layout());
                 if (inputLayout) {
-                    // 检查是否有发送按钮
-                    bool hasSendButton = false;
-                    bool hasSendFileButton = false;
-                    
-                    // 遍历输入布局中的所有控件
+                    // 查找按钮布局
+                    QHBoxLayout *buttonLayout = nullptr;
                     for (int j = 0; j < inputLayout->count(); ++j) {
-                        QWidget *widget = inputLayout->itemAt(j)->widget();
-                        if (QPushButton *button = qobject_cast<QPushButton*>(widget)) {
-                            if (button->text() == "发送") {
-                                hasSendButton = true;
-                            } else if (button->text() == "发送文件") {
-                                hasSendFileButton = true;
+                        QLayout *layout = inputLayout->itemAt(j)->layout();
+                        if (layout) {
+                            buttonLayout = qobject_cast<QHBoxLayout*>(layout);
+                            if (buttonLayout) {
+                                break;
                             }
                         }
                     }
                     
-                    // 如果缺少发送按钮，添加它
-                    if (!hasSendButton) {
-                        QPushButton *sendButton = new QPushButton("发送");
-                        sendButton->setProperty("class", "primaryButton");
-                        sendButton->setFixedWidth(80);
+                    if (buttonLayout) {
+                        // 检查是否有各种按钮
+                        bool hasSendButton = false;
+                        bool hasSendEmojiButton = false;
+                        bool hasSendImageButton = false;
+                        bool hasSendFileButton = false;
                         
-                        // 在发送文件按钮之前插入发送按钮
-                        if (hasSendFileButton) {
-                            // 找到发送文件按钮的位置
-                            for (int j = 0; j < inputLayout->count(); ++j) {
-                                QWidget *widget = inputLayout->itemAt(j)->widget();
-                                if (QPushButton *button = qobject_cast<QPushButton*>(widget)) {
-                                    if (button->text() == "发送文件") {
-                                        inputLayout->insertWidget(j, sendButton);
-                                        break;
-                                    }
+                        // 遍历按钮布局中的所有控件
+                        for (int j = 0; j < buttonLayout->count(); ++j) {
+                            QWidget *widget = buttonLayout->itemAt(j)->widget();
+                            if (QPushButton *button = qobject_cast<QPushButton*>(widget)) {
+                                if (button->text() == "发送") {
+                                    hasSendButton = true;
+                                } else if (button->text() == "表情包") {
+                                    hasSendEmojiButton = true;
+                                } else if (button->text() == "发送图片") {
+                                    hasSendImageButton = true;
+                                } else if (button->text() == "发送文件") {
+                                    hasSendFileButton = true;
                                 }
                             }
-                        } else {
-                            // 如果没有发送文件按钮，添加到末尾
-                            inputLayout->addWidget(sendButton);
                         }
                         
-                        // 连接信号
-                        connect(sendButton, &QPushButton::clicked, this, &ChatWindow::onSendMessage);
+                        // 如果缺少发送按钮，添加它
+                        if (!hasSendButton) {
+                            QPushButton *sendButton = new QPushButton("发送");
+                            sendButton->setMinimumHeight(40);
+                            sendButton->setFixedWidth(100);
+                            sendButton->setStyleSheet(
+                                "QPushButton { background-color: #3498db; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; }"
+                                "QPushButton:hover { background-color: #2980b9; }"
+                                "QPushButton:pressed { background-color: #2471a3; }"
+                            );
+                            buttonLayout->insertWidget(0, sendButton);
+                            connect(sendButton, &QPushButton::clicked, this, &ChatWindow::onSendMessage);
+                        }
+                        
+                        // 如果缺少表情包按钮，添加它
+                        if (!hasSendEmojiButton) {
+                            QPushButton *sendEmojiButton = new QPushButton("表情包");
+                            sendEmojiButton->setMinimumHeight(40);
+                            sendEmojiButton->setFixedWidth(80);
+                            sendEmojiButton->setStyleSheet(
+                                "QPushButton { background-color: #ecf0f1; color: #333; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-weight: 500; }"
+                                "QPushButton:hover { background-color: #d5dbdb; }"
+                                "QPushButton:pressed { background-color: #bdc3c7; }"
+                            );
+                            buttonLayout->insertWidget(1, sendEmojiButton);
+                            connect(sendEmojiButton, &QPushButton::clicked, this, &ChatWindow::onSendEmoji);
+                        }
+                        
+                        // 如果缺少发送图片按钮，添加它
+                        if (!hasSendImageButton) {
+                            QPushButton *sendImageButton = new QPushButton("发送图片");
+                            sendImageButton->setMinimumHeight(40);
+                            sendImageButton->setFixedWidth(100);
+                            sendImageButton->setStyleSheet(
+                                "QPushButton { background-color: #ecf0f1; color: #333; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-weight: 500; }"
+                                "QPushButton:hover { background-color: #d5dbdb; }"
+                                "QPushButton:pressed { background-color: #bdc3c7; }"
+                            );
+                            buttonLayout->insertWidget(2, sendImageButton);
+                            connect(sendImageButton, &QPushButton::clicked, this, &ChatWindow::onSendImage);
+                        }
+                        
+                        // 如果缺少发送文件按钮，添加它
+                        if (!hasSendFileButton) {
+                            QPushButton *sendFileButton = new QPushButton("发送文件");
+                            sendFileButton->setMinimumHeight(40);
+                            sendFileButton->setFixedWidth(100);
+                            sendFileButton->setStyleSheet(
+                                "QPushButton { background-color: #ecf0f1; color: #333; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-weight: 500; }"
+                                "QPushButton:hover { background-color: #d5dbdb; }"
+                                "QPushButton:pressed { background-color: #bdc3c7; }"
+                            );
+                            buttonLayout->insertWidget(3, sendFileButton);
+                            connect(sendFileButton, &QPushButton::clicked, this, &ChatWindow::onSendFile);
+                        }
                     }
                 }
             }
@@ -1096,7 +1800,7 @@ void ChatWindow::onFriendListUpdated(const QList<User> &friends) {
         // 尝试从contactTreeWidget中查找好友根节点
         for (int i = 0; i < contactTreeWidget->topLevelItemCount(); ++i) {
             QTreeWidgetItem *item = contactTreeWidget->topLevelItem(i);
-            if (item->text(0) == "好友") {
+            if (item->text(1) == "好友") {
                 friendRoot = item;
                 break;
             }
@@ -1106,7 +1810,8 @@ void ChatWindow::onFriendListUpdated(const QList<User> &friends) {
         if (!friendRoot) {
             qDebug() << "[DEBUG] Creating new friend root item";
             friendRoot = new QTreeWidgetItem(contactTreeWidget);
-            friendRoot->setText(0, "好友");
+            friendRoot->setText(1, "好友"); // 在联系人列显示标题
+            friendRoot->setFirstColumnSpanned(true); // 跨列显示
             contactTreeWidget->addTopLevelItem(friendRoot);
         }
     }
@@ -1120,13 +1825,104 @@ void ChatWindow::onFriendListUpdated(const QList<User> &friends) {
         friendMap[user.getId()] = user;
         QTreeWidgetItem *item = new QTreeWidgetItem(friendRoot);
         QString friendName = QString::fromStdString(user.getName());
-        item->setText(0, friendName + " (" + QString::number(user.getId()) + ")");
-        item->setData(0, Qt::UserRole, user.getId());
+        
+        // 设置联系人名称和ID
+        item->setText(1, friendName + " (" + QString::number(user.getId()) + ")");
+        item->setData(1, Qt::UserRole, user.getId());
+        
+        // 处理好友头像（统一使用数据库处理）
+        string avatarBase64 = user.getAvatar();
+        if (!avatarBase64.empty()) {
+            // 如果有头像数据
+            QPixmap avatarPixmap;
+            QByteArray decodedData;
+            bool loadSuccess = false;
+            
+            qDebug() << "ChatWindow: Friend avatar Base64 length:" << avatarBase64.size();
+            qDebug() << "ChatWindow: Friend avatar Base64 preview:" << QString::fromStdString(avatarBase64.substr(0, 50));
+            
+            // 直接将字符串作为Base64编码处理，解码得到二进制数据
+            QString base64Str = QString::fromStdString(avatarBase64);
+            decodedData = QByteArray::fromBase64(base64Str.toUtf8());
+            
+            qDebug() << "ChatWindow: Friend avatar decoded length:" << decodedData.size();
+            qDebug() << "ChatWindow: Friend avatar decoded header:" << decodedData.left(20).toHex();
+            
+            // 尝试明确指定JPEG格式加载
+            loadSuccess = avatarPixmap.loadFromData(decodedData, "JPEG");
+            qDebug() << "ChatWindow: Friend avatar load (JPEG):" << loadSuccess;
+            
+            if (!loadSuccess) {
+                // 尝试自动检测格式
+                loadSuccess = avatarPixmap.loadFromData(decodedData);
+                qDebug() << "ChatWindow: Friend avatar load (auto):" << loadSuccess;
+            }
+            
+            if (loadSuccess && !avatarPixmap.isNull()) {
+                // 头像图片加载成功，缩放头像到合适大小
+                QPixmap scaledPixmap = avatarPixmap.scaled(
+                    40, 40, // 头像大小
+                    Qt::KeepAspectRatio, 
+                    Qt::SmoothTransformation
+                );
+                item->setIcon(0, QIcon(scaledPixmap));
+                qDebug() << "ChatWindow: Friend avatar loaded successfully, icon set";
+            } else {
+                // 如果头像加载失败，显示用户名首字母
+                QChar firstChar = friendName.isEmpty() ? QChar('U') : friendName[0];
+                
+                // 创建一个带有首字母的圆形头像
+                QPixmap fallbackPixmap(40, 40);
+                fallbackPixmap.fill(Qt::transparent);
+                
+                QPainter painter(&fallbackPixmap);
+                painter.setRenderHint(QPainter::Antialiasing, true);
+                
+                // 绘制蓝色圆形背景
+                QBrush brush(QColor(52, 152, 219)); // #3498db
+                painter.setBrush(brush);
+                painter.setPen(Qt::NoPen);
+                painter.drawEllipse(0, 0, 40, 40);
+                
+                // 绘制白色文字
+                QFont font("Arial", 16, QFont::Bold);
+                painter.setFont(font);
+                painter.setPen(QColor(Qt::white));
+                painter.drawText(fallbackPixmap.rect(), Qt::AlignCenter, firstChar.toUpper());
+                
+                item->setIcon(0, QIcon(fallbackPixmap));
+                qDebug() << "ChatWindow: Friend avatar load failed, using fallback";
+            }
+        } else {
+            // 如果没有头像，显示用户名首字母
+            QChar firstChar = friendName.isEmpty() ? QChar('U') : friendName[0];
+            
+            // 创建一个带有首字母的圆形头像
+            QPixmap avatarPixmap(40, 40);
+            avatarPixmap.fill(Qt::transparent);
+            
+            QPainter painter(&avatarPixmap);
+            painter.setRenderHint(QPainter::Antialiasing, true);
+            
+            // 绘制蓝色圆形背景
+            QBrush brush(QColor(52, 152, 219)); // #3498db
+            painter.setBrush(brush);
+            painter.setPen(Qt::NoPen);
+            painter.drawEllipse(0, 0, 40, 40);
+            
+            // 绘制白色文字
+            QFont font("Arial", 16, QFont::Bold);
+            painter.setFont(font);
+            painter.setPen(QColor(Qt::white));
+            painter.drawText(avatarPixmap.rect(), Qt::AlignCenter, firstChar.toUpper());
+            
+            item->setIcon(0, QIcon(avatarPixmap));
+        }
         
         // 尝试获取并设置在线状态，避免方法不存在的错误
         try {
             QString stateText = QString::fromStdString(user.getState());
-            item->setText(1, stateText);
+            item->setText(2, stateText);
             qDebug() << "[CRITICAL] Added friend with state:" << friendName << "State:" << stateText;
         } catch (...) {
             // 如果getState()方法不存在，忽略状态设置
@@ -1170,7 +1966,7 @@ void ChatWindow::onGroupListUpdated(const QList<Group> &groups) {
         // 尝试从contactTreeWidget中查找群组根节点
         for (int i = 0; i < contactTreeWidget->topLevelItemCount(); ++i) {
             QTreeWidgetItem *item = contactTreeWidget->topLevelItem(i);
-            if (item->text(0) == "群组") {
+            if (item->text(1) == "群组") {
                 groupRoot = item;
                 break;
             }
@@ -1180,7 +1976,8 @@ void ChatWindow::onGroupListUpdated(const QList<Group> &groups) {
         if (!groupRoot) {
             qDebug() << "[DEBUG] Creating new group root item";
             groupRoot = new QTreeWidgetItem(contactTreeWidget);
-            groupRoot->setText(0, "群组");
+            groupRoot->setText(1, "群组"); // 在联系人列显示标题
+            groupRoot->setFirstColumnSpanned(true); // 跨列显示
             contactTreeWidget->addTopLevelItem(groupRoot);
         }
     }
@@ -1194,11 +1991,35 @@ void ChatWindow::onGroupListUpdated(const QList<Group> &groups) {
         groupMap[group.getId()] = group;
         QTreeWidgetItem *item = new QTreeWidgetItem(groupRoot);
         QString groupName = QString::fromStdString(group.getName());
-        item->setText(0, groupName + " (" + QString::number(group.getId()) + ")");
-        item->setData(0, Qt::UserRole, group.getId());
+        
+        // 设置群组名称和ID
+        item->setText(1, groupName + " (" + QString::number(group.getId()) + ")");
+        item->setData(1, Qt::UserRole, group.getId());
+        
+        // 显示默认群组图标
+        // 创建一个带有群组图标的圆形头像
+        QPixmap groupPixmap(40, 40);
+        groupPixmap.fill(Qt::transparent);
+        
+        QPainter painter(&groupPixmap);
+        painter.setRenderHint(QPainter::Antialiasing, true);
+        
+        // 绘制蓝色圆形背景
+        QBrush brush(QColor(46, 204, 113)); // #2ecc71
+        painter.setBrush(brush);
+        painter.setPen(Qt::NoPen);
+        painter.drawEllipse(0, 0, 40, 40);
+        
+        // 绘制白色文字 "G" 表示群组
+        QFont font("Arial", 16, QFont::Bold);
+        painter.setFont(font);
+        painter.setPen(QColor(Qt::white));
+        painter.drawText(groupPixmap.rect(), Qt::AlignCenter, "G");
+        
+        item->setIcon(0, QIcon(groupPixmap));
         
         // 不尝试获取群组成员数，避免const和方法不存在的错误
-        item->setText(1, "群组成员");
+        item->setText(2, "群组成员");
         qDebug() << "[CRITICAL] Added group:" << groupName << "(group member count skipped for compatibility)";
         
         qDebug() << "[CRITICAL] Added group to UI list:" << groupName;
@@ -1220,6 +2041,37 @@ void ChatWindow::onAddFriendResponse(bool success, const QString &message) {
         chatClient->requestFriendList(userId);
     } else {
         QMessageBox::warning(this, "失败", message);
+    }
+}
+
+// 处理好友状态更新
+void ChatWindow::onFriendStateUpdated(qint64 userId, const QString &state) {
+    qDebug() << "Friend state updated: userId=" << userId << "state=" << state;
+    
+    // 确保contactTreeWidget和friendRoot已初始化
+    if (!contactTreeWidget || !friendRoot) {
+        qDebug() << "contactTreeWidget or friendRoot is null, cannot update friend state";
+        return;
+    }
+    
+    // 遍历好友列表，查找ID匹配的好友项
+    for (int i = 0; i < friendRoot->childCount(); ++i) {
+        QTreeWidgetItem *item = friendRoot->child(i);
+        if (!item) continue;
+        
+        // 获取好友ID
+        qint64 friendId = item->data(1, Qt::UserRole).toLongLong();
+        
+        if (friendId == userId) {
+            // 更新好友状态
+            item->setText(2, state);
+            qDebug() << "Updated friend" << friendId << "state to" << state;
+            
+            // 刷新UI
+            contactTreeWidget->update();
+            contactTreeWidget->repaint();
+            break;
+        }
     }
 }
 

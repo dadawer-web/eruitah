@@ -20,6 +20,7 @@
 #include <QFile>
 #include <QScrollArea>
 #include <QGridLayout>
+#include <QListWidget>
 #include "chatclient.h"
 #include "models/user.h"
 #include "models/group.h"
@@ -84,8 +85,8 @@ private:
     
     // 聊天组件结构体
     typedef struct {
-        QTextEdit *chatEdit;    // 聊天记录显示区域
-        QTextEdit *inputEdit;   // 消息输入区域
+        QTextEdit *chatEdit;        // 聊天记录显示区域
+        QListWidget *memberListWidget; // 群组成员列表（仅群组聊天使用）
     } ChatComponents;
 
     // 聊天组件映射
@@ -101,6 +102,11 @@ private:
     QMap<int, QByteArray> emojiList; // 存储用户的表情包，key为表情ID，value为图片数据
     bool isLoadingEmojis; // 标记是否正在加载表情包
     QDialog *currentEmojiDialog; // 当前显示的表情包对话框
+    
+    // 头像相关
+    QLabel *avatarLabel; // 当前用户头像显示标签
+    QDialog *changeAvatarDialog; // 修改头像对话框
+    QPushButton *changeAvatarButton; // 修改头像按钮
 
     // 文件传输相关成员变量
     QMap<QString, QFile*> receivingFiles;    // 接收中的文件映射 (fileId -> QFile*)
@@ -141,6 +147,7 @@ public slots:
     // 列表更新槽函数
     void onFriendListUpdated(const QList<User> &friends);
     void onGroupListUpdated(const QList<Group> &groups);
+    void onFriendStateUpdated(qint64 userId, const QString &state);
     
     // 添加好友相关槽函数
     void onAddFriend();

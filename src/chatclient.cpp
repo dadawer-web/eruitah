@@ -9,6 +9,8 @@
 #include <QTimer>
 #include <QThread>
 #include <QRandomGenerator>
+#include <QFile>
+#include <QIODevice>
 #include <string>
 
 // 跨平台网络头文件处理
@@ -25,6 +27,8 @@
 ChatClient::ChatClient(QObject *parent) : QObject(parent) {
     socket = new QTcpSocket(this);
     isConnected = false;
+    currentUserId = 0;
+    currentUserAvatar = "";
     
     // 连接信号和槽 - 实现异步事件处理模式
     // 设计亮点：使用lambda表达式实现简洁的事件处理，提高代码可读性
@@ -118,6 +122,8 @@ bool ChatClient::connectToServer(const QString &host, quint16 port) {
 void ChatClient::login(qint64 userId, const QString &password) {
     qDebug() << "[CRITICAL] login called with userId:" << userId << "password:" << password;
     this->currentUserId = userId; // 保存当前用户ID - 状态管理设计
+    // 清空当前用户头像数据，确保每次登录都能获取最新头像
+    this->currentUserAvatar = "";
     QJsonObject message;
     message["msgid"] = MsgType::LOGIN_MSG;
     message["id"] = userId;
@@ -128,11 +134,68 @@ void ChatClient::login(qint64 userId, const QString &password) {
 
 // 注册功能 - 创建新用户账户
 // 设计思路：封装用户信息，通过消息ID标识为注册请求
-void ChatClient::registerUser(const QString &userName, const QString &password) {
+void ChatClient::registerUser(const QString &userName, const QString &password, const QString &avatarPath) {
     QJsonObject message;
     message["msgid"] = MsgType::REG_MSG;
     message["name"] = userName;
     message["password"] = password;
+    
+    // 如果提供了头像路径，添加头像数据
+    if (!avatarPath.isEmpty()) {
+        QFile file(avatarPath);
+        if (file.open(QIODevice::ReadOnly)) {
+            QByteArray fileData = file.readAll();
+            QString base64Data = fileData.toBase64();
+            message["avatarName"] = avatarPath.split("/").last();
+            message["avatarData"] = base64Data;
+            file.close();
+        }
+    }
+    
+    sendJsonMessage(message);
+}
+
+// 上传头像功能 - 为用户上传或更新头像
+// 设计思路：将头像文件转换为Base64编码，通过JSON消息发送到服务器
+void ChatClient::uploadAvatar(int userId, const QString &avatarPath) {
+    QFile file(avatarPath);
+    if (!file.open(QIODevice::ReadOnly)) {
+        qDebug() << "ChatClient: Failed to open avatar file:" << avatarPath;
+        return;
+    }
+    
+    QByteArray fileData = file.readAll();
+    QString base64Data = fileData.toBase64();
+    file.close();
+    
+    QJsonObject message;
+    message["msgid"] = MsgType::UPLOAD_AVATAR_MSG;
+    message["id"] = userId;
+    message["avatarName"] = avatarPath.split("/").last();
+    message["avatarData"] = base64Data;
+    
+    sendJsonMessage(message);
+}
+
+// 更新头像功能 - 更新用户现有头像
+// 设计思路：与上传头像类似，但使用不同的消息类型
+void ChatClient::updateAvatar(int userId, const QString &avatarPath) {
+    QFile file(avatarPath);
+    if (!file.open(QIODevice::ReadOnly)) {
+        qDebug() << "ChatClient: Failed to open avatar file:" << avatarPath;
+        return;
+    }
+    
+    QByteArray fileData = file.readAll();
+    QString base64Data = fileData.toBase64();
+    file.close();
+    
+    QJsonObject message;
+    message["msgid"] = MsgType::UPDATE_AVATAR_MSG;
+    message["id"] = userId;
+    message["avatarName"] = avatarPath.split("/").last();
+    message["avatarData"] = base64Data;
+    
     sendJsonMessage(message);
 }
 
@@ -143,6 +206,8 @@ void ChatClient::logout(int userId) {
     message["msgid"] = MsgType::LOGINOUT_MSG;
     message["id"] = userId;
     sendJsonMessage(message);
+    // 清空当前用户头像数据，确保下次登录时不会使用旧数据
+    this->currentUserAvatar = "";
 }
 
 // 发送私聊消息 - 实现一对一通信
@@ -387,6 +452,32 @@ void ChatClient::processMessage(const QJsonObject &message) {
             this->currentUserId = userId;
             // 保存用户ID即可，用户名可以从服务器获取
             
+            // 处理当前用户头像
+            if (message.contains("avatar")) {
+                QString avatarData = message["avatar"].toString();
+                qDebug() << "[CRITICAL] User avatar from login response, length:" << avatarData.length();
+                
+                // 输出头像数据的前50个字符，查看数据格式
+                qDebug() << "[CRITICAL] Avatar data preview:" << avatarData.left(50) << (avatarData.length() > 50 ? "..." : "");
+                
+                // 存储当前用户头像数据
+                currentUserAvatar = avatarData;
+                qDebug() << "[CRITICAL] Stored avatar data, currentUserAvatar length:" << currentUserAvatar.length();
+                
+                // 立即检查存储的数据
+                QString storedAvatar = getCurrentUserAvatar();
+                qDebug() << "[CRITICAL] getCurrentUserAvatar() returned, length:" << storedAvatar.length();
+                
+                emit avatarUpdated(avatarData);
+            } else {
+                // 如果登录响应中没有头像字段，尝试直接查询用户头像
+                qDebug() << "[CRITICAL] No avatar in login response, querying user avatar...";
+                // 清空当前用户头像数据
+                currentUserAvatar = "";
+                qDebug() << "[CRITICAL] Cleared currentUserAvatar, length:" << currentUserAvatar.length();
+                // 这里可以添加查询用户头像的逻辑
+            }
+            
             // 处理登录响应中的好友列表
             if (message.contains("friends")) {
                 QList<User> friendList;
@@ -399,6 +490,10 @@ void ChatClient::processMessage(const QJsonObject &message) {
                             friendInfo.setId(friendObj["id"].toVariant().toLongLong());
                             friendInfo.setName(friendObj["name"].toString().toStdString());
                             friendInfo.setState(friendObj["state"].toString().toStdString());
+                            // 处理好友头像
+                            if (friendObj.contains("avatar")) {
+                                friendInfo.setAvatar(friendObj["avatar"].toString().toStdString());
+                            }
                             friendList.append(friendInfo);
                         } else if (value.isString()) {
                             // 处理字符串形式的好友信息
@@ -410,6 +505,10 @@ void ChatClient::processMessage(const QJsonObject &message) {
                                 friendInfo.setId(friendObj["id"].toVariant().toLongLong());
                                 friendInfo.setName(friendObj["name"].toString().toStdString());
                                 friendInfo.setState(friendObj["state"].toString().toStdString());
+                                // 处理好友头像
+                                if (friendObj.contains("avatar")) {
+                                    friendInfo.setAvatar(friendObj["avatar"].toString().toStdString());
+                                }
                                 friendList.append(friendInfo);
                             }
                         }
@@ -431,6 +530,8 @@ void ChatClient::processMessage(const QJsonObject &message) {
                             groupInfo.setId(groupObj["id"].toInt());
                             groupInfo.setName(groupObj["groupname"].toString().toStdString());
                             groupInfo.setDesc(groupObj["groupdesc"].toString().toStdString());
+                            // 调试日志：打印解析出的群组成员数量
+                            qDebug() << "Parsed group" << groupInfo.getId() << "with" << groupInfo.getUsers().size() << "members";
                             groupList.append(groupInfo);
                         } else if (value.isString()) {
                             // 处理字符串形式的群组信息
@@ -482,8 +583,19 @@ void ChatClient::processMessage(const QJsonObject &message) {
             // 登录成功后自动请求表情包列表
             requestEmojiList(currentUserId);
 
+            // 再次检查并确保头像数据已正确保存
+            QString storedAvatar = getCurrentUserAvatar();
+            qDebug() << "[CRITICAL] Before emitting loginResponse, getCurrentUserAvatar() returned, length:" << storedAvatar.length();
+
             // 通知UI层登录成功
             emit loginResponse(true, "登录成功");
+            
+            // 延迟一小段时间后再次发送头像更新信号，确保ChatWindow已经创建并连接了信号
+            QTimer::singleShot(50, this, [this]() {
+                QString delayedAvatar = getCurrentUserAvatar();
+                qDebug() << "[CRITICAL] Delayed avatar update signal, getCurrentUserAvatar() returned, length:" << delayedAvatar.length();
+                emit avatarUpdated(delayedAvatar);
+            });
         }
         break;
     }
@@ -744,9 +856,22 @@ void ChatClient::processMessage(const QJsonObject &message) {
                         if (groupObj.contains("users") && groupObj["users"].isArray()) {
                             QJsonArray usersArray = groupObj["users"].toArray();
                             for (const QJsonValue &userValue : usersArray) {
-                                if (userValue.isObject()) {
+                                GroupUser user;
+                                if (userValue.isString()) {
+                                    // 处理字符串形式的用户对象（服务器返回的格式）
+                                    QString userStr = userValue.toString();
+                                    QJsonDocument userDoc = QJsonDocument::fromJson(userStr.toUtf8());
+                                    if (userDoc.isObject()) {
+                                        QJsonObject userObj = userDoc.object();
+                                        user.setId(userObj["id"].toVariant().toLongLong());
+                                        user.setName(userObj["name"].toString().toStdString());
+                                        user.setState(userObj["state"].toString().toStdString());
+                                        user.setRole(userObj["role"].toString().toStdString());
+                                        groupInfo.getUsers().push_back(user);
+                                    }
+                                } else if (userValue.isObject()) {
+                                    // 处理直接的用户对象
                                     QJsonObject userObj = userValue.toObject();
-                                    GroupUser user;
                                     user.setId(userObj["id"].toVariant().toLongLong());
                                     user.setName(userObj["name"].toString().toStdString());
                                     user.setState(userObj["state"].toString().toStdString());
@@ -767,6 +892,71 @@ void ChatClient::processMessage(const QJsonObject &message) {
                             groupInfo.setId(groupObj["id"].toInt());
                             groupInfo.setName(groupObj["groupname"].toString().toStdString());
                             groupInfo.setDesc(groupObj["groupdesc"].toString().toStdString());
+                            
+                            // 解析群组成员列表
+                            if (groupObj.contains("users")) {
+                                const QJsonValue &usersValue = groupObj["users"];
+                                if (usersValue.isArray()) {
+                                    // 直接处理JSON数组格式的成员
+                                    QJsonArray usersArray = usersValue.toArray();
+                                    for (const QJsonValue &userValue : usersArray) {
+                                        if (userValue.isObject()) {
+                                            QJsonObject userObj = userValue.toObject();
+                                            GroupUser user;
+                                            user.setId(userObj["id"].toVariant().toLongLong());
+                                            user.setName(userObj["name"].toString().toStdString());
+                                            user.setState(userObj["state"].toString().toStdString());
+                                            user.setRole(userObj["role"].toString().toStdString());
+                                            groupInfo.getUsers().push_back(user);
+                                        } else if (userValue.isString()) {
+                                            // 处理字符串形式的单个成员
+                                            QString userStr = userValue.toString();
+                                            QJsonDocument userDoc = QJsonDocument::fromJson(userStr.toUtf8());
+                                            if (userDoc.isObject()) {
+                                                QJsonObject userObj = userDoc.object();
+                                                GroupUser user;
+                                                user.setId(userObj["id"].toVariant().toLongLong());
+                                                user.setName(userObj["name"].toString().toStdString());
+                                                user.setState(userObj["state"].toString().toStdString());
+                                                user.setRole(userObj["role"].toString().toStdString());
+                                                groupInfo.getUsers().push_back(user);
+                                            }
+                                        }
+                                    }
+                                } else if (usersValue.isString()) {
+                                    // 处理字符串形式的成员数组
+                                    QString usersStr = usersValue.toString();
+                                    QJsonDocument usersDoc = QJsonDocument::fromJson(usersStr.toUtf8());
+                                    if (usersDoc.isArray()) {
+                                        QJsonArray usersArray = usersDoc.array();
+                                        for (const QJsonValue &userValue : usersArray) {
+                                            if (userValue.isObject()) {
+                                                QJsonObject userObj = userValue.toObject();
+                                                GroupUser user;
+                                                user.setId(userObj["id"].toVariant().toLongLong());
+                                                user.setName(userObj["name"].toString().toStdString());
+                                                user.setState(userObj["state"].toString().toStdString());
+                                                user.setRole(userObj["role"].toString().toStdString());
+                                                groupInfo.getUsers().push_back(user);
+                                            } else if (userValue.isString()) {
+                                                // 处理字符串形式的单个成员
+                                                QString userStr = userValue.toString();
+                                                QJsonDocument userDoc = QJsonDocument::fromJson(userStr.toUtf8());
+                                                if (userDoc.isObject()) {
+                                                    QJsonObject userObj = userDoc.object();
+                                                    GroupUser user;
+                                                    user.setId(userObj["id"].toVariant().toLongLong());
+                                                    user.setName(userObj["name"].toString().toStdString());
+                                                    user.setState(userObj["state"].toString().toStdString());
+                                                    user.setRole(userObj["role"].toString().toStdString());
+                                                    groupInfo.getUsers().push_back(user);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            
                             groupList.append(groupInfo);
                         }
                     }
@@ -977,8 +1167,8 @@ void ChatClient::processMessage(const QJsonObject &message) {
         qDebug() << "Processing QUERY_EMOJI_LIST_MSG_ACK (message type:" << msgType << ")";
         int errno_val = message["errno"].toInt();
         if (errno_val == 0) {
+            QList<QJsonObject> emojiList;
             if (message.contains("emojis")) {
-                QList<QJsonObject> emojiList;
                 if (message["emojis"].isArray()) {
                     QJsonArray emojisArray = message["emojis"].toArray();
                     for (const QJsonValue &value : emojisArray) {
@@ -994,10 +1184,44 @@ void ChatClient::processMessage(const QJsonObject &message) {
                             emojiList.append(value.toObject());
                         }
                     }
-                    qDebug() << "Received emoji list with" << emojiList.size() << "emojis";
-                    emit emojiListUpdated(emojiList);
                 }
             }
+            qDebug() << "Received emoji list with" << emojiList.size() << "emojis";
+            emit emojiListUpdated(emojiList);
+        }
+        break;
+    }
+    
+    case MsgType::UPLOAD_AVATAR_MSG_ACK: 
+    case MsgType::UPDATE_AVATAR_MSG_ACK: {
+        qDebug() << "Processing avatar update response (message type:" << msgType << ")";
+        int errno_val = message["errno"].toInt();
+        if (errno_val == 0) {
+            // 头像更新成功
+            qDebug() << "Avatar update successful";
+            if (message.contains("avatar")) {
+                QString avatarPath = message["avatar"].toString();
+                emit avatarUpdated(avatarPath);
+            } else {
+                // 如果没有返回avatar字段，也发射信号，UI层会处理
+                emit avatarUpdated("");
+            }
+        } else {
+            // 头像更新失败
+            QString errorMsg = message["errmsg"].toString();
+            qDebug() << "Avatar update failed:" << errorMsg;
+        }
+        break;
+    }
+    
+    case MsgType::STATE_UPDATE_MSG: {
+        qDebug() << "Processing STATE_UPDATE_MSG";
+        // 用户状态更新处理
+        if (message.contains("userid") && message.contains("state")) {
+            qint64 userId = message["userid"].toVariant().toLongLong();
+            QString state = message["state"].toString();
+            qDebug() << "Friend state updated: User" << userId << "state changed to" << state;
+            emit friendStateUpdated(userId, state);
         }
         break;
     }

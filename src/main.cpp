@@ -54,7 +54,8 @@ int main(int argc, char *argv[]) {
                                  "id INT PRIMARY KEY AUTO_INCREMENT, "  // 主键，自增
                                  "name VARCHAR(50) UNIQUE NOT NULL, "  // 用户名，唯一
                                  "password VARCHAR(50) NOT NULL, "     // 密码
-                                 "state VARCHAR(20) DEFAULT 'offline')";// 在线状态，默认离线
+                                 "state VARCHAR(20) DEFAULT 'offline', "// 在线状态，默认离线
+                                 "avatar VARCHAR(255) DEFAULT '')" ;    // 头像路径，默认空字符串
         
         // 好友表：存储好友关系
         QString createFriendTable = "CREATE TABLE IF NOT EXISTS friend (" 

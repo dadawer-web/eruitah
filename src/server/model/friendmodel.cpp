@@ -1,6 +1,7 @@
 #include"friendmodel.hpp"
 #include"db.h"
 #include <cstring>
+#include <iostream>
 
 // 添加好友关系 - 社交关系管理
 // 业务逻辑：建立用户之间的好友关系，支持双向好友系统的数据基础
@@ -31,7 +32,7 @@ vector<User> FriendModel::query(int userid){
     // SQL语句构造 - 多表关联查询
     // 关键业务：通过INNER JOIN关联user和friend表，一次性获取好友详细信息
     char sql[1024]={0};
-    sprintf(sql,"select a.id,a.name,a.state from user a inner join friend b on b.friendid=a.id where b.userid=%d",userid);
+    sprintf(sql,"select a.id,a.name,a.state,a.avatar from user a inner join friend b on b.friendid=a.id where b.userid=%d",userid);
     
     // 结果集容器初始化
     vector<User> vec;
@@ -44,6 +45,9 @@ vector<User> FriendModel::query(int userid){
         if(res!=nullptr){
             MYSQL_ROW row;
             
+            // 获取字段数量
+            unsigned int fieldCount = mysql_num_fields(res);
+            
             // 批量数据处理 - 结果集迭代和对象映射
             while((row=mysql_fetch_row(res))!=nullptr){
                 // 对象实例化 - 好友信息封装
@@ -51,6 +55,19 @@ vector<User> FriendModel::query(int userid){
                 user.setId(atoi(row[0]));      // 用户ID转换和设置
                 user.setName(row[1]);          // 好友昵称
                 user.setState(row[2]);         // 在线状态获取（用于实时显示）
+                
+                // 处理BLOB类型的头像数据
+                if (fieldCount > 3 && row[3] != nullptr) {
+                    // 获取头像字段的长度 - 必须在mysql_fetch_row之后立即调用
+                    unsigned long *lengths = mysql_fetch_lengths(res);
+                    if (lengths && lengths[3] > 0) {
+                        // 使用实际长度创建string，而不是依赖null终止符
+                        string avatarData(row[3], lengths[3]);
+                        user.setAvatar(avatarData);  // 好友头像数据
+                        cout << "[DEBUG] Friend avatar data retrieved, length: " << avatarData.size() << endl;
+                    }
+                }
+                
                 vec.push_back(user);           // 添加到结果集
             }
             

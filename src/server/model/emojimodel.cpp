@@ -49,13 +49,13 @@ bool EmojiModel::insert(Emoji &emoji) {
     return false;
 }
 
-// 根据用户ID查询表情包列表 - 返回所有表情包，让所有用户都能看到
+// 根据用户ID查询表情包列表 - 只返回当前用户的表情包
 vector<Emoji> EmojiModel::queryByUserId(long long userId) {
     vector<Emoji> emojis;
     
-    // SQL语句构造 - 查询所有表情包，不再限制user_id
+    // SQL语句构造 - 只查询当前用户的表情包
     char sql[1024] = {0};
-    sprintf(sql, "SELECT id, user_id, name, image_data, create_time FROM emoji ORDER BY id DESC");
+    sprintf(sql, "SELECT id, user_id, name, image_data, create_time FROM emoji WHERE user_id = %lld ORDER BY id DESC", userId);
     
     // 数据库连接建立
     MySQL mysql;

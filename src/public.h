@@ -35,7 +35,16 @@ enum MsgType {
     UPLOAD_EMOJI_MSG,       // Upload emoji request message
     UPLOAD_EMOJI_MSG_ACK,   // Upload emoji response message
     QUERY_EMOJI_LIST_MSG,   // Query emoji list request message
-    QUERY_EMOJI_LIST_MSG_ACK // Query emoji list response message
+    QUERY_EMOJI_LIST_MSG_ACK, // Query emoji list response message
+    
+    // Avatar related message types
+    UPLOAD_AVATAR_MSG = 40,      // Upload avatar request message
+    UPLOAD_AVATAR_MSG_ACK,  // Upload avatar response message
+    UPDATE_AVATAR_MSG,      // Update avatar request message
+    UPDATE_AVATAR_MSG_ACK,  // Update avatar response message
+    
+    // User state update message type
+    STATE_UPDATE_MSG        // User state update message
 };
 
 // 数据库表名常量定义

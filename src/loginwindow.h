@@ -56,8 +56,12 @@ private:
     QLineEdit *registerNameLineEdit;
     QLabel *registerPasswordLabel;
     QLineEdit *registerPasswordLineEdit;
+    QLabel *registerAvatarLabel;
+    QPushButton *registerAvatarButton;
+    QLabel *avatarPreviewLabel;
     QPushButton *registerSubmitButton;
     QPushButton *backToLoginButton;
+    QString avatarPath;
 
     QStackedWidget *stackedWidget;
     ChatClient *chatClient;

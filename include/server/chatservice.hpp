@@ -40,6 +40,9 @@ public:
   //处理注销业务
   void loginout(const TcpConnectionPtr& conn,json& js,Timestamp time);
   
+  // 向用户的所有好友推送状态更新
+  void pushStateUpdate(int userId, const string& state);
+  
   // 文件传输相关业务
   void fileTransferRequest(const TcpConnectionPtr& conn,json& js,Timestamp time);
   void fileTransferAck(const TcpConnectionPtr& conn,json& js,Timestamp time);
@@ -53,6 +56,10 @@ public:
   // 表情包相关业务
   void uploadEmoji(const TcpConnectionPtr& conn,json& js,Timestamp time);
   void queryEmojiList(const TcpConnectionPtr& conn,json& js,Timestamp time);
+  
+  // 头像相关业务
+  void uploadAvatar(const TcpConnectionPtr& conn,json& js,Timestamp time);
+  void updateAvatar(const TcpConnectionPtr& conn,json& js,Timestamp time);
   
   //处理客户端异常退出
   void clientCloseException(const TcpConnectionPtr& conn);

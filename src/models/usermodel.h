@@ -32,6 +32,14 @@ public:
     bool updateState(User user);
 
     /**
+     * @brief Update user avatar information
+     * @param id User identification number
+     * @param avatar Avatar file path
+     * @return true if update was successful, false otherwise
+     */
+    bool updateAvatar(long long id, const string& avatar);
+
+    /**
      * @brief Reset the online status of all users
      * 
      * Typically called when the server restarts to ensure clean state.

@@ -55,8 +55,23 @@ public:
      * @brief Register a new user on the server
      * @param userName Desired username
      * @param password User password
+     * @param avatarPath Path to avatar image (optional)
      */
-    void registerUser(const QString &userName, const QString &password);
+    void registerUser(const QString &userName, const QString &password, const QString &avatarPath = "");
+    
+    /**
+     * @brief Upload a new avatar to the server
+     * @param userId Current user ID
+     * @param avatarPath Path to avatar image
+     */
+    void uploadAvatar(int userId, const QString &avatarPath);
+    
+    /**
+     * @brief Update the user's avatar on the server
+     * @param userId Current user ID
+     * @param avatarPath Path to new avatar image
+     */
+    void updateAvatar(int userId, const QString &avatarPath);
 
     /**
      * @brief Logout from the server
@@ -175,6 +190,12 @@ public:
      * @return Current user ID
      */
     int getUserId() const { return currentUserId; }
+    
+    /**
+     * @brief Get the current user avatar
+     * @return Current user avatar data (Base64 encoded)
+     */
+    QString getCurrentUserAvatar() const { return currentUserAvatar; }
 
 private:
     QTcpSocket *socket;          // TCP socket for server communication
@@ -182,6 +203,7 @@ private:
     bool isConnected;            // Flag indicating connection status
     int currentUserId;           // Currently logged-in user ID
     QList<QJsonObject> offlineMessages; // Queue to store offline messages until ChatWindow is ready
+    QString currentUserAvatar;    // Currently logged-in user avatar data (Base64 encoded)
 
 public:
     /**
@@ -279,6 +301,13 @@ private slots:
     // Emoji related signals
     void emojiUploadResponse(bool success, const QString &message);
     void emojiListUpdated(const QList<QJsonObject> &emojis);
+    
+    // Avatar related signals
+    void avatarUpdated(const QString &avatarPath);
+    void userAvatarReceived(const QString &avatarPath);
+    
+    // User state update signal
+    void friendStateUpdated(qint64 userId, const QString &state);
 };
 
 #endif // CHATCLIENT_H

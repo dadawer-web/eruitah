@@ -6,14 +6,24 @@
 void OfflineMsgModel::insert(int userid, string msg)
 {
     // SQL语句构造 - 消息数据持久化
-    char sql[1024]={0};
-    sprintf(sql,"insert into offlinemessage values(%d,'%s')",userid,msg.c_str());
+    string sql = "insert into offlinemessage values(";
+    sql += to_string(userid) + ", '";
+    
+    // 转义消息中的单引号，避免SQL注入和语法错误
+    string escapedMsg = msg;
+    size_t pos = 0;
+    while ((pos = escapedMsg.find("'", pos)) != string::npos) {
+        escapedMsg.replace(pos, 1, "''");
+        pos += 2;
+    }
+    
+    sql += escapedMsg + "')";
     
     // 数据库操作执行
     MySQL mysql;
     if(mysql.connect()){
         // 执行插入操作 - 离线消息存储
-        mysql.update(sql);
+        mysql.update(sql.c_str());
     }
 }
 

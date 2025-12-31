@@ -12,6 +12,9 @@ public:
 
     //更新用户的状态信息
     bool updateState(User user);
+    
+    // 更新用户头像
+    bool updateAvatar(long long id, const string& avatar);
 
     //重置用户的状态信息
     void resetState();
