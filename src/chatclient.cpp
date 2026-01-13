@@ -11,6 +11,7 @@
 #include <QRandomGenerator>
 #include <QFile>
 #include <QIODevice>
+#include <QFileInfo>
 #include <string>
 
 // 跨平台网络头文件处理
@@ -399,9 +400,12 @@ void ChatClient::sendJsonMessage(const QJsonObject &message) {
         bool bytesWrittenSuccess = socket->waitForBytesWritten(500); // 增加到500ms
         qDebug() << "Message sent, msgid:" << msgid << 
                     "length:" << data.size() << "bytes written:" << bytesWritten << "success:" << bytesWrittenSuccess;
-        
-        // 增加延迟时间，确保两条连续消息不会被合并 - 时序控制优化
-        QThread::msleep(50); // 增加到50ms
+                // 增加延迟时间，确保两条连续消息不会被合并 - 时序控制优化
+#ifdef _WIN32
+                Sleep(50); // Windows平台使用Sleep
+#else
+                QThread::msleep(50); // Linux平台使用QThread::msleep
+#endif
     } else {
         // 对于登出消息，立即返回，不等待，因为服务器会立即关闭连接
         qDebug() << "Logout message sent, msgid:" << msgid << 

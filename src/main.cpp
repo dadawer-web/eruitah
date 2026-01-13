@@ -1,22 +1,24 @@
 // 包含Qt应用程序的核心头文件
 #include <QApplication>
 #include <QCoreApplication>
-// 包含文本编码相关的头文件
-#include <QTextCodec>
+// 文本编码相关的头文件 - Qt 5.14+ 已弃用 QTextCodec::setCodecForLocale
+// #include <QTextCodec>
 // 包含定时器相关的头文件
 #include <QTimer>
 // 包含登录窗口的头文件
 #include "loginwindow.h"
 // 包含聊天窗口的头文件
 #include "chatwindow.h"
-// 包含数据库操作的头文件
-#include "db/db.h"
-
-// 跨平台网络头文件处理
+// 跨平台网络头文件处理 - 注意：先包含Windows网络头文件，再包含Qt头文件，避免byte类型歧义
 #ifdef _WIN32
     #include <winsock2.h>
     #include <ws2tcpip.h>
+    // 防止Windows头文件中的byte类型与Qt冲突
+    #undef byte
 #endif
+
+// 注意：不要包含数据库头文件，客户端不需要直接连接数据库
+// #include "db/db.h"
 
 // 程序入口函数
 // argc: 命令行参数数量
@@ -47,66 +49,12 @@ int main(int argc, char *argv[]) {
     }
     
     // 设置中文显示
-    // QTextCodec用于处理不同字符编码
-    // setCodecForLocale设置程序的默认文本编码为UTF-8，确保中文等非ASCII字符能正确显示
-    QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
+    // Qt 5.14+ 推荐使用 QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling) 等属性
+    // 现代Qt默认使用UTF-8编码，无需手动设置
     
-    // 初始化数据库连接
-    // 创建MySQL对象并尝试连接数据库
-    MySQL mysql;
-    if (mysql.connect()) {
-        qDebug() << "数据库连接成功";
-        
-        // 创建必要的数据表
-        // 使用CREATE TABLE IF NOT EXISTS确保表只在不存在时创建
-        
-        // 用户表：存储用户基本信息
-        QString createUserTable = "CREATE TABLE IF NOT EXISTS user (" 
-                                 "id INT PRIMARY KEY AUTO_INCREMENT, "  // 主键，自增
-                                 "name VARCHAR(50) UNIQUE NOT NULL, "  // 用户名，唯一
-                                 "password VARCHAR(50) NOT NULL, "     // 密码
-                                 "state VARCHAR(20) DEFAULT 'offline', "// 在线状态，默认离线
-                                 "avatar VARCHAR(255) DEFAULT '')" ;    // 头像路径，默认空字符串
-        
-        // 好友表：存储好友关系
-        QString createFriendTable = "CREATE TABLE IF NOT EXISTS friend (" 
-                                   "userid INT NOT NULL, "            // 用户ID
-                                   "friendid INT NOT NULL, "          // 好友ID
-                                   "PRIMARY KEY (userid, friendid), "  // 复合主键，确保好友关系唯一性
-                                   "FOREIGN KEY (userid) REFERENCES user(id), "  // 外键引用user表
-                                   "FOREIGN KEY (friendid) REFERENCES user(id))";// 外键引用user表
-        
-        // 群组表：存储群组基本信息
-        QString createAllGroupTable = "CREATE TABLE IF NOT EXISTS allgroup (" 
-                                      "id INT PRIMARY KEY AUTO_INCREMENT, "  // 主键，自增
-                                      "groupname VARCHAR(50) NOT NULL, "     // 群组名称
-                                      "groupdesc VARCHAR(200) NOT NULL)" ;   // 群组描述
-        
-        // 群成员表：存储群组成员关系
-        QString createGroupUserTable = "CREATE TABLE IF NOT EXISTS groupuser (" 
-                                       "groupid INT NOT NULL, "             // 群组ID
-                                       "userid INT NOT NULL, "              // 用户ID
-                                       "grouprole VARCHAR(20) NOT NULL, "    // 用户在群组中的角色
-                                       "PRIMARY KEY (groupid, userid), "     // 复合主键，确保成员关系唯一性
-                                       "FOREIGN KEY (groupid) REFERENCES allgroup(id), "  // 外键引用allgroup表
-                                       "FOREIGN KEY (userid) REFERENCES user(id))" ;      // 外键引用user表
-        
-        // 离线消息表：存储用户离线时的消息
-        QString createOfflineMsgTable = "CREATE TABLE IF NOT EXISTS offlinemessage (" 
-                                        "id INT PRIMARY KEY AUTO_INCREMENT, "  // 主键，自增
-                                        "userid INT NOT NULL, "               // 接收者ID
-                                        "message TEXT NOT NULL, "             // 消息内容
-                                        "FOREIGN KEY (userid) REFERENCES user(id))" ;   // 外键引用user表
-        
-        // 执行SQL语句创建表
-        mysql.update(createUserTable.toStdString());
-        mysql.update(createFriendTable.toStdString());
-        mysql.update(createAllGroupTable.toStdString());
-        mysql.update(createGroupUserTable.toStdString());
-        mysql.update(createOfflineMsgTable.toStdString());
-    } else {
-        qDebug() << "数据库连接失败";
-    }
+    // 客户端不需要直接连接数据库，数据库操作由服务器处理
+    // 移除数据库连接和表创建代码，避免编译错误
+    qDebug() << "客户端启动，数据库操作由服务器处理";
     
     // 创建并显示登录窗口
     LoginWindow loginWindow;

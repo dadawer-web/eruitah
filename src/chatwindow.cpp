@@ -3346,7 +3346,11 @@ void ChatWindow::sendFileContent(int toId, const QString &filename, const QStrin
         QCoreApplication::processEvents();
         
         // 减小延迟，提高传输速度
-        QThread::msleep(5); // 从50ms减少到5ms
+#ifdef _WIN32
+        Sleep(5); // Windows平台使用Sleep
+#else
+        QThread::msleep(5); // Linux平台使用QThread::msleep
+#endif
     }
     
     // 如果被取消，发送错误通知
