@@ -26,6 +26,8 @@ set(CLIENT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/../loginwindow.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../mainwindow.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../chatserver.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../messagewidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../messagewidget.h
     # 服务器相关的核心文件（为了支持MainWindow中的服务器功能）
     ${CMAKE_CURRENT_SOURCE_DIR}/../server/db/db.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../server/model/usermodel.cpp
@@ -49,6 +51,9 @@ set(QT_CHAT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/../loginwindow.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../mainwindow.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../chatserver.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../messagewidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../messagewidget.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../qtchat.qrc
     # 服务器相关的核心文件
     ${CMAKE_CURRENT_SOURCE_DIR}/../server/db/db.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../server/model/usermodel.cpp

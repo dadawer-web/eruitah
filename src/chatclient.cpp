@@ -468,6 +468,8 @@ void ChatClient::processMessage(const QJsonObject &message) {
                 QString storedAvatar = getCurrentUserAvatar();
                 qDebug() << "[CRITICAL] getCurrentUserAvatar() returned, length:" << storedAvatar.length();
                 
+                // 确保我们发出的是从登录响应中获取的原始avatarData，而不是可能为空的storedAvatar
+                qDebug() << "[CRITICAL] Emitting avatarUpdated with data length:" << avatarData.length();
                 emit avatarUpdated(avatarData);
             } else {
                 // 如果登录响应中没有头像字段，尝试直接查询用户头像
@@ -591,7 +593,8 @@ void ChatClient::processMessage(const QJsonObject &message) {
             emit loginResponse(true, "登录成功");
             
             // 延迟一小段时间后再次发送头像更新信号，确保ChatWindow已经创建并连接了信号
-            QTimer::singleShot(50, this, [this]() {
+            // 增加延迟时间到300ms，确保在LoginWindow的200ms延迟后ChatWindow已经创建
+            QTimer::singleShot(300, this, [this]() {
                 QString delayedAvatar = getCurrentUserAvatar();
                 qDebug() << "[CRITICAL] Delayed avatar update signal, getCurrentUserAvatar() returned, length:" << delayedAvatar.length();
                 emit avatarUpdated(delayedAvatar);
@@ -614,6 +617,16 @@ void ChatClient::processMessage(const QJsonObject &message) {
             // 注册成功处理
             qint64 userId = message["id"].toVariant().toLongLong();
             QString userName = message["name"].toString();
+            
+            // 处理头像数据
+            if (message.contains("avatar")) {
+                QString avatarData = message["avatar"].toString();
+                this->currentUserAvatar = avatarData;
+                qDebug() << "Registration successful, saved avatar data length:" << avatarData.length();
+            } else {
+                qDebug() << "Registration successful, no avatar data provided";
+            }
+            
             qDebug() << "Registration successful for user:" << userId << "(" << userName << ")";
             
             // 构建包含用户信息的JSON消息
@@ -687,6 +700,9 @@ void ChatClient::processMessage(const QJsonObject &message) {
                         friendInfo.setId(friendObj["id"].toVariant().toLongLong());
                         friendInfo.setName(friendObj["name"].toString().toStdString());
                         friendInfo.setState(friendObj["state"].toString().toStdString());
+                        if (friendObj.contains("avatar")) {
+                            friendInfo.setAvatar(friendObj["avatar"].toString().toStdString());
+                        }
                         friendList.append(friendInfo);
                     } else if (value.isString()) {
                         // 处理字符串形式的好友信息
@@ -694,11 +710,14 @@ void ChatClient::processMessage(const QJsonObject &message) {
                         QJsonDocument doc = QJsonDocument::fromJson(friendStr.toUtf8());
                         if (doc.isObject()) {
                             QJsonObject friendObj = doc.object();
-                            User friendInfo;
-                            friendInfo.setId(friendObj["id"].toVariant().toLongLong());
-                            friendInfo.setName(friendObj["name"].toString().toStdString());
-                            friendInfo.setState(friendObj["state"].toString().toStdString());
-                            friendList.append(friendInfo);
+                                User friendInfo;
+                                friendInfo.setId(friendObj["id"].toVariant().toLongLong());
+                                friendInfo.setName(friendObj["name"].toString().toStdString());
+                                friendInfo.setState(friendObj["state"].toString().toStdString());
+                                if (friendObj.contains("avatar")) {
+                                    friendInfo.setAvatar(friendObj["avatar"].toString().toStdString());
+                                }
+                                friendList.append(friendInfo);
                         }
                     }
                 }
@@ -729,6 +748,9 @@ void ChatClient::processMessage(const QJsonObject &message) {
                                 friendInfo.setId(friendObj["id"].toVariant().toLongLong());
                                 friendInfo.setName(friendObj["name"].toString().toStdString());
                                 friendInfo.setState(friendObj["state"].toString().toStdString());
+                                if (friendObj.contains("avatar")) {
+                                    friendInfo.setAvatar(friendObj["avatar"].toString().toStdString());
+                                }
                                 friendList.append(friendInfo);
                             }
                         }
@@ -748,6 +770,9 @@ void ChatClient::processMessage(const QJsonObject &message) {
                                     friendInfo.setId(friendObj["id"].toVariant().toLongLong());
                                     friendInfo.setName(friendObj["name"].toString().toStdString());
                                     friendInfo.setState(friendObj["state"].toString().toStdString());
+                                    if (friendObj.contains("avatar")) {
+                                        friendInfo.setAvatar(friendObj["avatar"].toString().toStdString());
+                                    }
                                     friendList.append(friendInfo);
                                 } else if (value.isString()) {
                                     // 处理字符串形式的好友信息
@@ -759,6 +784,9 @@ void ChatClient::processMessage(const QJsonObject &message) {
                                         friendInfo.setId(friendObj["id"].toVariant().toLongLong());
                                         friendInfo.setName(friendObj["name"].toString().toStdString());
                                         friendInfo.setState(friendObj["state"].toString().toStdString());
+                                        if (friendObj.contains("avatar")) {
+                                            friendInfo.setAvatar(friendObj["avatar"].toString().toStdString());
+                                        }
                                         friendList.append(friendInfo);
                                     }
                                 }
@@ -781,6 +809,9 @@ void ChatClient::processMessage(const QJsonObject &message) {
                                     friendInfo.setId(friendObj["id"].toVariant().toLongLong());
                                     friendInfo.setName(friendObj["name"].toString().toStdString());
                                     friendInfo.setState(friendObj["state"].toString().toStdString());
+                                    if (friendObj.contains("avatar")) {
+                                        friendInfo.setAvatar(friendObj["avatar"].toString().toStdString());
+                                    }
                                     friendList.append(friendInfo);
                                 }
                             }
@@ -794,6 +825,9 @@ void ChatClient::processMessage(const QJsonObject &message) {
                             friendInfo.setId(friendObj["id"].toVariant().toLongLong());
                             friendInfo.setName(friendObj["name"].toString().toStdString());
                             friendInfo.setState(friendObj["state"].toString().toStdString());
+                            if (friendObj.contains("avatar")) {
+                                friendInfo.setAvatar(friendObj["avatar"].toString().toStdString());
+                            }
                             friendList.append(friendInfo);
                         } else {
                             // 尝试解析包含多个好友对象的字符串
@@ -812,6 +846,9 @@ void ChatClient::processMessage(const QJsonObject &message) {
                                     friendInfo.setId(friendObj["id"].toVariant().toLongLong());
                                     friendInfo.setName(friendObj["name"].toString().toStdString());
                                     friendInfo.setState(friendObj["state"].toString().toStdString());
+                                    if (friendObj.contains("avatar")) {
+                                        friendInfo.setAvatar(friendObj["avatar"].toString().toStdString());
+                                    }
                                     friendList.append(friendInfo);
                                 }
                             }

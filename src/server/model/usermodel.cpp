@@ -35,7 +35,7 @@ bool UserModel::insert(User &user)
         }
         
         // 预处理SQL语句
-        const char *sql = "INSERT INTO user(name, password, state, avatar) VALUES(?, ?, ?, ?)";
+        const char *sql = "INSERT INTO user(name, password, state, avatar) VALUES(?, ?, 'offline', ?)";
         if (mysql_stmt_prepare(stmt, sql, strlen(sql)) != 0) {
             cout << "[ERROR] Failed to prepare MySQL statement: " << mysql_stmt_error(stmt) << endl;
             mysql_stmt_close(stmt);
@@ -45,28 +45,26 @@ bool UserModel::insert(User &user)
         cout << "[DEBUG] MySQL statement prepared successfully" << endl;
         
         // 绑定参数
-        MYSQL_BIND bind[4];
+        MYSQL_BIND bind[3];
         memset(bind, 0, sizeof(bind));
         
         // 绑定用户名
+        string userName = user.getName();
         bind[0].buffer_type = MYSQL_TYPE_STRING;
-        bind[0].buffer = (void *)user.getName().c_str();
-        bind[0].buffer_length = user.getName().size();
+        bind[0].buffer = (void *)userName.c_str();
+        bind[0].buffer_length = userName.size();
         
         // 绑定密码
+        string userPwd = user.getPwd();
         bind[1].buffer_type = MYSQL_TYPE_STRING;
-        bind[1].buffer = (void *)user.getPwd().c_str();
-        bind[1].buffer_length = user.getPwd().size();
-        
-        // 绑定状态
-        bind[2].buffer_type = MYSQL_TYPE_STRING;
-        bind[2].buffer = (void *)user.getState().c_str();
-        bind[2].buffer_length = user.getState().size();
+        bind[1].buffer = (void *)userPwd.c_str();
+        bind[1].buffer_length = userPwd.size();
         
         // 绑定头像数据
-        bind[3].buffer_type = MYSQL_TYPE_BLOB;
-        bind[3].buffer = (void *)user.getAvatar().c_str();
-        bind[3].buffer_length = user.getAvatar().size();
+        string userAvatar = user.getAvatar();
+        bind[2].buffer_type = MYSQL_TYPE_BLOB;
+        bind[2].buffer = (void *)userAvatar.c_str();
+        bind[2].buffer_length = userAvatar.size();
         
         if (mysql_stmt_bind_param(stmt, bind) != 0) {
             cout << "[ERROR] Failed to bind parameters: " << mysql_stmt_error(stmt) << endl;

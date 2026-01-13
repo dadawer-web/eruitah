@@ -11,6 +11,7 @@
 #include <QMessageBox>
 #include <QStackedWidget>
 #include <QShowEvent>
+#include <QTimer>
 #include "chatclient.h"
 
 class LoginWindow : public QMainWindow {
@@ -25,10 +26,20 @@ public:
     
     // 重置ChatClient实例（用于登出后重新创建）
     void resetChatClient() {
-        delete chatClient;
-        chatClient = new ChatClient(this);
-        connect(chatClient, &ChatClient::loginResponse, this, &LoginWindow::handleLoginResponse);
-        connect(chatClient, &ChatClient::registerResponse, this, &LoginWindow::handleRegisterResponse);
+        // 创建新的ChatClient实例，然后替换旧的
+        ChatClient *newClient = new ChatClient(this);
+        connect(newClient, &ChatClient::loginResponse, this, &LoginWindow::handleLoginResponse);
+        connect(newClient, &ChatClient::registerResponse, this, &LoginWindow::handleRegisterResponse);
+        
+        // 先保存旧的指针
+        ChatClient *oldClient = chatClient;
+        // 立即替换为新的实例
+        chatClient = newClient;
+        
+        // 延迟删除旧的实例，确保所有事件都已处理
+        QTimer::singleShot(100, [oldClient]() {
+            delete oldClient;
+        });
     }
 
 private:

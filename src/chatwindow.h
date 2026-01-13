@@ -21,9 +21,20 @@
 #include <QScrollArea>
 #include <QGridLayout>
 #include <QListWidget>
+#include <QScrollBar>
 #include "chatclient.h"
 #include "models/user.h"
 #include "models/group.h"
+
+// 未处理消息结构体
+struct PendingMessage {
+    int fromId;
+    QString message;
+    QString fromName;
+    bool isGroup;
+    int groupId;
+    QString timestamp;
+};
 
 // 文件传输信息结构体
 struct FileTransferInfo {
@@ -70,6 +81,9 @@ private:
     bool friendListLoaded; // 标记好友列表是否已加载
     bool offlineMessagesProcessed; // 标记离线消息是否已处理
     
+    // 未处理消息队列（用于好友列表加载前的消息）
+    QList<PendingMessage> pendingMessages;
+    
     // 联系人树根节点
     QTreeWidgetItem *friendRoot;
     QTreeWidgetItem *groupRoot;
@@ -85,7 +99,7 @@ private:
     
     // 聊天组件结构体
     typedef struct {
-        QTextEdit *chatEdit;        // 聊天记录显示区域
+        QListWidget *chatListWidget; // 聊天记录显示区域
         QListWidget *memberListWidget; // 群组成员列表（仅群组聊天使用）
     } ChatComponents;
 
@@ -107,6 +121,7 @@ private:
     QLabel *avatarLabel; // 当前用户头像显示标签
     QDialog *changeAvatarDialog; // 修改头像对话框
     QPushButton *changeAvatarButton; // 修改头像按钮
+    QString currentUserAvatarData; // 当前用户头像数据（Base64或Data URL）
 
     // 文件传输相关成员变量
     QMap<QString, QFile*> receivingFiles;    // 接收中的文件映射 (fileId -> QFile*)
@@ -128,6 +143,7 @@ private:
     // 辅助方法
     QString generateChatKey(int chatId, bool isGroup);
     void updateTabText(int chatId, bool isGroup, const QString &chatName);
+    void addMessageToChatList(QListWidget *listWidget, bool isSender, const QString &message, const QString &avatarPath, const QString &timeStr);
 
 public slots:
     // 连接相关槽函数

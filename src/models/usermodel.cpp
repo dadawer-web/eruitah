@@ -6,6 +6,7 @@
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
+#include<cstring>
 using namespace std;
 
 // Base64编码辅助函数

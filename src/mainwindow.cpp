@@ -30,9 +30,13 @@ void MainWindow::initUI() {
     setCentralWidget(centralWidget);
     
     mainLayout = new QVBoxLayout(centralWidget);
+    mainLayout->setContentsMargins(10, 10, 10, 10);
+    mainLayout->setSpacing(10);
     
     // 端口设置
     QHBoxLayout *portLayout = new QHBoxLayout();
+    portLayout->setContentsMargins(0, 0, 0, 0);
+    portLayout->setSpacing(10);
     portLabel = new QLabel("端口:", this);
     portEdit = new QLineEdit(this);
     portEdit->setText("8000");
@@ -41,6 +45,8 @@ void MainWindow::initUI() {
     
     // 按钮布局
     buttonLayout = new QHBoxLayout();
+    buttonLayout->setContentsMargins(0, 0, 0, 0);
+    buttonLayout->setSpacing(10);
     startServerButton = new QPushButton("启动服务器", this);
     stopServerButton = new QPushButton("停止服务器", this);
     startClientButton = new QPushButton("启动客户端", this);

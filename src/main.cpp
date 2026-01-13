@@ -35,6 +35,17 @@ int main(int argc, char *argv[]) {
     // QApplication是Qt GUI应用程序的核心类，管理应用程序的资源、设置和事件循环
     QApplication a(argc, argv);
     
+    // 加载样式表
+    QFile file(":/styles.qss");
+    if(file.open(QFile::ReadOnly)) {
+        QString styleSheet = file.readAll();
+        a.setStyleSheet(styleSheet);
+        file.close();
+        qDebug() << "样式表加载成功";
+    } else {
+        qDebug() << "样式表加载失败:" << file.errorString();
+    }
+    
     // 设置中文显示
     // QTextCodec用于处理不同字符编码
     // setCodecForLocale设置程序的默认文本编码为UTF-8，确保中文等非ASCII字符能正确显示
@@ -81,7 +92,7 @@ int main(int argc, char *argv[]) {
                                        "FOREIGN KEY (userid) REFERENCES user(id))" ;      // 外键引用user表
         
         // 离线消息表：存储用户离线时的消息
-        QString createOfflineMsgTable = "CREATE TABLE IF NOT EXISTS offlineMessage (" 
+        QString createOfflineMsgTable = "CREATE TABLE IF NOT EXISTS offlinemessage (" 
                                         "id INT PRIMARY KEY AUTO_INCREMENT, "  // 主键，自增
                                         "userid INT NOT NULL, "               // 接收者ID
                                         "message TEXT NOT NULL, "             // 消息内容
@@ -161,13 +172,30 @@ int main(int argc, char *argv[]) {
             
             // 当ChatWindow发出logout信号时，关闭聊天窗口并重新显示登录窗口
             QObject::connect(chatWindow, &ChatWindow::logout, [&loginWindow, &chatWindow]() {
+                qDebug() << "[CRITICAL] Logout signal received in main.cpp";
                 if (chatWindow) {
-                    chatWindow->close();
-                    delete chatWindow;
+                    qDebug() << "[CRITICAL] Processing logout for chatWindow:" << chatWindow;
+                    // 先保存chatWindow指针
+                    ChatWindow *windowToDelete = chatWindow;
+                    // 立即将chatWindow置为nullptr，防止其他地方访问
                     chatWindow = nullptr;
-                    // 重新创建ChatClient实例，确保LoginWindow有一个有效的ChatClient指针
+                    
+                    // 先断开所有信号连接
+                    windowToDelete->disconnect();
+                    
+                    // 关闭窗口
+                    windowToDelete->close();
+                    
+                    // 重新显示登录窗口
                     loginWindow.resetChatClient();
                     loginWindow.show();
+                    qDebug() << "[CRITICAL] Login window shown after logout";
+                    
+                    // 使用QTimer延迟删除，确保所有事件都已处理
+                    QTimer::singleShot(100, [windowToDelete]() {
+                        qDebug() << "[CRITICAL] Deleting chatWindow:" << windowToDelete;
+                        delete windowToDelete;
+                    });
                 }
             });
             

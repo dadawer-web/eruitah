@@ -8,5 +8,6 @@
     <file>icons/send.png</file>
     <file>icons/refresh.png</file>
     <file>icons/exit.png</file>
+    <file>styles.qss</file>
 </qresource>
 </RCC>

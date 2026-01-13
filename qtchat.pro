@@ -45,7 +45,7 @@ INCLUDEPATH += $$PWD/src \
                $$PWD/thirdparty
 
 # 链接MySQL库
-LIBS += -lmysqlclient
+LIBS += -lmysqlclient -lcrypto -lssl
 
 # 输出目录
 DESTDIR = $$PWD/bin

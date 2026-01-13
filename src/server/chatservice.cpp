@@ -404,6 +404,7 @@ void ChatService::reg(const TcpConnectionPtr& conn,json& js,Timestamp time){
         User user;
         user.setName(name);
         user.setPwd(pwd);
+        user.setState("offline"); // Explicitly set state to "offline"
         
         bool state=_userModel.insert(user);
         if(state){//注册成功
@@ -424,6 +425,16 @@ void ChatService::reg(const TcpConnectionPtr& conn,json& js,Timestamp time){
             response["msgid"]=REG_MSG_ACK;
             response["errno"]=0;
             response["id"]=user.getId();
+            
+            // 如果提供了头像数据，在响应中返回
+            if (js.contains("avatarData")) {
+                // 直接使用客户端上传的Base64编码头像数据返回
+                response["avatar"] = js["avatarData"];
+                LOG_INFO << "Returning avatar data in registration response";
+            } else {
+                response["avatar"] = ""; // 空头像
+            }
+            
             conn->send(response.dump());
         }
         else{//注册失败

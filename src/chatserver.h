@@ -9,7 +9,7 @@
 #include "models/usermodel.h"
 #include "models/friendmodel.h"
 #include "models/groupmodel.h"
-#include "models/offlinemessagemodel.h"
+#include "server/model/offlinemessagemodel.hpp"
 
 /**
  * @brief The ChatServer class

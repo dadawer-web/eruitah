@@ -4,11 +4,13 @@
 #include <QCoreApplication>
 #include <QFileDialog>
 #include <QPixmap>
+#include <QPainter>
+#include <QPainterPath>
 
 LoginWindow::LoginWindow(QWidget *parent) : QMainWindow(parent) {
     // 设置窗口标题和大小
     setWindowTitle("Qt Chat - 登录");
-    setFixedSize(420, 380);
+    setFixedSize(520, 480);
     setObjectName("loginWindow");
     
 
@@ -50,7 +52,8 @@ LoginWindow::LoginWindow(QWidget *parent) : QMainWindow(parent) {
     QWidget *mainWidget = new QWidget;
     QVBoxLayout *mainLayout = new QVBoxLayout;
     mainLayout->setAlignment(Qt::AlignCenter);
-    mainLayout->setContentsMargins(20, 20, 20, 20);
+    mainLayout->setContentsMargins(10, 10, 10, 10);
+    mainLayout->setSpacing(0);
     mainWidget->setLayout(mainLayout);
     setCentralWidget(mainWidget);
 
@@ -261,17 +264,20 @@ LoginWindow::LoginWindow(QWidget *parent) : QMainWindow(parent) {
     );
     
     avatarPreviewLabel = new QLabel;
-    avatarPreviewLabel->setFixedSize(80, 80);
+    avatarPreviewLabel->setFixedSize(120, 120);
     avatarPreviewLabel->setStyleSheet(
         "border: 1px solid #e0e0e0; "
-        "border-radius: 40px; "
+        "border-radius: 60px; "
         "background-color: #fafafa;"
     );
     avatarPreviewLabel->setAlignment(Qt::AlignCenter);
     
-    avatarLayout->addWidget(registerAvatarButton);
-    avatarLayout->addWidget(avatarPreviewLabel);
-    avatarLayout->setSpacing(12);
+    // 调整布局，确保按钮和头像垂直居中对齐
+    avatarLayout->addWidget(registerAvatarButton, 0, Qt::AlignVCenter);
+    avatarLayout->addSpacing(30);
+    avatarLayout->addWidget(avatarPreviewLabel, 0, Qt::AlignVCenter);
+    avatarLayout->setAlignment(Qt::AlignCenter);
+    avatarLayout->setContentsMargins(0, 0, 0, 20);
 
     // 按钮
     registerSubmitButton = new QPushButton("注册");
@@ -314,6 +320,7 @@ LoginWindow::LoginWindow(QWidget *parent) : QMainWindow(parent) {
     // 头像部分
     registerLayout->addWidget(registerAvatarLabel);
     registerLayout->addLayout(avatarLayout);
+    registerLayout->addSpacing(30);
     
     // 按钮部分
     registerLayout->addSpacing(25);
@@ -343,9 +350,16 @@ LoginWindow::LoginWindow(QWidget *parent) : QMainWindow(parent) {
         QString filePath = QFileDialog::getOpenFileName(this, "选择头像", ".", "图像文件 (*.png *.jpg *.jpeg)");
         if (!filePath.isEmpty()) {
             avatarPath = filePath;
+            
+            // 直接加载图片并显示
             QPixmap pixmap(filePath);
+            
+            // 缩放到预览标签大小，保持原始比例
             QPixmap scaledPixmap = pixmap.scaled(avatarPreviewLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+            
+            // 直接设置到标签
             avatarPreviewLabel->setPixmap(scaledPixmap);
+            avatarPreviewLabel->setAlignment(Qt::AlignCenter);
         }
     });
     
