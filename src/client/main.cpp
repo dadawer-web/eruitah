@@ -17,13 +17,22 @@
 using namespace std;
 using json = nlohmann::json;    // 为json库定义别名，方便使用
 
-// 网络和系统相关头文件
-#include <unistd.h>              // 系统调用（如close, read, write）
-#include <sys/socket.h>          // socket API
-#include <sys/types.h>           // 基本系统数据类型
-#include <netinet/in.h>          // 互联网地址族
-#include <arpa/inet.h>           // 网络地址转换
-#include <semaphore.h>           // 信号量，用于线程同步
+// 网络和系统相关头文件 - 跨平台兼容
+#ifdef _WIN32
+    #include <winsock2.h>          // Windows socket API
+    #include <ws2tcpip.h>          // Windows TCP/IP 相关
+    #include <windows.h>           // Windows 系统函数
+    // Windows 没有 semaphore.h，使用 Windows 事件对象模拟
+    HANDLE rwsem;
+#else
+    #include <unistd.h>            // 系统调用（如close, read, write）
+    #include <sys/socket.h>        // socket API
+    #include <sys/types.h>         // 基本系统数据类型
+    #include <netinet/in.h>        // 互联网地址族
+    #include <arpa/inet.h>         // 网络地址转换
+    #include <semaphore.h>         // 信号量，用于线程同步
+    sem_t rwsem;
+#endif
 #include <atomic>                // 原子变量，保证线程安全
 
 // 自定义头文件，包含聊天系统的数据结构定义
@@ -49,9 +58,9 @@ bool isMainMenuRunning = false;          // 标记主菜单运行状态 - UI状�
 // 关键设计：使用atomic_bool确保在多线程环境下登录状态的线程安全
 // 业务说明：避免线程竞争导致的状态不一致问题
 
-// 线程同步信号量
+// 线程同步机制 - 跨平台兼容
 // 业务逻辑：实现主线程与接收线程之间的同步通信
-sem_t rwsem;
+// 注意：rwsem 已经在平台特定头文件部分定义
 // 登录状态标记（原子类型，保证线程安全）
 // 业务逻辑：跨线程安全地共享登录状态
 atomic_bool g_isLoginSuccess{false};
@@ -69,6 +78,15 @@ void showCurrentUserData();
 // 聊天客户端程序实现，main线程用作发送线程，子线程用作接收线程
 int main(int argc, char **argv)
 {
+    // Windows 平台需要初始化 Winsock 库
+    #ifdef _WIN32
+        WSADATA wsaData;
+        if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+            cerr << "WSAStartup failed!" << endl;
+            exit(-1);
+        }
+    #endif
+
     if (argc < 3)
     {
         cerr << "command invalid! example: ./ChatClient 127.0.0.1 6000" << endl;
@@ -103,8 +121,12 @@ int main(int argc, char **argv)
         exit(-1);
     }
 
-    // 初始化读写线程通信用的信号量
-    sem_init(&rwsem, 0, 0);
+    // 初始化读写线程通信用的同步机制 - 跨平台兼容
+    #ifdef _WIN32
+        rwsem = CreateEvent(NULL, FALSE, FALSE, NULL);
+    #else
+        sem_init(&rwsem, 0, 0);
+    #endif
 
     // 连接服务器成功，启动接收子线程
     std::thread readTask(readTaskHandler, clientfd); // pthread_create
@@ -150,7 +172,12 @@ int main(int argc, char **argv)
                 cerr << "send login msg error:" << request << endl;
             }
 
-            sem_wait(&rwsem); // 等待信号量，由子线程处理完登录的响应消息后，通知这里
+            // 等待同步信号，由子线程处理完登录的响应消息后，通知这里 - 跨平台兼容
+            #ifdef _WIN32
+                WaitForSingleObject(rwsem, INFINITE);
+            #else
+                sem_wait(&rwsem);
+            #endif
                 
             if (g_isLoginSuccess) 
             {
@@ -181,12 +208,24 @@ int main(int argc, char **argv)
                 cerr << "send reg msg error:" << request << endl;
             }
             
-            sem_wait(&rwsem); // 等待信号量，子线程处理完注册消息会通知
+            // 等待同步信号，子线程处理完注册消息会通知 - 跨平台兼容
+            #ifdef _WIN32
+                WaitForSingleObject(rwsem, INFINITE);
+            #else
+                sem_wait(&rwsem);
+            #endif
         }
         break;
         case 3: // quit业务
-            close(clientfd);
-            sem_destroy(&rwsem);
+            // 关闭客户端socket - 跨平台兼容
+            #ifdef _WIN32
+                closesocket(clientfd);
+                CloseHandle(rwsem);
+                WSACleanup(); // 清理 Winsock 库
+            #else
+                close(clientfd);
+                sem_destroy(&rwsem);
+            #endif
             exit(0);
         default:
             cerr << "invalid input!" << endl;
@@ -333,7 +372,12 @@ void readTaskHandler(int clientfd)
         // 检查连接是否关闭或出错
         if (-1 == len || 0 == len)
         {
-            close(clientfd);
+            // 关闭客户端socket - 跨平台兼容
+            #ifdef _WIN32
+                closesocket(clientfd);
+            #else
+                close(clientfd);
+            #endif
             exit(-1);
         }
 
@@ -357,14 +401,24 @@ void readTaskHandler(int clientfd)
         if (LOGIN_MSG_ACK == msgtype)
         {
             doLoginResponse(js); // 处理登录响应的业务逻辑
-            sem_post(&rwsem);    // 通知主线程，登录结果处理完成
+            // 通知主线程，登录结果处理完成 - 跨平台兼容
+            #ifdef _WIN32
+                SetEvent(rwsem);
+            #else
+                sem_post(&rwsem);
+            #endif
             continue;
         }
 
         if (REG_MSG_ACK == msgtype)
         {
             doRegResponse(js);
-            sem_post(&rwsem);    // 通知主线程，注册结果处理完成
+            // 通知主线程，注册结果处理完成 - 跨平台兼容
+            #ifdef _WIN32
+                SetEvent(rwsem);
+            #else
+                sem_post(&rwsem);
+            #endif
             continue;
         }
     }

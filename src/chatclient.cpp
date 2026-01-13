@@ -146,7 +146,8 @@ void ChatClient::registerUser(const QString &userName, const QString &password, 
         if (file.open(QIODevice::ReadOnly)) {
             QByteArray fileData = file.readAll();
             QString base64Data = fileData.toBase64();
-            message["avatarName"] = avatarPath.split("/").last();
+            // 跨平台兼容的文件名提取
+            message["avatarName"] = QFileInfo(avatarPath).fileName();
             message["avatarData"] = base64Data;
             file.close();
         }
@@ -171,7 +172,8 @@ void ChatClient::uploadAvatar(int userId, const QString &avatarPath) {
     QJsonObject message;
     message["msgid"] = MsgType::UPLOAD_AVATAR_MSG;
     message["id"] = userId;
-    message["avatarName"] = avatarPath.split("/").last();
+    // 跨平台兼容的文件名提取
+    message["avatarName"] = QFileInfo(avatarPath).fileName();
     message["avatarData"] = base64Data;
     
     sendJsonMessage(message);
@@ -193,7 +195,8 @@ void ChatClient::updateAvatar(int userId, const QString &avatarPath) {
     QJsonObject message;
     message["msgid"] = MsgType::UPDATE_AVATAR_MSG;
     message["id"] = userId;
-    message["avatarName"] = avatarPath.split("/").last();
+    // 跨平台兼容的文件名提取
+    message["avatarName"] = QFileInfo(avatarPath).fileName();
     message["avatarData"] = base64Data;
     
     sendJsonMessage(message);
