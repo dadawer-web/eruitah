@@ -1,3 +1,12 @@
+// 跨平台网络头文件处理 - 注意：先包含Windows网络头文件，再包含Qt头文件，避免byte类型歧义
+#ifdef _WIN32
+    // 首先包含Windows头文件
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+    // 防止Windows头文件中的byte类型与Qt冲突
+    #undef byte
+#endif
+
 // 包含Qt应用程序的核心头文件
 #include <QApplication>
 #include <QCoreApplication>
@@ -9,13 +18,6 @@
 #include "loginwindow.h"
 // 包含聊天窗口的头文件
 #include "chatwindow.h"
-// 跨平台网络头文件处理 - 注意：先包含Windows网络头文件，再包含Qt头文件，避免byte类型歧义
-#ifdef _WIN32
-    #include <winsock2.h>
-    #include <ws2tcpip.h>
-    // 防止Windows头文件中的byte类型与Qt冲突
-    #undef byte
-#endif
 
 // 注意：不要包含数据库头文件，客户端不需要直接连接数据库
 // #include "db/db.h"
@@ -36,6 +38,14 @@ int main(int argc, char *argv[]) {
     // 创建Qt应用程序实例
     // QApplication是Qt GUI应用程序的核心类，管理应用程序的资源、设置和事件循环
     QApplication a(argc, argv);
+    
+    // Windows平台特定字体设置
+    #ifdef _WIN32
+    // 设置全局字体，确保Windows平台上文本显示
+    QFont globalFont("Arial", 10);
+    a.setFont(globalFont);
+    qDebug() << "已设置Windows平台全局字体";
+    #endif
     
     // 加载样式表
     QFile file(":/styles.qss");

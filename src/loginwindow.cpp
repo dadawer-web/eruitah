@@ -7,6 +7,14 @@
 #include <QPainter>
 #include <QPainterPath>
 
+// 跨平台网络头文件处理 - 注意：先包含Windows网络头文件，再包含Qt头文件，避免byte类型歧义
+#ifdef _WIN32
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+    // 防止Windows头文件中的byte类型与Qt冲突
+    #undef byte
+#endif
+
 LoginWindow::LoginWindow(QWidget *parent) : QMainWindow(parent) {
     // 设置窗口标题和大小
     setWindowTitle("Qt Chat - 登录");
@@ -16,24 +24,22 @@ LoginWindow::LoginWindow(QWidget *parent) : QMainWindow(parent) {
 
 
     // 应用样式表
-    // 跨平台路径处理，使用应用程序所在目录
-    QString styleFilePath = QCoreApplication::applicationDirPath() + "/styles.qss";
-    QFile styleFile(styleFilePath);
-    if (styleFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        QString styleSheet = styleFile.readAll();
+    QFile file(":/styles.qss");
+    if(file.open(QFile::ReadOnly)) {
+        QString styleSheet = file.readAll();
         setStyleSheet(styleSheet);
-        styleFile.close();
+        file.close();
         qDebug() << "样式表加载成功";
     } else {
         qDebug() << "样式表加载失败，使用默认样式";
         // 如果样式表文件无法加载，使用不包含Qt不支持属性的内联样式
         QString inlineStyle = ""
-            "QWidget { font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; font-size: 14px; color: #333; background-color: #f5f5f5; }" 
+            "QWidget { font-family: Arial, 'Microsoft YaHei', sans-serif; font-size: 14px; color: #333; background-color: #f5f5f5; }" 
             "QLabel[class='titleLabel'] { font-size: 24px; font-weight: 600; color: #2c3e50; margin-bottom: 20px; }" 
             "QWidget[class='card'] { background-color: white; border-radius: 12px; padding: 30px; }" 
-            "QLineEdit { height: 40px; border: 1px solid #ddd; border-radius: 8px; padding: 0 12px; font-size: 14px; background-color: white; }" 
+            "QLineEdit { height: 40px; border: 1px solid #ddd; border-radius: 8px; padding: 0 12px; font-size: 14px; background-color: white; font-family: Arial, 'Microsoft YaHei', sans-serif; color: #000000; }" 
             "QLineEdit:focus { border-color: #3498db; }" 
-            "QPushButton { height: 40px; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; padding: 0 20px; }" 
+            "QPushButton { height: 40px; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; padding: 0 20px; font-family: Arial, 'Microsoft YaHei', sans-serif; }" 
             "QPushButton[class='primaryButton'] { background-color: #3498db; color: white; }" 
             "QPushButton[class='primaryButton']:hover { background-color: #2980b9; }" 
             "QPushButton[class='primaryButton']:pressed { background-color: #2471a3; }" 

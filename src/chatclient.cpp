@@ -1,3 +1,13 @@
+// 跨平台网络头文件处理 - 注意：先包含Windows网络头文件，再包含Qt头文件，避免byte类型歧义
+#ifdef _WIN32
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+    // 防止Windows头文件中的byte类型与Qt冲突
+    #undef byte
+#else
+    #include <arpa/inet.h>  // 用于ntohl函数
+#endif
+
 #include "chatclient.h"
 #include "public.h"
 #include <QByteArray>
@@ -14,13 +24,7 @@
 #include <QFileInfo>
 #include <string>
 
-// 跨平台网络头文件处理
-#ifdef _WIN32
-    #include <winsock2.h>
-    #include <ws2tcpip.h>
-#else
-    #include <arpa/inet.h>  // 用于ntohl函数
-#endif
+
 
 // ChatClient类实现 - 客户端核心通信模块
 // 设计思路：采用事件驱动架构，基于Qt的信号槽机制实现异步网络通信
@@ -301,7 +305,13 @@ void ChatClient::requestGroupList(int userId) {
 QString ChatClient::generateFileId() {
     // 使用时间戳和随机数组合生成唯一ID
     QString timestamp = QString::number(QDateTime::currentMSecsSinceEpoch());
+#ifdef _WIN32
+    // Windows平台使用QRandomGenerator
+    QString randomNum = QString::number(QRandomGenerator::global()->bounded(10000));
+#else
+    // Linux平台使用qrand
     QString randomNum = QString::number(qrand() % 10000);
+#endif
     return timestamp + "_" + randomNum;
 }
 
@@ -402,7 +412,7 @@ void ChatClient::sendJsonMessage(const QJsonObject &message) {
                     "length:" << data.size() << "bytes written:" << bytesWritten << "success:" << bytesWrittenSuccess;
                 // 增加延迟时间，确保两条连续消息不会被合并 - 时序控制优化
 #ifdef _WIN32
-                Sleep(50); // Windows平台使用Sleep
+                ::Sleep(50); // 使用全局命名空间的Sleep
 #else
                 QThread::msleep(50); // Linux平台使用QThread::msleep
 #endif

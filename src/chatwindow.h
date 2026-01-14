@@ -1,6 +1,14 @@
 #ifndef CHATWINDOW_H
 #define CHATWINDOW_H
 
+// 跨平台网络头文件处理 - 注意：先包含Windows网络头文件，再包含Qt头文件，避免byte类型歧义
+#ifdef _WIN32
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+    // 防止Windows头文件中的byte类型与Qt冲突
+    #undef byte
+#endif
+
 #include <QMainWindow>
 #include <QWidget>
 #include <QTreeWidget>

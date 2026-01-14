@@ -2,10 +2,17 @@
 
 /* 全局样式 */
 QWidget {
-    font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+    font-family: Arial, 'Microsoft YaHei', sans-serif;
     font-size: 14px;
-    color: #333;
+    color: #000000;
     background-color: #f5f5f5;
+}
+
+/* 标签样式 */
+QLabel {
+    font-family: Arial, 'Microsoft YaHei', sans-serif;
+    font-size: 14px;
+    color: #000000;
 }
 
 /* 标题样式 */
