@@ -1,10 +1,14 @@
 /* 简化的Qt样式表 - 仅包含Qt支持的基本属性 */
 
-/* 全局样式 */
-QWidget {
-    font-family: Arial, 'Microsoft YaHei', sans-serif;
+/* 全局样式 - 为所有元素设置明确的字体 */
+* {
+    font-family: 'Microsoft YaHei', Arial, sans-serif;
     font-size: 14px;
     color: #000000;
+}
+
+/* 全局窗口样式 */
+QWidget {
     background-color: #f5f5f5;
 }
 
@@ -43,6 +47,8 @@ QLineEdit {
     padding: 0 12px;
     font-size: 14px;
     background-color: white;
+    font-family: Arial, 'Microsoft YaHei', sans-serif;
+    color: #000000;
 }
 
 QLineEdit:focus {
@@ -57,6 +63,7 @@ QPushButton {
     font-size: 14px;
     font-weight: 500;
     padding: 0 20px;
+    font-family: Arial, 'Microsoft YaHei', sans-serif;
 }
 
 /* 主按钮 */
@@ -98,6 +105,9 @@ QTreeWidget {
     background-color: white;
     border: none;
     border-right: 1px solid #eee;
+    font-family: Arial, 'Microsoft YaHei', sans-serif;
+    font-size: 14px;
+    color: #000000;
 }
 
 QTreeWidget::item {
@@ -121,6 +131,9 @@ QTreeWidget::header {
     border: none;
     border-bottom: 1px solid #eee;
     height: 30px;
+    font-family: Arial, 'Microsoft YaHei', sans-serif;
+    font-size: 12px;
+    color: #666;
 }
 
 /* 聊天标签页样式 */
@@ -137,6 +150,9 @@ QTabBar::tab {
     margin-right: 2px;
     border-radius: 8px 8px 0 0;
     font-weight: 500;
+    font-family: Arial, 'Microsoft YaHei', sans-serif;
+    font-size: 14px;
+    color: #333;
 }
 
 QTabBar::tab:selected {
@@ -151,8 +167,9 @@ QTextBrowser {
     border: none;
     padding: 10px;
     border-radius: 8px;
-    font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+    font-family: Arial, 'Microsoft YaHei', sans-serif;
     font-size: 14px;
+    color: #000000;
 }
 
 /* 消息输入区域样式 */
@@ -162,6 +179,8 @@ QTextEdit {
     padding: 10px;
     background-color: white;
     font-size: 14px;
+    font-family: Arial, 'Microsoft YaHei', sans-serif;
+    color: #000000;
 }
 
 /* 分割器样式 */
@@ -176,6 +195,7 @@ QStatusBar {
     border-top: 1px solid #eee;
     color: #666;
     font-size: 12px;
+    font-family: Arial, 'Microsoft YaHei', sans-serif;
 }
 
 /* 工具栏样式 */
@@ -183,6 +203,9 @@ QToolBar {
     background-color: white;
     border: none;
     border-bottom: 1px solid #eee;
+    font-family: Arial, 'Microsoft YaHei', sans-serif;
+    font-size: 14px;
+    color: #333;
 }
 
 /* 分割线样式 */
@@ -230,24 +253,32 @@ QDockWidget {
     background-color: #f5f5f5;
     color: #333;
     border: 1px solid #eee;
+    font-family: Arial, 'Microsoft YaHei', sans-serif;
+    font-size: 14px;
 }
 
 QDockWidget::title {
     background-color: #f5f5f5;
     color: #333;
     padding: 8px;
+    font-family: Arial, 'Microsoft YaHei', sans-serif;
+    font-size: 14px;
 }
 
 /* 菜单栏样式 */
 QMenuBar {
     background-color: #f5f5f5;
     color: #333;
+    font-family: Arial, 'Microsoft YaHei', sans-serif;
+    font-size: 14px;
 }
 
 QMenuBar::item {
     background-color: #f5f5f5;
     color: #333;
     padding: 8px 12px;
+    font-family: Arial, 'Microsoft YaHei', sans-serif;
+    font-size: 14px;
 }
 
 QMenuBar::item:hover {
@@ -259,12 +290,16 @@ QMenu {
     background-color: white;
     color: #333;
     border: 1px solid #ddd;
+    font-family: Arial, 'Microsoft YaHei', sans-serif;
+    font-size: 14px;
 }
 
 QMenu::item {
     background-color: white;
     color: #333;
     padding: 8px 20px;
+    font-family: Arial, 'Microsoft YaHei', sans-serif;
+    font-size: 14px;
 }
 
 QMenu::item:hover {

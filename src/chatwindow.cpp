@@ -96,6 +96,16 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     headers << "头像" << "联系人" << "状态";
     contactTreeWidget->setHeaderLabels(headers);
     
+    // 设置联系人树字体
+    QFont treeFont = contactTreeWidget->font();
+    treeFont.setPointSize(14);
+    #ifdef _WIN32
+    treeFont.setFamily("Microsoft YaHei");
+    #else
+    treeFont.setFamily("Arial");
+    #endif
+    contactTreeWidget->setFont(treeFont);
+    
     // 设置列宽
     contactTreeWidget->setColumnWidth(0, 70); // 增加头像列宽度到70
     contactTreeWidget->setColumnWidth(1, 150); // 联系人列宽度
@@ -643,15 +653,34 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     QVBoxLayout *userInfoLayout = new QVBoxLayout;
     userInfoLayout->setSpacing(5);
     QLabel *userNameLabel = new QLabel(userName);
+    QFont userNameFont = userNameLabel->font();
+    userNameFont.setPointSize(16);
+    userNameFont.setBold(true);
+    #ifdef _WIN32
+    userNameFont.setFamily("Microsoft YaHei");
+    #else
+    userNameFont.setFamily("Arial");
+    #endif
+    userNameLabel->setFont(userNameFont);
     userNameLabel->setStyleSheet(
         "font-size: 16px; "
         "font-weight: bold; "
-        "color: #2c3e50;"
+        "color: #2c3e50; "
+        "font-family: 'Microsoft YaHei', Arial, sans-serif;"
     );
     QLabel *userIdLabel = new QLabel(QString("ID: %1").arg(userId));
+    QFont userIdFont = userIdLabel->font();
+    userIdFont.setPointSize(12);
+    #ifdef _WIN32
+    userIdFont.setFamily("Microsoft YaHei");
+    #else
+    userIdFont.setFamily("Arial");
+    #endif
+    userIdLabel->setFont(userIdFont);
     userIdLabel->setStyleSheet(
         "font-size: 12px; "
-        "color: #666;"
+        "color: #666; "
+        "font-family: 'Microsoft YaHei', Arial, sans-serif;"
     );
     userInfoLayout->addWidget(userNameLabel);
     userInfoLayout->addWidget(userIdLabel);
@@ -659,13 +688,22 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     
     // 修改头像按钮
     changeAvatarButton = new QPushButton("修改头像");
+    QFont buttonFont = changeAvatarButton->font();
+    buttonFont.setPointSize(12);
+    #ifdef _WIN32
+    buttonFont.setFamily("Microsoft YaHei");
+    #else
+    buttonFont.setFamily("Arial");
+    #endif
+    changeAvatarButton->setFont(buttonFont);
     changeAvatarButton->setStyleSheet(
         "height: 32px; "
         "background-color: white; "
         "color: #3498db; "
         "border: 1px solid #3498db; "
         "border-radius: 16px; "
-        "font-size: 12px;"
+        "font-size: 12px; "
+        "font-family: 'Microsoft YaHei', Arial, sans-serif;"
     );
     
     topLayout->addWidget(avatarLabel);
@@ -677,6 +715,15 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     QToolBar *toolBar = addToolBar("工具栏");
     toolBar->setMovable(false);
     toolBar->setFloatable(false);
+    
+    QFont toolbarFont = toolBar->font();
+    toolbarFont.setPointSize(14);
+    #ifdef _WIN32
+    toolbarFont.setFamily("Microsoft YaHei");
+    #else
+    toolbarFont.setFamily("Arial");
+    #endif
+    toolBar->setFont(toolbarFont);
     
     QAction *addFriendAction = toolBar->addAction(QIcon(), "添加好友");
     QAction *createGroupAction = toolBar->addAction(QIcon(), "创建群组");
@@ -750,22 +797,68 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     QFont font = addFriendTitle->font();
     font.setPointSize(16);
     font.setBold(true);
+    #ifdef _WIN32
+    font.setFamily("Microsoft YaHei");
+    #else
+    font.setFamily("Arial");
+    #endif
     addFriendTitle->setFont(font);
     addFriendTitle->setAlignment(Qt::AlignCenter);
+    addFriendTitle->setStyleSheet(
+        "font-family: 'Microsoft YaHei', Arial, sans-serif;"
+    );
     
     addFriendLayout->addWidget(addFriendTitle);
-    addFriendLayout->addWidget(new QLabel("好友ID:"));
+    QLabel *addFriendIdLabel = new QLabel("好友ID:");
+    QFont labelFont = addFriendIdLabel->font();
+    labelFont.setPointSize(14);
+    #ifdef _WIN32
+    labelFont.setFamily("Microsoft YaHei");
+    #else
+    labelFont.setFamily("Arial");
+    #endif
+    addFriendIdLabel->setFont(labelFont);
+    addFriendIdLabel->setStyleSheet(
+        "font-family: 'Microsoft YaHei', Arial, sans-serif;"
+    );
+    addFriendLayout->addWidget(addFriendIdLabel);
     addFriendIdEdit = new QLineEdit;
+    QFont lineEditFont = addFriendIdEdit->font();
+    lineEditFont.setPointSize(14);
+    #ifdef _WIN32
+    lineEditFont.setFamily("Microsoft YaHei");
+    #else
+    lineEditFont.setFamily("Arial");
+    #endif
+    addFriendIdEdit->setFont(lineEditFont);
+    addFriendIdEdit->setStyleSheet(
+        "font-family: 'Microsoft YaHei', Arial, sans-serif;"
+    );
     addFriendLayout->addWidget(addFriendIdEdit);
     
     QHBoxLayout *addFriendButtonLayout = new QHBoxLayout;
     addFriendButtonLayout->setSpacing(10);
     
     QPushButton *addFriendOkButton = new QPushButton("确定");
+    QFont dialogButtonFont = addFriendOkButton->font();
+    dialogButtonFont.setPointSize(14);
+    #ifdef _WIN32
+    dialogButtonFont.setFamily("Microsoft YaHei");
+    #else
+    dialogButtonFont.setFamily("Arial");
+    #endif
+    addFriendOkButton->setFont(dialogButtonFont);
     addFriendOkButton->setProperty("class", "primaryButton");
+    addFriendOkButton->setStyleSheet(
+        "font-family: 'Microsoft YaHei', Arial, sans-serif;"
+    );
     
     QPushButton *addFriendCancelButton = new QPushButton("取消");
+    addFriendCancelButton->setFont(dialogButtonFont);
     addFriendCancelButton->setProperty("class", "secondaryButton");
+    addFriendCancelButton->setStyleSheet(
+        "font-family: Arial, 'Microsoft YaHei', sans-serif;"
+    );
     
     addFriendButtonLayout->addWidget(addFriendOkButton);
     addFriendButtonLayout->addWidget(addFriendCancelButton);
@@ -790,23 +883,52 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     QLabel *createGroupTitle = new QLabel("创建群组");
     createGroupTitle->setFont(font);
     createGroupTitle->setAlignment(Qt::AlignCenter);
+    createGroupTitle->setStyleSheet(
+        "font-family: Arial, 'Microsoft YaHei', sans-serif;"
+    );
     
     createGroupLayout->addWidget(createGroupTitle);
-    createGroupLayout->addWidget(new QLabel("群组名称:"));
+    QLabel *groupNameLabel = new QLabel("群组名称:");
+    groupNameLabel->setFont(labelFont);
+    groupNameLabel->setStyleSheet(
+        "font-family: Arial, 'Microsoft YaHei', sans-serif;"
+    );
+    createGroupLayout->addWidget(groupNameLabel);
     groupNameEdit = new QLineEdit;
+    groupNameEdit->setFont(lineEditFont);
+    groupNameEdit->setStyleSheet(
+        "font-family: Arial, 'Microsoft YaHei', sans-serif;"
+    );
     createGroupLayout->addWidget(groupNameEdit);
-    createGroupLayout->addWidget(new QLabel("群组描述:"));
+    QLabel *groupDescLabel = new QLabel("群组描述:");
+    groupDescLabel->setFont(labelFont);
+    groupDescLabel->setStyleSheet(
+        "font-family: Arial, 'Microsoft YaHei', sans-serif;"
+    );
+    createGroupLayout->addWidget(groupDescLabel);
     groupDescEdit = new QLineEdit;
+    groupDescEdit->setFont(lineEditFont);
+    groupDescEdit->setStyleSheet(
+        "font-family: Arial, 'Microsoft YaHei', sans-serif;"
+    );
     createGroupLayout->addWidget(groupDescEdit);
     
     QHBoxLayout *createGroupButtonLayout = new QHBoxLayout;
     createGroupButtonLayout->setSpacing(10);
     
     QPushButton *createGroupOkButton = new QPushButton("确定");
+    createGroupOkButton->setFont(dialogButtonFont);
     createGroupOkButton->setProperty("class", "primaryButton");
+    createGroupOkButton->setStyleSheet(
+        "font-family: Arial, 'Microsoft YaHei', sans-serif;"
+    );
     
     QPushButton *createGroupCancelButton = new QPushButton("取消");
+    createGroupCancelButton->setFont(dialogButtonFont);
     createGroupCancelButton->setProperty("class", "secondaryButton");
+    createGroupCancelButton->setStyleSheet(
+        "font-family: Arial, 'Microsoft YaHei', sans-serif;"
+    );
     
     createGroupButtonLayout->addWidget(createGroupOkButton);
     createGroupButtonLayout->addWidget(createGroupCancelButton);
@@ -828,20 +950,40 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     QLabel *joinGroupTitle = new QLabel("加入群组");
     joinGroupTitle->setFont(font);
     joinGroupTitle->setAlignment(Qt::AlignCenter);
+    joinGroupTitle->setStyleSheet(
+        "font-family: Arial, 'Microsoft YaHei', sans-serif;"
+    );
     
     joinGroupLayout->addWidget(joinGroupTitle);
-    joinGroupLayout->addWidget(new QLabel("群组ID:"));
+    QLabel *joinGroupIdLabel = new QLabel("群组ID:");
+    joinGroupIdLabel->setFont(labelFont);
+    joinGroupIdLabel->setStyleSheet(
+        "font-family: Arial, 'Microsoft YaHei', sans-serif;"
+    );
+    joinGroupLayout->addWidget(joinGroupIdLabel);
     joinGroupIdEdit = new QLineEdit;
+    joinGroupIdEdit->setFont(lineEditFont);
+    joinGroupIdEdit->setStyleSheet(
+        "font-family: Arial, 'Microsoft YaHei', sans-serif;"
+    );
     joinGroupLayout->addWidget(joinGroupIdEdit);
     
     QHBoxLayout *joinGroupButtonLayout = new QHBoxLayout;
     joinGroupButtonLayout->setSpacing(10);
     
     QPushButton *joinGroupOkButton = new QPushButton("确定");
+    joinGroupOkButton->setFont(dialogButtonFont);
     joinGroupOkButton->setProperty("class", "primaryButton");
+    joinGroupOkButton->setStyleSheet(
+        "font-family: Arial, 'Microsoft YaHei', sans-serif;"
+    );
     
     QPushButton *joinGroupCancelButton = new QPushButton("取消");
+    joinGroupCancelButton->setFont(dialogButtonFont);
     joinGroupCancelButton->setProperty("class", "secondaryButton");
+    joinGroupCancelButton->setStyleSheet(
+        "font-family: Arial, 'Microsoft YaHei', sans-serif;"
+    );
     
     joinGroupButtonLayout->addWidget(joinGroupOkButton);
     joinGroupButtonLayout->addWidget(joinGroupCancelButton);

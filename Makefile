@@ -16,7 +16,7 @@ CC            = gcc
 CXX           = g++
 DEFINES       = -DQT_NO_DEBUG -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB
 CFLAGS        = -pipe -O2 -Wall -Wextra -D_REENTRANT -fPIC $(DEFINES)
-CXXFLAGS      = -pipe -O2 -std=gnu++1z -Wall -Wextra -D_REENTRANT -fPIC $(DEFINES)
+CXXFLAGS      = -pipe -finput-charset=UTF-8 -fexec-charset=UTF-8 -O2 -std=gnu++1z -Wall -Wextra -D_REENTRANT -fPIC $(DEFINES)
 INCPATH       = -I. -Isrc -Ithirdparty -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtNetwork -I/usr/include/x86_64-linux-gnu/qt5/QtCore -Ibuild/moc -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++
 QMAKE         = /usr/lib/qt5/bin/qmake
 DEL_FILE      = rm -f
@@ -388,7 +388,7 @@ compiler_moc_predefs_make_all: build/moc/moc_predefs.h
 compiler_moc_predefs_clean:
 	-$(DEL_FILE) build/moc/moc_predefs.h
 build/moc/moc_predefs.h: /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/data/dummy.cpp
-	g++ -pipe -O2 -std=gnu++1z -Wall -Wextra -dM -E -o build/moc/moc_predefs.h /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/data/dummy.cpp
+	g++ -pipe -finput-charset=UTF-8 -fexec-charset=UTF-8 -O2 -std=gnu++1z -Wall -Wextra -dM -E -o build/moc/moc_predefs.h /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/data/dummy.cpp
 
 compiler_moc_header_make_all: build/moc/moc_chatclient.cpp build/moc/moc_chatwindow.cpp build/moc/moc_loginwindow.cpp build/moc/moc_messagewidget.cpp
 compiler_moc_header_clean:

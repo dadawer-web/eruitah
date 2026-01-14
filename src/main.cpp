@@ -35,17 +35,36 @@ int main(int argc, char *argv[]) {
     }
     #endif
     
+    // 【新增】这一行非常关键！解决Windows/虚拟机下界面空白、文字不显示的问题
+    // 强制 Qt 使用 CPU 进行界面绘制，绕过可能有问题的显卡驱动
+    QCoreApplication::setAttribute(Qt::AA_UseSoftwareOpenGL);
+
+    // 设置Qt属性，必须在QApplication创建之前调用
+    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
+    
     // 创建Qt应用程序实例
     // QApplication是Qt GUI应用程序的核心类，管理应用程序的资源、设置和事件循环
     QApplication a(argc, argv);
     
-    // Windows平台特定字体设置
+    // 全局字体设置 - 为所有平台设置明确的字体
+    QFont globalFont;
     #ifdef _WIN32
     // 设置全局字体，确保Windows平台上文本显示
-    QFont globalFont("Arial", 10);
+    globalFont = QFont("Microsoft YaHei", 9); // 使用微软雅黑，9pt (约12px)
+    globalFont.setStyleStrategy(QFont::PreferAntialias); // 开启抗锯齿
     a.setFont(globalFont);
-    qDebug() << "已设置Windows平台全局字体";
+    qDebug() << "已设置Windows平台全局字体: Microsoft YaHei, 9pt";
+    #else
+    // Linux平台使用Arial字体
+    globalFont = QFont("Arial", 14);
+    qDebug() << "非Windows平台: 使用Arial字体, 14px";
+    a.setFont(globalFont);
     #endif
+    qDebug() << "已设置全局字体: " << globalFont.family() << ", " << globalFont.pointSize() << "pt";
+    
+    // 确保应用程序字体在所有平台上正确设置
+    QApplication::setFont(globalFont);
     
     // 加载样式表
     QFile file(":/styles.qss");
