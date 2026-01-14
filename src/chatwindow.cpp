@@ -35,7 +35,7 @@
 
 ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, QWidget *parent) : QMainWindow(parent), userId(userId), userName(userName), chatClient(client), loginHandled(false), friendListLoaded(false), offlineMessagesProcessed(false), isLoggingOut(false) {
     // 设置窗口标题
-    setWindowTitle(QString("Qt Chat - %1").arg(userName));
+    setWindowTitle(QString(QStringLiteral("Qt Chat - %1")).arg(userName));
     setObjectName("chatWindow");
     setMinimumSize(800, 600);
 

@@ -48,17 +48,22 @@ int main(int argc, char *argv[]) {
     // QApplication是Qt GUI应用程序的核心类，管理应用程序的资源、设置和事件循环
     QApplication a(argc, argv);
     
-    // 全局字体设置 - 为所有平台设置明确的字体
-    QFont globalFont;
-    #ifdef _WIN32
-    // 设置全局字体，确保Windows平台上文本显示
-    // 尝试多种字体，确保至少有一种可用
+    // [重要] 解决高分屏(High DPI)下字体可能极其微小或不显示的问题
+    // Qt 5.6+ 建议开启，Qt 6 默认已开启
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+#endif
+
+    // --- 跨平台字体设置开始 ---
+    QFont font;
+#if defined(Q_OS_WIN)
+    // Windows 端首选微软雅黑
     QStringList fontFamilies = {"Microsoft YaHei", "SimHei", "Arial", "SansSerif"};
     QString selectedFont;
     
     for (const QString &fontFamily : fontFamilies) {
         if (QFontDatabase::hasFamily(fontFamily)) {
-            globalFont = QFont(fontFamily, 10);
+            font.setFamily(fontFamily);
             selectedFont = fontFamily;
             break;
         }
@@ -66,24 +71,23 @@ int main(int argc, char *argv[]) {
     
     // 如果没有找到指定字体，使用默认字体
     if (selectedFont.isEmpty()) {
-        globalFont = QFont();
-        globalFont.setPointSize(10);
         selectedFont = "Default";
     }
-    
-    globalFont.setStyleStrategy(QFont::PreferAntialias); // 开启抗锯齿
-    a.setFont(globalFont);
+    font.setPointSize(10); // 设置一个基础字号
     qDebug() << "已设置Windows平台全局字体: " << selectedFont << ", 10pt";
-    #else
-    // Linux平台使用Arial字体
-    globalFont = QFont("Arial", 14);
-    qDebug() << "非Windows平台: 使用Arial字体, 14px";
-    a.setFont(globalFont);
-    #endif
-    qDebug() << "已设置全局字体: " << globalFont.family() << ", " << globalFont.pointSize() << "pt";
+#elif defined(Q_OS_LINUX)
+    // Linux 端首选系统默认，或者指定常用字体
+    // 如果不确定用户有什么字体，通常不指定，由系统 fallback
+    font.setFamily("WenQuanYi Micro Hei");
+    font.setPointSize(12);
+    qDebug() << "非Windows平台: 使用WenQuanYi Micro Hei字体, 12px";
+#endif
     
-    // 确保应用程序字体在所有平台上正确设置
-    QApplication::setFont(globalFont);
+    font.setStyleStrategy(QFont::PreferAntialias); // 开启抗锯齿
+    a.setFont(font);       // 应用到整个程序
+    QApplication::setFont(font); // 确保应用程序字体在所有平台上正确设置
+    qDebug() << "已设置全局字体: " << font.family() << ", " << font.pointSize() << "pt";
+    // --- 跨平台字体设置结束 ---
     
     // 加载样式表
     QFile file(":/styles.qss");

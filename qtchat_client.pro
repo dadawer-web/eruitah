@@ -11,12 +11,17 @@ CONFIG += c++17
 # ==========================================
 # 核心修复：解决 Windows 下中文显示为空白/乱码的问题
 # ==========================================
+# 强制编译器将源文件视为 UTF-8 (解决源码读取问题)
+QMAKE_CXXFLAGS += -finput-charset=UTF-8
+
+# 强制编译器生成的二进制字符串也是 UTF-8 (解决运行时显示问题)
+QMAKE_CXXFLAGS += -fexec-charset=UTF-8
+
 # 强制 MSVC 编译器将源文件视为 UTF-8，并将执行字符集设为 UTF-8
 msvc:QMAKE_CXXFLAGS += /utf-8
 
 # 强制 MinGW / GCC 使用 UTF-8
 gcc:QMAKE_CXXFLAGS += -finput-charset=UTF-8 -fexec-charset=UTF-8
-
 
 
 # 源文件 - 只包含客户端相关文件

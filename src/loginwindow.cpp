@@ -16,196 +16,155 @@
 #endif
 
 LoginWindow::LoginWindow(QWidget *parent) : QMainWindow(parent) {
-    // 设置窗口标题和大小
-    setWindowTitle("Qt Chat - 登录");
+    // 1. 基础设置
+    setWindowTitle(QStringLiteral("Qt Chat - 登录"));
     setFixedSize(520, 480);
     setObjectName("loginWindow");
-    
-    // 应用全局样式表（从资源文件加载）
+
+    // 2. 加载样式表
     QFile file(":/styles.qss");
     if(file.open(QFile::ReadOnly)) {
         QString styleSheet = file.readAll();
-        setStyleSheet(styleSheet);
+        // 注意：这里追加样式，而不是覆盖，防止破坏子控件样式
+        this->setStyleSheet(this->styleSheet() + styleSheet); 
         file.close();
         qDebug() << "登录窗口样式表加载成功";
-    } else {
-        qDebug() << "登录窗口样式表加载失败，使用默认样式";
     }
 
-    // 创建聊天客户端实例
+    // 3. 创建客户端 (传入 this 确保内存管理)
     chatClient = new ChatClient(this);
     connect(chatClient, &ChatClient::loginResponse, this, &LoginWindow::handleLoginResponse);
     connect(chatClient, &ChatClient::registerResponse, this, &LoginWindow::handleRegisterResponse);
 
-    // 创建主容器
-    QWidget *mainWidget = new QWidget;
-    QVBoxLayout *mainLayout = new QVBoxLayout;
-    mainLayout->setAlignment(Qt::AlignCenter);
-    mainLayout->setContentsMargins(10, 10, 10, 10);
-    mainLayout->setSpacing(0);
-    mainWidget->setLayout(mainLayout);
+    // 4. 创建主容器 【修复点：必须传入 this】
+    QWidget *mainWidget = new QWidget(this);
+    // 【修复点：设置主容器背景透明，防止它遮挡住背景图（如果有的话）】
+    mainWidget->setAttribute(Qt::WA_TranslucentBackground); 
+    
+    QVBoxLayout *mainLayout = new QVBoxLayout(mainWidget);
+    // 【关键修复】：Windows下不要过度使用 AlignCenter，容易把控件压成0
+    // 我们保留边距，但去掉布局的强制居中，让 stackedWidget 自己去填充
+    mainLayout->setContentsMargins(20, 20, 20, 20);
+    mainLayout->setSpacing(10);
+    
+    // 这一步必须做
     setCentralWidget(mainWidget);
 
-    // 初始化登录界面
-    loginWidget = new QWidget;
+    // ================= 登录界面初始化 =================
+    loginWidget = new QWidget(this); // 【修复点：传入this】
+    // 强制指定登录框的大小策略，防止被压缩
+    loginWidget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
     loginWidget->setStyleSheet(
+        "QWidget#loginWidget {" // 加上ID选择器，防止污染子控件
         "background-color: white; "
         "border-radius: 16px; "
-        "padding: 40px 30px;"
+        "padding: 40px 30px; "
+        "color: #000000;"
+        "}"
     );
-    
-    loginTitleLabel = new QLabel("用户登录");
-    loginTitleLabel->setObjectName("loginTitleLabel");
-    loginTitleLabel->setStyleSheet(
-        "color: #2c3e50; "
-        "margin-bottom: 25px; "
-        "text-align: center;"
-    );
+    loginWidget->setObjectName("loginWidget"); // 配合上面的样式选择器
+
+    loginTitleLabel = new QLabel(QStringLiteral("用户登录"), loginWidget);
+    loginTitleLabel->setStyleSheet("color: #2c3e50; font-size: 20px; font-weight: bold; margin-bottom: 25px;");
     loginTitleLabel->setAlignment(Qt::AlignCenter);
 
-    // 服务器地址输入框
-    serverLabel = new QLabel("服务器地址");
-    serverLineEdit = new QLineEdit;
-    serverLineEdit->setText("127.0.0.1:6000"); // 默认值
-    
-    // 用户ID输入框
-    idLabel = new QLabel("用户ID");
-    idLineEdit = new QLineEdit;
-    
-    // 密码输入框
-    passwordLabel = new QLabel("密码");
-    passwordLineEdit = new QLineEdit;
+    serverLabel = new QLabel(QStringLiteral("服务器地址"), loginWidget);
+    serverLabel->setStyleSheet("color: #333333; font-size: 14px;");
+    serverLineEdit = new QLineEdit(loginWidget);
+    serverLineEdit->setText("127.0.0.1:6000");
+
+    idLabel = new QLabel(QStringLiteral("用户ID"), loginWidget);
+    idLabel->setStyleSheet("color: #333333; font-size: 14px;");
+    idLineEdit = new QLineEdit(loginWidget);
+
+    passwordLabel = new QLabel(QStringLiteral("密码"), loginWidget);
+    passwordLabel->setStyleSheet("color: #333333; font-size: 14px;");
+    passwordLineEdit = new QLineEdit(loginWidget);
     passwordLineEdit->setEchoMode(QLineEdit::Password);
 
-    // 按钮
-    loginButton = new QPushButton("登录");
-    loginButton->setObjectName("loginButton");
-    
-    registerButton = new QPushButton("注册");
-    registerButton->setObjectName("registerButton");
+    loginButton = new QPushButton(QStringLiteral("登录"), loginWidget);
+    registerButton = new QPushButton(QStringLiteral("注册"), loginWidget);
 
-    // 布局
-    QVBoxLayout *loginLayout = new QVBoxLayout;
-    loginLayout->setContentsMargins(0, 0, 0, 0);
-    loginLayout->setSpacing(0);
-    
+    QVBoxLayout *loginLayout = new QVBoxLayout(loginWidget);
     loginLayout->addWidget(loginTitleLabel);
-    
-    // 服务器地址部分
     loginLayout->addWidget(serverLabel);
     loginLayout->addWidget(serverLineEdit);
-    
-    // 用户ID部分
     loginLayout->addWidget(idLabel);
     loginLayout->addWidget(idLineEdit);
-    
-    // 密码部分
     loginLayout->addWidget(passwordLabel);
     loginLayout->addWidget(passwordLineEdit);
-    
-    // 按钮部分
     loginLayout->addSpacing(25);
     
     QHBoxLayout *buttonLayout = new QHBoxLayout;
-    buttonLayout->setSpacing(12);
-    buttonLayout->addWidget(loginButton, 1);
-    buttonLayout->addWidget(registerButton, 1);
+    buttonLayout->addWidget(loginButton);
+    buttonLayout->addWidget(registerButton);
     loginLayout->addLayout(buttonLayout);
 
-    loginWidget->setLayout(loginLayout);
-
-    // 初始化注册界面
-    registerWidget = new QWidget;
+    // ================= 注册界面初始化 =================
+    registerWidget = new QWidget(this); // 【修复点：传入this】
+    registerWidget->setObjectName("registerWidget");
     registerWidget->setStyleSheet(
+        "QWidget#registerWidget {"
         "background-color: white; "
         "border-radius: 16px; "
-        "padding: 40px 30px;"
+        "padding: 40px 30px; "
+        "color: #000000;"
+        "}"
     );
-    
-    registerTitleLabel = new QLabel("用户注册");
-    registerTitleLabel->setStyleSheet(
-        "color: #2c3e50; "
-        "margin-bottom: 25px; "
-        "text-align: center;"
-    );
+
+    registerTitleLabel = new QLabel(QStringLiteral("用户注册"), registerWidget);
+    registerTitleLabel->setStyleSheet("color: #2c3e50; font-size: 20px; font-weight: bold; margin-bottom: 25px;");
     registerTitleLabel->setAlignment(Qt::AlignCenter);
 
-    // 用户名输入框
-    registerNameLabel = new QLabel("用户名");
-    registerNameLineEdit = new QLineEdit;
-    
-    // 密码输入框
-    registerPasswordLabel = new QLabel("密码");
-    registerPasswordLineEdit = new QLineEdit;
+    registerNameLabel = new QLabel(QStringLiteral("用户名"), registerWidget);
+    registerNameLineEdit = new QLineEdit(registerWidget);
+
+    registerPasswordLabel = new QLabel(QStringLiteral("密码"), registerWidget);
+    registerPasswordLineEdit = new QLineEdit(registerWidget);
     registerPasswordLineEdit->setEchoMode(QLineEdit::Password);
 
-    // 头像上传
-    registerAvatarLabel = new QLabel("头像");
+    registerAvatarLabel = new QLabel(QStringLiteral("头像"), registerWidget);
     
+    // 头像区域
     QHBoxLayout *avatarLayout = new QHBoxLayout;
-    
-    registerAvatarButton = new QPushButton("选择头像");
-    
-    avatarPreviewLabel = new QLabel;
-    avatarPreviewLabel->setFixedSize(120, 120);
-    avatarPreviewLabel->setStyleSheet(
-        "border: 1px solid #e0e0e0; "
-        "border-radius: 60px; "
-        "background-color: #fafafa;"
-    );
-    avatarPreviewLabel->setAlignment(Qt::AlignCenter);
-    
-    // 调整布局，确保按钮和头像垂直居中对齐
-    avatarLayout->addWidget(registerAvatarButton, 0, Qt::AlignVCenter);
-    avatarLayout->addSpacing(30);
-    avatarLayout->addWidget(avatarPreviewLabel, 0, Qt::AlignVCenter);
-    avatarLayout->setAlignment(Qt::AlignCenter);
-    avatarLayout->setContentsMargins(0, 0, 0, 20);
+    registerAvatarButton = new QPushButton(QStringLiteral("选择头像"), registerWidget);
+    avatarPreviewLabel = new QLabel(registerWidget);
+    avatarPreviewLabel->setFixedSize(60, 60); //稍微改小一点防止撑爆窗口
+    avatarPreviewLabel->setStyleSheet("border: 1px solid #e0e0e0; border-radius: 30px; background-color: #fafafa;");
+    avatarLayout->addWidget(registerAvatarButton);
+    avatarLayout->addWidget(avatarPreviewLabel);
 
-    // 按钮
-    registerSubmitButton = new QPushButton("注册");
-    backToLoginButton = new QPushButton("返回登录");
+    registerSubmitButton = new QPushButton(QStringLiteral("注册提交"), registerWidget);
+    backToLoginButton = new QPushButton(QStringLiteral("返回登录"), registerWidget);
 
-    // 布局
-    QVBoxLayout *registerLayout = new QVBoxLayout;
-    registerLayout->setContentsMargins(0, 0, 0, 0);
-    registerLayout->setSpacing(0);
-    
+    QVBoxLayout *registerLayout = new QVBoxLayout(registerWidget);
     registerLayout->addWidget(registerTitleLabel);
-    
-    // 用户名部分
     registerLayout->addWidget(registerNameLabel);
     registerLayout->addWidget(registerNameLineEdit);
-    
-    // 密码部分
     registerLayout->addWidget(registerPasswordLabel);
     registerLayout->addWidget(registerPasswordLineEdit);
-    
-    // 头像部分
     registerLayout->addWidget(registerAvatarLabel);
     registerLayout->addLayout(avatarLayout);
-    registerLayout->addSpacing(30);
-    
-    // 按钮部分
-    registerLayout->addSpacing(25);
-    
+    registerLayout->addSpacing(20);
+
     QHBoxLayout *regButtonLayout = new QHBoxLayout;
-    regButtonLayout->setSpacing(12);
-    regButtonLayout->addWidget(registerSubmitButton, 1);
-    regButtonLayout->addWidget(backToLoginButton, 1);
+    regButtonLayout->addWidget(registerSubmitButton);
+    regButtonLayout->addWidget(backToLoginButton);
     registerLayout->addLayout(regButtonLayout);
 
-    registerWidget->setLayout(registerLayout);
-
-    // 创建堆栈窗口
-    stackedWidget = new QStackedWidget;
+    // ================= 堆栈窗口组装 =================
+    stackedWidget = new QStackedWidget(this); // 【修复点：传入this】
     stackedWidget->addWidget(loginWidget);
     stackedWidget->addWidget(registerWidget);
     
-    mainLayout->addWidget(stackedWidget);
-    mainLayout->setAlignment(stackedWidget, Qt::AlignCenter);
+    // 【关键修复】：确保堆栈窗口默认显示第一页
+    stackedWidget->setCurrentWidget(loginWidget);
 
-    // 连接信号和槽
+    // 【关键修复】：去掉 alignment 参数，让 stackedWidget 填满 mainWidget
+    // 之前是 mainLayout->setAlignment(stackedWidget, Qt::AlignCenter); 这句在 Windows 上会导致 stackedWidget 变为空
+    mainLayout->addWidget(stackedWidget); 
+    
+    // ================= 信号连接 (保持不变) =================
     connect(loginButton, &QPushButton::clicked, this, &LoginWindow::handleLogin);
     connect(registerButton, &QPushButton::clicked, this, &LoginWindow::switchToRegister);
     connect(registerSubmitButton, &QPushButton::clicked, this, &LoginWindow::handleRegister);
@@ -214,28 +173,17 @@ LoginWindow::LoginWindow(QWidget *parent) : QMainWindow(parent) {
         QString filePath = QFileDialog::getOpenFileName(this, "选择头像", ".", "图像文件 (*.png *.jpg *.jpeg)");
         if (!filePath.isEmpty()) {
             avatarPath = filePath;
-            
-            // 直接加载图片并显示
             QPixmap pixmap(filePath);
-            
-            // 缩放到预览标签大小，保持原始比例
             QPixmap scaledPixmap = pixmap.scaled(avatarPreviewLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
-            
-            // 直接设置到标签
             avatarPreviewLabel->setPixmap(scaledPixmap);
             avatarPreviewLabel->setAlignment(Qt::AlignCenter);
         }
     });
-    
-    // 连接头像相关信号
+
     connect(chatClient, &ChatClient::userAvatarReceived, this, [=](const QString &avatarPath) {
         qDebug() << "Received user avatar path:" << avatarPath;
-        // 这里可以处理头像更新，但登录窗口可能已经关闭，所以主要在ChatWindow中处理
     });
-    
-    // 登录窗口初始化完成，等待用户手动登录
 }
-
 LoginWindow::~LoginWindow() {
 }
 

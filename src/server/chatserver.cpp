@@ -106,3 +106,4 @@ ChatServer::ChatServer(EventLoop* loop,
             }
         }
     }
+    //外网是0.0.0.0 6000
