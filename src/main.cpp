@@ -10,6 +10,7 @@
 // 包含Qt应用程序的核心头文件
 #include <QApplication>
 #include <QCoreApplication>
+#include <QFontDatabase>
 // 文本编码相关的头文件 - Qt 5.14+ 已弃用 QTextCodec::setCodecForLocale
 // #include <QTextCodec>
 // 包含定时器相关的头文件
@@ -51,10 +52,28 @@ int main(int argc, char *argv[]) {
     QFont globalFont;
     #ifdef _WIN32
     // 设置全局字体，确保Windows平台上文本显示
-    globalFont = QFont("Microsoft YaHei", 9); // 使用微软雅黑，9pt (约12px)
+    // 尝试多种字体，确保至少有一种可用
+    QStringList fontFamilies = {"Microsoft YaHei", "SimHei", "Arial", "SansSerif"};
+    QString selectedFont;
+    
+    for (const QString &fontFamily : fontFamilies) {
+        if (QFontDatabase::hasFamily(fontFamily)) {
+            globalFont = QFont(fontFamily, 10);
+            selectedFont = fontFamily;
+            break;
+        }
+    }
+    
+    // 如果没有找到指定字体，使用默认字体
+    if (selectedFont.isEmpty()) {
+        globalFont = QFont();
+        globalFont.setPointSize(10);
+        selectedFont = "Default";
+    }
+    
     globalFont.setStyleStrategy(QFont::PreferAntialias); // 开启抗锯齿
     a.setFont(globalFont);
-    qDebug() << "已设置Windows平台全局字体: Microsoft YaHei, 9pt";
+    qDebug() << "已设置Windows平台全局字体: " << selectedFont << ", 10pt";
     #else
     // Linux平台使用Arial字体
     globalFont = QFont("Arial", 14);
