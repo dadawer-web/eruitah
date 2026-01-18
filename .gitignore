@@ -1,38 +1,36 @@
-# 编译产生的中间文件
-*.o
-*.obj
-*.moc
-*.ui
-
-# 编译生成的可执行文件（根据你的项目名修改，或者忽略 Debug/Release 目录）
-debug/
-release/
-build/
-*.exe
-
-# Qt 自动生成的 Makefiles (如果是 qmake 项目)
-Makefile*
-
-# Qt Creator 的临时文件
-*.user
-
-# CMake 编译产生的垃圾
+# --- CMake 产生的垃圾 (无论在哪一层都会被忽略) ---
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
 Makefile
 *.cmake
 install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
 
-# 编译输出目录
+# --- 编译产生的二进制文件 ---
+*.o
+*.obj
+*.so
+*.dylib
+*.dll
+*.exe
+*.a
+*.lib
+
+# --- 常见的构建目录名 ---
+build/
 bin/
 lib/
-build/
-bulid/
+# 你项目里特殊的拼写错误目录
+bulid/ 
 
-# IDE 产生的垃圾
+# --- IDE 配置文件 ---
 .vscode/
 .idea/
 *.user
+*.pro.user
 
-
+# --- 日志和临时文件 ---
+*.log
+*.tmp
