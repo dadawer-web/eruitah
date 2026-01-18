@@ -1065,3 +1065,13 @@
 [2026-01-13 20:22:12.412] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
 [2026-01-13 23:03:15.371] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
 [2026-01-14 14:24:24.301] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+                                                                                                     [2026-01-18 23:38:12.178] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2026-01-18 23:38:45.201] LoginWindow: emitting loginSuccess signal with userId:32 userName:用户32
+[2026-01-18 23:58:16.026] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2026-01-18 23:58:31.534] LoginWindow: emitting loginSuccess signal with userId:26 userName:用户26
+[2026-01-19 00:10:59.221] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2026-01-19 00:11:17.849] LoginWindow: emitting loginSuccess signal with userId:32 userName:用户32
+[2026-01-19 00:18:58.293] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2026-01-19 00:19:16.761] LoginWindow: emitting loginSuccess signal with userId:32 userName:用户32
+[2026-01-19 00:22:39.121] LoginWindow: emitting loginSuccess signal with userId:22 userName:用户22
+[2026-01-19 00:23:01.648] LoginWindow: emitting loginSuccess signal with userId:32 userName:用户32

@@ -7,6 +7,8 @@
     #include <ws2tcpip.h>
     // 防止Windows头文件中的byte类型与Qt冲突
     #undef byte
+#else
+    #include <arpa/inet.h>  // 用于ntohl函数
 #endif
 
 #include <QMainWindow>
@@ -30,6 +32,9 @@
 #include <QGridLayout>
 #include <QListWidget>
 #include <QScrollBar>
+#include <QtConcurrent>
+#include <QFuture>
+#include <QFutureWatcher>
 #include "chatclient.h"
 #include "models/user.h"
 #include "models/group.h"
@@ -122,6 +127,7 @@ private:
     
     // 表情包相关
     QMap<int, QByteArray> emojiList; // 存储用户的表情包，key为表情ID，value为图片数据
+    QMap<int, QIcon> emojiIconCache; // 缓存解码后的图标，key是表情ID
     bool isLoadingEmojis; // 标记是否正在加载表情包
     QDialog *currentEmojiDialog; // 当前显示的表情包对话框
     

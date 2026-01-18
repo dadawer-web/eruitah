@@ -5,7 +5,7 @@ include_directories(${PROJECT_SOURCE_DIR}/src/server/model)
 include_directories(${PROJECT_SOURCE_DIR}/src/server/redis)
 
 # 查找Qt包
-find_package(Qt5 COMPONENTS Widgets Network REQUIRED)
+find_package(Qt5 COMPONENTS Widgets Network Concurrent REQUIRED)
 
 # 设置muduo路径（如果客户端需要用到）
 set(MUDUO_ROOT_DIR "/home/xmy/muduo")
@@ -70,8 +70,8 @@ add_executable(ChatClient ${CLIENT_SOURCES})
 add_executable(QtChat ${QT_CHAT_SOURCES})
 
 # 指定可执行文件所依赖的库
-target_link_libraries(ChatClient Qt5::Widgets Qt5::Network muduo_net muduo_base pthread mysqlclient hiredis)
-target_link_libraries(QtChat Qt5::Widgets Qt5::Network muduo_net muduo_base pthread mysqlclient hiredis)
+target_link_libraries(ChatClient Qt5::Widgets Qt5::Network Qt5::Concurrent muduo_net muduo_base pthread mysqlclient hiredis)
+target_link_libraries(QtChat Qt5::Widgets Qt5::Network Qt5::Concurrent muduo_net muduo_base pthread mysqlclient hiredis)
 
 # 启用Qt的MOC处理
 set_target_properties(ChatClient PROPERTIES

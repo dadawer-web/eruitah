@@ -1,0 +1,114 @@
+{
+	"BUILD_DIR" : "/home/xmy/code/src/server/ChatServer_autogen",
+	"CMAKE_BINARY_DIR" : "/home/xmy/code",
+	"CMAKE_CURRENT_BINARY_DIR" : "/home/xmy/code/src/server",
+	"CMAKE_CURRENT_SOURCE_DIR" : "/home/xmy/code/src/server",
+	"CMAKE_EXECUTABLE" : "/usr/bin/cmake",
+	"CMAKE_LIST_FILES" : 
+	[
+		"/home/xmy/code/src/server/CMakeLists.txt",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt5/Qt5ConfigVersion.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt5/Qt5Config.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt5/Qt5ModuleLocation.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt5Core/Qt5CoreConfigVersion.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt5Core/Qt5CoreConfig.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt5Core/Qt5CoreConfigExtras.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt5Core/Qt5CoreConfigExtrasMkspecDir.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt5Core/Qt5CoreMacros.cmake",
+		"/usr/share/cmake-3.28/Modules/CMakeParseArguments.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt5Network/Qt5NetworkConfigVersion.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt5Network/Qt5NetworkConfig.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt5Network/Qt5Network_QConnmanEnginePlugin.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt5Network/Qt5Network_QGenericEnginePlugin.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt5Network/Qt5Network_QNetworkManagerEnginePlugin.cmake"
+	],
+	"CMAKE_SOURCE_DIR" : "/home/xmy/code",
+	"DEP_FILE" : "/home/xmy/code/src/server/ChatServer_autogen/deps",
+	"DEP_FILE_RULE_NAME" : "ChatServer_autogen/timestamp",
+	"HEADERS" : 
+	[
+		[
+			"/home/xmy/code/src/chatserver.h",
+			"Mu",
+			"VNU7RW3YIC/moc_chatserver.cpp",
+			null
+		],
+		[
+			"/home/xmy/code/src/public.h",
+			"Mu",
+			"VNU7RW3YIC/moc_public.cpp",
+			null
+		]
+	],
+	"HEADER_EXTENSIONS" : [ "h", "hh", "h++", "hm", "hpp", "hxx", "in", "txx" ],
+	"INCLUDE_DIR" : "/home/xmy/code/src/server/ChatServer_autogen/include",
+	"MOC_COMPILATION_FILE" : "/home/xmy/code/src/server/ChatServer_autogen/mocs_compilation.cpp",
+	"MOC_DEFINITIONS" : [ "QT_CORE_LIB", "QT_NETWORK_LIB", "QT_NO_DEBUG" ],
+	"MOC_DEPEND_FILTERS" : 
+	[
+		[
+			"Q_PLUGIN_METADATA",
+			"[\n][ \t]*Q_PLUGIN_METADATA[ \t]*\\([^\\)]*FILE[ \t]*\"([^\"]+)\""
+		]
+	],
+	"MOC_INCLUDES" : 
+	[
+		"/home/xmy/code/include",
+		"/home/xmy/code/include/server",
+		"/home/xmy/code/include/server/db",
+		"/home/xmy/code/include/server/model",
+		"/home/xmy/code/include/server/redis",
+		"/home/xmy/code/thirdparty",
+		"/home/xmy/muduo/include",
+		"/home/xmy/code/src",
+		"/usr/include/x86_64-linux-gnu/qt5",
+		"/usr/include/x86_64-linux-gnu/qt5/QtCore",
+		"/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++",
+		"/usr/include/x86_64-linux-gnu/qt5/QtNetwork",
+		"/home/xmy/muduo",
+		"/usr/include/c++/13",
+		"/usr/include/x86_64-linux-gnu/c++/13",
+		"/usr/include/c++/13/backward",
+		"/usr/lib/gcc/x86_64-linux-gnu/13/include",
+		"/usr/local/include",
+		"/usr/include/x86_64-linux-gnu",
+		"/usr/include"
+	],
+	"MOC_MACRO_NAMES" : [ "Q_OBJECT", "Q_GADGET", "Q_NAMESPACE", "Q_NAMESPACE_EXPORT" ],
+	"MOC_OPTIONS" : [],
+	"MOC_PATH_PREFIX" : false,
+	"MOC_PREDEFS_CMD" : 
+	[
+		"/usr/bin/c++",
+		"-dM",
+		"-E",
+		"-c",
+		"/usr/share/cmake-3.28/Modules/CMakeCXXCompilerABI.cpp"
+	],
+	"MOC_PREDEFS_FILE" : "/home/xmy/code/src/server/ChatServer_autogen/moc_predefs.h",
+	"MOC_RELAXED_MODE" : false,
+	"MOC_SKIP" : [],
+	"MULTI_CONFIG" : false,
+	"PARALLEL" : 4,
+	"PARSE_CACHE_FILE" : "/home/xmy/code/src/server/CMakeFiles/ChatServer_autogen.dir/ParseCache.txt",
+	"QT_MOC_EXECUTABLE" : "/usr/lib/qt5/bin/moc",
+	"QT_UIC_EXECUTABLE" : "",
+	"QT_VERSION_MAJOR" : 5,
+	"QT_VERSION_MINOR" : 15,
+	"SETTINGS_FILE" : "/home/xmy/code/src/server/CMakeFiles/ChatServer_autogen.dir/AutogenUsed.txt",
+	"SOURCES" : 
+	[
+		[ "/home/xmy/code/src/chatserver.cpp", "Mu", null ],
+		[ "/home/xmy/code/src/server/chatserver.cpp", "Mu", null ],
+		[ "/home/xmy/code/src/server/chatservice.cpp", "Mu", null ],
+		[ "/home/xmy/code/src/server/db/db.cpp", "Mu", null ],
+		[ "/home/xmy/code/src/server/main.cpp", "Mu", null ],
+		[ "/home/xmy/code/src/server/model/emojimodel.cpp", "Mu", null ],
+		[ "/home/xmy/code/src/server/model/friendmodel.cpp", "Mu", null ],
+		[ "/home/xmy/code/src/server/model/groupmodel.cpp", "Mu", null ],
+		[ "/home/xmy/code/src/server/model/offlinemessagemodel.cpp", "Mu", null ],
+		[ "/home/xmy/code/src/server/model/usermodel.cpp", "Mu", null ],
+		[ "/home/xmy/code/src/server/redis/redis.cpp", "Mu", null ]
+	],
+	"VERBOSITY" : 0
+}

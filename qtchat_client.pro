@@ -55,9 +55,7 @@ OBJECTS_DIR = $$PWD/build/obj
 MOC_DIR = $$PWD/build/moc
 RCC_DIR = $$PWD/build/rcc
 
-# 修复MSVC版本检测问题
-QMAKE_MSC_VER = 1900
-QMAKE_MSC_FULL_VER = 190024213
+
 
 # 跨平台编译配置
 win32 {
@@ -78,6 +76,7 @@ win32 {
     # Linux 特定配置
     LIBS += -lcrypto -lssl
 }
-
-# 通用配置
-CONFIG += console
+# 只有在 Debug 模式下才显示黑窗口，Release 模式下自动隐藏
+debug {
+    CONFIG += console
+}

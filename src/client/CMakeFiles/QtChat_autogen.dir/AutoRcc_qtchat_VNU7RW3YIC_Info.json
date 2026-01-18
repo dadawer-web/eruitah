@@ -1,0 +1,30 @@
+{
+	"BUILD_DIR" : "/home/xmy/code/src/client/QtChat_autogen",
+	"CMAKE_BINARY_DIR" : "/home/xmy/code",
+	"CMAKE_CURRENT_BINARY_DIR" : "/home/xmy/code/src/client",
+	"CMAKE_CURRENT_SOURCE_DIR" : "/home/xmy/code/src/client",
+	"CMAKE_SOURCE_DIR" : "/home/xmy/code",
+	"GENERATOR" : "Unix Makefiles",
+	"INCLUDE_DIR" : "/home/xmy/code/src/client/QtChat_autogen/include",
+	"INPUTS" : 
+	[
+		"/home/xmy/code/src/styles.qss",
+		"/home/xmy/code/src/icons/send.png",
+		"/home/xmy/code/src/icons/chat.png",
+		"/home/xmy/code/src/icons/add.png",
+		"/home/xmy/code/src/icons/user.png",
+		"/home/xmy/code/src/icons/exit.png",
+		"/home/xmy/code/src/icons/group.png",
+		"/home/xmy/code/src/icons/refresh.png"
+	],
+	"LOCK_FILE" : "/home/xmy/code/src/client/CMakeFiles/QtChat_autogen.dir/AutoRcc_qtchat_VNU7RW3YIC_Lock.lock",
+	"MULTI_CONFIG" : false,
+	"OPTIONS" : [ "-name", "qtchat" ],
+	"OUTPUT_CHECKSUM" : "VNU7RW3YIC",
+	"OUTPUT_NAME" : "qrc_qtchat.cpp",
+	"RCC_EXECUTABLE" : "/usr/lib/qt5/bin/rcc",
+	"RCC_LIST_OPTIONS" : [ "--list" ],
+	"SETTINGS_FILE" : "/home/xmy/code/src/client/CMakeFiles/QtChat_autogen.dir/AutoRcc_qtchat_VNU7RW3YIC_Used.txt",
+	"SOURCE" : "/home/xmy/code/src/qtchat.qrc",
+	"VERBOSITY" : 0
+}

@@ -410,12 +410,7 @@ void ChatClient::sendJsonMessage(const QJsonObject &message) {
         bool bytesWrittenSuccess = socket->waitForBytesWritten(500); // 增加到500ms
         qDebug() << "Message sent, msgid:" << msgid << 
                     "length:" << data.size() << "bytes written:" << bytesWritten << "success:" << bytesWrittenSuccess;
-                // 增加延迟时间，确保两条连续消息不会被合并 - 时序控制优化
-#ifdef _WIN32
-                ::Sleep(50); // 使用全局命名空间的Sleep
-#else
-                QThread::msleep(50); // Linux平台使用QThread::msleep
-#endif
+
     } else {
         // 对于登出消息，立即返回，不等待，因为服务器会立即关闭连接
         qDebug() << "Logout message sent, msgid:" << msgid << 
@@ -599,8 +594,8 @@ void ChatClient::processMessage(const QJsonObject &message) {
                 }
             }
 
-            // 登录成功后自动请求表情包列表
-            requestEmojiList(currentUserId);
+            // 登录成功后自动请求表情包列表 - 已注释，改为懒加载
+            // requestEmojiList(currentUserId);
 
             // 再次检查并确保头像数据已正确保存
             QString storedAvatar = getCurrentUserAvatar();
