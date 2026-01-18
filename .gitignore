@@ -35,5 +35,4 @@ bulid/
 .idea/
 *.user
 
-# 日志文件
-*.log
+
