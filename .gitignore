@@ -15,3 +15,25 @@ Makefile*
 
 # Qt Creator 的临时文件
 *.user
+
+# CMake 编译产生的垃圾
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+install_manifest.txt
+
+# 编译输出目录
+bin/
+lib/
+build/
+bulid/
+
+# IDE 产生的垃圾
+.vscode/
+.idea/
+*.user
+
+# 日志文件
+*.log
