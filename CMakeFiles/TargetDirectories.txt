@@ -1,0 +1,17 @@
+/home/xmy/code/CMakeFiles/edit_cache.dir
+/home/xmy/code/CMakeFiles/rebuild_cache.dir
+/home/xmy/code/src/CMakeFiles/edit_cache.dir
+/home/xmy/code/src/CMakeFiles/rebuild_cache.dir
+/home/xmy/code/src/server/CMakeFiles/ChatServer.dir
+/home/xmy/code/src/server/CMakeFiles/edit_cache.dir
+/home/xmy/code/src/server/CMakeFiles/rebuild_cache.dir
+/home/xmy/code/src/server/CMakeFiles/ChatServer_autogen_timestamp_deps.dir
+/home/xmy/code/src/server/CMakeFiles/ChatServer_autogen.dir
+/home/xmy/code/src/client/CMakeFiles/ChatClient.dir
+/home/xmy/code/src/client/CMakeFiles/QtChat.dir
+/home/xmy/code/src/client/CMakeFiles/edit_cache.dir
+/home/xmy/code/src/client/CMakeFiles/rebuild_cache.dir
+/home/xmy/code/src/client/CMakeFiles/ChatClient_autogen_timestamp_deps.dir
+/home/xmy/code/src/client/CMakeFiles/ChatClient_autogen.dir
+/home/xmy/code/src/client/CMakeFiles/QtChat_autogen_timestamp_deps.dir
+/home/xmy/code/src/client/CMakeFiles/QtChat_autogen.dir
