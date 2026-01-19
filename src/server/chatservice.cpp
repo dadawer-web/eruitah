@@ -823,6 +823,14 @@ void ChatService::reg(const TcpConnectionPtr& conn,json& js,Timestamp time){
         User sender = _userModel.query(userid);
         js["fromName"] = sender.getName();
         
+        // Add sender avatar to JSON
+        string senderAvatar = sender.getAvatar();
+        if (!senderAvatar.empty()) {
+            js["avatar"] = base64Encode(senderAvatar);
+        } else {
+            js["avatar"] = "";
+        }
+        
         // Add timestamp to the message in ISO format
         js["timestamp"] = time.toFormattedString(true);
         

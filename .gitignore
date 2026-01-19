@@ -34,3 +34,11 @@ bulid/
 # --- 日志和临时文件 ---
 *.log
 *.tmp
+
+# === Qt Autogen 垃圾文件屏蔽 ===
+*_autogen/
+*.moc
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+timestamp

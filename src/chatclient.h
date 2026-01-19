@@ -284,7 +284,7 @@ private slots:
 
     // Message related signals
     void messageReceived(int fromId, const QString &message, const QString &fromName = "", bool isGroup = false, int groupId = -1, const QString &timestamp = "");
-    void groupMessageReceived(int groupId, int fromId, const QString &userName, const QString &message, const QString &timestamp = "");
+    void groupMessageReceived(int groupId, int fromId, const QString &userName, const QString &message, const QString &timestamp = "", const QString &avatar = "");
 
     // Friend related signals
     void friendListUpdated(const QList<User> &friends);        // New friend list available

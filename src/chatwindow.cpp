@@ -2345,9 +2345,23 @@ void ChatWindow::onGroupListUpdated(const QList<Group> &groups) {
         
         item->setIcon(0, QIcon(groupPixmap));
         
-        // 不尝试获取群组成员数，避免const和方法不存在的错误
-        item->setText(2, "群组成员");
-        qDebug() << "[CRITICAL] Added group:" << groupName << "(group member count skipped for compatibility)";
+        // 检查当前用户是否是群组创建者
+        QString userStatus = "群组成员";
+        if (groupMap.contains(group.getId())) {
+            const vector<GroupUser>& members = groupMap[group.getId()].getUsers();
+            for (const GroupUser& member : members) {
+                if (member.getId() == userId && member.getRole() == "creator") {
+                    userStatus = "群主";
+                    break;
+                } else if (member.getId() == userId && member.getRole() == "admin") {
+                    userStatus = "管理员";
+                    break;
+                }
+            }
+        }
+        
+        item->setText(2, userStatus);
+        qDebug() << "[CRITICAL] Added group:" << groupName << "with user status:" << userStatus;
         
         qDebug() << "[CRITICAL] Added group to UI list:" << groupName;
     }
