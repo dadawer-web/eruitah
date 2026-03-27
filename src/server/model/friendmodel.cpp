@@ -9,19 +9,35 @@ void FriendModel::insert(int userid,int friendid){
     // SQL语句构造 - 关系数据持久化
     char sql[1024]={0};
     
-    // 双向好友关系：A添加B为好友，B也添加A为好友
-    // 第一次插入：userid -> friendid
-    sprintf(sql,"insert into friend values(%d,%d)",userid,friendid);
+    // 检查是否已经是好友 - 防止重复添加
+    char checkSql[1024]={0};
+    sprintf(checkSql,"select count(*) from friend where userid=%d and friendid=%d",userid,friendid);
     
-    // 数据库连接和操作 - 事务一致性保障
     MySQL mysql;
     if(mysql.connect()){
+        // 执行检查查询
+        MYSQL_RES *res=mysql.query(checkSql);
+        if(res!=nullptr){
+            MYSQL_ROW row=mysql_fetch_row(res);
+            if(row!=nullptr && atoi(row[0])>0){
+                // 已经是好友，直接返回
+                mysql_free_result(res);
+                return;
+            }
+            mysql_free_result(res);
+        }
+        
+        // 双向好友关系：A添加B为好友，B也添加A为好友
+        // 第一次插入：userid -> friendid
+        sprintf(sql,"INSERT IGNORE INTO friend values(%d,%d)",userid,friendid);
+        
+        // 数据库连接和操作 - 事务一致性保障
         // 执行第一次插入操作 - 社交关系建立
         mysql.update(sql);
         
         // 第二次插入：friendid -> userid
         memset(sql, 0, sizeof(sql));
-        sprintf(sql,"insert into friend values(%d,%d)",friendid,userid);
+        sprintf(sql,"INSERT IGNORE INTO friend values(%d,%d)",friendid,userid);
         mysql.update(sql);
     }
 }

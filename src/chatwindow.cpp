@@ -1051,7 +1051,7 @@ void ChatWindow::updateTabText(int chatId, bool isGroup, const QString &chatName
 }
 
 // 添加消息到聊天列表，使用聊天气泡
-void ChatWindow::addMessageToChatList(QListWidget *listWidget, bool isSender, const QString &message, const QString &avatarPath, const QString &timeStr) {
+QListWidgetItem* ChatWindow::addMessageToChatList(QListWidget *listWidget, bool isSender, const QString &message, const QString &avatarPath, const QString &timeStr) {
     // 创建QListWidgetItem
     QListWidgetItem *item = new QListWidgetItem(listWidget);
     
@@ -1079,6 +1079,8 @@ void ChatWindow::addMessageToChatList(QListWidget *listWidget, bool isSender, co
             listWidget->scrollToBottom();
         });
     }
+    
+    return item;
 }
 
 void ChatWindow::onSendMessage() {
@@ -1248,6 +1250,20 @@ void ChatWindow::onSendMessage() {
     }
 }
 
+QListWidget* ChatWindow::findChatListWidgetForUser(int userId) {
+    // 遍历所有的聊天窗口，找到对应用户的chatListWidget
+    for (int i = 0; i < chatTabWidget->count(); ++i) {
+        QWidget* widget = chatTabWidget->widget(i);
+        if (widget && widget->property("chatId").toInt() == userId &&
+            !widget->property("isGroup").toBool()) {
+            if (chatComponents.contains(widget)) {
+                return chatComponents[widget].chatListWidget;
+            }
+        }
+    }
+    return nullptr;
+}
+
 void ChatWindow::createChatWidget(int chatId, const QString &chatName, bool isGroup) {
     // 检查是否已经打开了该聊天窗口
     for (int i = 0; i < chatTabWidget->count(); ++i) {
@@ -1268,13 +1284,15 @@ void ChatWindow::createChatWidget(int chatId, const QString &chatName, bool isGr
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(0);
     
-    // 聊天记录区域 - 使用QListWidget替代QTextEdit，以便使用聊天气泡
+    // 聊天记录区域 - 使用 QListWidget 替代 QTextEdit，以便使用聊天气泡
     QListWidget *chatListWidget = new QListWidget;
     chatListWidget->setMinimumHeight(200); // 减小最小高度，使窗口可以更小
     chatListWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     chatListWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     chatListWidget->setFocusPolicy(Qt::NoFocus); // 禁用焦点
     chatListWidget->setSelectionMode(QAbstractItemView::NoSelection); // 禁用选择
+    chatListWidget->setWordWrap(true); // 启用文本自动换行
+    chatListWidget->setResizeMode(QListWidget::Adjust); // 根据内容调整大小
     chatListWidget->setStyleSheet("border: none; background-color: #fafafa;"
                                  "QListWidget { outline: none; }"
                                  "QListWidget::item { outline: none; border: none; }"
@@ -1666,6 +1684,85 @@ void ChatWindow::onJoinGroupConfirmed() {
     joinGroupIdEdit->clear();
 }
 void ChatWindow::onReceiveMessage(int fromId, const QString &message, const QString &fromName, bool isGroup, int groupId, const QString &timestamp) {
+    qDebug() << "ChatWindow: onReceiveMessage - Received message from" << fromId << ":" << message;
+    
+    // 检查是否是流式消息（包含特殊标记）
+    bool isStreamChunk = message.startsWith("[STREAM_CHUNK]:");
+    QString actualMessage = isStreamChunk ? message.mid(15) : message; // 移除流式标记（15个字符）
+    
+    // 检查是否是流式消息结束标记
+    bool isStreamEnd = actualMessage == "[STREAM_END]";
+    if (isStreamEnd) {
+        qDebug() << "ChatWindow: Stream message ended, clearing stream message items for user" << fromId;
+        // 清除流式消息映射，这样下一个问题会创建新的气泡
+        if (streamMessageItems.contains(fromId)) {
+            streamMessageItems.remove(fromId);
+        }
+        return;
+    }
+    
+    // 如果是流式消息，累积到现有消息项中
+    if (isStreamChunk) {
+        qDebug() << "ChatWindow: Processing stream message for user" << fromId;
+        
+        // 需要先找到对应的chatListWidget
+        QListWidget* chatListWidget = findChatListWidgetForUser(fromId);
+        qDebug() << "ChatWindow: findChatListWidgetForUser returned:" << (chatListWidget ? "valid" : "nullptr");
+        
+        if (chatListWidget) {
+            // 使用 value() 方法避免自动插入空列表
+            QList<QListWidgetItem*> items = streamMessageItems.value(fromId);
+            qDebug() << "ChatWindow: chatListWidget is valid, streamMessageItems contains:" << streamMessageItems.contains(fromId) 
+                     << ", items count:" << items.size();
+
+            // 如果该用户还没有流式消息项，创建第一个
+            if (items.isEmpty()) {
+                qDebug() << "ChatWindow: Creating first stream message item for user" << fromId;
+                
+                // 创建消息项并添加到UI
+                QListWidgetItem* item = new QListWidgetItem();
+                chatListWidget->addItem(item);
+                
+                MessageWidget* messageWidget = new MessageWidget(false, actualMessage, "", timestamp, this);
+                item->setSizeHint(messageWidget->sizeHint());
+                chatListWidget->setItemWidget(item, messageWidget);
+                
+                // 添加到流式消息项列表
+                items.append(item);
+                streamMessageItems.insert(fromId, items);
+                
+                qDebug() << "ChatWindow: Message item created, chatListWidget->count():" << chatListWidget->count();
+                
+                // 滚动到底部
+                chatListWidget->scrollToBottom();
+            } else {
+                // 获取最后一个消息项并追加内容
+                QListWidgetItem* lastItem = items.last();
+                if (lastItem) {
+                    MessageWidget* messageWidget = qobject_cast<MessageWidget*>(chatListWidget->itemWidget(lastItem));
+                    if (messageWidget) {
+                        messageWidget->appendText(actualMessage);
+                        lastItem->setSizeHint(messageWidget->sizeHint());
+                        
+                        // 强制更新chatListWidget的布局
+                        chatListWidget->updateGeometry();
+                        chatListWidget->repaint();
+                        
+                        // 滚动到底部
+                        chatListWidget->scrollToBottom();
+                        
+                        qDebug() << "ChatWindow: Stream chunk accumulated:" << actualMessage.length() << "chars";
+                    } else {
+                        qDebug() << "ChatWindow: ERROR - messageWidget is nullptr!";
+                    }
+                }
+            }
+        } else {
+            qDebug() << "ChatWindow: ERROR - chatListWidget is nullptr, cannot display stream message!";
+        }
+        return;
+    }
+    
     // 检查好友列表是否已加载
     if (!friendListLoaded && !isGroup) {
         qDebug() << "ChatWindow: onReceiveMessage - Friend list not loaded yet, storing message from" << fromId;
@@ -1870,6 +1967,15 @@ void ChatWindow::onReceiveMessage(int fromId, const QString &message, const QStr
             }
         }
         addMessageToChatList(chatListWidget, false, message, senderAvatarPath, timeStr);
+        
+        // 如果是AI Bot的消息，添加到流式消息映射中以便后续累积
+        if (fromId == 100) {
+            QListWidgetItem* lastItem = chatListWidget->item(chatListWidget->count() - 1);
+            if (lastItem) {
+                streamMessageItems[fromId].append(lastItem);
+                qDebug() << "ChatWindow: Added AI Bot message to stream tracking";
+            }
+        }
         
         // 检查消息是否在当前聊天窗口中显示，如果不是则增加未读计数
         if (chatTabWidget->currentWidget() != chatWidget) {

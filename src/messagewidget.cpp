@@ -1,4 +1,5 @@
 #include "messagewidget.h"
+#include <QApplication>
 #include <QGraphicsDropShadowEffect>
 #include <QPixmap>
 #include <QPainter>
@@ -6,6 +7,12 @@
 #include <QPen>
 #include <QPainterPath>
 #include <QDebug>
+#include <QRegularExpression>
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QEventLoop>
+#include <QListWidget>
 
 // 跨平台网络头文件处理 - 注意：先包含Windows网络头文件，再包含Qt头文件，避免byte类型歧义
 #ifdef _WIN32
@@ -16,7 +23,7 @@
 #endif
 
 MessageWidget::MessageWidget(bool isSender, const QString &text, const QString &avatarPath, const QString &timeStr, QWidget *parent)
-    : QWidget(parent)
+    : QWidget(parent), m_isSender(isSender)
 {
     // 1. 初始化控件
     lblAvatar = new QLabel(this);
@@ -73,8 +80,9 @@ MessageWidget::MessageWidget(bool isSender, const QString &text, const QString &
     
     lblContent = new QLabel(this);
     lblContent->setWordWrap(true); // 允许换行
-    lblContent->setMaximumWidth(300); // 气泡最大宽度
     lblContent->setTextInteractionFlags(Qt::TextSelectableByMouse); // 允许复制文字
+    lblContent->setMaximumWidth(400); // 气泡最大宽度
+    lblContent->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum); // 确保高度根据内容调整
     
     // 检查消息是否包含图片数据
     if (text.startsWith("data:image/")) {
@@ -164,7 +172,7 @@ MessageWidget::MessageWidget(bool isSender, const QString &text, const QString &
         int commaPos = text.indexOf(',');
         if (commaPos != -1) {
             QString imageType = text.mid(7, commaPos - 7); // 提取图片类型
-            QString base64Data = text.mid(commaPos + 1);  // 提取Base64数据
+            QString base64Data = text.mid(commaPos + 1); // 提取Base64数据
             QByteArray decodedData = QByteArray::fromBase64(base64Data.toUtf8());
             
             // 检查是否需要再次解码
@@ -188,6 +196,68 @@ MessageWidget::MessageWidget(bool isSender, const QString &text, const QString &
                 // 图片加载失败，显示错误信息
                 lblContent->setText("图片加载失败");
             }
+        }
+    } else if (text.contains("![")) {
+        // 处理Markdown格式的图片链接 ![描述](URL)
+        qDebug() << "MessageWidget: Processing Markdown image link...";
+        
+        // 查找所有Markdown图片链接
+         QRegularExpression re(R"(!\[(.*?)\]\((.*?)\))");
+         QRegularExpressionMatchIterator it = re.globalMatch(text);
+        
+        if (it.hasNext()) {
+            // 只处理第一个图片链接
+            QRegularExpressionMatch match = it.next();
+            QString imageUrl = match.captured(2); // 捕获URL
+            QString altText = match.captured(1); // 捕获描述文本
+            
+            qDebug() << "MessageWidget: Found image URL:" << imageUrl;
+            
+            // 尝试加载网络图片
+            QNetworkAccessManager *networkManager = new QNetworkAccessManager(this);
+            QNetworkRequest request(imageUrl);
+            
+            QNetworkReply *reply = networkManager->get(request);
+            
+            // 等待图片加载完成
+            QEventLoop loop;
+            QObject::connect(reply, &QNetworkReply::finished, [&]() {
+                if (reply->error() == QNetworkReply::NoError) {
+                    QByteArray imageData = reply->readAll();
+                    QPixmap pixmap;
+                    
+                    if (pixmap.loadFromData(imageData)) {
+                        // 图片加载成功，调整大小
+                        QImage image = pixmap.toImage();
+                        QImage scaledImage = image.scaled(300, 200, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+                        QPixmap finalPixmap = QPixmap::fromImage(scaledImage);
+                        
+                        // 显示图片
+                        lblContent->setPixmap(finalPixmap);
+                        lblContent->setAlignment(Qt::AlignCenter);
+                        lblContent->setStyleSheet(""); // 清除文本样式
+                    } else {
+                        // 图片加载失败，显示链接
+                        QString displayText = QString("图片: %1").arg(altText);
+                        lblContent->setText(displayText);
+                        lblContent->setStyleSheet("color: #666; font-style: italic;");
+                    }
+                } else {
+                    // 网络请求失败，显示链接
+                    QString displayText = QString("图片: %1").arg(altText);
+                    lblContent->setText(displayText);
+                    lblContent->setStyleSheet("color: #999;");
+                }
+                
+                reply->deleteLater();
+                networkManager->deleteLater();
+                loop.quit();
+            });
+            
+            loop.exec();
+        } else {
+            // 是文本消息，直接显示
+            lblContent->setText(text);
         }
     } else {
         // 是文本消息，直接显示
@@ -238,4 +308,76 @@ MessageWidget::MessageWidget(bool isSender, const QString &text, const QString &
         mainLayout->addLayout(messageLayout);
         mainLayout->addStretch();
     }
+}
+
+void MessageWidget::appendText(const QString &text) {
+    if (lblContent) {
+        QString currentText = lblContent->text();
+        QString newText = currentText + text;
+        lblContent->setText(newText);
+        
+        // 强制更新 QLabel 的大小
+        lblContent->setMinimumHeight(0);
+        lblContent->setMaximumHeight(QWIDGETSIZE_MAX);
+        
+        // 更新布局
+        lblContent->updateGeometry();
+        this->updateGeometry();
+        
+        // 获取父级 QListWidget 并更新 item 大小
+        QWidget* parent = this->parentWidget();
+        if (parent) {
+            QListWidget* listWidget = qobject_cast<QListWidget*>(parent->parentWidget());
+            if (listWidget) {
+                // 查找包含此 widget 的 item
+                for (int i = 0; i < listWidget->count(); ++i) {
+                    QListWidgetItem* item = listWidget->item(i);
+                    if (item && listWidget->itemWidget(item) == this) {
+                        QSize hint = this->sizeHint();
+                        item->setSizeHint(hint);
+                        listWidget->updateGeometry();
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
+
+QSize MessageWidget::sizeHint() const {
+    if (!lblContent) {
+        return QWidget::sizeHint();
+    }
+
+    // 获取文本内容
+    QString text = lblContent->text();
+    if (text.isEmpty()) {
+        return QWidget::sizeHint();
+    }
+
+    // 使用 QFontMetrics 计算文本所需的高度
+    QFontMetrics fm(lblContent->font());
+    int maxWidth = 400; // 最大宽度
+    int padding = 24; // 内边距
+
+    // 计算换行后的文本矩形
+    QRect boundingRect = fm.boundingRect(QRect(0, 0, maxWidth - padding, 10000),
+                                          Qt::TextWordWrap | Qt::AlignLeft | Qt::AlignTop,
+                                          text);
+
+    int contentHeight = boundingRect.height() + padding;
+
+    // 头像高度
+    int avatarHeight = lblAvatar ? lblAvatar->height() : 40;
+
+    // 时间标签高度
+    int timeHeight = lblTime ? 25 : 0;
+
+    // 宽度 = 内容宽度 + 头像 + 边距
+    int totalWidth = qMin(boundingRect.width() + padding, maxWidth) + 80;
+
+    // 高度 = max(内容高度, 头像高度) + 时间高度 + 上下边距
+    int totalHeight = qMax(contentHeight, avatarHeight) + timeHeight + 30;
+
+    return QSize(totalWidth, totalHeight);
 }

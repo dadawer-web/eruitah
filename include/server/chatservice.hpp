@@ -12,6 +12,7 @@
 #include"server/model/friendmodel.hpp"
 #include"server/model/groupmodel.hpp"
 #include"server/model/emojimodel.hpp"
+#include"server/ai_service_client.hpp"
 using namespace muduo;
 using namespace std;
 using namespace muduo::net;
@@ -91,6 +92,9 @@ private:
 
     //redis操作对象
     Redis _redis;
+    
+    // AI 服务客户端
+    AiServiceClient& _aiServiceClient;
 };
 
 #endif

@@ -125,6 +125,10 @@ private:
     // 未读消息计数映射 (chatId_isGroup -> count)
     QMap<QString, int> unreadMessageCounts;
     
+    // 流式消息处理相关
+    QMap<int, QString> pendingStreamMessages; // 存储正在接收的流式消息 (fromId -> 完整消息)
+    QMap<int, QList<QListWidgetItem*>> streamMessageItems; // 存储流式消息的UI项 (fromId -> 消息项列表)
+    
     // 表情包相关
     QMap<int, QByteArray> emojiList; // 存储用户的表情包，key为表情ID，value为图片数据
     QMap<int, QIcon> emojiIconCache; // 缓存解码后的图标，key是表情ID
@@ -152,12 +156,13 @@ private:
     QString getGroupNameById(int groupId);
     
     // 创建聊天窗口的辅助方法
+    QListWidget* findChatListWidgetForUser(int userId);
     void createChatWidget(int chatId, const QString &chatName, bool isGroup);
     
     // 辅助方法
     QString generateChatKey(int chatId, bool isGroup);
     void updateTabText(int chatId, bool isGroup, const QString &chatName);
-    void addMessageToChatList(QListWidget *listWidget, bool isSender, const QString &message, const QString &avatarPath, const QString &timeStr);
+    QListWidgetItem* addMessageToChatList(QListWidget *listWidget, bool isSender, const QString &message, const QString &avatarPath, const QString &timeStr);
 
 public slots:
     // 连接相关槽函数

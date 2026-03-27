@@ -28,7 +28,7 @@ add_executable(ChatServer
 )
 
 #指定可执行文件所依赖的库
-target_link_libraries(ChatServer Qt5::Core Qt5::Network muduo_net muduo_base pthread mysqlclient hiredis crypto)
+target_link_libraries(ChatServer Qt5::Core Qt5::Network muduo_net muduo_base pthread mysqlclient hiredis crypto curl)
 
 #启用Qt的MOC处理
 set_target_properties(ChatServer PROPERTIES
