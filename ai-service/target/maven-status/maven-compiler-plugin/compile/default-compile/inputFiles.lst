@@ -1,4 +1,12 @@
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/controller/ChatRequest.java
+/home/xmy/code/ai-service/src/main/java/com/chat/ai/service/GroupChatService.java
+/home/xmy/code/ai-service/src/main/java/com/chat/ai/controller/ChatResponse.java
+/home/xmy/code/ai-service/src/main/java/com/chat/ai/service/AiTaskConsumer.java
+/home/xmy/code/ai-service/src/main/java/com/chat/ai/AiServiceApplication.java
+/home/xmy/code/ai-service/src/main/java/com/chat/ai/controller/GroupChatController.java
+/home/xmy/code/ai-service/src/main/java/com/chat/ai/config/CorsConfig.java
+/home/xmy/code/ai-service/src/main/java/com/chat/ai/service/RedisPubSubService.java
+/home/xmy/code/ai-service/src/main/java/com/chat/ai/controller/GroupChatResponse.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/controller/AiStreamController.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/service/ChatMemoryService.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/model/ChatMessage.java
@@ -6,7 +14,7 @@
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/config/AsyncConfig.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/config/WebClientConfig.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/controller/AiController.java
-/home/xmy/code/ai-service/src/main/java/com/chat/ai/controller/ChatResponse.java
-/home/xmy/code/ai-service/src/main/java/com/chat/ai/AiServiceApplication.java
-/home/xmy/code/ai-service/src/main/java/com/chat/ai/config/CorsConfig.java
+/home/xmy/code/ai-service/src/main/java/com/chat/ai/model/AiTask.java
+/home/xmy/code/ai-service/src/main/java/com/chat/ai/controller/GroupMessageRequest.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/config/RedisConfig.java
+/home/xmy/code/ai-service/src/main/java/com/chat/ai/service/GroupChatMemoryService.java

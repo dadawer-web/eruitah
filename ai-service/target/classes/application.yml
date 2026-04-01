@@ -32,6 +32,11 @@ chat:
     max-history: 10
     ttl-minutes: 30
 
+group:
+  chat:
+    max-messages: 100
+    ttl-hours: 24
+
 logging:
   level:
     com.chat.ai: DEBUG
