@@ -8,6 +8,7 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -58,12 +59,12 @@ public class AiTaskConsumer {
             RedisTemplate<String, Object> redisTemplate,
             GroupChatMemoryService groupChatMemoryService,
             RedisPubSubService redisPubSubService,
-            ChatClient.Builder chatClientBuilder,
+            @Qualifier("fastChatClient") ChatClient fastChatClient,
             ObjectMapper objectMapper) {
         this.redisTemplate = redisTemplate;
         this.groupChatMemoryService = groupChatMemoryService;
         this.redisPubSubService = redisPubSubService;
-        this.chatClient = chatClientBuilder.build();
+        this.chatClient = fastChatClient;
         this.objectMapper = objectMapper;
     }
     
@@ -103,7 +104,7 @@ public class AiTaskConsumer {
         while (running.get()) {
             try {
                 Object taskData = redisTemplate.opsForList()
-                    .rightPop(TASK_QUEUE_KEY, 5, TimeUnit.SECONDS);
+                    .rightPop(TASK_QUEUE_KEY, 3, TimeUnit.SECONDS);
                 
                 if (taskData == null) {
                     continue;
@@ -114,9 +115,9 @@ public class AiTaskConsumer {
                 
             } catch (Exception e) {
                 if (running.get()) {
-                    log.error("Error consuming task", e);
+                    log.debug("Queue poll timeout or error, continuing...: {}", e.getMessage());
                     try {
-                        Thread.sleep(1000);
+                        Thread.sleep(500);
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
                         break;

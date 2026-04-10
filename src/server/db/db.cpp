@@ -28,9 +28,10 @@
       
       if (p != nullptr)
       {
-         // 设置字符编码为GBK - 国际化支持
+         // 设置字符编码为UTF-8 - 国际化支持
          // 数据一致性：确保中文字符在存储和检索过程中不会出现乱码
-         mysql_query(_conn, "set names gbk"); 
+         // 重要：数据库中的中文数据使用UTF-8编码存储，必须使用utf8mb4保持一致
+         mysql_query(_conn, "set names utf8mb4"); 
          LOG_INFO<<"connect mysql success!";
       }
       else

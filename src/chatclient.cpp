@@ -875,6 +875,24 @@ void ChatClient::processMessage(const QJsonObject &message) {
         break;
     }
     
+    case MsgType::CREATE_GROUP_MSG_ACK: {
+        qDebug() << "Processing CREATE_GROUP_MSG_ACK";
+        
+        bool success = message["success"].toBool();
+        QString msg = message["msg"].toString();
+        
+        if (success) {
+            qDebug() << "Group created successfully:" << msg;
+            emit groupCreated(true, msg);
+            // 创建成功后自动刷新群组列表
+            requestGroupList(currentUserId);
+        } else {
+            qDebug() << "Group creation failed:" << msg;
+            emit groupCreated(false, msg);
+        }
+        break;
+    }
+    
     case MsgType::QUERY_GROUP_MSG_ACK: 
     case 11: { // 处理服务器返回的群组列表响应，服务器使用的消息类型是11
         qDebug() << "Processing QUERY_GROUP_MSG_ACK (message type:" << msgType << ")";

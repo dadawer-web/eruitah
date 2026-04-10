@@ -2,7 +2,7 @@ package com.chat.ai.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -12,67 +12,186 @@ import java.util.Map;
 @Slf4j
 @Service
 public class RedisPubSubService {
-    
-    private final RedisTemplate<String, Object> redisTemplate;
+
+    private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
-    
+
     private static final String GROUP_CHANNEL_PREFIX = "group:message:";
-    private static final String AI_SENDER_NAME = "AI助手";
-    private static final int AI_SENDER_ID = -1;
-    
-    public RedisPubSubService(RedisTemplate<String, Object> redisTemplate, ObjectMapper objectMapper) {
-        this.redisTemplate = redisTemplate;
+    private static final String DIRECT_CHANNEL_PREFIX = "user:message:";
+
+    public RedisPubSubService(StringRedisTemplate stringRedisTemplate, ObjectMapper objectMapper) {
+        this.stringRedisTemplate = stringRedisTemplate;
         this.objectMapper = objectMapper;
     }
-    
+
     public void publishGroupMessage(Long groupId, String content, Integer replyTo) {
         String channel = GROUP_CHANNEL_PREFIX + groupId;
-        
+
         try {
             Map<String, Object> message = new HashMap<>();
             message.put("groupId", groupId);
-            message.put("senderId", AI_SENDER_ID);
-            message.put("senderName", AI_SENDER_NAME);
+            message.put("senderId", -1);
+            message.put("senderName", "AI助手");
             message.put("content", content);
             message.put("timestamp", Instant.now().toEpochMilli());
             message.put("replyTo", replyTo);
             message.put("type", "AI_SUMMARY");
-            
+
             String jsonMessage = objectMapper.writeValueAsString(message);
-            
-            redisTemplate.convertAndSend(channel, jsonMessage);
-            
-            log.info("Published AI message to channel: {}, replyTo: {}", channel, replyTo);
-            
+            stringRedisTemplate.convertAndSend(channel, jsonMessage);
+
+            log.info("Published AI summary message to channel: {}, replyTo: {}", channel, replyTo);
+
         } catch (Exception e) {
             log.error("Error publishing message to channel: {}", channel, e);
         }
     }
-    
+
     public void publishGroupMessage(Long groupId, String content) {
         publishGroupMessage(groupId, content, null);
     }
-    
-    public void publishDirectMessage(Integer userId, String content) {
-        String channel = "user:message:" + userId;
-        
+
+    /**
+     * 发布AI角色的群聊消息
+     *
+     * @param groupId    群组ID
+     * @param content    消息内容
+     * @param botId      AI角色ID（10000~10099）
+     * @param botName    AI角色名称
+     * @param messageType 消息类型
+     */
+    public void publishAgentGroupMessage(Long groupId, String content, int botId, String botName, String messageType) {
+        String channel = GROUP_CHANNEL_PREFIX + groupId;
+
         try {
             Map<String, Object> message = new HashMap<>();
-            message.put("receiverId", userId);
-            message.put("senderId", AI_SENDER_ID);
-            message.put("senderName", AI_SENDER_NAME);
+            message.put("groupId", groupId);
+            message.put("senderId", botId);
+            message.put("senderName", botName);
             message.put("content", content);
             message.put("timestamp", Instant.now().toEpochMilli());
-            message.put("type", "AI_DIRECT");
-            
+            message.put("type", messageType);
+
             String jsonMessage = objectMapper.writeValueAsString(message);
-            
-            redisTemplate.convertAndSend(channel, jsonMessage);
-            
-            log.info("Published direct AI message to user: {}", userId);
-            
+            stringRedisTemplate.convertAndSend(channel, jsonMessage);
+
+            log.info("Published agent message to channel: {}, botId: {}, botName: {}, type: {}",
+                channel, botId, botName, messageType);
+
         } catch (Exception e) {
-            log.error("Error publishing direct message to user: {}", userId, e);
+            log.error("Error publishing agent message to channel: {}, botId: {}", channel, botId, e);
+        }
+    }
+
+    /**
+     * 发布AI角色的私聊消息（重构后）
+     * 注意：ChatServer订阅的是用户ID作为频道号（如 "22"），不是 "user:message:22"
+     * 消息格式需要与ChatServer的oneChat处理逻辑一致，包含msgid=6(ONE_CHAT_MSG)
+     *
+     * @param userId   接收用户ID
+     * @param content  消息内容
+     * @param botId    AI角色ID（10000~10099）
+     * @param botName  AI角色名称
+     */
+    public void publishDirectMessage(Integer userId, String content, int botId, String botName) {
+        String channel = String.valueOf(userId);
+
+        try {
+            Map<String, Object> message = new HashMap<>();
+            message.put("msgid", 6);
+            message.put("from", botId);
+            message.put("to", userId);
+            message.put("msg", content);
+            message.put("name", botName);
+            message.put("timestamp", Instant.now().toEpochMilli());
+
+            String jsonMessage = objectMapper.writeValueAsString(message);
+            stringRedisTemplate.convertAndSend(channel, jsonMessage);
+
+            log.info("Published direct AI message to channel: {}, from bot: {}({})", channel, botId, botName);
+
+        } catch (Exception e) {
+            log.error("Error publishing direct message to user: {}, from bot: {}", userId, botId, e);
+        }
+    }
+
+    /**
+     * 兼容旧接口的私聊消息发布（默认AI助手）
+     */
+    public void publishDirectMessage(Integer userId, String content) {
+        publishDirectMessage(userId, content, -1, "AI助手");
+    }
+
+    /**
+     * 发送流式消息开始标记（AI开始思考）
+     */
+    public void publishStreamStart(Integer userId, int botId, String botName) {
+        String channel = String.valueOf(userId);
+
+        try {
+            Map<String, Object> message = new HashMap<>();
+            message.put("msgid", 6);
+            message.put("from", botId);
+            message.put("to", userId);
+            message.put("msg", "[STREAM_CHUNK]: ");  // 空内容，触发思考提示
+            message.put("name", botName);
+            message.put("timestamp", Instant.now().toEpochMilli());
+
+            String jsonMessage = objectMapper.writeValueAsString(message);
+            stringRedisTemplate.convertAndSend(channel, jsonMessage);
+
+            log.info("Published stream start to user: {}, bot: {}", userId, botName);
+
+        } catch (Exception e) {
+            log.error("Error publishing stream start to user: {}", userId, e);
+        }
+    }
+
+    /**
+     * 发送流式消息块
+     */
+    public void publishStreamChunk(Integer userId, String chunk, int botId, String botName) {
+        String channel = String.valueOf(userId);
+
+        try {
+            Map<String, Object> message = new HashMap<>();
+            message.put("msgid", 6);
+            message.put("from", botId);
+            message.put("to", userId);
+            message.put("msg", "[STREAM_CHUNK]:" + chunk);
+            message.put("name", botName);
+            message.put("timestamp", Instant.now().toEpochMilli());
+
+            String jsonMessage = objectMapper.writeValueAsString(message);
+            stringRedisTemplate.convertAndSend(channel, jsonMessage);
+
+        } catch (Exception e) {
+            log.error("Error publishing stream chunk to user: {}", userId, e);
+        }
+    }
+
+    /**
+     * 发送流式消息结束标记
+     */
+    public void publishStreamEnd(Integer userId, int botId, String botName) {
+        String channel = String.valueOf(userId);
+
+        try {
+            Map<String, Object> message = new HashMap<>();
+            message.put("msgid", 6);
+            message.put("from", botId);
+            message.put("to", userId);
+            message.put("msg", "[STREAM_CHUNK]:[STREAM_END]");
+            message.put("name", botName);
+            message.put("timestamp", Instant.now().toEpochMilli());
+
+            String jsonMessage = objectMapper.writeValueAsString(message);
+            stringRedisTemplate.convertAndSend(channel, jsonMessage);
+
+            log.info("Published stream end to user: {}", userId);
+
+        } catch (Exception e) {
+            log.error("Error publishing stream end to user: {}", userId, e);
         }
     }
 }

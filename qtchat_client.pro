@@ -30,7 +30,8 @@ SOURCES += \
     src/chatclient.cpp \
     src/chatwindow.cpp \
     src/loginwindow.cpp \
-    src/messagewidget.cpp
+    src/messagewidget.cpp \
+    src/customtitlebar.cpp
 
 # 头文件 - 只包含客户端相关文件
 HEADERS += \
@@ -38,7 +39,8 @@ HEADERS += \
     src/chatwindow.h \
     src/loginwindow.h \
     src/public.h \
-    src/messagewidget.h
+    src/messagewidget.h \
+    src/customtitlebar.h
 
 # 资源文件
 RESOURCES += src/qtchat.qrc

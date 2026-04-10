@@ -32,12 +32,23 @@
 #include <QGridLayout>
 #include <QListWidget>
 #include <QScrollBar>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QHttpMultiPart>
 #include <QtConcurrent>
 #include <QFuture>
 #include <QFutureWatcher>
 #include "chatclient.h"
 #include "models/user.h"
 #include "models/group.h"
+#include "customtitlebar.h"
+
+// Material 组件前向声明
+class QtMaterialTextField;
+class QtMaterialFlatButton;
+class QtMaterialIconButton;
+class QtMaterialScrollBar;
+class QtMaterialAvatar;
 
 // 未处理消息结构体
 struct PendingMessage {
@@ -71,7 +82,8 @@ private:
     int userId;
     QString userName;
     
-    // UI组件
+    CustomTitleBar *m_titleBar;
+    
     QSplitter *mainSplitter;
     QTreeWidget *contactTreeWidget;
     QTabWidget *chatTabWidget;
@@ -113,14 +125,15 @@ private:
     // 聊天组件结构体
     typedef struct {
         QListWidget *chatListWidget; // 聊天记录显示区域
+        QtMaterialScrollBar *verticalScrollBar; // Material 滚动条
         QListWidget *memberListWidget; // 群组成员列表（仅群组聊天使用）
     } ChatComponents;
-
+    
     // 聊天组件映射
     QMap<QWidget*, ChatComponents> chatComponents;
     
-    // 输入框映射
-    QMap<QWidget*, QLineEdit*> inputLineEdits;
+    // 输入框映射 - 使用 Material TextField
+    QMap<QWidget*, QtMaterialTextField*> inputTextFields;
     
     // 未读消息计数映射 (chatId_isGroup -> count)
     QMap<QString, int> unreadMessageCounts;
@@ -128,6 +141,7 @@ private:
     // 流式消息处理相关
     QMap<int, QString> pendingStreamMessages; // 存储正在接收的流式消息 (fromId -> 完整消息)
     QMap<int, QList<QListWidgetItem*>> streamMessageItems; // 存储流式消息的UI项 (fromId -> 消息项列表)
+    QMap<int, QListWidgetItem*> thinkingIndicatorItems; // 存储"正在思考"提示项 (fromId -> 提示项)
     
     // 表情包相关
     QMap<int, QByteArray> emojiList; // 存储用户的表情包，key为表情ID，value为图片数据
@@ -136,7 +150,7 @@ private:
     QDialog *currentEmojiDialog; // 当前显示的表情包对话框
     
     // 头像相关
-    QLabel *avatarLabel; // 当前用户头像显示标签
+    QtMaterialAvatar *avatarLabel; // 当前用户头像显示标签 (Material Avatar)
     QDialog *changeAvatarDialog; // 修改头像对话框
     QPushButton *changeAvatarButton; // 修改头像按钮
     QString currentUserAvatarData; // 当前用户头像数据（Base64或Data URL）
@@ -151,6 +165,9 @@ private:
     void sendFileContent(int toId, const QString &filename, const QString &fileId);
     void handleReceivedFile(const QString &fileId, const QString &filename, qint64 filesize);
     
+    // RAG知识库上传相关
+    QNetworkAccessManager *ragNetworkManager;
+
     // 查找联系人方法
     QString getUserNameById(int userId);
     QString getGroupNameById(int groupId);
@@ -162,7 +179,9 @@ private:
     // 辅助方法
     QString generateChatKey(int chatId, bool isGroup);
     void updateTabText(int chatId, bool isGroup, const QString &chatName);
-    QListWidgetItem* addMessageToChatList(QListWidget *listWidget, bool isSender, const QString &message, const QString &avatarPath, const QString &timeStr);
+    QListWidgetItem* addMessageToChatList(QListWidget *listWidget, bool isSender, const QString &message, const QString &avatarPath, const QString &timeStr, const QString &senderName = QString());
+    QString loadModernStylesheet();
+    void scrollChatToBottom(QListWidget *listWidget);
 
 public slots:
     // 连接相关槽函数
@@ -206,6 +225,10 @@ public slots:
     void onFileTransferDataReceived(const QString &fileId, int chunkIndex, const QByteArray &data);
     void onFileTransferCompleteReceived(const QString &fileId, bool success);
     void onFileTransferError(const QString &fileId, int errorCode, const QString &errorMsg);
+    
+    // RAG知识库上传相关槽函数
+    void onUploadKnowledgeDoc();
+    void onRagUploadFinished(QNetworkReply *reply);
     
     // 其他槽函数
     void onContactSelected();

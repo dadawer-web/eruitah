@@ -13,6 +13,7 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QCoreApplication>
+#include <QApplication>
 #include <QThread>
 #include <QBuffer>
 #include <QImage>
@@ -23,6 +24,15 @@
 #include <QFont>
 #include <QPainterPath>
 #include <QProcess>
+
+// Material 组件头文件
+#include "qtmaterialtextfield.h"
+#include "qtmaterialflatbutton.h"
+#include "qtmaterialraisedbutton.h"
+#include "qtmaterialiconbutton.h"
+#include "qtmaterialscrollbar.h"
+#include "qtmaterialavatar.h"
+#include "lib/qtmaterialtheme.h"
 
 // 跨平台网络头文件处理 - 注意：先包含Windows网络头文件，再包含Qt头文件，避免byte类型歧义
 #ifdef _WIN32
@@ -49,64 +59,84 @@ struct EmojiLoadResult {
     QByteArray rawData;    // 原始图片数据（用于发送）
 };
 
-ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, QWidget *parent) : QMainWindow(parent), userId(userId), userName(userName), chatClient(client), loginHandled(false), friendListLoaded(false), offlineMessagesProcessed(false), isLoggingOut(false) {
-    // 设置窗口标题
-    setWindowTitle(QString(QStringLiteral("Qt Chat - %1")).arg(userName));
+ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, QWidget *parent) : QMainWindow(parent), userId(userId), userName(userName), m_titleBar(nullptr), chatClient(client), loginHandled(false), friendListLoaded(false), offlineMessagesProcessed(false), isLoggingOut(false) {
+    setWindowFlags(Qt::FramelessWindowHint);
+    setAttribute(Qt::WA_TranslucentBackground, false);
+    
+    setWindowTitle(QString(QStringLiteral("AI Chat - %1")).arg(userName));
     setObjectName("chatWindow");
-    setMinimumSize(800, 600);
+    setMinimumSize(900, 650);
+    resize(1100, 750);
 
-    // 应用样式表
-    QFile file(":/styles.qss");
-    if(file.open(QFile::ReadOnly)) {
-        QString styleSheet = file.readAll();
-        setStyleSheet(styleSheet);
-        file.close();
-        qDebug() << "样式表加载成功";
-    } else {
-        qDebug() << "样式表加载失败，使用默认样式";
-        // 如果样式表文件无法加载，使用不包含Qt不支持属性的内联样式
-        QString inlineStyle = ""
-            "QMainWindow[objectName='chatWindow'] { background-color: #f5f5f5; }" 
-            "QTreeWidget { background-color: white; border: none; border-right: 1px solid #eee; }" 
-            "QTreeWidget::item { height: 40px; padding: 0 10px; border-radius: 6px; margin: 2px 8px; }" 
-            "QTreeWidget::item:hover { background-color: #f0f0f0; }" 
-            "QTreeWidget::item:selected { background-color: #e3f2fd; color: #1976d2; }" 
-            "QTabWidget::pane { background-color: white; border: none; }" 
-            "QTabBar::tab { background-color: #f5f5f5; border: none; border-bottom: 2px solid transparent; padding: 10px 20px; margin-right: 2px; border-radius: 8px 8px 0 0; font-weight: 500; }" 
-            "QTabBar::tab:selected { background-color: white; border-bottom-color: #3498db; color: #3498db; }" 
-            "QTextBrowser { background-color: #fafafa; border: none; padding: 10px; border-radius: 8px; font-family: Arial, 'Microsoft YaHei', sans-serif; font-size: 14px; color: #000000; }" 
-            "QLineEdit { height: 40px; border: 1px solid #ddd; border-radius: 8px; padding: 0 12px; font-size: 14px; background-color: white; font-family: Arial, 'Microsoft YaHei', sans-serif; color: #000000; }" 
-            "QPushButton { height: 40px; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; padding: 0 20px; font-family: Arial, 'Microsoft YaHei', sans-serif; }" 
-            "QPushButton[class='primaryButton'] { background-color: #3498db; color: white; }" 
-            "QPushButton[class='primaryButton']:hover { background-color: #2980b9; }" 
-            "QPushButton[class='primaryButton']:pressed { background-color: #2471a3; }" 
-            "QPushButton[class='secondaryButton'] { background-color: #ecf0f1; color: #333; border: 1px solid #ddd; }" 
-            "QPushButton[class='secondaryButton']:hover { background-color: #d5dbdb; }" 
-            "QPushButton[class='secondaryButton']:pressed { background-color: #bdc3c7; }" 
-            "QSplitter::handle { background-color: #eee; width: 1px; }" 
-            "QFrame[class='separator'] { background-color: #eee; height: 1px; margin: 10px 0; }";
-        setStyleSheet(inlineStyle);
-    }
+    // 应用全局现代化样式表
+    QString modernStyle = loadModernStylesheet();
+    setStyleSheet(modernStyle);
+    
+    // 设置全局字体（无衬线字体 + 抗锯齿）
+    QFont modernFont;
+    modernFont.setStyleStrategy(QFont::PreferAntialias);
+    modernFont.setStyleHint(QFont::SansSerif);
+    #ifdef _WIN32
+        modernFont.setFamily("Microsoft YaHei");
+    #elif defined(Q_OS_MAC)
+        modernFont.setFamily("Helvetica Neue");
+    #else
+        modernFont.setFamily("Segoe UI");
+    #endif
+    modernFont.setPointSize(14);
+    QApplication::setFont(modernFont);
+    
+    QWidget *centralContainer = new QWidget(this);
+    QVBoxLayout *containerLayout = new QVBoxLayout(centralContainer);
+    containerLayout->setContentsMargins(0, 0, 0, 0);
+    containerLayout->setSpacing(0);
+    
+    m_titleBar = new CustomTitleBar(windowTitle(), this);
+    containerLayout->addWidget(m_titleBar);
+    
+    connect(m_titleBar, &CustomTitleBar::minimizeClicked, this, &QMainWindow::showMinimized);
+    connect(m_titleBar, &CustomTitleBar::maximizeClicked, this, [this]() {
+        if (isMaximized()) {
+            showNormal();
+        } else {
+            showMaximized();
+        }
+    });
+    connect(m_titleBar, &CustomTitleBar::closeClicked, this, &QMainWindow::close);
+    
+    QWidget *mainContent = new QWidget(this);
+    containerLayout->addWidget(mainContent, 1);
+    
+    setCentralWidget(centralContainer);
 
-    // 使用传入的ChatClient实例或创建新实例
     if (client) {
         chatClient = client;
-        // 确保ChatClient不会被销毁
         chatClient->setParent(this);
     } else {
         chatClient = new ChatClient(this);
     }
-    // 初始化表情包相关成员变量
     isLoadingEmojis = false;
     currentEmojiDialog = nullptr;
     
-    // 初始化左侧联系人树
+    ragNetworkManager = new QNetworkAccessManager(this);
+    connect(ragNetworkManager, &QNetworkAccessManager::finished, this, &ChatWindow::onRagUploadFinished);
+    
     contactTreeWidget = new QTreeWidget;
     contactTreeWidget->setContextMenuPolicy(Qt::CustomContextMenu);
+    contactTreeWidget->setContentsMargins(0, 0, 0, 0);
+    contactTreeWidget->setFrameShape(QFrame::NoFrame); // 去除3D边框
+    contactTreeWidget->setStyleSheet(
+        "QTreeWidget { background-color: #1e1e1e; border: none; border-right: 1px solid #2f2f2f; outline: none; color: #CCCCCC; }"
+        "QTreeWidget::item { height: 48px; padding: 4px 12px; border: none; border-radius: 8px; margin: 2px 8px; color: #CCCCCC; }"
+        "QTreeWidget::item:hover { background-color: #2a2a2a; }"
+        "QTreeWidget::item:selected { background-color: #2d3748; color: #60a5fa; outline: none; }"
+        "QTreeWidget::item:selected:!active { background-color: #2d3748; }"
+        "QTreeWidget::branch { background-color: transparent; border: none; }"
+        "QHeaderView::section { background-color: #1e1e1e; border: none; border-bottom: 1px solid #2f2f2f; padding: 8px; color: #9ca3af; font-weight: 500; }"
+    );
     connect(contactTreeWidget, &QTreeWidget::itemClicked, this, &ChatWindow::onContactSelected);
     connect(contactTreeWidget, &QTreeWidget::customContextMenuRequested, this, &ChatWindow::showContextMenu);
     
-    // 设置联系人树列数和表头
     contactTreeWidget->setColumnCount(3);
     QStringList headers;
     headers << "头像" << "联系人" << "状态";
@@ -118,7 +148,7 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     #ifdef _WIN32
     treeFont.setFamily("Microsoft YaHei");
     #else
-    treeFont.setFamily("Arial");
+    treeFont.setFamily("Segoe UI");
     #endif
     contactTreeWidget->setFont(treeFont);
     
@@ -142,6 +172,7 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     // 初始化聊天标签页
     chatTabWidget = new QTabWidget;
     chatTabWidget->setTabsClosable(true);
+    chatTabWidget->setStyleSheet("QTabWidget { background-color: #2b2b2b; border: none; } QTabWidget::pane { background-color: #2b2b2b; border: none; }");
     connect(chatTabWidget, &QTabWidget::tabCloseRequested, chatTabWidget, &QTabWidget::removeTab);
 
     // 创建主分割器
@@ -150,6 +181,7 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     mainSplitter->addWidget(chatTabWidget);
     mainSplitter->setSizes({250, 550});
     mainSplitter->setHandleWidth(1);
+    mainSplitter->setStyleSheet("QSplitter { background-color: #2b2b2b; } QSplitter::handle { background-color: #3a3a3a; }");
 
     // 设置状态栏
     statusBarLabel = new QLabel(QString("已登录: %1").arg(userName));
@@ -161,24 +193,12 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     topLayout->setContentsMargins(15, 10, 15, 10);
     topLayout->setSpacing(15);
     
-    // 用户头像
-    avatarLabel = new QLabel;
-    avatarLabel->setFixedSize(50, 50); // 调整头像大小为50x50
-    avatarLabel->setStyleSheet(
-        "border: 2px solid #3498db; "
-        "border-radius: 25px; "
-        "background-color: #f0f0f0;"
-    );
-    avatarLabel->setAlignment(Qt::AlignCenter);
-    
-    // 初始显示用户名首字母
+    // 用户头像 - 使用 QtMaterialAvatar
     QChar firstChar = userName.isEmpty() ? 'U' : userName[0];
-    avatarLabel->setText(firstChar.toUpper());
-    avatarLabel->setStyleSheet(avatarLabel->styleSheet() + 
-        "font-size: 20px; "
-        "font-weight: bold; "
-        "color: #3498db;"
-    );
+    avatarLabel = new QtMaterialAvatar(firstChar.toUpper(), this);
+    avatarLabel->setSize(50);
+    avatarLabel->setBackgroundColor(QColor(52, 152, 219));
+    avatarLabel->setTextColor(QColor(255, 255, 255));
     
     // 连接信号槽
     connect(chatClient, &ChatClient::connected, this, &ChatWindow::onConnected);
@@ -266,48 +286,9 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
             
             if (!pixmap.isNull()) {
                 // 头像图片加载成功
-                // 创建一个正方形的QPixmap，确保宽高相等
-                QSize avatarSize = avatarLabel->size();
-                int side = qMin(avatarSize.width(), avatarSize.height());
-                
-                // 缩放图片，保持宽高比，确保图片完全覆盖正方形区域
-                QPixmap scaledPixmap = pixmap.scaled(
-                    side, side, 
-                    Qt::KeepAspectRatioByExpanding, 
-                    Qt::SmoothTransformation
-                );
-                
-                // 创建一个带有圆形遮罩的QPixmap
-                QPixmap circularPixmap(side, side);
-                circularPixmap.fill(Qt::transparent);
-                
-                QPainter painter(&circularPixmap);
-                painter.setRenderHint(QPainter::Antialiasing, true);
-                painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
-                
-                // 绘制圆形路径作为遮罩
-                QPainterPath path;
-                path.addEllipse(0, 0, side, side);
-                painter.setClipPath(path);
-                
-                // 在圆形遮罩内绘制图片，居中显示
-                painter.drawPixmap(
-                    (side - scaledPixmap.width()) / 2, 
-                    (side - scaledPixmap.height()) / 2, 
-                    scaledPixmap
-                );
-                
-                // 绘制边框
-                painter.setClipping(false);
-                QPen pen(QColor(52, 152, 219), 2);
-                painter.setPen(pen);
-                painter.drawEllipse(0, 0, side, side);
-                
-                avatarLabel->setPixmap(circularPixmap);
-                avatarLabel->setStyleSheet(
-                    "border-radius: 25px; "
-                    "background-color: transparent;"
-                );
+                QImage image = pixmap.toImage();
+                avatarLabel->setImage(image);
+                avatarLabel->setBackgroundColor(QColor(52, 152, 219));
                 qDebug() << "Avatar updated successfully from database";
             } else {
                 // 头像图片加载失败，显示默认头像
@@ -319,29 +300,9 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
                 } else {
                     firstChar = this->userName[0];
                 }
-                QPixmap defaultPixmap(avatarLabel->size());
-                defaultPixmap.fill(Qt::transparent);
-                
-                QPainter painter(&defaultPixmap);
-                painter.setRenderHint(QPainter::Antialiasing, true);
-                
-                // 绘制蓝色圆形背景
-                QBrush brush(QColor(52, 152, 219)); // #3498db
-                painter.setBrush(brush);
-                painter.setPen(Qt::NoPen);
-                painter.drawEllipse(0, 0, avatarLabel->width(), avatarLabel->height());
-                
-                // 绘制白色文字
-                QFont font("Arial", 20, QFont::Bold);
-                painter.setFont(font);
-                painter.setPen(QColor(Qt::white));
-                painter.drawText(defaultPixmap.rect(), Qt::AlignCenter, firstChar.toUpper());
-                
-                avatarLabel->setPixmap(defaultPixmap);
-                avatarLabel->setStyleSheet(
-                    "border: 2px solid #3498db; "
-                    "border-radius: 25px;"
-                );
+                avatarLabel->setLetter(firstChar.toUpper());
+                avatarLabel->setBackgroundColor(QColor(52, 152, 219));
+                avatarLabel->setTextColor(QColor(255, 255, 255));
             }
         } else {
             // 头像数据为空，显示默认头像
@@ -353,29 +314,9 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
             } else {
                 firstChar = this->userName[0];
             }
-            QPixmap defaultPixmap(avatarLabel->size());
-            defaultPixmap.fill(Qt::transparent);
-            
-            QPainter painter(&defaultPixmap);
-            painter.setRenderHint(QPainter::Antialiasing, true);
-            
-            // 绘制蓝色圆形背景
-            QBrush brush(QColor(52, 152, 219)); // #3498db
-            painter.setBrush(brush);
-            painter.setPen(Qt::NoPen);
-            painter.drawEllipse(0, 0, avatarLabel->width(), avatarLabel->height());
-            
-            // 绘制白色文字
-            QFont font("Arial", 20, QFont::Bold);
-            painter.setFont(font);
-            painter.setPen(QColor(Qt::white));
-            painter.drawText(defaultPixmap.rect(), Qt::AlignCenter, firstChar.toUpper());
-            
-            avatarLabel->setPixmap(defaultPixmap);
-            avatarLabel->setStyleSheet(
-                "border: 2px solid #3498db; "
-                "border-radius: 25px;"
-            );
+            avatarLabel->setLetter(firstChar.toUpper());
+            avatarLabel->setBackgroundColor(QColor(52, 152, 219));
+            avatarLabel->setTextColor(QColor(255, 255, 255));
         }
     });
     
@@ -543,49 +484,10 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
                 // 头像图片加载成功
                 qDebug() << "ChatWindow: Avatar image loaded successfully, size:" << pixmap.size();
                 
-                // 创建一个正方形的QPixmap，确保宽高相等
-                QSize avatarSize = avatarLabel->size();
-                int side = qMin(avatarSize.width(), avatarSize.height());
-                qDebug() << "ChatWindow: Avatar label size:" << avatarSize << "side:" << side;
-                
-                // 缩放图片，保持宽高比，确保图片完全覆盖正方形区域
-                QPixmap scaledPixmap = pixmap.scaled(
-                    side, side, 
-                    Qt::KeepAspectRatioByExpanding, 
-                    Qt::SmoothTransformation
-                );
-                
-                // 创建一个带有圆形遮罩的QPixmap
-                QPixmap circularPixmap(side, side);
-                circularPixmap.fill(Qt::transparent);
-                
-                QPainter painter(&circularPixmap);
-                painter.setRenderHint(QPainter::Antialiasing, true);
-                painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
-                
-                // 绘制圆形路径作为遮罩
-                QPainterPath path;
-                path.addEllipse(0, 0, side, side);
-                painter.setClipPath(path);
-                
-                // 在圆形遮罩内绘制图片，居中显示
-                painter.drawPixmap(
-                    (side - scaledPixmap.width()) / 2, 
-                    (side - scaledPixmap.height()) / 2, 
-                    scaledPixmap
-                );
-                
-                // 绘制边框
-                painter.setClipping(false);
-                QPen pen(QColor(52, 152, 219), 2);
-                painter.setPen(pen);
-                painter.drawEllipse(0, 0, side, side);
-                
-                avatarLabel->setPixmap(circularPixmap);
-                avatarLabel->setStyleSheet(
-                    "border-radius: 25px; "
-                    "background-color: transparent;"
-                );
+                // 使用QtMaterialAvatar的setImage方法
+                QImage image = pixmap.toImage();
+                avatarLabel->setImage(image);
+                avatarLabel->setBackgroundColor(QColor(52, 152, 219));
                 qDebug() << "ChatWindow: Avatar updated successfully after delay";
             } else {
                 // 头像图片加载失败，显示默认头像
@@ -597,29 +499,9 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
                 } else {
                     firstChar = this->userName[0];
                 }
-                QPixmap defaultPixmap(avatarLabel->size());
-                defaultPixmap.fill(Qt::transparent);
-                
-                QPainter painter(&defaultPixmap);
-                painter.setRenderHint(QPainter::Antialiasing, true);
-                
-                // 绘制蓝色圆形背景
-                QBrush brush(QColor(52, 152, 219)); // #3498db
-                painter.setBrush(brush);
-                painter.setPen(Qt::NoPen);
-                painter.drawEllipse(0, 0, avatarLabel->width(), avatarLabel->height());
-                
-                // 绘制白色文字
-                QFont font("Arial", 20, QFont::Bold);
-                painter.setFont(font);
-                painter.setPen(QColor(Qt::white));
-                painter.drawText(defaultPixmap.rect(), Qt::AlignCenter, firstChar.toUpper());
-                
-                avatarLabel->setPixmap(defaultPixmap);
-                avatarLabel->setStyleSheet(
-                    "border: 2px solid #3498db; "
-                    "border-radius: 25px;"
-                );
+                avatarLabel->setLetter(firstChar.toUpper());
+                avatarLabel->setBackgroundColor(QColor(52, 152, 219));
+                avatarLabel->setTextColor(QColor(255, 255, 255));
             }
         } else {
             qDebug() << "ChatWindow: No stored avatar data found after delay, showing default avatar";
@@ -630,29 +512,9 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
             } else {
                 firstChar = this->userName[0];
             }
-            QPixmap defaultPixmap(avatarLabel->size());
-            defaultPixmap.fill(Qt::transparent);
-            
-            QPainter painter(&defaultPixmap);
-            painter.setRenderHint(QPainter::Antialiasing, true);
-            
-            // 绘制蓝色圆形背景
-            QBrush brush(QColor(52, 152, 219)); // #3498db
-            painter.setBrush(brush);
-            painter.setPen(Qt::NoPen);
-            painter.drawEllipse(0, 0, avatarLabel->width(), avatarLabel->height());
-            
-            // 绘制白色文字
-            QFont font("Arial", 20, QFont::Bold);
-            painter.setFont(font);
-            painter.setPen(QColor(Qt::white));
-            painter.drawText(defaultPixmap.rect(), Qt::AlignCenter, firstChar.toUpper());
-            
-            avatarLabel->setPixmap(defaultPixmap);
-            avatarLabel->setStyleSheet(
-                "border: 2px solid #3498db; "
-                "border-radius: 25px;"
-            );
+            avatarLabel->setLetter(firstChar.toUpper());
+            avatarLabel->setBackgroundColor(QColor(52, 152, 219));
+            avatarLabel->setTextColor(QColor(255, 255, 255));
         }
     });
     
@@ -727,33 +589,51 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     topLayout->addStretch();
     topLayout->addWidget(changeAvatarButton);
     
-    // 创建工具栏
-    QToolBar *toolBar = addToolBar("工具栏");
-    toolBar->setMovable(false);
-    toolBar->setFloatable(false);
+    // 创建工具栏（使用 QWidget 而非 QToolBar，避免布局问题）
+    QWidget *toolBarWidget = new QWidget;
+    toolBarWidget->setFixedHeight(44);
+    toolBarWidget->setStyleSheet("background-color: #2a2a2a; border: none; border-bottom: 1px solid #3a3a3a;");
+    QHBoxLayout *toolbarLayout = new QHBoxLayout(toolBarWidget);
+    toolbarLayout->setContentsMargins(10, 0, 10, 0);
+    toolbarLayout->setSpacing(4);
     
-    QFont toolbarFont = toolBar->font();
-    toolbarFont.setPointSize(14);
+    QFont toolbarFont = toolBarWidget->font();
+    toolbarFont.setPointSize(13);
     #ifdef _WIN32
     toolbarFont.setFamily("Microsoft YaHei");
     #else
     toolbarFont.setFamily("Arial");
     #endif
-    toolBar->setFont(toolbarFont);
     
-    QAction *addFriendAction = toolBar->addAction(QIcon(), "添加好友");
-    QAction *createGroupAction = toolBar->addAction(QIcon(), "创建群组");
-    QAction *joinGroupAction = toolBar->addAction(QIcon(), "加入群组");
-    toolBar->addSeparator();
-    //QAction *sendFileAction = toolBar->addAction(QIcon(), "发送文件");
-    //toolBar->addSeparator();
-    QAction *logoutAction = toolBar->addAction(QIcon(), "注销");
+    QPushButton *addFriendBtn = new QPushButton("添加好友", toolBarWidget);
+    QPushButton *createGroupBtn = new QPushButton("创建群组", toolBarWidget);
+    QPushButton *joinGroupBtn = new QPushButton("加入群组", toolBarWidget);
+    QPushButton *logoutBtn = new QPushButton("注销", toolBarWidget);
+    
+    QString btnStyle = "QPushButton { background-color: transparent; border: none; color: #9ca3af; font-size: 13px; padding: 6px 12px; border-radius: 4px; } QPushButton:hover { background-color: #3a3a3a; color: #ececec; } QPushButton:pressed { background-color: #404040; }";
+    addFriendBtn->setStyleSheet(btnStyle);
+    createGroupBtn->setStyleSheet(btnStyle);
+    joinGroupBtn->setStyleSheet(btnStyle);
+    logoutBtn->setStyleSheet(btnStyle);
+    
+    addFriendBtn->setFont(toolbarFont);
+    createGroupBtn->setFont(toolbarFont);
+    joinGroupBtn->setFont(toolbarFont);
+    logoutBtn->setFont(toolbarFont);
+    
+    toolbarLayout->addWidget(addFriendBtn);
+    toolbarLayout->addWidget(createGroupBtn);
+    toolbarLayout->addWidget(joinGroupBtn);
+    toolbarLayout->addSpacing(8);
+    toolbarLayout->addWidget(new QLabel("|", toolBarWidget));
+    toolbarLayout->addSpacing(8);
+    toolbarLayout->addWidget(logoutBtn);
+    toolbarLayout->addStretch();
 
-    connect(addFriendAction, &QAction::triggered, this, &ChatWindow::onAddFriend);
-    connect(createGroupAction, &QAction::triggered, this, &ChatWindow::onCreateGroup);
-    connect(joinGroupAction, &QAction::triggered, this, &ChatWindow::onJoinGroup);
-    //connect(sendFileAction, &QAction::triggered, this, &ChatWindow::onSendFile);
-    connect(logoutAction, &QAction::triggered, this, &ChatWindow::onLogout);
+    connect(addFriendBtn, &QPushButton::clicked, this, &ChatWindow::onAddFriend);
+    connect(createGroupBtn, &QPushButton::clicked, this, &ChatWindow::onCreateGroup);
+    connect(joinGroupBtn, &QPushButton::clicked, this, &ChatWindow::onJoinGroup);
+    connect(logoutBtn, &QPushButton::clicked, this, &ChatWindow::onLogout);
     connect(changeAvatarButton, &QPushButton::clicked, this, [this, userId]() {
         // 打开文件选择对话框
         QString filePath = QFileDialog::getOpenFileName(
@@ -767,65 +647,40 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
             chatClient->updateAvatar(userId, filePath);
             
             // 本地预览头像
-            QPixmap pixmap(filePath);
-            QPixmap scaledPixmap = pixmap.scaled(
-                avatarLabel->size(), 
-                Qt::KeepAspectRatio, 
-                Qt::SmoothTransformation
-            );
-            avatarLabel->setPixmap(scaledPixmap);
-            avatarLabel->setStyleSheet(
-                "border: 2px solid #3498db; "
-                "border-radius: 30px; "
-                "background-color: #f0f0f0;"
-            );
+            QImage image(filePath);
+            if (!image.isNull()) {
+                avatarLabel->setImage(image);
+            }
         }
     });
 
-    // 创建主布局，将顶部栏和主分割器垂直排列
-    QVBoxLayout *mainLayout = new QVBoxLayout;
-    mainLayout->setContentsMargins(0, 0, 0, 0);
-    mainLayout->setSpacing(0);
+    QVBoxLayout *contentLayout = new QVBoxLayout(mainContent);
+    contentLayout->setContentsMargins(0, 0, 0, 0);
+    contentLayout->setSpacing(0);
     
-    // 创建一个主窗口部件来容纳布局
-    QWidget *centralWidget = new QWidget;
-    centralWidget->setLayout(mainLayout);
+    contentLayout->addWidget(topBar);
+    contentLayout->addWidget(toolBarWidget);
+    contentLayout->addWidget(mainSplitter, 1);
     
-    // 将顶部栏和主分割器添加到主布局
-    mainLayout->addWidget(topBar);
-    mainLayout->addWidget(mainSplitter, 1); // 设置拉伸因子为1，使分割器占据剩余空间
-    
-    setCentralWidget(centralWidget);
-    
-    // 列表请求移至登录成功后执行，确保在正确的时机获取数据
     qDebug() << "ChatWindow initialized for userId:" << userId;
 
     // 初始化添加好友对话框
     addFriendDialog = new QDialog(this);
     addFriendDialog->setWindowTitle("添加好友");
-    addFriendDialog->setFixedSize(320, 180);
-    
-    QVBoxLayout *addFriendLayout = new QVBoxLayout;
-    addFriendLayout->setContentsMargins(20, 20, 20, 20);
-    addFriendLayout->setSpacing(15);
-    
-    QLabel *addFriendTitle = new QLabel("添加好友");
-    QFont font = addFriendTitle->font();
-    font.setPointSize(16);
-    font.setBold(true);
-    #ifdef _WIN32
-    font.setFamily("Microsoft YaHei");
-    #else
-    font.setFamily("Arial");
-    #endif
-    addFriendTitle->setFont(font);
-    addFriendTitle->setAlignment(Qt::AlignCenter);
-    addFriendTitle->setStyleSheet(
-        "font-family: 'Microsoft YaHei', Arial, sans-serif;"
+    addFriendDialog->setFixedSize(320, 160);
+    addFriendDialog->setStyleSheet(
+        "QDialog { background-color: #2a2a2a; border: 2px solid #3a3a3a; border-radius: 12px; }"
+        "QLabel { color: #ececec; font-size: 14px; }"
+        "QLineEdit { background-color: #3a3a3a; border: none; border-radius: 6px; padding: 8px 12px; color: #ececec; }"
+        "QPushButton { background-color: #3b82f6; color: white; border: none; border-radius: 6px; padding: 8px 16px; min-width: 60px; }"
+        "QPushButton:hover { background-color: #2563eb; }"
     );
     
-    addFriendLayout->addWidget(addFriendTitle);
-    QLabel *addFriendIdLabel = new QLabel("好友ID:");
+    QVBoxLayout *addFriendLayout = new QVBoxLayout(addFriendDialog);
+    addFriendLayout->setContentsMargins(20, 20, 20, 20);
+    addFriendLayout->setSpacing(12);
+    
+    QLabel *addFriendIdLabel = new QLabel("好友ID:", addFriendDialog);
     QFont labelFont = addFriendIdLabel->font();
     labelFont.setPointSize(14);
     #ifdef _WIN32
@@ -833,54 +688,21 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     #else
     labelFont.setFamily("Arial");
     #endif
-    addFriendIdLabel->setFont(labelFont);
-    addFriendIdLabel->setStyleSheet(
-        "font-family: 'Microsoft YaHei', Arial, sans-serif;"
-    );
     addFriendLayout->addWidget(addFriendIdLabel);
-    addFriendIdEdit = new QLineEdit;
-    QFont lineEditFont = addFriendIdEdit->font();
-    lineEditFont.setPointSize(14);
-    #ifdef _WIN32
-    lineEditFont.setFamily("Microsoft YaHei");
-    #else
-    lineEditFont.setFamily("Arial");
-    #endif
-    addFriendIdEdit->setFont(lineEditFont);
-    addFriendIdEdit->setStyleSheet(
-        "font-family: 'Microsoft YaHei', Arial, sans-serif;"
-    );
+    addFriendIdEdit = new QLineEdit(addFriendDialog);
+    addFriendIdEdit->setPlaceholderText("请输入好友ID");
     addFriendLayout->addWidget(addFriendIdEdit);
     
     QHBoxLayout *addFriendButtonLayout = new QHBoxLayout;
     addFriendButtonLayout->setSpacing(10);
     
-    QPushButton *addFriendOkButton = new QPushButton("确定");
-    QFont dialogButtonFont = addFriendOkButton->font();
-    dialogButtonFont.setPointSize(14);
-    #ifdef _WIN32
-    dialogButtonFont.setFamily("Microsoft YaHei");
-    #else
-    dialogButtonFont.setFamily("Arial");
-    #endif
-    addFriendOkButton->setFont(dialogButtonFont);
-    addFriendOkButton->setProperty("class", "primaryButton");
-    addFriendOkButton->setStyleSheet(
-        "font-family: 'Microsoft YaHei', Arial, sans-serif;"
-    );
-    
-    QPushButton *addFriendCancelButton = new QPushButton("取消");
-    addFriendCancelButton->setFont(dialogButtonFont);
-    addFriendCancelButton->setProperty("class", "secondaryButton");
-    addFriendCancelButton->setStyleSheet(
-        "font-family: Arial, 'Microsoft YaHei', sans-serif;"
-    );
+    QPushButton *addFriendOkButton = new QPushButton("确定", addFriendDialog);
+    QPushButton *addFriendCancelButton = new QPushButton("取消", addFriendDialog);
     
     addFriendButtonLayout->addWidget(addFriendOkButton);
     addFriendButtonLayout->addWidget(addFriendCancelButton);
     addFriendLayout->addLayout(addFriendButtonLayout);
     
-    addFriendDialog->setLayout(addFriendLayout);
     connect(addFriendOkButton, &QPushButton::clicked, this, &ChatWindow::onAddFriendConfirmed);
     connect(addFriendCancelButton, &QPushButton::clicked, addFriendDialog, &QDialog::close);
     
@@ -890,121 +712,74 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     // 初始化创建群组对话框
     createGroupDialog = new QDialog(this);
     createGroupDialog->setWindowTitle("创建群组");
-    createGroupDialog->setFixedSize(350, 220);
+    createGroupDialog->setFixedSize(400, 250);
+    createGroupDialog->setStyleSheet(
+        "QDialog { background-color: #2a2a2a; border: 2px solid #3a3a3a; border-radius: 12px; }"
+        "QLabel { color: #ececec; font-size: 14px; }"
+        "QLineEdit { background-color: #3a3a3a; border: none; border-radius: 6px; padding: 10px 12px; color: #ececec; min-height: 28px; font-size: 13px; }"
+        "QPushButton { background-color: #3b82f6; color: white; border: none; border-radius: 6px; padding: 10px 20px; min-width: 80px; min-height: 32px; font-size: 14px; }"
+        "QPushButton:hover { background-color: #2563eb; }"
+    );
     
-    QVBoxLayout *createGroupLayout = new QVBoxLayout;
+    QVBoxLayout *createGroupLayout = new QVBoxLayout(createGroupDialog);
     createGroupLayout->setContentsMargins(20, 20, 20, 20);
-    createGroupLayout->setSpacing(15);
+    createGroupLayout->setSpacing(12);
     
-    QLabel *createGroupTitle = new QLabel("创建群组");
-    createGroupTitle->setFont(font);
-    createGroupTitle->setAlignment(Qt::AlignCenter);
-    createGroupTitle->setStyleSheet(
-        "font-family: Arial, 'Microsoft YaHei', sans-serif;"
-    );
-    
-    createGroupLayout->addWidget(createGroupTitle);
-    QLabel *groupNameLabel = new QLabel("群组名称:");
-    groupNameLabel->setFont(labelFont);
-    groupNameLabel->setStyleSheet(
-        "font-family: Arial, 'Microsoft YaHei', sans-serif;"
-    );
+    QLabel *groupNameLabel = new QLabel("群组名称:", createGroupDialog);
     createGroupLayout->addWidget(groupNameLabel);
-    groupNameEdit = new QLineEdit;
-    groupNameEdit->setFont(lineEditFont);
-    groupNameEdit->setStyleSheet(
-        "font-family: Arial, 'Microsoft YaHei', sans-serif;"
-    );
+    groupNameEdit = new QLineEdit(createGroupDialog);
+    groupNameEdit->setPlaceholderText("请输入群组名称");
     createGroupLayout->addWidget(groupNameEdit);
     QLabel *groupDescLabel = new QLabel("群组描述:");
-    groupDescLabel->setFont(labelFont);
-    groupDescLabel->setStyleSheet(
-        "font-family: Arial, 'Microsoft YaHei', sans-serif;"
-    );
     createGroupLayout->addWidget(groupDescLabel);
-    groupDescEdit = new QLineEdit;
-    groupDescEdit->setFont(lineEditFont);
-    groupDescEdit->setStyleSheet(
-        "font-family: Arial, 'Microsoft YaHei', sans-serif;"
-    );
+    groupDescEdit = new QLineEdit(createGroupDialog);
+    groupDescEdit->setPlaceholderText("请输入群组描述");
     createGroupLayout->addWidget(groupDescEdit);
     
     QHBoxLayout *createGroupButtonLayout = new QHBoxLayout;
     createGroupButtonLayout->setSpacing(10);
     
-    QPushButton *createGroupOkButton = new QPushButton("确定");
-    createGroupOkButton->setFont(dialogButtonFont);
-    createGroupOkButton->setProperty("class", "primaryButton");
-    createGroupOkButton->setStyleSheet(
-        "font-family: Arial, 'Microsoft YaHei', sans-serif;"
-    );
-    
-    QPushButton *createGroupCancelButton = new QPushButton("取消");
-    createGroupCancelButton->setFont(dialogButtonFont);
-    createGroupCancelButton->setProperty("class", "secondaryButton");
-    createGroupCancelButton->setStyleSheet(
-        "font-family: Arial, 'Microsoft YaHei', sans-serif;"
-    );
+    QPushButton *createGroupOkButton = new QPushButton("确定", createGroupDialog);
+    QPushButton *createGroupCancelButton = new QPushButton("取消", createGroupDialog);
     
     createGroupButtonLayout->addWidget(createGroupOkButton);
     createGroupButtonLayout->addWidget(createGroupCancelButton);
     createGroupLayout->addLayout(createGroupButtonLayout);
     
-    createGroupDialog->setLayout(createGroupLayout);
     connect(createGroupOkButton, &QPushButton::clicked, this, &ChatWindow::onCreateGroupConfirmed);
     connect(createGroupCancelButton, &QPushButton::clicked, createGroupDialog, &QDialog::close);
 
     // 初始化加入群组对话框
     joinGroupDialog = new QDialog(this);
     joinGroupDialog->setWindowTitle("加入群组");
-    joinGroupDialog->setFixedSize(320, 180);
+    joinGroupDialog->setFixedSize(320, 160);
+    joinGroupDialog->setStyleSheet(
+        "QDialog { background-color: #2a2a2a; border: 2px solid #3a3a3a; border-radius: 12px; }"
+        "QLabel { color: #ececec; font-size: 14px; }"
+        "QLineEdit { background-color: #3a3a3a; border: none; border-radius: 6px; padding: 8px 12px; color: #ececec; }"
+        "QPushButton { background-color: #3b82f6; color: white; border: none; border-radius: 6px; padding: 8px 16px; min-width: 60px; }"
+        "QPushButton:hover { background-color: #2563eb; }"
+    );
     
-    QVBoxLayout *joinGroupLayout = new QVBoxLayout;
+    QVBoxLayout *joinGroupLayout = new QVBoxLayout(joinGroupDialog);
     joinGroupLayout->setContentsMargins(20, 20, 20, 20);
-    joinGroupLayout->setSpacing(15);
+    joinGroupLayout->setSpacing(12);
     
-    QLabel *joinGroupTitle = new QLabel("加入群组");
-    joinGroupTitle->setFont(font);
-    joinGroupTitle->setAlignment(Qt::AlignCenter);
-    joinGroupTitle->setStyleSheet(
-        "font-family: Arial, 'Microsoft YaHei', sans-serif;"
-    );
-    
-    joinGroupLayout->addWidget(joinGroupTitle);
-    QLabel *joinGroupIdLabel = new QLabel("群组ID:");
-    joinGroupIdLabel->setFont(labelFont);
-    joinGroupIdLabel->setStyleSheet(
-        "font-family: Arial, 'Microsoft YaHei', sans-serif;"
-    );
+    QLabel *joinGroupIdLabel = new QLabel("群组ID:", joinGroupDialog);
     joinGroupLayout->addWidget(joinGroupIdLabel);
-    joinGroupIdEdit = new QLineEdit;
-    joinGroupIdEdit->setFont(lineEditFont);
-    joinGroupIdEdit->setStyleSheet(
-        "font-family: Arial, 'Microsoft YaHei', sans-serif;"
-    );
+    joinGroupIdEdit = new QLineEdit(joinGroupDialog);
+    joinGroupIdEdit->setPlaceholderText("请输入群组ID");
     joinGroupLayout->addWidget(joinGroupIdEdit);
     
     QHBoxLayout *joinGroupButtonLayout = new QHBoxLayout;
     joinGroupButtonLayout->setSpacing(10);
     
-    QPushButton *joinGroupOkButton = new QPushButton("确定");
-    joinGroupOkButton->setFont(dialogButtonFont);
-    joinGroupOkButton->setProperty("class", "primaryButton");
-    joinGroupOkButton->setStyleSheet(
-        "font-family: Arial, 'Microsoft YaHei', sans-serif;"
-    );
-    
-    QPushButton *joinGroupCancelButton = new QPushButton("取消");
-    joinGroupCancelButton->setFont(dialogButtonFont);
-    joinGroupCancelButton->setProperty("class", "secondaryButton");
-    joinGroupCancelButton->setStyleSheet(
-        "font-family: Arial, 'Microsoft YaHei', sans-serif;"
-    );
+    QPushButton *joinGroupOkButton = new QPushButton("确定", joinGroupDialog);
+    QPushButton *joinGroupCancelButton = new QPushButton("取消", joinGroupDialog);
     
     joinGroupButtonLayout->addWidget(joinGroupOkButton);
     joinGroupButtonLayout->addWidget(joinGroupCancelButton);
     joinGroupLayout->addLayout(joinGroupButtonLayout);
-    joinGroupDialog->setLayout(joinGroupLayout);
     connect(joinGroupOkButton, &QPushButton::clicked, this, &ChatWindow::onJoinGroupConfirmed);
     connect(joinGroupCancelButton, &QPushButton::clicked, joinGroupDialog, &QDialog::close);
 
@@ -1050,55 +825,56 @@ void ChatWindow::updateTabText(int chatId, bool isGroup, const QString &chatName
     }
 }
 
-// 添加消息到聊天列表，使用聊天气泡
-QListWidgetItem* ChatWindow::addMessageToChatList(QListWidget *listWidget, bool isSender, const QString &message, const QString &avatarPath, const QString &timeStr) {
-    // 创建QListWidgetItem
+QListWidgetItem* ChatWindow::addMessageToChatList(QListWidget *listWidget, bool isSender, const QString &message, const QString &avatarPath, const QString &timeStr, const QString &senderName) {
     QListWidgetItem *item = new QListWidgetItem(listWidget);
     
-    // 创建MessageWidget
-    MessageWidget *messageWidget = new MessageWidget(isSender, message, avatarPath, timeStr);
+    QString finalSenderName;
+    if (!senderName.isEmpty()) {
+        finalSenderName = senderName;
+    } else if (isSender) {
+        finalSenderName = this->userName;
+    } else {
+        finalSenderName = "User";
+    }
     
-    // 设置Item的大小提示
+    MessageWidget *messageWidget = new MessageWidget(isSender, message, avatarPath, finalSenderName, timeStr);
+    
     item->setSizeHint(messageWidget->sizeHint());
     
-    // 将控件放入列表
     listWidget->setItemWidget(item, messageWidget);
     
-    // 强制更新布局和大小
     listWidget->updateGeometry();
     listWidget->repaint();
     
-    // 确保列表有足够的高度
     QScrollBar *scrollBar = listWidget->verticalScrollBar();
     if (scrollBar) {
-        // 先滚动到底部
         scrollBar->setValue(scrollBar->maximum());
         
-        // 再次确保滚动到底部（双重保险）
-        QTimer::singleShot(10, listWidget, [listWidget]() {
-            listWidget->scrollToBottom();
+        QTimer::singleShot(10, listWidget, [this, listWidget]() {
+            scrollChatToBottom(listWidget);
         });
     }
     
     return item;
 }
 
-void ChatWindow::onSendMessage() {
-    // 获取当前聊天窗口的相关组件
+void ChatWindow::onSendMessage()
+{
     QWidget *currentWidget = chatTabWidget->currentWidget();
-    if (!currentWidget) return;
-
-    // 从映射中获取聊天组件
-    if (!chatComponents.contains(currentWidget) || !inputLineEdits.contains(currentWidget)) return;
+    if (!currentWidget)
+        return;
+    
+    if (!chatComponents.contains(currentWidget) || !inputTextFields.contains(currentWidget))
+        return;
     
     ChatComponents components = chatComponents[currentWidget];
     QListWidget *chatListWidget = components.chatListWidget;
-    QLineEdit *inputEdit = inputLineEdits[currentWidget];
+    QtMaterialTextField *inputEdit = inputTextFields[currentWidget];
     
     QString message = inputEdit->text().trimmed();
-    if (message.isEmpty()) return;
-
-    // 获取标签页的用户数据（好友ID或群组ID）
+    if (message.isEmpty())
+        return;
+    
     int chatId = currentWidget->property("chatId").toInt();
     bool isGroup = currentWidget->property("isGroup").toBool();
 
@@ -1261,6 +1037,22 @@ QListWidget* ChatWindow::findChatListWidgetForUser(int userId) {
             }
         }
     }
+    
+    // 如果找不到，自动创建一个新的聊天窗口
+    qDebug() << "ChatWindow: Creating new chat widget for user" << userId;
+    createChatWidget(userId, QString("User %1").arg(userId), false);
+    
+    // 再次查找
+    for (int i = 0; i < chatTabWidget->count(); ++i) {
+        QWidget* widget = chatTabWidget->widget(i);
+        if (widget && widget->property("chatId").toInt() == userId &&
+            !widget->property("isGroup").toBool()) {
+            if (chatComponents.contains(widget)) {
+                return chatComponents[widget].chatListWidget;
+            }
+        }
+    }
+    
     return nullptr;
 }
 
@@ -1275,56 +1067,50 @@ void ChatWindow::createChatWidget(int chatId, const QString &chatName, bool isGr
         }
     }
 
-    // 创建新的聊天窗口
     QWidget *chatWidget = new QWidget;
-    chatWidget->setStyleSheet("background-color: white;");
+    chatWidget->setStyleSheet("background-color: #2b2b2b;");
     
-    // 使用QVBoxLayout作为主布局
     QVBoxLayout *mainLayout = new QVBoxLayout;
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(0);
     
-    // 聊天记录区域 - 使用 QListWidget 替代 QTextEdit，以便使用聊天气泡
     QListWidget *chatListWidget = new QListWidget;
-    chatListWidget->setMinimumHeight(200); // 减小最小高度，使窗口可以更小
-    chatListWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
-    chatListWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    chatListWidget->setFocusPolicy(Qt::NoFocus); // 禁用焦点
-    chatListWidget->setSelectionMode(QAbstractItemView::NoSelection); // 禁用选择
-    chatListWidget->setWordWrap(true); // 启用文本自动换行
-    chatListWidget->setResizeMode(QListWidget::Adjust); // 根据内容调整大小
-    chatListWidget->setStyleSheet("border: none; background-color: #fafafa;"
-                                 "QListWidget { outline: none; }"
-                                 "QListWidget::item { outline: none; border: none; }"
-                                 "QListWidget::item:selected { background-color: transparent; outline: none; border: none; }"
-                                 "QListWidget::item:selected:!active { background-color: transparent; outline: none; border: none; }"
-                                 "QListWidget::item:selected:active { background-color: transparent; outline: none; border: none; }"
-                                 "QListWidget::item:hover { background-color: transparent; outline: none; border: none; }"
-                                 "QListWidget::item:disabled { background-color: transparent; outline: none; border: none; }");
+    chatListWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    chatListWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    chatListWidget->setFocusPolicy(Qt::NoFocus);
+    chatListWidget->setSelectionMode(QAbstractItemView::NoSelection);
+    chatListWidget->setWordWrap(true);
+    chatListWidget->setResizeMode(QListWidget::Adjust);
+    chatListWidget->setUniformItemSizes(false);
+    chatListWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    chatListWidget->setStyleSheet(
+        "QListWidget { background-color: #2b2b2b; border: none; outline: none; padding-bottom: 20px; }"
+        "QListWidget::item { background-color: transparent; border: none; outline: none; margin-bottom: 8px; }"
+        "QListWidget::item:selected { background-color: transparent; }"
+        "QListWidget::item:hover { background-color: transparent; }"
+        "QScrollBar:vertical { background-color: transparent; width: 8px; }"
+        "QScrollBar::handle:vertical { background-color: #404040; border-radius: 4px; min-height: 32px; }"
+    );
     
-    // 创建群组成员列表（仅群组聊天显示）
     QWidget *memberWidget = nullptr;
     QListWidget *memberListWidget = nullptr;
     QVBoxLayout *memberLayout = nullptr;
     
     if (isGroup) {
-        // 创建成员列表部件
         memberWidget = new QWidget;
-        memberWidget->setStyleSheet("background-color: #f8f9fa; border-left: 1px solid #eee;");
+        memberWidget->setStyleSheet("background-color: #212121; border-left: 1px solid #2f2f2f;");
         memberLayout = new QVBoxLayout;
         memberLayout->setContentsMargins(10, 10, 10, 10);
         memberLayout->setSpacing(10);
         
-        // 成员列表标题
-        QLabel *memberTitle = new QLabel("群组成员");
-        memberTitle->setStyleSheet("font-weight: bold; font-size: 14px; color: #333;");
+        QLabel *memberTitle = new QLabel("Group Members");
+        memberTitle->setStyleSheet("font-weight: bold; font-size: 14px; color: #9ca3af;");
         memberLayout->addWidget(memberTitle);
         
-        // 成员列表
         memberListWidget = new QListWidget;
         memberListWidget->setStyleSheet(
-            "background-color: white; border: 1px solid #ddd; border-radius: 6px;"
-            "QListWidget::item { height: 30px; padding: 5px 10px; border-bottom: 1px solid #f0f0f0; }"
+            "QListWidget { background-color: #2f2f2f; border: 1px solid #404040; border-radius: 6px; color: #ececec; }"
+            "QListWidget::item { height: 30px; padding: 5px 10px; border-bottom: 1px solid #404040; color: #ececec; }"
             "QListWidget::item:last-child { border-bottom: none; }"
         );
         memberLayout->addWidget(memberListWidget);
@@ -1333,121 +1119,138 @@ void ChatWindow::createChatWidget(int chatId, const QString &chatName, bool isGr
         memberWidget->setFixedWidth(180);
     }
     
-    // 如果是群组聊天，使用分割器布局，包含聊天记录和成员列表
     if (isGroup && memberWidget) {
         QSplitter *chatSplitter = new QSplitter(Qt::Horizontal);
         chatSplitter->addWidget(chatListWidget);
         chatSplitter->addWidget(memberWidget);
-        chatSplitter->setSizes({450, 180}); // 设置初始大小
+        chatSplitter->setSizes({450, 180});
         chatSplitter->setHandleWidth(1);
-        mainLayout->addWidget(chatSplitter);
+        mainLayout->addWidget(chatSplitter, 1);
     } else {
-        // 普通聊天，仅显示聊天记录
-        mainLayout->addWidget(chatListWidget);
+        mainLayout->addWidget(chatListWidget, 1);
     }
     
-    // 分隔线
     QFrame *separator = new QFrame;
     separator->setFrameShape(QFrame::HLine);
-    separator->setFrameShadow(QFrame::Sunken);
-    separator->setStyleSheet("background-color: #eee;");
+    separator->setFrameShadow(QFrame::Plain);
+    separator->setStyleSheet("background-color: #3a3a3a; border: none;");
+    separator->setFixedHeight(1);
     mainLayout->addWidget(separator);
     
-    // 输入区域
     QWidget *inputWidget = new QWidget;
-    inputWidget->setStyleSheet("background-color: white;");
+    inputWidget->setStyleSheet("background-color: #333333; border: none; border-top: 1px solid #EAEAEA; border-radius: 0;");
     QVBoxLayout *inputLayout = new QVBoxLayout;
-    inputLayout->setContentsMargins(10, 10, 10, 10);
-    inputLayout->setSpacing(10);
+    inputLayout->setContentsMargins(16, 12, 16, 12);
+    inputLayout->setSpacing(12);
     
-    // 输入框
-    QLineEdit *inputEdit = new QLineEdit;
-    inputEdit->setMinimumHeight(40);
-    inputEdit->setStyleSheet("border: 1px solid #ddd; border-radius: 8px; padding: 0 12px;");
+    QtMaterialTextField *inputEdit = new QtMaterialTextField;
+    inputEdit->setMinimumHeight(56);
+    inputEdit->setMinimumWidth(300);
+    inputEdit->setPlaceholderText("Type a message...");
+    inputEdit->setTextColor(QColor("#FFFFFF"));
+    inputEdit->setLabelColor(QColor("#9ca3af"));
+    inputEdit->setInkColor(QColor("#3b82f6"));
+    inputEdit->setInputLineColor(QColor("#4a4a4a"));
+    inputEdit->setShowInputLine(true);
+    inputEdit->setShowLabel(false);
     inputLayout->addWidget(inputEdit);
     
-    // 按钮区域
     QHBoxLayout *buttonLayout = new QHBoxLayout;
     buttonLayout->setContentsMargins(0, 0, 0, 0);
     buttonLayout->setSpacing(10);
     buttonLayout->setAlignment(Qt::AlignRight);
     
-    // 创建发送按钮
-    QPushButton *sendButton = new QPushButton("发送");
+    // 发送按钮使用 QtMaterialRaisedButton（主要操作按钮）
+    QtMaterialRaisedButton *sendButton = new QtMaterialRaisedButton("Send");
     sendButton->setMinimumHeight(40);
     sendButton->setFixedWidth(100);
-    sendButton->setStyleSheet(
-        "QPushButton { background-color: #3498db; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; }"
-        "QPushButton:hover { background-color: #2980b9; }"
-        "QPushButton:pressed { background-color: #2471a3; }"
-    );
+    sendButton->setForegroundColor(QColor("#ffffff"));
+    sendButton->setBackgroundColor(QColor("#3b82f6"));
+    sendButton->setOverlayColor(QColor("#2563eb"));
+    sendButton->setRippleStyle(Material::CenteredRipple);
+    sendButton->setCornerRadius(8);
+    sendButton->setFontSize(14);
+    sendButton->setHaloVisible(true);
     
-    // 创建发送文件按钮
-    QPushButton *sendFileButton = new QPushButton("发送文件");
+    // 其他次要按钮使用 QtMaterialFlatButton
+    QtMaterialFlatButton *sendFileButton = new QtMaterialFlatButton("File");
     sendFileButton->setMinimumHeight(40);
-    sendFileButton->setFixedWidth(100);
-    sendFileButton->setStyleSheet(
-        "QPushButton { background-color: #ecf0f1; color: #333; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-weight: 500; }"
-        "QPushButton:hover { background-color: #d5dbdb; }"
-        "QPushButton:pressed { background-color: #bdc3c7; }"
-    );
+    sendFileButton->setFixedWidth(80);
+    sendFileButton->setRole(Material::Default);
+    sendFileButton->setForegroundColor(QColor("#9ca3af"));
+    sendFileButton->setBackgroundColor(QColor("#2a2a2a"));
+    sendFileButton->setOverlayColor(QColor("#3a3a3a"));
+    sendFileButton->setRippleStyle(Material::CenteredRipple);
+    sendFileButton->setCornerRadius(8);
+    sendFileButton->setFontSize(14);
     
-    // 创建发送图片按钮
-    QPushButton *sendImageButton = new QPushButton("发送图片");
+    QtMaterialFlatButton *sendImageButton = new QtMaterialFlatButton("Image");
     sendImageButton->setMinimumHeight(40);
-    sendImageButton->setFixedWidth(100);
-    sendImageButton->setStyleSheet(
-        "QPushButton { background-color: #ecf0f1; color: #333; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-weight: 500; }"
-        "QPushButton:hover { background-color: #d5dbdb; }"
-        "QPushButton:pressed { background-color: #bdc3c7; }"
-    );
+    sendImageButton->setFixedWidth(80);
+    sendImageButton->setRole(Material::Default);
+    sendImageButton->setForegroundColor(QColor("#9ca3af"));
+    sendImageButton->setBackgroundColor(QColor("#2a2a2a"));
+    sendImageButton->setOverlayColor(QColor("#3a3a3a"));
+    sendImageButton->setRippleStyle(Material::CenteredRipple);
+    sendImageButton->setCornerRadius(8);
+    sendImageButton->setFontSize(14);
     
-    // 创建表情包按钮
-    QPushButton *sendEmojiButton = new QPushButton("表情包");
+    QtMaterialFlatButton *sendEmojiButton = new QtMaterialFlatButton("Emoji");
     sendEmojiButton->setMinimumHeight(40);
     sendEmojiButton->setFixedWidth(80);
-    sendEmojiButton->setStyleSheet(
-        "QPushButton { background-color: #ecf0f1; color: #333; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-weight: 500; }"
-        "QPushButton:hover { background-color: #d5dbdb; }"
-        "QPushButton:pressed { background-color: #bdc3c7; }"
-    );
+    sendEmojiButton->setRole(Material::Default);
+    sendEmojiButton->setForegroundColor(QColor("#9ca3af"));
+    sendEmojiButton->setBackgroundColor(QColor("#2a2a2a"));
+    sendEmojiButton->setOverlayColor(QColor("#3a3a3a"));
+    sendEmojiButton->setRippleStyle(Material::CenteredRipple);
+    sendEmojiButton->setCornerRadius(8);
+    sendEmojiButton->setFontSize(14);
     
-    // 添加按钮到布局
+    QtMaterialFlatButton *uploadKnowledgeButton = new QtMaterialFlatButton("📚 Knowledge");
+    uploadKnowledgeButton->setMinimumHeight(40);
+    uploadKnowledgeButton->setFixedWidth(130);
+    uploadKnowledgeButton->setRole(Material::Default);
+    uploadKnowledgeButton->setForegroundColor(QColor("#34d399"));
+    uploadKnowledgeButton->setBackgroundColor(QColor("#1a3a2a"));
+    uploadKnowledgeButton->setOverlayColor(QColor("#2a5a3a"));
+    uploadKnowledgeButton->setRippleStyle(Material::CenteredRipple);
+    uploadKnowledgeButton->setCornerRadius(8);
+    uploadKnowledgeButton->setFontSize(13);
+    
     buttonLayout->addWidget(sendButton);
     buttonLayout->addWidget(sendEmojiButton);
     buttonLayout->addWidget(sendImageButton);
     buttonLayout->addWidget(sendFileButton);
+    buttonLayout->addWidget(uploadKnowledgeButton);
     
-    // 连接表情包按钮信号
-    connect(sendEmojiButton, &QPushButton::clicked, this, &ChatWindow::onSendEmoji);
+    connect(sendEmojiButton, &QtMaterialFlatButton::clicked, this, &ChatWindow::onSendEmoji);
     
-    // 将按钮布局添加到输入布局
     inputLayout->addLayout(buttonLayout);
     
-    // 将输入布局添加到输入部件
     inputWidget->setLayout(inputLayout);
     
-    // 将输入部件添加到主布局
     mainLayout->addWidget(inputWidget);
     
-    // 将主布局设置到聊天部件
     chatWidget->setLayout(mainLayout);
     
-    // 设置属性
     chatWidget->setProperty("chatId", chatId);
     chatWidget->setProperty("isGroup", isGroup);
     
-    // 存储聊天组件的映射关系
-    chatComponents[chatWidget] = {chatListWidget, memberListWidget};
+    QtMaterialScrollBar *verticalScrollBar = new QtMaterialScrollBar;
+    verticalScrollBar->setCanvasColor(QColor("#1a1a1a"));
+    verticalScrollBar->setBackgroundColor(QColor("#2f2f2f"));
+    verticalScrollBar->setSliderColor(QColor("#4a4a4a"));
+    chatListWidget->setVerticalScrollBar(verticalScrollBar);
     
-    // 连接信号
-    connect(sendButton, &QPushButton::clicked, this, &ChatWindow::onSendMessage);
-    connect(inputEdit, &QLineEdit::returnPressed, this, &ChatWindow::onSendMessage);
-    connect(sendImageButton, &QPushButton::clicked, this, &ChatWindow::onSendImage);
-    connect(sendFileButton, &QPushButton::clicked, this, &ChatWindow::onSendFile);
+    chatComponents[chatWidget] = {chatListWidget, verticalScrollBar, memberListWidget};
     
-    // 存储输入框的映射关系
-    inputLineEdits[chatWidget] = inputEdit;
+    connect(sendButton, &QtMaterialRaisedButton::clicked, this, &ChatWindow::onSendMessage);
+    connect(inputEdit, &QtMaterialTextField::returnPressed, this, &ChatWindow::onSendMessage);
+    connect(sendImageButton, &QtMaterialFlatButton::clicked, this, &ChatWindow::onSendImage);
+    connect(sendFileButton, &QtMaterialFlatButton::clicked, this, &ChatWindow::onSendFile);
+    connect(uploadKnowledgeButton, &QtMaterialFlatButton::clicked, this, &ChatWindow::onUploadKnowledgeDoc);
+    
+    inputTextFields[chatWidget] = inputEdit;
     
     // 添加到标签页
     chatTabWidget->addTab(chatWidget, chatName);
@@ -1503,127 +1306,17 @@ void ChatWindow::createChatWidget(int chatId, const QString &chatName, bool isGr
 
 void ChatWindow::onContactSelected() {
     QTreeWidgetItem *item = contactTreeWidget->currentItem();
-    if (!item || !item->parent()) return; // 忽略根节点
+    if (!item || !item->parent()) return;
 
     bool isGroup = (item->parent()->text(1) == "群组");
     int chatId = item->data(1, Qt::UserRole).toInt();
     QString chatName = item->text(1);
 
-    // 首先修复所有现有窗口
-    for (int i = 0; i < chatTabWidget->count(); ++i) {
-        QWidget *existingWidget = chatTabWidget->widget(i);
-        
-        // 检查现有窗口是否有发送按钮，如果没有则修复
-        QVBoxLayout *chatLayout = qobject_cast<QVBoxLayout*>(existingWidget->layout());
-        if (chatLayout) {
-            QWidget *inputWidget = chatLayout->itemAt(2)->widget();
-            if (inputWidget) {
-                QVBoxLayout *inputLayout = qobject_cast<QVBoxLayout*>(inputWidget->layout());
-                if (inputLayout) {
-                    // 查找按钮布局
-                    QHBoxLayout *buttonLayout = nullptr;
-                    for (int j = 0; j < inputLayout->count(); ++j) {
-                        QLayout *layout = inputLayout->itemAt(j)->layout();
-                        if (layout) {
-                            buttonLayout = qobject_cast<QHBoxLayout*>(layout);
-                            if (buttonLayout) {
-                                break;
-                            }
-                        }
-                    }
-                    
-                    if (buttonLayout) {
-                        // 检查是否有各种按钮
-                        bool hasSendButton = false;
-                        bool hasSendEmojiButton = false;
-                        bool hasSendImageButton = false;
-                        bool hasSendFileButton = false;
-                        
-                        // 遍历按钮布局中的所有控件
-                        for (int j = 0; j < buttonLayout->count(); ++j) {
-                            QWidget *widget = buttonLayout->itemAt(j)->widget();
-                            if (QPushButton *button = qobject_cast<QPushButton*>(widget)) {
-                                if (button->text() == "发送") {
-                                    hasSendButton = true;
-                                } else if (button->text() == "表情包") {
-                                    hasSendEmojiButton = true;
-                                } else if (button->text() == "发送图片") {
-                                    hasSendImageButton = true;
-                                } else if (button->text() == "发送文件") {
-                                    hasSendFileButton = true;
-                                }
-                            }
-                        }
-                        
-                        // 如果缺少发送按钮，添加它
-                        if (!hasSendButton) {
-                            QPushButton *sendButton = new QPushButton("发送");
-                            sendButton->setMinimumHeight(40);
-                            sendButton->setFixedWidth(100);
-                            sendButton->setStyleSheet(
-                                "QPushButton { background-color: #3498db; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; }"
-                                "QPushButton:hover { background-color: #2980b9; }"
-                                "QPushButton:pressed { background-color: #2471a3; }"
-                            );
-                            buttonLayout->insertWidget(0, sendButton);
-                            connect(sendButton, &QPushButton::clicked, this, &ChatWindow::onSendMessage);
-                        }
-                        
-                        // 如果缺少表情包按钮，添加它
-                        if (!hasSendEmojiButton) {
-                            QPushButton *sendEmojiButton = new QPushButton("表情包");
-                            sendEmojiButton->setMinimumHeight(40);
-                            sendEmojiButton->setFixedWidth(80);
-                            sendEmojiButton->setStyleSheet(
-                                "QPushButton { background-color: #ecf0f1; color: #333; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-weight: 500; }"
-                                "QPushButton:hover { background-color: #d5dbdb; }"
-                                "QPushButton:pressed { background-color: #bdc3c7; }"
-                            );
-                            buttonLayout->insertWidget(1, sendEmojiButton);
-                            connect(sendEmojiButton, &QPushButton::clicked, this, &ChatWindow::onSendEmoji);
-                        }
-                        
-                        // 如果缺少发送图片按钮，添加它
-                        if (!hasSendImageButton) {
-                            QPushButton *sendImageButton = new QPushButton("发送图片");
-                            sendImageButton->setMinimumHeight(40);
-                            sendImageButton->setFixedWidth(100);
-                            sendImageButton->setStyleSheet(
-                                "QPushButton { background-color: #ecf0f1; color: #333; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-weight: 500; }"
-                                "QPushButton:hover { background-color: #d5dbdb; }"
-                                "QPushButton:pressed { background-color: #bdc3c7; }"
-                            );
-                            buttonLayout->insertWidget(2, sendImageButton);
-                            connect(sendImageButton, &QPushButton::clicked, this, &ChatWindow::onSendImage);
-                        }
-                        
-                        // 如果缺少发送文件按钮，添加它
-                        if (!hasSendFileButton) {
-                            QPushButton *sendFileButton = new QPushButton("发送文件");
-                            sendFileButton->setMinimumHeight(40);
-                            sendFileButton->setFixedWidth(100);
-                            sendFileButton->setStyleSheet(
-                                "QPushButton { background-color: #ecf0f1; color: #333; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-weight: 500; }"
-                                "QPushButton:hover { background-color: #d5dbdb; }"
-                                "QPushButton:pressed { background-color: #bdc3c7; }"
-                            );
-                            buttonLayout->insertWidget(3, sendFileButton);
-                            connect(sendFileButton, &QPushButton::clicked, this, &ChatWindow::onSendFile);
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    // 清除未读计数
     QString key = generateChatKey(chatId, isGroup);
     unreadMessageCounts.remove(key);
-    
-    // 然后创建或切换到目标聊天窗口
+
     createChatWidget(chatId, chatName, isGroup);
-    
-    // 更新标签页文本，清除小红点
+
     updateTabText(chatId, isGroup, chatName);
 }
 
@@ -1694,9 +1387,12 @@ void ChatWindow::onReceiveMessage(int fromId, const QString &message, const QStr
     bool isStreamEnd = actualMessage == "[STREAM_END]";
     if (isStreamEnd) {
         qDebug() << "ChatWindow: Stream message ended, clearing stream message items for user" << fromId;
-        // 清除流式消息映射，这样下一个问题会创建新的气泡
+        // 清除流式消息映射和思考提示
         if (streamMessageItems.contains(fromId)) {
             streamMessageItems.remove(fromId);
+        }
+        if (thinkingIndicatorItems.contains(fromId)) {
+            thinkingIndicatorItems.remove(fromId);
         }
         return;
     }
@@ -1715,27 +1411,71 @@ void ChatWindow::onReceiveMessage(int fromId, const QString &message, const QStr
             qDebug() << "ChatWindow: chatListWidget is valid, streamMessageItems contains:" << streamMessageItems.contains(fromId) 
                      << ", items count:" << items.size();
 
-            // 如果该用户还没有流式消息项，创建第一个
+            // 如果该用户还没有流式消息项
             if (items.isEmpty()) {
-                qDebug() << "ChatWindow: Creating first stream message item for user" << fromId;
+                // 检查是否有"正在思考"提示，如果没有则创建
+                if (!thinkingIndicatorItems.contains(fromId)) {
+                    qDebug() << "ChatWindow: Creating 'AI is thinking...' indicator for user" << fromId;
+                    
+                    // 创建"正在思考"提示项
+                    QListWidgetItem* thinkingItem = new QListWidgetItem();
+                    chatListWidget->addItem(thinkingItem);
+                    
+                    QString senderName = fromName.isEmpty() ? "AI Assistant" : fromName;
+                    MessageWidget* thinkingWidget = new MessageWidget(false, "🤔 AI正在思考...", "", senderName, timestamp, this);
+                    thinkingItem->setSizeHint(thinkingWidget->sizeHint());
+                    chatListWidget->setItemWidget(thinkingItem, thinkingWidget);
+                    
+                    // 存储思考提示项
+                    thinkingIndicatorItems.insert(fromId, thinkingItem);
+                    
+                    qDebug() << "ChatWindow: Thinking indicator created, chatListWidget->count():" << chatListWidget->count();
+                    
+                    scrollChatToBottom(chatListWidget);
+                }
                 
-                // 创建消息项并添加到UI
-                QListWidgetItem* item = new QListWidgetItem();
-                chatListWidget->addItem(item);
-                
-                MessageWidget* messageWidget = new MessageWidget(false, actualMessage, "", timestamp, this);
-                item->setSizeHint(messageWidget->sizeHint());
-                chatListWidget->setItemWidget(item, messageWidget);
-                
-                // 添加到流式消息项列表
-                items.append(item);
-                streamMessageItems.insert(fromId, items);
-                
-                qDebug() << "ChatWindow: Message item created, chatListWidget->count():" << chatListWidget->count();
-                
-                // 滚动到底部
-                chatListWidget->scrollToBottom();
+                // 只有当有实际内容时才创建消息项
+                if (!actualMessage.isEmpty() && actualMessage != " " && actualMessage != "\n") {
+                    qDebug() << "ChatWindow: First content received, removing thinking indicator and creating message item";
+                    
+                    // 移除思考提示
+                    if (thinkingIndicatorItems.contains(fromId)) {
+                        QListWidgetItem* thinkingItem = thinkingIndicatorItems.take(fromId);
+                        int row = chatListWidget->row(thinkingItem);
+                        if (row >= 0) {
+                            chatListWidget->takeItem(row);
+                            delete thinkingItem;
+                        }
+                    }
+                    
+                    // 创建实际消息项
+                    QListWidgetItem* item = new QListWidgetItem();
+                    chatListWidget->addItem(item);
+                    
+                    QString senderName = fromName.isEmpty() ? "AI Assistant" : fromName;
+                    MessageWidget* messageWidget = new MessageWidget(false, actualMessage, "", senderName, timestamp, this);
+                    item->setSizeHint(messageWidget->sizeHint());
+                    chatListWidget->setItemWidget(item, messageWidget);
+                    
+                    // 添加到流式消息项列表
+                    items.append(item);
+                    streamMessageItems.insert(fromId, items);
+                    
+                    qDebug() << "ChatWindow: Message item created, chatListWidget->count():" << chatListWidget->count();
+                    
+                    scrollChatToBottom(chatListWidget);
+                }
             } else {
+                // 确保思考提示已移除
+                if (thinkingIndicatorItems.contains(fromId)) {
+                    QListWidgetItem* thinkingItem = thinkingIndicatorItems.take(fromId);
+                    int row = chatListWidget->row(thinkingItem);
+                    if (row >= 0) {
+                        chatListWidget->takeItem(row);
+                        delete thinkingItem;
+                    }
+                }
+                
                 // 获取最后一个消息项并追加内容
                 QListWidgetItem* lastItem = items.last();
                 if (lastItem) {
@@ -1748,8 +1488,7 @@ void ChatWindow::onReceiveMessage(int fromId, const QString &message, const QStr
                         chatListWidget->updateGeometry();
                         chatListWidget->repaint();
                         
-                        // 滚动到底部
-                        chatListWidget->scrollToBottom();
+                        scrollChatToBottom(chatListWidget);
                         
                         qDebug() << "ChatWindow: Stream chunk accumulated:" << actualMessage.length() << "chars";
                     } else {
@@ -1966,7 +1705,7 @@ void ChatWindow::onReceiveMessage(int fromId, const QString &message, const QStr
                 }
             }
         }
-        addMessageToChatList(chatListWidget, false, message, senderAvatarPath, timeStr);
+        addMessageToChatList(chatListWidget, false, message, senderAvatarPath, timeStr, fromName);
         
         // 如果是AI Bot的消息，添加到流式消息映射中以便后续累积
         if (fromId == 100) {
@@ -2159,7 +1898,7 @@ void ChatWindow::onReceiveGroupMessage(int groupId, int fromId, const QString &u
                 }
             }
         }
-        addMessageToChatList(chatListWidget, false, message, senderAvatarPath, timeStr);
+        addMessageToChatList(chatListWidget, false, message, senderAvatarPath, timeStr, userName);
         
         // 检查消息是否在当前聊天窗口中显示，如果不是则增加未读计数
         if (chatTabWidget->currentWidget() != chatWidget) {
@@ -2651,14 +2390,12 @@ void ChatWindow::showContextMenu(const QPoint &pos) {
 
 void ChatWindow::closeEvent(QCloseEvent *event) {
     if (isLoggingOut) {
-        // If we're already logging out, just accept the close event
         event->accept();
         return;
     }
     
-    if (QMessageBox::question(this, "确认退出", "确定要退出吗？") == QMessageBox::Yes) {
+    if (QMessageBox::question(this, "Confirm Exit", "Are you sure you want to exit?") == QMessageBox::Yes) {
         chatClient->logout(userId);
-        // 清理文件传输相关资源
         for (auto it = receivingFiles.begin(); it != receivingFiles.end(); ++it) {
             if (it.value()) {
                 it.value()->close();
@@ -3652,4 +3389,179 @@ QString ChatWindow::getGroupNameById(int groupId) {
         return QString::fromStdString(groupMap[groupId].getName());
     }
     return QString("群组%1").arg(groupId);
+}
+
+// RAG知识库文档上传
+void ChatWindow::onUploadKnowledgeDoc() {
+    QString filePath = QFileDialog::getOpenFileName(
+        this,
+        "选择知识库文档",
+        QString(),
+        "文档文件 (*.txt *.pdf);;文本文件 (*.txt);;PDF文件 (*.pdf)"
+    );
+
+    if (filePath.isEmpty()) {
+        return;
+    }
+
+    QFileInfo fileInfo(filePath);
+    QString fileName = fileInfo.fileName();
+
+    QFile *file = new QFile(filePath);
+    if (!file->open(QIODevice::ReadOnly)) {
+        QMessageBox::warning(this, "上传失败", "无法打开文件: " + fileName);
+        delete file;
+        return;
+    }
+
+    statusBarLabel->setText("正在向量化并上传知识库文档...");
+
+    QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
+
+    QHttpPart filePart;
+    filePart.setHeader(
+        QNetworkRequest::ContentDispositionHeader,
+        QVariant(QString("form-data; name=\"file\"; filename=\"%1\"").arg(fileName))
+    );
+    filePart.setBodyDevice(file);
+    file->setParent(multiPart);
+
+    multiPart->append(filePart);
+
+    QNetworkRequest request(QUrl("http://localhost:8081/api/rag/upload"));
+    QNetworkReply *reply = ragNetworkManager->post(request, multiPart);
+    multiPart->setParent(reply);
+
+    reply->setProperty("fileName", fileName);
+}
+
+void ChatWindow::onRagUploadFinished(QNetworkReply *reply) {
+    QString fileName = reply->property("fileName").toString();
+
+    if (reply->error() == QNetworkReply::NoError) {
+        QByteArray responseData = reply->readAll();
+        qDebug() << "RAG upload response:" << responseData;
+
+        statusBarLabel->setText("知识库文档上传成功: " + fileName);
+
+        QMessageBox::information(
+            this,
+            "知识库更新成功",
+            QString("文档 \"%1\" 已成功上传并索引到知识库！\n\n服务器响应: %2")
+                .arg(fileName)
+                .arg(QString::fromUtf8(responseData))
+        );
+    } else {
+        QString errorMsg = reply->errorString();
+        qDebug() << "RAG upload error:" << errorMsg;
+
+        statusBarLabel->setText("知识库文档上传失败: " + fileName);
+
+        QMessageBox::warning(
+            this,
+            "上传失败",
+            QString("文档 \"%1\" 上传失败！\n\n错误信息: %2")
+                .arg(fileName)
+                .arg(errorMsg)
+        );
+    }
+
+    reply->deleteLater();
+}
+
+void ChatWindow::scrollChatToBottom(QListWidget *listWidget)
+{
+    if (!listWidget) return;
+    
+    listWidget->scrollToBottom();
+    
+    int scrollBarValue = listWidget->verticalScrollBar()->value();
+    int scrollBarMax = listWidget->verticalScrollBar()->maximum();
+    
+    if (scrollBarValue >= scrollBarMax - 10) {
+        listWidget->verticalScrollBar()->setValue(scrollBarMax + 80);
+    }
+}
+
+// 加载现代化样式表
+QString ChatWindow::loadModernStylesheet()
+{
+    QString style;
+    
+    // 全局背景与边框
+    style += "QMainWindow, QMainWindow > QWidget { background-color: #1a1a1a; border: none; }";
+    style += "QWidget { background-color: transparent; border: none; color: #ececec; }";
+    
+    // 文本控件
+    style += "QTextBrowser { background-color: transparent; border: none; border-radius: 0; padding: 0; margin: 0; color: #ececec; selection-background-color: #3b82f6; selection-color: #ffffff; }";
+    style += "QTextEdit { background-color: #2a2a2a; border: none; border-radius: 8px; padding: 12px; color: #ececec; selection-background-color: #3b82f6; selection-color: #ffffff; }";
+    style += "QLineEdit { background-color: #2a2a2a; border: none; border-radius: 8px; padding: 8px 12px; color: #ececec; selection-background-color: #3b82f6; selection-color: #ffffff; }";
+    style += "QLineEdit:focus { border: 1px solid #3b82f6; }";
+    
+    // 列表控件
+    style += "QListWidget { background-color: transparent; border: none; outline: none; padding: 0; margin: 0; }";
+    style += "QListWidget::item { background-color: transparent; border: none; padding: 0; margin: 0; }";
+    style += "QListWidget::item:selected, QListWidget::item:hover { background-color: transparent; }";
+    
+    // 树形控件
+    style += "QTreeWidget { background-color: #1a1a1a; border: none; border-right: 1px solid #2f2f2f; outline: none; padding: 0; margin: 0; color: #ececec; }";
+    style += "QTreeWidget::item { background-color: transparent; border: none; padding: 8px 4px; margin: 0; color: #ececec; }";
+    style += "QTreeWidget::item:selected { background-color: #2d3748; color: #60a5fa; }";
+    style += "QTreeWidget::item:hover { background-color: #2a2a2a; }";
+    style += "QTreeWidget::branch { background-color: transparent; border: none; }";
+    
+    // 滚动区域
+    style += "QScrollArea { background-color: transparent; border: none; }";
+    style += "QScrollArea > QWidget > QWidget { background-color: transparent; }";
+    
+    // 标签页
+    style += "QTabWidget::pane { border: none; background-color: transparent; top: -1px; }";
+    style += "QTabBar::tab { background-color: transparent; border: none; border-bottom: 2px solid transparent; padding: 12px 20px; margin: 0 4px; color: #9ca3af; font-weight: 500; }";
+    style += "QTabBar::tab:selected { color: #60a5fa; border-bottom: 2px solid #3b82f6; }";
+    style += "QTabBar::tab:hover { color: #ececec; background-color: rgba(59, 130, 246, 0.1); }";
+    
+    // 按钮
+    style += "QPushButton { background-color: #2a2a2a; border: none; border-radius: 6px; padding: 8px 16px; color: #ececec; font-weight: 500; }";
+    style += "QPushButton:hover { background-color: #3a3a3a; }";
+    style += "QPushButton:pressed { background-color: #1a1a1a; }";
+    style += "QPushButton:disabled { background-color: #1a1a1a; color: #4a4a4a; }";
+    
+    // 分割器
+    style += "QSplitter::handle { background-color: #2f2f2f; border: none; }";
+    style += "QSplitter::handle:horizontal { width: 1px; }";
+    style += "QSplitter::handle:vertical { height: 1px; }";
+    style += "QSplitter::handle:hover { background-color: #3b82f6; }";
+    
+    // 标签
+    style += "QLabel { background-color: transparent; border: none; color: #ececec; }";
+    
+    // 状态栏
+    style += "QStatusBar { background-color: #1a1a1a; border: none; border-top: 1px solid #2f2f2f; color: #9ca3af; }";
+    style += "QStatusBar::item { border: none; }";
+    
+    // 滚动条 - 极简现代风格
+    style += "QScrollBar:vertical { background-color: transparent; width: 8px; margin: 0; padding: 0; border: none; }";
+    style += "QScrollBar::handle:vertical { background-color: rgba(156, 163, 175, 0.3); min-height: 40px; border-radius: 4px; margin: 2px; }";
+    style += "QScrollBar::handle:vertical:hover { background-color: rgba(156, 163, 175, 0.5); }";
+    style += "QScrollBar::handle:vertical:pressed { background-color: rgba(59, 130, 246, 0.7); }";
+    style += "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; background-color: transparent; border: none; }";
+    style += "QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background-color: transparent; border: none; }";
+    
+    style += "QScrollBar:horizontal { background-color: transparent; height: 8px; margin: 0; padding: 0; border: none; }";
+    style += "QScrollBar::handle:horizontal { background-color: rgba(156, 163, 175, 0.3); min-width: 40px; border-radius: 4px; margin: 2px; }";
+    style += "QScrollBar::handle:horizontal:hover { background-color: rgba(156, 163, 175, 0.5); }";
+    style += "QScrollBar::handle:horizontal:pressed { background-color: rgba(59, 130, 246, 0.7); }";
+    style += "QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; background-color: transparent; border: none; }";
+    style += "QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal { background-color: transparent; border: none; }";
+    
+    // 菜单
+    style += "QMenu { background-color: #2a2a2a; border: 1px solid #2f2f2f; border-radius: 8px; padding: 8px 0; color: #ececec; }";
+    style += "QMenu::item { padding: 8px 24px; border-radius: 0; }";
+    style += "QMenu::item:selected { background-color: #3b82f6; }";
+    style += "QMenu::separator { height: 1px; background-color: #2f2f2f; margin: 4px 8px; }";
+    
+    // 工具提示
+    style += "QToolTip { background-color: #2a2a2a; border: 1px solid #2f2f2f; border-radius: 6px; padding: 6px 10px; color: #ececec; }";
+    
+    return style;
 }

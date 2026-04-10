@@ -1,6 +1,5 @@
 #include "messagewidget.h"
 #include <QApplication>
-#include <QGraphicsDropShadowEffect>
 #include <QPixmap>
 #include <QPainter>
 #include <QBrush>
@@ -13,371 +12,421 @@
 #include <QNetworkReply>
 #include <QEventLoop>
 #include <QListWidget>
+#include <QScrollBar>
+#include <QTextDocument>
+#include <QTextBlock>
+#include <QTextBlockFormat>
+#include <QTextCursor>
+#include <QAbstractTextDocumentLayout>
+#include <QBuffer>
+#include <QtMath>
 
-// 跨平台网络头文件处理 - 注意：先包含Windows网络头文件，再包含Qt头文件，避免byte类型歧义
+#include "qtmaterialavatar.h"
+#include "lib/qtmaterialtheme.h"
+
 #ifdef _WIN32
     #include <winsock2.h>
     #include <ws2tcpip.h>
-    // 防止Windows头文件中的byte类型与Qt冲突
     #undef byte
 #endif
 
-MessageWidget::MessageWidget(bool isSender, const QString &text, const QString &avatarPath, const QString &timeStr, QWidget *parent)
-    : QWidget(parent), m_isSender(isSender)
+MessageWidget::MessageWidget(bool isSender, const QString &text, const QString &avatarPath, 
+                             const QString &senderName, const QString &timeStr, 
+                             QWidget *parent)
+    : QWidget(parent)
+    , m_isSender(isSender)
+    , m_senderName(senderName)
+    , m_rawText(text)
+    , m_headerWidget(nullptr)
+    , m_contentContainer(nullptr)
+    , m_bubbleWidget(nullptr)
+    , m_avatarLabel(nullptr)
+    , m_nameLabel(nullptr)
+    , m_contentBrowser(nullptr)
+    , m_timeLabel(nullptr)
 {
-    // 1. 初始化控件
-    lblAvatar = new QLabel(this);
-    lblAvatar->setFixedSize(40, 40);
+    setupUI(text, avatarPath, senderName, timeStr);
+    applyStyles();
+}
+
+void MessageWidget::setupUI(const QString &text, const QString &avatarPath, 
+                            const QString &senderName, const QString &timeStr)
+{
+    setStyleSheet("background: transparent;");
     
-    // 设置头像
-    QPixmap avatarPixmap;
-    if (!avatarPixmap.load(avatarPath)) {
-        // 如果头像加载失败，创建默认头像
-        QPixmap defaultAvatar(40, 40);
-        defaultAvatar.fill(Qt::lightGray);
-        
-        QPainter painter(&defaultAvatar);
-        painter.setRenderHint(QPainter::Antialiasing, true);
-        
-        // 绘制圆形背景
-        QBrush brush(QColor(100, 149, 237)); //  CornflowerBlue
-        painter.setBrush(brush);
-        painter.setPen(Qt::NoPen);
-        painter.drawEllipse(0, 0, 40, 40);
-        
-        // 绘制默认文字
-        QFont font("Arial", 14, QFont::Bold);
-        painter.setFont(font);
-        painter.setPen(QColor(Qt::white));
-        painter.drawText(defaultAvatar.rect(), Qt::AlignCenter, "U");
-        
-        lblAvatar->setPixmap(defaultAvatar);
-    } else {
-        // 头像加载成功，设置圆形头像
-        QPixmap circularAvatar(40, 40);
-        circularAvatar.fill(Qt::transparent);
-        
-        QPainter painter(&circularAvatar);
-        painter.setRenderHint(QPainter::Antialiasing, true);
-        
-        // 绘制圆形路径作为遮罩
-        QPainterPath path;
-        path.addEllipse(0, 0, 40, 40);
-        painter.setClipPath(path);
-        
-        // 绘制头像
-        QPixmap scaledAvatar = avatarPixmap.scaled(40, 40, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
-        painter.drawPixmap(0, 0, scaledAvatar);
-        
-        // 绘制边框
-        painter.setClipping(false);
-        QPen pen(QColor(100, 149, 237), 2);
-        painter.setPen(pen);
-        painter.drawEllipse(0, 0, 39, 39);
-        
-        lblAvatar->setPixmap(circularAvatar);
-    }
+    QString displayName = senderName.isEmpty() 
+        ? (m_isSender ? "You" : "User") 
+        : senderName;
+    QString initial = displayName.isEmpty() ? "U" : QString(displayName[0]).toUpper();
     
-    lblContent = new QLabel(this);
-    lblContent->setWordWrap(true); // 允许换行
-    lblContent->setTextInteractionFlags(Qt::TextSelectableByMouse); // 允许复制文字
-    lblContent->setMaximumWidth(400); // 气泡最大宽度
-    lblContent->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum); // 确保高度根据内容调整
+    m_avatarLabel = new QtMaterialAvatar(QChar(initial[0]), this);
+    m_avatarLabel->setSize(40);
     
-    // 检查消息是否包含图片数据
-    if (text.startsWith("data:image/")) {
-        // 是Data URL格式的图片
-        qDebug() << "MessageWidget: Received image message, processing...";
-        
-        // 提取Base64数据
-        int commaPos = text.indexOf(',');
-        if (commaPos != -1) {
-            QString base64Data = text.mid(commaPos + 1);
-            QByteArray decodedData = QByteArray::fromBase64(base64Data.toUtf8());
-            
-            // 检查是否需要再次解码
-            if (decodedData.size() >= 4 && decodedData[0] == '/' && decodedData[1] == '9' && decodedData[2] == 'j' && decodedData[3] == '/') {
-                qDebug() << "MessageWidget: Image data is double Base64 encoded, decoding again...";
-                decodedData = QByteArray::fromBase64(decodedData);
-            }
-            
-            // 加载图片
-            QImage image;
-            if (image.loadFromData(decodedData)) {
-                // 图片加载成功，调整大小
-                QImage scaledImage = image.scaled(200, 150, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-                QPixmap pixmap = QPixmap::fromImage(scaledImage);
-                
-                // 显示图片
-                lblContent->setPixmap(pixmap);
-                lblContent->setAlignment(Qt::AlignCenter);
-                lblContent->setStyleSheet(""); // 清除文本样式
-            } else {
-                // 图片加载失败，显示错误信息
-                lblContent->setText("图片加载失败");
-            }
-        }
-    } else if (text.startsWith("image:")) {
-        // 是图片路径
-        QString imagePath = text.mid(6); // 移除"image:"前缀
-        QPixmap pixmap;
-        if (pixmap.load(imagePath)) {
-            // 图片加载成功，调整大小
-            QPixmap scaledPixmap = pixmap.scaled(200, 150, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-            lblContent->setPixmap(scaledPixmap);
-            lblContent->setAlignment(Qt::AlignCenter);
-            lblContent->setStyleSheet(""); // 清除文本样式
-        } else {
-            // 图片加载失败，显示错误信息
-            lblContent->setText("图片加载失败");
-        }
-    } else if (text.startsWith("[EMOJI_DATA:")) {
-        // 是表情包数据
-        qDebug() << "MessageWidget: Received emoji message, processing...";
-        
-        // 提取Base64数据
-        int startPos = text.indexOf(':') + 1;
-        int endPos = text.lastIndexOf(']');
-        if (startPos != -1 && endPos != -1) {
-            QString base64Data = text.mid(startPos, endPos - startPos);
-            QByteArray decodedData = QByteArray::fromBase64(base64Data.toUtf8());
-            
-            // 检查是否需要再次解码
-            if (decodedData.size() >= 4 && decodedData[0] == '/' && decodedData[1] == '9' && decodedData[2] == 'j' && decodedData[3] == '/') {
-                qDebug() << "MessageWidget: Emoji data is double Base64 encoded, decoding again...";
-                decodedData = QByteArray::fromBase64(decodedData);
-            }
-            
-            // 加载图片
-            QImage image;
-            if (image.loadFromData(decodedData)) {
-                // 图片加载成功，调整大小（表情包通常较小）
-                QImage scaledImage = image.scaled(64, 64, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-                QPixmap pixmap = QPixmap::fromImage(scaledImage);
-                
-                // 显示图片
-                lblContent->setPixmap(pixmap);
-                lblContent->setAlignment(Qt::AlignCenter);
-                lblContent->setStyleSheet(""); // 清除文本样式
-            } else {
-                // 图片加载失败，显示错误信息
-                lblContent->setText("表情包加载失败");
-            }
-        }
-    } else if (text.startsWith("[IMAGE]")) {
-        // 是图片消息
-        qDebug() << "MessageWidget: Received image message, processing...";
-        
-        // 提取图片类型和Base64数据
-        int commaPos = text.indexOf(',');
-        if (commaPos != -1) {
-            QString imageType = text.mid(7, commaPos - 7); // 提取图片类型
-            QString base64Data = text.mid(commaPos + 1); // 提取Base64数据
-            QByteArray decodedData = QByteArray::fromBase64(base64Data.toUtf8());
-            
-            // 检查是否需要再次解码
-            if (decodedData.size() >= 4 && decodedData[0] == '/' && decodedData[1] == '9' && decodedData[2] == 'j' && decodedData[3] == '/') {
-                qDebug() << "MessageWidget: Image data is double Base64 encoded, decoding again...";
-                decodedData = QByteArray::fromBase64(decodedData);
-            }
-            
-            // 加载图片
-            QImage image;
-            if (image.loadFromData(decodedData)) {
-                // 图片加载成功，调整大小
-                QImage scaledImage = image.scaled(200, 150, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-                QPixmap pixmap = QPixmap::fromImage(scaledImage);
-                
-                // 显示图片
-                lblContent->setPixmap(pixmap);
-                lblContent->setAlignment(Qt::AlignCenter);
-                lblContent->setStyleSheet(""); // 清除文本样式
-            } else {
-                // 图片加载失败，显示错误信息
-                lblContent->setText("图片加载失败");
-            }
-        }
-    } else if (text.contains("![")) {
-        // 处理Markdown格式的图片链接 ![描述](URL)
-        qDebug() << "MessageWidget: Processing Markdown image link...";
-        
-        // 查找所有Markdown图片链接
-         QRegularExpression re(R"(!\[(.*?)\]\((.*?)\))");
-         QRegularExpressionMatchIterator it = re.globalMatch(text);
-        
-        if (it.hasNext()) {
-            // 只处理第一个图片链接
-            QRegularExpressionMatch match = it.next();
-            QString imageUrl = match.captured(2); // 捕获URL
-            QString altText = match.captured(1); // 捕获描述文本
-            
-            qDebug() << "MessageWidget: Found image URL:" << imageUrl;
-            
-            // 尝试加载网络图片
-            QNetworkAccessManager *networkManager = new QNetworkAccessManager(this);
-            QNetworkRequest request(imageUrl);
-            
-            QNetworkReply *reply = networkManager->get(request);
-            
-            // 等待图片加载完成
-            QEventLoop loop;
-            QObject::connect(reply, &QNetworkReply::finished, [&]() {
-                if (reply->error() == QNetworkReply::NoError) {
-                    QByteArray imageData = reply->readAll();
-                    QPixmap pixmap;
-                    
-                    if (pixmap.loadFromData(imageData)) {
-                        // 图片加载成功，调整大小
-                        QImage image = pixmap.toImage();
-                        QImage scaledImage = image.scaled(300, 200, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-                        QPixmap finalPixmap = QPixmap::fromImage(scaledImage);
-                        
-                        // 显示图片
-                        lblContent->setPixmap(finalPixmap);
-                        lblContent->setAlignment(Qt::AlignCenter);
-                        lblContent->setStyleSheet(""); // 清除文本样式
-                    } else {
-                        // 图片加载失败，显示链接
-                        QString displayText = QString("图片: %1").arg(altText);
-                        lblContent->setText(displayText);
-                        lblContent->setStyleSheet("color: #666; font-style: italic;");
-                    }
-                } else {
-                    // 网络请求失败，显示链接
-                    QString displayText = QString("图片: %1").arg(altText);
-                    lblContent->setText(displayText);
-                    lblContent->setStyleSheet("color: #999;");
-                }
-                
-                reply->deleteLater();
-                networkManager->deleteLater();
-                loop.quit();
-            });
-            
-            loop.exec();
-        } else {
-            // 是文本消息，直接显示
-            lblContent->setText(text);
-        }
-    } else {
-        // 是文本消息，直接显示
-        lblContent->setText(text);
-    }
-    
-    // 2. 设置气泡样式 (利用QSS设置背景色和尖角)
-    if (isSender) {
-        // 只有当是文本消息时才设置气泡样式
-        if (lblContent->text() != "" && lblContent->pixmap(Qt::ReturnByValue).isNull()) {
-            lblContent->setStyleSheet("background-color: #00bfff; color: white; border-radius: 10px; padding: 10px;");
-        }
-    } else {
-        // 只有当是文本消息时才设置气泡样式
-        if (lblContent->text() != "" && lblContent->pixmap(Qt::ReturnByValue).isNull()) {
-            lblContent->setStyleSheet("background-color: #ffffff; color: black; border-radius: 10px; padding: 10px; border: 1px solid #e0e0e0;");
+    if (!avatarPath.isEmpty()) {
+        QImage avatarImage;
+        if (avatarImage.load(avatarPath)) {
+            m_avatarLabel->setImage(avatarImage);
         }
     }
     
-    // 3. 添加时间标签
-    lblTime = new QLabel(timeStr, this);
-    lblTime->setStyleSheet("font-size: 10px; color: #999;");
-    
-    // 4. 布局管理
-    QVBoxLayout *messageLayout = new QVBoxLayout();
-    messageLayout->setContentsMargins(0, 0, 0, 0);
-    messageLayout->setSpacing(5);
-    
-    if (isSender) {
-        messageLayout->addWidget(lblTime, 0, Qt::AlignRight);
-        messageLayout->addWidget(lblContent, 0, Qt::AlignRight);
+    if (m_isSender) {
+        m_avatarLabel->setBackgroundColor(QColor("#3b82f6"));
+        m_avatarLabel->setTextColor(QColor("#ffffff"));
     } else {
-        messageLayout->addWidget(lblTime, 0, Qt::AlignLeft);
-        messageLayout->addWidget(lblContent, 0, Qt::AlignLeft);
+        m_avatarLabel->setBackgroundColor(QColor("#10a37f"));
+        m_avatarLabel->setTextColor(QColor("#ffffff"));
+    }
+    
+    m_nameLabel = new QLabel(this);
+    m_nameLabel->setText(displayName);
+    m_nameLabel->setStyleSheet("color: #9ca3af; font-size: 12px; font-weight: 500; background: transparent;");
+    
+    m_timeLabel = new QLabel(this);
+    m_timeLabel->setText(timeStr.isEmpty() 
+        ? QDateTime::currentDateTime().toString("hh:mm") 
+        : timeStr);
+    m_timeLabel->setStyleSheet("color: #6b7280; font-size: 11px; background: transparent;");
+    
+    m_headerWidget = new QWidget(this);
+    m_headerWidget->setStyleSheet("background: transparent;");
+    QHBoxLayout *headerLayout = new QHBoxLayout(m_headerWidget);
+    headerLayout->setContentsMargins(0, 0, 0, 0);
+    headerLayout->setSpacing(8);
+    
+    if (!m_isSender) {
+        headerLayout->addWidget(m_nameLabel, 0, Qt::AlignLeft);
+        headerLayout->addStretch();
+        headerLayout->addWidget(m_timeLabel, 0, Qt::AlignRight);
+    } else {
+        headerLayout->addWidget(m_timeLabel, 0, Qt::AlignLeft);
+        headerLayout->addStretch();
+        headerLayout->addWidget(m_nameLabel, 0, Qt::AlignRight);
+    }
+    
+    m_bubbleWidget = new QWidget(this);
+    m_bubbleWidget->setObjectName("messageBubble");
+    QVBoxLayout *bubbleLayout = new QVBoxLayout(m_bubbleWidget);
+    bubbleLayout->setContentsMargins(24, 16, 24, 16);
+    bubbleLayout->setSpacing(0);
+    
+    m_contentBrowser = new QTextBrowser(m_bubbleWidget);
+    m_contentBrowser->setOpenExternalLinks(true);
+    m_contentBrowser->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_contentBrowser->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_contentBrowser->setFrameShape(QFrame::NoFrame);
+    m_contentBrowser->setFrameStyle(QFrame::NoFrame);
+    m_contentBrowser->setLineWidth(0);
+    m_contentBrowser->setMidLineWidth(0);
+    m_contentBrowser->setLineWrapMode(QTextBrowser::WidgetWidth);
+    m_contentBrowser->document()->setDocumentMargin(0);
+    m_contentBrowser->viewport()->setContentsMargins(0, 0, 0, 0);
+    m_contentBrowser->setTextInteractionFlags(Qt::TextBrowserInteraction | Qt::TextSelectableByMouse);
+    m_contentBrowser->setMinimumWidth(60);
+    m_contentBrowser->setMaximumWidth(600);
+    
+    processAndSetContent(text);
+    
+    bubbleLayout->addWidget(m_contentBrowser);
+    
+    m_contentContainer = new QWidget(this);
+    m_contentContainer->setStyleSheet("background: transparent;");
+    QVBoxLayout *bodyLayout = new QVBoxLayout(m_contentContainer);
+    bodyLayout->setContentsMargins(0, 0, 0, 0);
+    bodyLayout->setSpacing(1);
+    bodyLayout->addWidget(m_headerWidget);
+    if (!m_isSender) {
+        bodyLayout->addWidget(m_bubbleWidget, 0, Qt::AlignLeft);
+    } else {
+        bodyLayout->addWidget(m_bubbleWidget, 0, Qt::AlignRight);
     }
     
     QHBoxLayout *mainLayout = new QHBoxLayout(this);
-    mainLayout->setContentsMargins(10, 5, 10, 5); // 气泡间的上下间距
+    mainLayout->setContentsMargins(12, 4, 12, 4);
+    mainLayout->setSpacing(8);
     
-    if (isSender) {
-        // 我发的： 弹簧 + 消息布局 + 头像
-        mainLayout->addStretch();
-        mainLayout->addLayout(messageLayout);
-        mainLayout->addWidget(lblAvatar);
+    if (!m_isSender) {
+        mainLayout->addWidget(m_avatarLabel, 0, Qt::AlignTop);
+        mainLayout->addWidget(m_contentContainer, 0);
+        mainLayout->addStretch(1);
     } else {
-        // 别人发的： 头像 + 消息布局 + 弹簧
-        mainLayout->addWidget(lblAvatar);
-        mainLayout->addLayout(messageLayout);
-        mainLayout->addStretch();
+        mainLayout->addStretch(1);
+        mainLayout->addWidget(m_contentContainer, 0);
+        mainLayout->addWidget(m_avatarLabel, 0, Qt::AlignTop);
+    }
+    
+    setLayout(mainLayout);
+    setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
+}
+
+void MessageWidget::applyStyles()
+{
+    setStyleSheet("background: transparent;");
+    
+    QString nameColor = m_isSender ? "#60a5fa" : "#34d399";
+    QString nameStyle = QString(
+        "QLabel { color: %1; font-size: 14px; font-weight: 600; background: transparent; }"
+    ).arg(nameColor);
+    m_nameLabel->setStyleSheet(nameStyle);
+    
+    QString timeStyle = QString(
+        "QLabel { color: #6b7280; font-size: 11px; background: transparent; }"
+    );
+    m_timeLabel->setStyleSheet(timeStyle);
+    
+    m_headerWidget->setStyleSheet("background: transparent;");
+    m_contentContainer->setStyleSheet("background: transparent;");
+    
+    QString bubbleBgColor = m_isSender ? "#2d3748" : "#1e293b";
+    QString borderColor = m_isSender ? "#3d4a5c" : "#2d3c4e";
+    
+    QString bubbleStyle = QString(
+        "QWidget#messageBubble { background-color: %1; border: 1px solid %2; border-radius: 12px; }"
+    ).arg(bubbleBgColor).arg(borderColor);
+    
+    if (m_bubbleWidget) {
+        m_bubbleWidget->setStyleSheet(bubbleStyle);
+    }
+    
+    QString browserStyle = QString(
+        "QTextBrowser { background-color: transparent; color: #f1f5f9; font-size: 15px; border: none; padding: 0; margin: 0; }"
+        "QTextBrowser::selection { background-color: #3b82f6; color: #ffffff; }"
+        "QTextBrowser viewport { background-color: transparent; padding: 0; margin: 0; }"
+    );
+    if (m_contentBrowser) {
+        m_contentBrowser->setStyleSheet(browserStyle);
     }
 }
 
-void MessageWidget::appendText(const QString &text) {
-    if (lblContent) {
-        QString currentText = lblContent->text();
-        QString newText = currentText + text;
-        lblContent->setText(newText);
+QByteArray MessageWidget::imageDataFromPixmap(const QPixmap &pixmap)
+{
+    QByteArray imageData;
+    QBuffer buffer(&imageData);
+    buffer.open(QIODevice::WriteOnly);
+    pixmap.save(&buffer, "PNG");
+    buffer.close();
+    return imageData;
+}
+
+int MessageWidget::calculateDocumentHeight(QTextDocument *doc, int textWidth)
+{
+    doc->setTextWidth(textWidth);
+    
+    // 使用 documentLayout 获取渲染后的实际尺寸
+    QAbstractTextDocumentLayout *layout = doc->documentLayout();
+    QSizeF docSize = layout->documentSize();
+    
+    // 返回向上取整的高度，并添加更多的安全边距
+    // 长文本可能需要更多的空间
+    int blockCount = doc->blockCount();
+    int extraPadding = qMax(16, blockCount * 2);  // 每个段落额外 2px
+    
+    return qCeil(docSize.height()) + extraPadding + 16;
+}
+
+void MessageWidget::processAndSetContent(const QString &text)
+{
+    QString processedText = text;
+    
+    if (text.startsWith("data:image/") || text.startsWith("[EMOJI_DATA:") || text.startsWith("[IMAGE]")) {
+        QByteArray imageData;
         
-        // 强制更新 QLabel 的大小
-        lblContent->setMinimumHeight(0);
-        lblContent->setMaximumHeight(QWIDGETSIZE_MAX);
+        if (text.startsWith("data:image/")) {
+            int commaPos = text.indexOf(',');
+            if (commaPos != -1) {
+                imageData = QByteArray::fromBase64(text.mid(commaPos + 1).toUtf8());
+            }
+        } else if (text.startsWith("[EMOJI_DATA:")) {
+            int startPos = text.indexOf(':') + 1;
+            int endPos = text.lastIndexOf(']');
+            if (startPos != -1 && endPos != -1) {
+                imageData = QByteArray::fromBase64(text.mid(startPos, endPos - startPos).toUtf8());
+            }
+        } else if (text.startsWith("[IMAGE]")) {
+            int commaPos = text.indexOf(',');
+            if (commaPos != -1) {
+                imageData = QByteArray::fromBase64(text.mid(commaPos + 1).toUtf8());
+            }
+        }
         
-        // 更新布局
-        lblContent->updateGeometry();
-        this->updateGeometry();
+        if (!imageData.isEmpty()) {
+            QImage image;
+            if (image.loadFromData(imageData)) {
+                QString base64 = QString(imageData.toBase64());
+                QString imageType = text.contains("png", Qt::CaseInsensitive) ? "png" : "jpeg";
+                processedText = QString("![image](data:image/%1;base64,%2)").arg(imageType).arg(base64);
+            } else {
+                processedText = "[Image load failed]";
+            }
+        }
+    } else if (text.startsWith("image:")) {
+        QString imagePath = text.mid(6);
+        QPixmap pixmap;
+        if (pixmap.load(imagePath)) {
+            QString base64 = QString(imageDataFromPixmap(pixmap).toBase64());
+            processedText = QString("![image](data:image/png;base64,%1)").arg(base64);
+        } else {
+            processedText = "[Image load failed]";
+        }
+    }
+    
+    processedText = processedText.trimmed();
+    
+    QTextDocument *doc = m_contentBrowser->document();
+    doc->setDocumentMargin(0);
+    
+    m_contentBrowser->setMarkdown(processedText);
+    m_rawText = processedText;
+    
+    const int maxBubbleWidth = 600;
+    const int minBubbleWidth = 200;
+    const int horizontalPadding = 48;
+    const int maxTextWidth = maxBubbleWidth - horizontalPadding;
+    
+    int docHeight = calculateDocumentHeight(doc, maxTextWidth);
+    
+    qreal idealWidth = doc->idealWidth();
+    int actualTextWidth = qMin(qCeil(idealWidth), maxTextWidth);
+    int bubbleWidth = qBound(minBubbleWidth, actualTextWidth + horizontalPadding, maxBubbleWidth);
+    int contentWidth = bubbleWidth - horizontalPadding;
+    
+    if (contentWidth < maxTextWidth) {
+        docHeight = calculateDocumentHeight(doc, contentWidth);
+    }
+    
+    m_contentBrowser->setMinimumWidth(contentWidth);
+    m_contentBrowser->setMaximumWidth(contentWidth);
+    m_contentBrowser->setMinimumHeight(docHeight);
+    // 不限制最大高度，让内容自动扩展
+    m_contentBrowser->setMaximumHeight(16777215);  // QWIDGETSIZE_MAX
+    
+    m_bubbleWidget->setMinimumWidth(bubbleWidth);
+    m_bubbleWidget->setMaximumWidth(bubbleWidth);
+    
+    m_contentBrowser->updateGeometry();
+    m_bubbleWidget->updateGeometry();
+    updateGeometry();
+}
+
+void MessageWidget::appendText(const QString &text)
+{
+    if (m_contentBrowser) {
+        m_rawText += text;
         
-        // 获取父级 QListWidget 并更新 item 大小
+        QTextDocument *doc = m_contentBrowser->document();
+        doc->setDocumentMargin(0);
+        
+        m_contentBrowser->setMarkdown(m_rawText);
+        
+        const int maxBubbleWidth = 600;
+        const int minBubbleWidth = 200;
+        const int horizontalPadding = 48;
+        const int maxTextWidth = maxBubbleWidth - horizontalPadding;
+        
+        int docHeight = calculateDocumentHeight(doc, maxTextWidth);
+        qreal idealWidth = doc->idealWidth();
+        int actualTextWidth = qMin(qCeil(idealWidth), maxTextWidth);
+        int bubbleWidth = qBound(minBubbleWidth, actualTextWidth + horizontalPadding, maxBubbleWidth);
+        int contentWidth = bubbleWidth - horizontalPadding;
+        
+        if (contentWidth < maxTextWidth) {
+            docHeight = calculateDocumentHeight(doc, contentWidth);
+        }
+        
+        m_contentBrowser->setMinimumWidth(contentWidth);
+        m_contentBrowser->setMaximumWidth(contentWidth);
+        m_contentBrowser->setMinimumHeight(docHeight);
+        m_contentBrowser->setMaximumHeight(16777215);  // 不限制最大高度
+        
+        m_bubbleWidget->setMinimumWidth(bubbleWidth);
+        m_bubbleWidget->setMaximumWidth(bubbleWidth);
+        
+        updateGeometry();
+        
+        // 查找父级 QListWidget 并更新大小
         QWidget* parent = this->parentWidget();
-        if (parent) {
-            QListWidget* listWidget = qobject_cast<QListWidget*>(parent->parentWidget());
+        while (parent) {
+            QListWidget* listWidget = qobject_cast<QListWidget*>(parent);
             if (listWidget) {
-                // 查找包含此 widget 的 item
                 for (int i = 0; i < listWidget->count(); ++i) {
                     QListWidgetItem* item = listWidget->item(i);
                     if (item && listWidget->itemWidget(item) == this) {
-                        QSize hint = this->sizeHint();
-                        item->setSizeHint(hint);
+                        item->setSizeHint(sizeHint());
                         listWidget->updateGeometry();
+                        // 滚动到底部
+                        QScrollBar *scrollBar = listWidget->verticalScrollBar();
+                        if (scrollBar) {
+                            scrollBar->setValue(scrollBar->maximum());
+                        }
                         break;
                     }
                 }
+                break;
             }
+            parent = parent->parentWidget();
         }
     }
 }
 
-QSize MessageWidget::sizeHint() const {
-    if (!lblContent) {
+void MessageWidget::setMarkdownContent(const QString &markdown)
+{
+    if (m_contentBrowser) {
+        m_rawText = markdown.trimmed();
+        
+        QTextDocument *doc = m_contentBrowser->document();
+        doc->setDocumentMargin(0);
+        
+        m_contentBrowser->setMarkdown(m_rawText);
+        
+        const int maxBubbleWidth = 600;
+        const int minBubbleWidth = 200;
+        const int horizontalPadding = 48;
+        const int maxTextWidth = maxBubbleWidth - horizontalPadding;
+        
+        int docHeight = calculateDocumentHeight(doc, maxTextWidth);
+        
+        qreal idealWidth = doc->idealWidth();
+        int actualTextWidth = qMin(qCeil(idealWidth), maxTextWidth);
+        int bubbleWidth = qBound(minBubbleWidth, actualTextWidth + horizontalPadding, maxBubbleWidth);
+        int contentWidth = bubbleWidth - horizontalPadding;
+        
+        if (contentWidth < maxTextWidth) {
+            docHeight = calculateDocumentHeight(doc, contentWidth);
+        }
+        
+        m_contentBrowser->setMinimumWidth(contentWidth);
+        m_contentBrowser->setMaximumWidth(contentWidth);
+        m_contentBrowser->setMinimumHeight(docHeight);
+        m_contentBrowser->setMaximumHeight(16777215);  // 不限制最大高度
+        
+        m_bubbleWidget->setMinimumWidth(bubbleWidth);
+        m_bubbleWidget->setMaximumWidth(bubbleWidth);
+        
+        updateGeometry();
+    }
+}
+
+QSize MessageWidget::sizeHint() const
+{
+    if (!m_contentBrowser || !m_headerWidget) {
         return QWidget::sizeHint();
     }
+    
+    int headerHeight = m_headerWidget->sizeHint().height();
+    
+    // 使用文档的实际高度
+    QTextDocument *doc = m_contentBrowser->document();
+    int docHeight = qCeil(doc->size().height());
+    
+    int bubbleHeight = docHeight + 32;  // 上下边距各 16px
+    int totalHeight = headerHeight + bubbleHeight + 8;
+    
+    return QSize(width() > 0 ? width() : 800, totalHeight);
+}
 
-    // 获取文本内容
-    QString text = lblContent->text();
-    if (text.isEmpty()) {
-        return QWidget::sizeHint();
-    }
-
-    // 使用 QFontMetrics 计算文本所需的高度
-    QFontMetrics fm(lblContent->font());
-    int maxWidth = 400; // 最大宽度
-    int padding = 24; // 内边距
-
-    // 计算换行后的文本矩形
-    QRect boundingRect = fm.boundingRect(QRect(0, 0, maxWidth - padding, 10000),
-                                          Qt::TextWordWrap | Qt::AlignLeft | Qt::AlignTop,
-                                          text);
-
-    int contentHeight = boundingRect.height() + padding;
-
-    // 头像高度
-    int avatarHeight = lblAvatar ? lblAvatar->height() : 40;
-
-    // 时间标签高度
-    int timeHeight = lblTime ? 25 : 0;
-
-    // 宽度 = 内容宽度 + 头像 + 边距
-    int totalWidth = qMin(boundingRect.width() + padding, maxWidth) + 80;
-
-    // 高度 = max(内容高度, 头像高度) + 时间高度 + 上下边距
-    int totalHeight = qMax(contentHeight, avatarHeight) + timeHeight + 30;
-
-    return QSize(totalWidth, totalHeight);
+void MessageWidget::paintEvent(QPaintEvent *event)
+{
+    Q_UNUSED(event)
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.fillRect(rect(), Qt::transparent);
 }

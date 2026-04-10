@@ -1,0 +1,140 @@
+/*
+ * Modern Scrollbar Stylesheet
+ * 极简现代风格滚动条
+ */
+
+/* ==================== 垂直滚动条 ==================== */
+
+QScrollBar:vertical {
+    background-color: transparent;
+    width: 8px;
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
+QScrollBar::handle:vertical {
+    background-color: rgba(156, 163, 175, 0.3);
+    min-height: 40px;
+    border-radius: 4px;
+    margin: 2px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background-color: rgba(156, 163, 175, 0.5);
+}
+
+QScrollBar::handle:vertical:pressed {
+    background-color: rgba(59, 130, 246, 0.7);
+}
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+    height: 0;
+    background-color: transparent;
+    border: none;
+}
+
+QScrollBar::add-page:vertical,
+QScrollBar::sub-page:vertical {
+    background-color: transparent;
+    border: none;
+}
+
+/* ==================== 水平滚动条 ==================== */
+
+QScrollBar:horizontal {
+    background-color: transparent;
+    height: 8px;
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
+QScrollBar::handle:horizontal {
+    background-color: rgba(156, 163, 175, 0.3);
+    min-width: 40px;
+    border-radius: 4px;
+    margin: 2px;
+}
+
+QScrollBar::handle:horizontal:hover {
+    background-color: rgba(156, 163, 175, 0.5);
+}
+
+QScrollBar::handle:horizontal:pressed {
+    background-color: rgba(59, 130, 246, 0.7);
+}
+
+QScrollBar::add-line:horizontal,
+QScrollBar::sub-line:horizontal {
+    width: 0;
+    background-color: transparent;
+    border: none;
+}
+
+QScrollBar::add-page:horizontal,
+QScrollBar::sub-page:horizontal {
+    background-color: transparent;
+    border: none;
+}
+
+/* ==================== 滚动区域内的滚动条 ==================== */
+
+QScrollArea QScrollBar:vertical,
+QScrollArea QScrollBar:horizontal {
+    background-color: transparent;
+}
+
+QScrollArea QScrollBar::handle:vertical,
+QScrollArea QScrollBar::handle:horizontal {
+    background-color: rgba(156, 163, 175, 0.25);
+}
+
+QScrollArea QScrollBar::handle:vertical:hover,
+QScrollArea QScrollBar::handle:horizontal:hover {
+    background-color: rgba(156, 163, 175, 0.4);
+}
+
+/* ==================== 列表控件内的滚动条 ==================== */
+
+QListWidget QScrollBar:vertical,
+QListWidget QScrollBar:horizontal {
+    background-color: transparent;
+}
+
+QListWidget QScrollBar::handle:vertical,
+QListWidget QScrollBar::handle:horizontal {
+    background-color: rgba(156, 163, 175, 0.2);
+}
+
+QListWidget QScrollBar::handle:vertical:hover,
+QListWidget QScrollBar::handle:horizontal:hover {
+    background-color: rgba(156, 163, 175, 0.35);
+}
+
+/* ==================== 文本控件内的滚动条 ==================== */
+
+QTextBrowser QScrollBar:vertical,
+QTextBrowser QScrollBar:horizontal,
+QTextEdit QScrollBar:vertical,
+QTextEdit QScrollBar:horizontal {
+    background-color: transparent;
+    width: 6px;
+    height: 6px;
+}
+
+QTextBrowser QScrollBar::handle:vertical,
+QTextBrowser QScrollBar::handle:horizontal,
+QTextEdit QScrollBar::handle:vertical,
+QTextEdit QScrollBar::handle:horizontal {
+    background-color: rgba(156, 163, 175, 0.25);
+    border-radius: 3px;
+}
+
+QTextBrowser QScrollBar::handle:vertical:hover,
+QTextBrowser QScrollBar::handle:horizontal:hover,
+QTextEdit QScrollBar::handle:vertical:hover,
+QTextEdit QScrollBar::handle:horizontal:hover {
+    background-color: rgba(156, 163, 175, 0.4);
+}

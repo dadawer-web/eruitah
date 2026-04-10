@@ -16,6 +16,10 @@ set(CLIENT_SOURCES
     main.cpp
     mainwindow.cpp
     mainwindow.h
+    messagewidget.cpp
+    messagewidget.h
+    customtitlebar.cpp
+    customtitlebar.h
     qtchat.qrc
 )
 

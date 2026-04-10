@@ -270,50 +270,46 @@ void ChatService::login(const TcpConnectionPtr& conn,json& js,Timestamp time){
             }
 
             vector<User> userVec=_friendModel.query(id);
-            if(!userVec.empty()){
-                vector<string> vec2;
-                for(User &user:userVec){
-                    json js;
-                    js["id"]=user.getId();
-                    js["name"]=user.getName();
-                    js["state"]=user.getState();
-                    string friendAvatarData = user.getAvatar();
-                    if (!friendAvatarData.empty()) {
-                        js["avatar"] = base64Encode(friendAvatarData);
-                    } else {
-                        js["avatar"] = "";
-                    }
-                    vec2.push_back(js.dump());
+            vector<string> vec2;
+            for(User &user:userVec){
+                json js;
+                js["id"]=user.getId();
+                js["name"]=user.getName();
+                js["state"]=user.getState();
+                string friendAvatarData = user.getAvatar();
+                if (!friendAvatarData.empty()) {
+                    js["avatar"] = base64Encode(friendAvatarData);
+                } else {
+                    js["avatar"] = "";
                 }
-                response["friends"]=vec2;
+                vec2.push_back(js.dump());
             }
+            response["friends"]=vec2;
+            cout << "[DEBUG] Added " << vec2.size() << " friends to login response" << endl;
 
             vector<Group> groupuserVec = _groupModel.queryGroups(id);
-            if (!groupuserVec.empty())
+            vector<string> groupV;
+            for (Group &group : groupuserVec)
             {
-                vector<string> groupV;
-                for (Group &group : groupuserVec)
+                json grpjson;
+                grpjson["id"] = group.getId();
+                grpjson["groupname"] = group.getName();
+                grpjson["groupdesc"] = group.getDesc();
+                vector<string> userV;
+                for (GroupUser &user : group.getUsers())
                 {
-                    json grpjson;
-                    grpjson["id"] = group.getId();
-                    grpjson["groupname"] = group.getName();
-                    grpjson["groupdesc"] = group.getDesc();
-                    vector<string> userV;
-                    for (GroupUser &user : group.getUsers())
-                    {
-                        json js;
-                        js["id"] = user.getId();
-                        js["name"] = user.getName();
-                        js["state"] = user.getState();
-                        js["role"] = user.getRole();
-                        userV.push_back(js.dump());
-                    }
-                    grpjson["users"] = userV;
-                    groupV.push_back(grpjson.dump());
+                    json js;
+                    js["id"] = user.getId();
+                    js["name"] = user.getName();
+                    js["state"] = user.getState();
+                    js["role"] = user.getRole();
+                    userV.push_back(js.dump());
                 }
-
-                response["groups"] = groupV;
+                grpjson["users"] = userV;
+                groupV.push_back(grpjson.dump());
             }
+            response["groups"] = groupV;
+            cout << "[DEBUG] Added " << groupV.size() << " groups to login response" << endl;
 
             string responseStr = response.dump();
             cout << "[DEBUG] Sending login success response: " << responseStr << endl;
@@ -472,9 +468,15 @@ void ChatService::oneChat(const TcpConnectionPtr& conn,json& js,Timestamp time){
         }
     }
 
-    const int AI_BOT_ID = 100;
-    if (toid == AI_BOT_ID) {
-        LOG_INFO << "Message sent to AI Bot from user " << fromId;
+    const int AI_BOT_ID_MIN = 10000;
+    const int AI_BOT_ID_MAX = 10099;
+
+    // ==================== AI私聊拦截逻辑 ====================
+    // 如果目标用户ID在 10000~10099 范围内，说明是发给AI机器人的私聊
+    // 需要将消息投递到Redis的AI专属任务队列，由Java AI服务处理并返回结果
+    // 注意：AI用户不需要存储离线消息，因为AI服务会通过Redis订阅处理并返回回复
+    if (toid >= AI_BOT_ID_MIN && toid <= AI_BOT_ID_MAX) {
+        LOG_INFO << "Message sent to AI Bot (id=" << toid << ") from user " << fromId;
 
         User sender = _userModel.query(fromId);
         string senderName = sender.getName();
@@ -489,39 +491,25 @@ void ChatService::oneChat(const TcpConnectionPtr& conn,json& js,Timestamp time){
             return;
         }
 
-        // 使用流式接口
-        std::thread([this, conn, fromId, senderName, userMessage, time, AI_BOT_ID]() {
-            _aiServiceClient.streamChat(userMessage, fromId, senderName, 
-                [this, fromId, time, AI_BOT_ID](const std::string& aiResponse) {
-                // 构造 AI 回复消息
-                json responseJs;
-                responseJs["msgid"] = ONE_CHAT_MSG;
-                responseJs["id"] = AI_BOT_ID;
-                responseJs["from"] = AI_BOT_ID;
-                responseJs["name"] = "AI Bot";
-                
-                // 添加流式标记
-                if (aiResponse == "[STREAM_END]") {
-                    responseJs["msg"] = aiResponse;
-                } else {
-                    responseJs["msg"] = "[STREAM_CHUNK]:" + aiResponse;
-                }
-                
-                responseJs["to"] = fromId;
-                responseJs["timestamp"] = time.toFormattedString(true);
+        // 构造AI任务请求，投递到Redis桥交给Java AI服务处理
+        // 包含：发送者ID、AI角色ID(botId)、消息内容
+        json aiRequest;
+        aiRequest["userId"] = fromId;
+        aiRequest["botId"] = toid;
+        aiRequest["message"] = userMessage;
+        aiRequest["userName"] = senderName;
 
-                lock_guard<mutex> lock(_connMutex);
-                auto it = _userConnMap.find(fromId);
-                if (it != _userConnMap.end()) {
-                    it->second->send(responseJs.dump());
-                    LOG_INFO << "AI stream chunk sent to user " << fromId;
-                } else {
-                    _offlineMsgModel.insert(fromId, responseJs.dump());
-                    LOG_INFO << "User " << fromId << " is offline, AI stream response stored as offline message";
-                }
-            });
-        }).detach();
+        // 将AI请求发布到Redis的AI任务频道
+        // Java端的AiChatService会订阅该频道并处理
+        string aiRequestStr = aiRequest.dump();
+        if (_redis.publish(9999, aiRequestStr)) {
+            LOG_INFO << "AI chat request published to Redis: userId=" << fromId << ", botId=" << toid;
+        } else {
+            LOG_ERROR << "Failed to publish AI chat request to Redis";
+        }
 
+        // AI用户不需要存储离线消息，AI服务会通过Redis返回回复
+        // 离线消息表仅用于普通用户离线时保存消息
         return;
     }
 
@@ -764,8 +752,48 @@ void ChatService::groupChat(const TcpConnectionPtr& conn,json& js,Timestamp time
 
      vector<int> useridVec=_groupModel.queryGroupUsers(userid,groupid);
 
+     // ==================== AI群聊拦截逻辑 ====================
+     // 收集群里所有的AI成员ID（id >= 10000 && id <= 10099）
+     // 如果AI成员列表不为空，构造特殊的群聊请求发送到Redis桥交给Java处理
+     const int AI_BOT_ID_MIN = 10000;
+     const int AI_BOT_ID_MAX = 10099;
+     vector<int> aiBotIds;
+     for(int id : useridVec) {
+         if (id >= AI_BOT_ID_MIN && id <= AI_BOT_ID_MAX) {
+             aiBotIds.push_back(id);
+         }
+     }
+
+     // 如果群内有AI成员，构造AI群聊请求投递到Redis桥
+     if (!aiBotIds.empty()) {
+         LOG_INFO << "Group " << groupid << " has " << aiBotIds.size() << " AI bots, forwarding to Java AI service";
+
+         json aiGroupRequest;
+         aiGroupRequest["groupId"] = groupid;
+         aiGroupRequest["senderId"] = userid;
+         aiGroupRequest["senderName"] = sender.getName();
+         aiGroupRequest["content"] = js.value("msg", js.value("message", ""));
+         aiGroupRequest["aiBotIds"] = aiBotIds;
+
+         string aiGroupRequestStr = aiGroupRequest.dump();
+         if (_redis.publish(9998, aiGroupRequestStr)) {
+             LOG_INFO << "AI group chat request published to Redis: groupId=" << groupid
+                      << ", aiBotIds count=" << aiBotIds.size();
+         } else {
+             LOG_ERROR << "Failed to publish AI group chat request to Redis";
+         }
+     }
+
+     // ==================== 正常群聊消息分发 ====================
+     // 照常给群里的真实人类用户（id < 10000）转发消息
+     // AI成员不需要通过C++转发，它们由Java端直接通过Redis Pub/Sub回复
      lock_guard<mutex> lock(_connMutex);
      for(int id:useridVec){
+         // 跳过AI机器人，它们由Java端处理
+         if (id >= AI_BOT_ID_MIN && id <= AI_BOT_ID_MAX) {
+             continue;
+         }
+
          auto it=_userConnMap.find(id);
          if(it!=_userConnMap.end()){
              it->second->send(js.dump());

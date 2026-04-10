@@ -10,7 +10,7 @@ spring:
       port: 6379
       password: 123456
       database: 0
-      timeout: 3000ms
+      timeout: 10000ms
       lettuce:
         pool:
           max-active: 8
@@ -19,13 +19,24 @@ spring:
           max-wait: -1ms
   ai:
     openai:
-      api-key: ${OPENAI_API_KEY}
+      api-key: sk-cb25020465f1471896dad23a241624b8
       base-url: https://dashscope.aliyuncs.com/compatible-mode
       chat:
         options:
           model: qwen3.5-flash
           temperature: 0.7
       enabled: true
+    vectorstore:
+      redis:
+        initialize-schema: true
+        index-name: rag-knowledge-index
+        prefix: "rag:doc:"
+
+embedding:
+  siliconflow:
+    api-key: sk-aklpwuwfhvqhgssjupjtkupqrngufnrmfdopmwlhtfeukehy
+    base-url: https://api.siliconflow.cn
+    model: BAAI/bge-m3
 
 chat:
   memory:

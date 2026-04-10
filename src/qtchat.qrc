@@ -9,5 +9,6 @@
     <file>icons/refresh.png</file>
     <file>icons/exit.png</file>
     <file>styles.qss</file>
+    <file>styles_dark.qss</file>
 </qresource>
 </RCC>
