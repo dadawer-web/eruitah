@@ -1,6 +1,7 @@
 #include"chatservice.hpp"
 #include"public.hpp"
 #include<string>
+#include<map>
 #include<muduo/base/Logging.h>
 #include<iostream>
 #include<vector>
@@ -99,6 +100,7 @@ ChatService::ChatService()
     _msgHandlerMap.insert({CREATE_GROUP_MSG ,std::bind(&ChatService::createGroup,this,_1,_2,_3)});
     _msgHandlerMap.insert({ADD_GROUP_MSG ,std::bind(&ChatService::addGroup,this,_1,_2,_3)});
     _msgHandlerMap.insert({GROUP_CHAT_MSG,std::bind(&ChatService::groupChat,this,_1,_2,_3)});
+    _msgHandlerMap.insert({INVITE_GROUP_MSG,std::bind(&ChatService::inviteToGroup,this,_1,_2,_3)});
 
     _msgHandlerMap.insert({FILE_TRANSFER_REQ,std::bind(&ChatService::fileTransferRequest,this,_1,_2,_3)});
     _msgHandlerMap.insert({FILE_TRANSFER_ACK,std::bind(&ChatService::fileTransferAck,this,_1,_2,_3)});
@@ -114,23 +116,19 @@ ChatService::ChatService()
     _msgHandlerMap.insert(std::make_pair(UPLOAD_AVATAR_MSG,std::bind(&ChatService::uploadAvatar,this,_1,_2,_3)));
     _msgHandlerMap.insert(std::make_pair(UPDATE_AVATAR_MSG,std::bind(&ChatService::updateAvatar,this,_1,_2,_3)));
 
-    _msgHandlerMap.insert({14,std::bind(&ChatService::queryFriendList,this,_1,_2,_3)});
-    _msgHandlerMap.insert({16,std::bind(&ChatService::queryGroupList,this,_1,_2,_3)});
-    _msgHandlerMap.insert({10,std::bind(&ChatService::groupChat,this,_1,_2,_3)});
-    _msgHandlerMap.insert({17,std::bind(&ChatService::groupChat,this,_1,_2,_3)});
-    _msgHandlerMap.insert({7,std::bind(&ChatService::addFriend,this,_1,_2,_3)});
-    _msgHandlerMap.insert({8,std::bind(&ChatService::createGroup,this,_1,_2,_3)});
-    _msgHandlerMap.insert({9,std::bind(&ChatService::queryFriendList,this,_1,_2,_3)});
-    _msgHandlerMap.insert({11,std::bind(&ChatService::queryGroupList,this,_1,_2,_3)});
-    _msgHandlerMap.insert({13,std::bind(&ChatService::createGroup,this,_1,_2,_3)});
-    _msgHandlerMap.insert({15,std::bind(&ChatService::addGroup,this,_1,_2,_3)});
-
     if(_redis.connect()){
+        LOG_INFO << "Redis connected successfully!";
         _redis.init_notify_handler(std::bind(&ChatService::handleRedisSubscribeMessage,this,_1,_2));
-        LOG_INFO << "Redis connected and notify handler initialized";
+        LOG_INFO << "Redis notify handler initialized";
+        
+        if(_redis.subscribe(GROUP_DISPATCH_CHANNEL)){
+            LOG_INFO << "Subscribed to group dispatch channel: " << GROUP_DISPATCH_CHANNEL;
+        } else {
+            LOG_ERROR << "Failed to subscribe to group dispatch channel: " << GROUP_DISPATCH_CHANNEL;
+        }
     }
     else{
-        LOG_ERROR << "Failed to connect to Redis";
+        LOG_ERROR << "Failed to connect to Redis!";
     }
 }
 
@@ -139,8 +137,10 @@ void ChatService::reset(){
 }
 
 MsgHandler ChatService::getHandler(int msgid){
+    LOG_INFO << "getHandler called with msgid: " << msgid;
     auto it=_msgHandlerMap.find(msgid);
     if(it==_msgHandlerMap.end()){
+        LOG_ERROR<<"msgid:"<<msgid<<" can not find handler!";
         return[=](const TcpConnectionPtr& conn,json& js,Timestamp time){
             LOG_ERROR<<"msgid:"<<msgid<<" can not find handler!";
         };
@@ -752,33 +752,50 @@ void ChatService::groupChat(const TcpConnectionPtr& conn,json& js,Timestamp time
 
      vector<int> useridVec=_groupModel.queryGroupUsers(userid,groupid);
 
-     // ==================== AI群聊拦截逻辑 ====================
-     // 收集群里所有的AI成员ID（id >= 10000 && id <= 10099）
-     // 如果AI成员列表不为空，构造特殊的群聊请求发送到Redis桥交给Java处理
+     // ==================== AI群聊拦截逻辑（@AI触发） ====================
+     // 只有消息中@了AI，才触发对应AI回复
+     // AI名称与ID映射：旗舰大师(10000)、严厉导师(10001)、温柔学长(10002)、代码审查员(10003)
      const int AI_BOT_ID_MIN = 10000;
      const int AI_BOT_ID_MAX = 10099;
-     vector<int> aiBotIds;
-     for(int id : useridVec) {
-         if (id >= AI_BOT_ID_MIN && id <= AI_BOT_ID_MAX) {
-             aiBotIds.push_back(id);
+     
+     string messageContent = js.value("msg", js.value("message", ""));
+     vector<int> mentionedAiBotIds;
+     
+     map<string, int> aiNameToId = {
+         {"旗舰大师", 10000},
+         {"严厉导师", 10001},
+         {"温柔学长", 10002},
+         {"代码审查员", 10003}
+     };
+     
+     for (const auto& pair : aiNameToId) {
+         string mentionPattern = "@" + pair.first;
+         if (messageContent.find(mentionPattern) != string::npos) {
+             for (int id : useridVec) {
+                 if (id == pair.second) {
+                     mentionedAiBotIds.push_back(id);
+                     LOG_INFO << "Message mentions AI: " << pair.first << " (id=" << id << ")";
+                     break;
+                 }
+             }
          }
      }
 
-     // 如果群内有AI成员，构造AI群聊请求投递到Redis桥
-     if (!aiBotIds.empty()) {
-         LOG_INFO << "Group " << groupid << " has " << aiBotIds.size() << " AI bots, forwarding to Java AI service";
+     // 只有被@的AI才需要回复
+     if (!mentionedAiBotIds.empty()) {
+         LOG_INFO << "Group " << groupid << " message mentions " << mentionedAiBotIds.size() << " AI bots, forwarding to Java AI service";
 
          json aiGroupRequest;
          aiGroupRequest["groupId"] = groupid;
          aiGroupRequest["senderId"] = userid;
          aiGroupRequest["senderName"] = sender.getName();
-         aiGroupRequest["content"] = js.value("msg", js.value("message", ""));
-         aiGroupRequest["aiBotIds"] = aiBotIds;
+         aiGroupRequest["content"] = messageContent;
+         aiGroupRequest["aiBotIds"] = mentionedAiBotIds;
 
          string aiGroupRequestStr = aiGroupRequest.dump();
          if (_redis.publish(9998, aiGroupRequestStr)) {
              LOG_INFO << "AI group chat request published to Redis: groupId=" << groupid
-                      << ", aiBotIds count=" << aiBotIds.size();
+                      << ", mentionedAiBotIds count=" << mentionedAiBotIds.size();
          } else {
              LOG_ERROR << "Failed to publish AI group chat request to Redis";
          }
@@ -810,6 +827,105 @@ void ChatService::groupChat(const TcpConnectionPtr& conn,json& js,Timestamp time
                }
           }
       }
+}
+
+void ChatService::inviteToGroup(const TcpConnectionPtr& conn,json& js,Timestamp time){
+    LOG_INFO << "do invite to group service!";
+
+    if (!js.contains("id") || !js["id"].is_number() ||
+        !js.contains("groupid") || !js["groupid"].is_number() ||
+        !js.contains("targetid") || !js["targetid"].is_number()) {
+        LOG_ERROR << "Invite to group request missing required fields or invalid types";
+        json response;
+        response["msgid"] = INVITE_GROUP_MSG_ACK;
+        response["errno"] = 1;
+        response["errmsg"] = "Invalid invite request format";
+        conn->send(response.dump());
+        return;
+    }
+
+    int inviterId = js["id"].get<int>();
+    int groupid = js["groupid"].get<int>();
+    int targetid = js["targetid"].get<int>();
+
+    LOG_INFO << "User " << inviterId << " inviting user " << targetid << " to group " << groupid;
+
+    const int AI_BOT_ID_MIN = 10000;
+    const int AI_BOT_ID_MAX = 10099;
+
+    bool dbResult = _groupModel.addGroup(targetid, groupid, "normal");
+    if (!dbResult) {
+        LOG_ERROR << "DB insert failed: user " << targetid << " could not be added to group " << groupid;
+        json response;
+        response["msgid"] = INVITE_GROUP_MSG_ACK;
+        response["errno"] = 2;
+        response["errmsg"] = "Database error: failed to add user to group";
+        conn->send(response.dump());
+        return;
+    }
+    LOG_INFO << "DB insert success: user " << targetid << " added to group " << groupid;
+
+    json response;
+    response["msgid"] = INVITE_GROUP_MSG_ACK;
+    response["errno"] = 0;
+    response["inviterid"] = inviterId;
+    response["groupid"] = groupid;
+    response["targetid"] = targetid;
+
+    vector<Group> groupuserVec = _groupModel.queryGroups(inviterId);
+    if (!groupuserVec.empty()) {
+        vector<string> groupV;
+        for (Group &group : groupuserVec) {
+            json grpjson;
+            grpjson["id"] = group.getId();
+            grpjson["groupname"] = group.getName();
+            grpjson["groupdesc"] = group.getDesc();
+            vector<string> userV;
+            for (GroupUser &user : group.getUsers()) {
+                json js;
+                js["id"] = user.getId();
+                js["name"] = user.getName();
+                js["state"] = user.getState();
+                js["role"] = user.getRole();
+                userV.push_back(js.dump());
+            }
+            grpjson["users"] = userV;
+            groupV.push_back(grpjson.dump());
+        }
+        response["groups"] = groupV;
+    }
+
+    conn->send(response.dump());
+
+    if (targetid < AI_BOT_ID_MIN || targetid > AI_BOT_ID_MAX) {
+        User targetUser = _userModel.query(targetid);
+        json notify;
+        notify["msgid"] = INVITE_GROUP_MSG_ACK;
+        notify["errno"] = 0;
+        notify["inviterid"] = inviterId;
+        notify["groupid"] = groupid;
+        notify["targetid"] = targetid;
+        notify["notify"] = true;
+
+        string notifyStr = notify.dump();
+
+        {
+            lock_guard<mutex> lock(_connMutex);
+            auto it = _userConnMap.find(targetid);
+            if (it != _userConnMap.end()) {
+                it->second->send(notifyStr);
+                LOG_INFO << "Invite notification sent directly to online user " << targetid;
+            }
+        }
+
+        if (targetUser.getState() == "online") {
+            if (_redis.publish(targetid, notifyStr)) {
+                LOG_INFO << "Invite notification published to Redis for user " << targetid;
+            }
+        }
+    } else {
+        LOG_INFO << "Target user " << targetid << " is AI bot, skipping notification";
+    }
 }
 
 void ChatService::fileTransferRequest(const TcpConnectionPtr& conn, json& js, Timestamp time) {
@@ -989,34 +1105,94 @@ void ChatService::fileTransferComplete(const TcpConnectionPtr& conn, json& js, T
     _offlineMsgModel.insert(toId, offlineMsg.dump());
 }
 
-void ChatService::handleRedisSubscribeMessage(long long userid, string msg)
+void ChatService::handleRedisSubscribeMessage(long long channel, string msg)
 {
-    LOG_INFO << "Received message from Redis for user " << userid;
+    LOG_INFO << "Received message from Redis on channel " << channel;
     LOG_INFO << "Message content: " << msg;
 
     try {
         json js = json::parse(msg);
         if (!js.contains("msgid") || !js["msgid"].is_number()) {
-            LOG_ERROR << "Message from Redis missing valid msgid field, userid: " << userid;
+            LOG_ERROR << "Message from Redis missing valid msgid field, channel: " << channel;
             return;
         }
     } catch (const json::exception& e) {
-        LOG_ERROR << "Failed to parse message from Redis, error: " << e.what() << ", userid: " << userid;
+        LOG_ERROR << "Failed to parse message from Redis, error: " << e.what() << ", channel: " << channel;
+        return;
+    }
+
+    if (channel == GROUP_DISPATCH_CHANNEL) {
+        handleGroupDispatchMessage(msg);
         return;
     }
 
     lock_guard<mutex> lock(_connMutex);
-    auto it = _userConnMap.find(static_cast<int>(userid));
+    auto it = _userConnMap.find(static_cast<int>(channel));
     if (it != _userConnMap.end())
     {
-        LOG_INFO << "Found user " << userid << " in connection map";
+        LOG_INFO << "Found user " << channel << " in connection map";
         it->second->send(msg);
-        LOG_INFO << "Message forwarded to user " << userid;
+        LOG_INFO << "Message forwarded to user " << channel;
         return;
     }
     else{
-        LOG_INFO << "User " << userid << " not found in connection map, storing as offline message";
-        _offlineMsgModel.insert(userid, msg);
+        LOG_INFO << "User " << channel << " not found in connection map, storing as offline message";
+        _offlineMsgModel.insert(channel, msg);
+    }
+}
+
+void ChatService::handleGroupDispatchMessage(const string& msg)
+{
+    LOG_INFO << "Handling group dispatch message: " << msg;
+    
+    try {
+        json js = json::parse(msg);
+        
+        if (!js.contains("groupid") || !js["groupid"].is_number()) {
+            LOG_ERROR << "Group dispatch message missing groupid";
+            return;
+        }
+        
+        int groupid = js["groupid"].get<int>();
+        int fromId = js.contains("from") ? js["from"].get<int>() : -1;
+        
+        LOG_INFO << "Dispatching group message to group: " << groupid << ", from: " << fromId;
+        
+        vector<int> useridVec = _groupModel.queryGroupUsers(fromId > 0 ? fromId : 1, groupid);
+        
+        const int AI_BOT_ID_MIN = 10000;
+        const int AI_BOT_ID_MAX = 10099;
+        
+        lock_guard<mutex> lock(_connMutex);
+        for (int userid : useridVec) {
+            if (userid == fromId) {
+                continue;
+            }
+            
+            if (userid >= AI_BOT_ID_MIN && userid <= AI_BOT_ID_MAX) {
+                LOG_INFO << "Skipping AI bot: " << userid << ", no offline message storage";
+                continue;
+            }
+            
+            auto it = _userConnMap.find(userid);
+            if (it != _userConnMap.end()) {
+                LOG_INFO << "Forwarding group message to online user: " << userid;
+                it->second->send(msg);
+            } else {
+                User user = _userModel.query(userid);
+                if (user.getState() == "online") {
+                    _redis.publish(userid, msg);
+                } else {
+                    LOG_INFO << "Storing group offline message for user: " << userid;
+                    _offlineMsgModel.insert(userid, msg);
+                }
+            }
+        }
+        
+        LOG_INFO << "Group dispatch completed for group: " << groupid;
+        
+    } catch (const json::exception& e) {
+        LOG_ERROR << "Failed to parse group dispatch message: " << e.what();
     }
 }
 

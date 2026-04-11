@@ -137,6 +137,8 @@ public:
      */
     void joinGroup(int userId, int groupId);
 
+    void inviteToGroup(int userId, int groupId, int targetId);
+
     /**
      * @brief Request the list of friends for a user
      * @param userId User ID to query
@@ -297,6 +299,7 @@ private slots:
     void groupJoined(bool success, const QString &message);    // Response to group join request
     void createGroupResponse(bool success, const QString &message);
     void addGroupResponse(bool success, const QString &message);
+    void inviteGroupResponse(bool success, const QString &message);
 
     // File transfer related signals
     void fileTransferRequestReceived(int fromId, const QString &filename, qint64 filesize, const QString &fileId);

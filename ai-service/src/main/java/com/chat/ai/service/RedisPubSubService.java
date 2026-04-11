@@ -18,6 +18,9 @@ public class RedisPubSubService {
 
     private static final String GROUP_CHANNEL_PREFIX = "group:message:";
     private static final String DIRECT_CHANNEL_PREFIX = "user:message:";
+    
+    private static final int GROUP_DISPATCH_CHANNEL = 9997;
+    private static final int GROUP_CHAT_MSG = 17;
 
     public RedisPubSubService(StringRedisTemplate stringRedisTemplate, ObjectMapper objectMapper) {
         this.stringRedisTemplate = stringRedisTemplate;
@@ -53,6 +56,7 @@ public class RedisPubSubService {
 
     /**
      * 发布AI角色的群聊消息
+     * 发布到群组消息分发频道(9997)，由ChatServer分发给群成员
      *
      * @param groupId    群组ID
      * @param content    消息内容
@@ -61,25 +65,24 @@ public class RedisPubSubService {
      * @param messageType 消息类型
      */
     public void publishAgentGroupMessage(Long groupId, String content, int botId, String botName, String messageType) {
-        String channel = GROUP_CHANNEL_PREFIX + groupId;
-
         try {
             Map<String, Object> message = new HashMap<>();
-            message.put("groupId", groupId);
-            message.put("senderId", botId);
-            message.put("senderName", botName);
-            message.put("content", content);
+            message.put("msgid", GROUP_CHAT_MSG);
+            message.put("groupid", groupId);
+            message.put("from", botId);
+            message.put("fromName", botName);
+            message.put("msg", content);
             message.put("timestamp", Instant.now().toEpochMilli());
-            message.put("type", messageType);
 
             String jsonMessage = objectMapper.writeValueAsString(message);
-            stringRedisTemplate.convertAndSend(channel, jsonMessage);
+            
+            stringRedisTemplate.convertAndSend(String.valueOf(GROUP_DISPATCH_CHANNEL), jsonMessage);
 
-            log.info("Published agent message to channel: {}, botId: {}, botName: {}, type: {}",
-                channel, botId, botName, messageType);
+            log.info("Published agent group message to dispatch channel: {}, groupId: {}, botId: {}",
+                GROUP_DISPATCH_CHANNEL, groupId, botId);
 
         } catch (Exception e) {
-            log.error("Error publishing agent message to channel: {}, botId: {}", channel, botId, e);
+            log.error("Error publishing agent message to group: {}, botId: {}", groupId, botId, e);
         }
     }
 

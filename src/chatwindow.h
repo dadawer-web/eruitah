@@ -218,6 +218,10 @@ public slots:
     void onJoinGroupConfirmed();
     void onAddGroupResponse(bool success, const QString &message);
     
+    // 拉人进群相关槽函数
+    void onInviteToGroup();
+    void onInviteGroupResponse(bool success, const QString &message);
+    
     // 文件传输相关槽函数
     void onSendFile();
     void onFileTransferRequestReceived(int fromId, const QString &filename, qint64 filesize, const QString &fileId);

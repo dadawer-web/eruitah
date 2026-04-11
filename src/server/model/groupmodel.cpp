@@ -27,18 +27,19 @@ bool GroupModel::createGroup(Group &group){
 
 // 加入群组 - 成员管理功能
 // 业务逻辑：将用户添加到指定群组，设置用户在群组中的角色权限
-void GroupModel::addGroup(int userid,int groupid,string role){
+bool GroupModel::addGroup(int userid,int groupid,string role){
     // SQL语句构造 - 成员关系建立
     // Correct parameter order: groupid first, then userid (matches table schema)
     char sql[1024]={0};
     sprintf(sql,"insert into groupuser values(%d,%d,'%s')",groupid,userid,role.c_str());
-    
+
     // 数据库操作执行
     MySQL mysql;
     if(mysql.connect()){
         // 执行插入操作 - 成员关系持久化
-        mysql.update(sql);
+        return mysql.update(sql);
     }
+    return false;
 }
 
 // 查询用户群组列表 - 群组信息聚合

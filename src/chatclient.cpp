@@ -283,6 +283,15 @@ void ChatClient::joinGroup(int userId, int groupId) {
     sendJsonMessage(message);
 }
 
+void ChatClient::inviteToGroup(int userId, int groupId, int targetId) {
+    QJsonObject message;
+    message["msgid"] = MsgType::INVITE_GROUP_MSG;
+    message["id"] = userId;
+    message["groupid"] = groupId;
+    message["targetid"] = targetId;
+    sendJsonMessage(message);
+}
+
 void ChatClient::requestFriendList(int userId) {
     qDebug() << "[CRITICAL] requestFriendList called with userId:" << userId;
     QJsonObject message;
@@ -687,8 +696,7 @@ void ChatClient::processMessage(const QJsonObject &message) {
         break;
     }
     
-    case MsgType::QUERY_FRIEND_MSG_ACK: 
-    case 9: { // 处理服务器返回的好友列表响应，服务器使用的消息类型是9
+    case MsgType::QUERY_FRIEND_MSG_ACK: {
         qDebug() << "Processing QUERY_FRIEND_MSG_ACK (message type:" << msgType << ")";
         // 好友列表查询响应处理 - 关系数据管理
         // 设计思路：
@@ -893,8 +901,101 @@ void ChatClient::processMessage(const QJsonObject &message) {
         break;
     }
     
-    case MsgType::QUERY_GROUP_MSG_ACK: 
-    case 11: { // 处理服务器返回的群组列表响应，服务器使用的消息类型是11
+    case MsgType::INVITE_GROUP_MSG_ACK: {
+        qDebug() << "Processing INVITE_GROUP_MSG_ACK";
+        int errno_val = message["errno"].toInt();
+        if (errno_val != 0) {
+            QString errorMsg = message["errmsg"].toString("Invite to group failed");
+            qDebug() << "Invite to group failed:" << errorMsg;
+            emit inviteGroupResponse(false, errorMsg);
+        } else {
+            qDebug() << "Invite to group success";
+            emit inviteGroupResponse(true, "Invite to group success");
+            if (message.contains("groups")) {
+                QList<Group> groupList;
+                if (message["groups"].isArray()) {
+                    QJsonArray groupsArray = message["groups"].toArray();
+                    for (const QJsonValue &value : groupsArray) {
+                        if (value.isString()) {
+                            QString groupStr = value.toString();
+                            QJsonDocument doc = QJsonDocument::fromJson(groupStr.toUtf8());
+                            if (doc.isObject()) {
+                                QJsonObject groupObj = doc.object();
+                                Group groupInfo;
+                                groupInfo.setId(groupObj["id"].toInt());
+                                groupInfo.setName(groupObj["groupname"].toString().toStdString());
+                                groupInfo.setDesc(groupObj["groupdesc"].toString().toStdString());
+                                if (groupObj.contains("users") && groupObj["users"].isArray()) {
+                                    QJsonArray usersArray = groupObj["users"].toArray();
+                                    for (const QJsonValue &userValue : usersArray) {
+                                        GroupUser user;
+                                        if (userValue.isString()) {
+                                            QString userStr = userValue.toString();
+                                            QJsonDocument userDoc = QJsonDocument::fromJson(userStr.toUtf8());
+                                            if (userDoc.isObject()) {
+                                                QJsonObject userObj = userDoc.object();
+                                                user.setId(userObj["id"].toVariant().toLongLong());
+                                                user.setName(userObj["name"].toString().toStdString());
+                                                user.setState(userObj["state"].toString().toStdString());
+                                                user.setRole(userObj["role"].toString().toStdString());
+                                                groupInfo.getUsers().push_back(user);
+                                            }
+                                        } else if (userValue.isObject()) {
+                                            QJsonObject userObj = userValue.toObject();
+                                            user.setId(userObj["id"].toVariant().toLongLong());
+                                            user.setName(userObj["name"].toString().toStdString());
+                                            user.setState(userObj["state"].toString().toStdString());
+                                            user.setRole(userObj["role"].toString().toStdString());
+                                            groupInfo.getUsers().push_back(user);
+                                        }
+                                    }
+                                }
+                                groupList.append(groupInfo);
+                            }
+                        } else if (value.isObject()) {
+                            QJsonObject groupObj = value.toObject();
+                            Group groupInfo;
+                            groupInfo.setId(groupObj["id"].toInt());
+                            groupInfo.setName(groupObj["groupname"].toString().toStdString());
+                            groupInfo.setDesc(groupObj["groupdesc"].toString().toStdString());
+                            if (groupObj.contains("users") && groupObj["users"].isArray()) {
+                                QJsonArray usersArray = groupObj["users"].toArray();
+                                for (const QJsonValue &userValue : usersArray) {
+                                    GroupUser user;
+                                    if (userValue.isString()) {
+                                        QString userStr = userValue.toString();
+                                        QJsonDocument userDoc = QJsonDocument::fromJson(userStr.toUtf8());
+                                        if (userDoc.isObject()) {
+                                            QJsonObject userObj = userDoc.object();
+                                            user.setId(userObj["id"].toVariant().toLongLong());
+                                            user.setName(userObj["name"].toString().toStdString());
+                                            user.setState(userObj["state"].toString().toStdString());
+                                            user.setRole(userObj["role"].toString().toStdString());
+                                            groupInfo.getUsers().push_back(user);
+                                        }
+                                    } else if (userValue.isObject()) {
+                                        QJsonObject userObj = userValue.toObject();
+                                        user.setId(userObj["id"].toVariant().toLongLong());
+                                        user.setName(userObj["name"].toString().toStdString());
+                                        user.setState(userObj["state"].toString().toStdString());
+                                        user.setRole(userObj["role"].toString().toStdString());
+                                        groupInfo.getUsers().push_back(user);
+                                    }
+                                }
+                            }
+                            groupList.append(groupInfo);
+                        }
+                    }
+                }
+                if (!groupList.isEmpty()) {
+                    emit groupListUpdated(groupList);
+                }
+            }
+        }
+        break;
+    }
+    
+    case MsgType::QUERY_GROUP_MSG_ACK: {
         qDebug() << "Processing QUERY_GROUP_MSG_ACK (message type:" << msgType << ")";
         // 群组列表查询响应处理 - 群组数据管理
         // 设计思路：

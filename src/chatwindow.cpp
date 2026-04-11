@@ -210,6 +210,7 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     connect(chatClient, &ChatClient::addFriendResponse, this, &ChatWindow::onAddFriendResponse);
     connect(chatClient, &ChatClient::addGroupResponse, this, &ChatWindow::onAddGroupResponse);
     connect(chatClient, &ChatClient::createGroupResponse, this, &ChatWindow::onCreateGroupResponse);
+    connect(chatClient, &ChatClient::inviteGroupResponse, this, &ChatWindow::onInviteGroupResponse);
 
     connect(chatClient, &ChatClient::emojiListUpdated, this, &ChatWindow::onEmojiListUpdated);
     connect(chatClient, &ChatClient::avatarUpdated, this, [this](const QString &avatarData) {
@@ -608,22 +609,26 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     QPushButton *addFriendBtn = new QPushButton("添加好友", toolBarWidget);
     QPushButton *createGroupBtn = new QPushButton("创建群组", toolBarWidget);
     QPushButton *joinGroupBtn = new QPushButton("加入群组", toolBarWidget);
+    QPushButton *inviteGroupBtn = new QPushButton("邀请进群", toolBarWidget);
     QPushButton *logoutBtn = new QPushButton("注销", toolBarWidget);
     
     QString btnStyle = "QPushButton { background-color: transparent; border: none; color: #9ca3af; font-size: 13px; padding: 6px 12px; border-radius: 4px; } QPushButton:hover { background-color: #3a3a3a; color: #ececec; } QPushButton:pressed { background-color: #404040; }";
     addFriendBtn->setStyleSheet(btnStyle);
     createGroupBtn->setStyleSheet(btnStyle);
     joinGroupBtn->setStyleSheet(btnStyle);
+    inviteGroupBtn->setStyleSheet(btnStyle);
     logoutBtn->setStyleSheet(btnStyle);
     
     addFriendBtn->setFont(toolbarFont);
     createGroupBtn->setFont(toolbarFont);
     joinGroupBtn->setFont(toolbarFont);
+    inviteGroupBtn->setFont(toolbarFont);
     logoutBtn->setFont(toolbarFont);
     
     toolbarLayout->addWidget(addFriendBtn);
     toolbarLayout->addWidget(createGroupBtn);
     toolbarLayout->addWidget(joinGroupBtn);
+    toolbarLayout->addWidget(inviteGroupBtn);
     toolbarLayout->addSpacing(8);
     toolbarLayout->addWidget(new QLabel("|", toolBarWidget));
     toolbarLayout->addSpacing(8);
@@ -633,6 +638,7 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     connect(addFriendBtn, &QPushButton::clicked, this, &ChatWindow::onAddFriend);
     connect(createGroupBtn, &QPushButton::clicked, this, &ChatWindow::onCreateGroup);
     connect(joinGroupBtn, &QPushButton::clicked, this, &ChatWindow::onJoinGroup);
+    connect(inviteGroupBtn, &QPushButton::clicked, this, &ChatWindow::onInviteToGroup);
     connect(logoutBtn, &QPushButton::clicked, this, &ChatWindow::onLogout);
     connect(changeAvatarButton, &QPushButton::clicked, this, [this, userId]() {
         // 打开文件选择对话框
@@ -1114,7 +1120,20 @@ void ChatWindow::createChatWidget(int chatId, const QString &chatName, bool isGr
             "QListWidget::item:last-child { border-bottom: none; }"
         );
         memberLayout->addWidget(memberListWidget);
-        
+
+        QtMaterialFlatButton *inviteBtn = new QtMaterialFlatButton("Invite +");
+        inviteBtn->setMinimumHeight(32);
+        inviteBtn->setRole(Material::Default);
+        inviteBtn->setForegroundColor(QColor("#3b82f6"));
+        inviteBtn->setBackgroundColor(QColor("#1a2a3a"));
+        inviteBtn->setOverlayColor(QColor("#2a4a6a"));
+        inviteBtn->setRippleStyle(Material::CenteredRipple);
+        inviteBtn->setCornerRadius(6);
+        inviteBtn->setFontSize(12);
+        inviteBtn->setProperty("groupId", chatId);
+        connect(inviteBtn, &QtMaterialFlatButton::clicked, this, &ChatWindow::onInviteToGroup);
+        memberLayout->addWidget(inviteBtn);
+
         memberWidget->setLayout(memberLayout);
         memberWidget->setFixedWidth(180);
     }
@@ -2218,6 +2237,35 @@ void ChatWindow::onGroupListUpdated(const QList<Group> &groups) {
     contactTreeWidget->update();
     contactTreeWidget->repaint();
     qDebug() << "[CRITICAL] Group list UI updated, expanded and repainted";
+
+    // 更新已打开的群聊Tab中的成员列表
+    for (int i = 0; i < chatTabWidget->count(); ++i) {
+        QWidget *tabWidget = chatTabWidget->widget(i);
+        if (tabWidget && tabWidget->property("isGroup").toBool()) {
+            int groupId = tabWidget->property("chatId").toInt();
+            if (groupMap.contains(groupId)) {
+                auto it = chatComponents.find(tabWidget);
+                if (it != chatComponents.end() && it->memberListWidget) {
+                    QListWidget *memberList = it->memberListWidget;
+                    memberList->clear();
+                    
+                    const vector<GroupUser>& members = groupMap[groupId].getUsers();
+                    for (const GroupUser& member : members) {
+                        QString memberName = QString::fromStdString(member.getName());
+                        QString memberRole = QString::fromStdString(member.getRole());
+                        QString display = memberName;
+                        if (memberRole == "creator") {
+                            display += " (群主)";
+                        } else if (memberRole == "admin") {
+                            display += " (管理员)";
+                        }
+                        memberList->addItem(display);
+                    }
+                    qDebug() << "Updated member list for group" << groupId << "with" << members.size() << "members";
+                }
+            }
+        }
+    }
 }
 
 void ChatWindow::onAddFriendResponse(bool success, const QString &message) {
@@ -2264,7 +2312,43 @@ void ChatWindow::onFriendStateUpdated(qint64 userId, const QString &state) {
 void ChatWindow::onAddGroupResponse(bool success, const QString &message) {
     if (success) {
         QMessageBox::information(this, "成功", "加入群组成功！");
-        // 重新请求群组列表
+        chatClient->requestGroupList(userId);
+    } else {
+        QMessageBox::warning(this, "失败", message);
+    }
+}
+
+void ChatWindow::onInviteToGroup() {
+    QtMaterialFlatButton *btn = qobject_cast<QtMaterialFlatButton*>(sender());
+    int groupId = -1;
+
+    if (btn) {
+        groupId = btn->property("groupId").toInt();
+    }
+
+    if (groupId <= 0) {
+        bool ok;
+        QString groupIdStr = QInputDialog::getText(this, "邀请进群", "请输入要邀请加入的群ID：", QLineEdit::Normal, "", &ok);
+        if (!ok || groupIdStr.isEmpty()) return;
+        groupId = groupIdStr.toInt(&ok);
+        if (!ok || groupId <= 0) {
+            QMessageBox::warning(this, "警告", "请输入有效的群ID");
+            return;
+        }
+    }
+
+    bool ok2;
+    int targetId = QInputDialog::getInt(this, "邀请加入群聊",
+        "请输入要拉入群聊的用户ID（如 AI 导师 10001）：", 0, 1, 999999, 1, &ok2);
+
+    if (ok2 && targetId > 0) {
+        chatClient->inviteToGroup(userId, groupId, targetId);
+    }
+}
+
+void ChatWindow::onInviteGroupResponse(bool success, const QString &message) {
+    if (success) {
+        QMessageBox::information(this, "成功", "邀请进群成功！");
         chatClient->requestGroupList(userId);
     } else {
         QMessageBox::warning(this, "失败", message);
@@ -2383,6 +2467,19 @@ void ChatWindow::showContextMenu(const QPoint &pos) {
         QAction *joinGroupAction = menu->addAction("加入群组");
         connect(createGroupAction, &QAction::triggered, this, &ChatWindow::onCreateGroup);
         connect(joinGroupAction, &QAction::triggered, this, &ChatWindow::onJoinGroup);
+    }
+    
+    if (item->parent() && item->parent()->text(0) == "群组") {
+        int groupId = item->data(1, Qt::UserRole).toInt();
+        QAction *inviteAction = menu->addAction("邀请进群");
+        connect(inviteAction, &QAction::triggered, this, [this, groupId]() {
+            bool ok;
+            int targetId = QInputDialog::getInt(this, "邀请加入群聊",
+                "请输入要拉入群聊的用户ID（如 AI 导师 10001）：", 0, 1, 999999, 1, &ok);
+            if (ok && targetId > 0) {
+                chatClient->inviteToGroup(userId, groupId, targetId);
+            }
+        });
     }
     
     menu->popup(contactTreeWidget->viewport()->mapToGlobal(pos));

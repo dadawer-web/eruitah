@@ -44,6 +44,10 @@ int main(int argc, char **argv){
     // 设计模式：组合模式，将事件循环注入到服务器对象中
     ChatServer server(&loop, addr, "ChatServer");
 
+    // 初始化ChatService单例 - 确保Redis连接和订阅在服务器启动前完成
+    // 关键业务：提前初始化单例，建立Redis连接，订阅GROUP_DISPATCH_CHANNEL
+    ChatService::instance();
+
     // 启动服务器 - 开始接受客户端连接请求
     // 内部逻辑：创建监听套接字，注册读事件，准备接受新连接
     server.start();

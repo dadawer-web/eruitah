@@ -21,6 +21,9 @@
 #include <QShowEvent>
 #include <QTimer>
 #include "chatclient.h"
+#include <qtmaterialtextfield.h>
+#include <qtmaterialraisedbutton.h>
+#include <qtmaterialflatbutton.h>
 
 class LoginWindow : public QMainWindow {
     Q_OBJECT
@@ -58,28 +61,23 @@ private:
     // 登录界面组件
     QWidget *loginWidget;
     QLabel *loginTitleLabel;
-    QLabel *serverLabel;
-    QLineEdit *serverLineEdit;
-    QLabel *idLabel;
-    QLineEdit *idLineEdit;
-    QLabel *passwordLabel;
-    QLineEdit *passwordLineEdit;
-    QPushButton *loginButton;
-    QPushButton *registerButton;
+    QtMaterialTextField *serverLineEdit;
+    QtMaterialTextField *idLineEdit;
+    QtMaterialTextField *passwordLineEdit;
+    QtMaterialRaisedButton *loginButton;
+    QtMaterialFlatButton *registerButton;
     QMessageBox *messageBox;
 
     // 注册界面组件
     QWidget *registerWidget;
     QLabel *registerTitleLabel;
-    QLabel *registerNameLabel;
-    QLineEdit *registerNameLineEdit;
-    QLabel *registerPasswordLabel;
-    QLineEdit *registerPasswordLineEdit;
+    QtMaterialTextField *registerNameLineEdit;
+    QtMaterialTextField *registerPasswordLineEdit;
     QLabel *registerAvatarLabel;
-    QPushButton *registerAvatarButton;
+    QtMaterialFlatButton *registerAvatarButton;
     QLabel *avatarPreviewLabel;
-    QPushButton *registerSubmitButton;
-    QPushButton *backToLoginButton;
+    QtMaterialRaisedButton *registerSubmitButton;
+    QtMaterialFlatButton *backToLoginButton;
     QString avatarPath;
 
     QStackedWidget *stackedWidget;
@@ -88,6 +86,15 @@ private:
 protected:
     // 重写showEvent事件处理函数
     void showEvent(QShowEvent *event) override;
+    
+    // 窗口拖动支持
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+
+private:
+    bool m_dragging = false;
+    QPoint m_dragPosition;
 
 private slots:
     void handleLogin();

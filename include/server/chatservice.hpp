@@ -18,6 +18,10 @@ using namespace std;
 using namespace muduo::net;
 using json=nlohmann::json;
 using  MsgHandler=std::function<void(const TcpConnectionPtr& conn,json& js,Timestamp time)>;
+
+// 群组消息分发频道（用于AI群聊回复）
+static const int GROUP_DISPATCH_CHANNEL = 9997;
+
 //聊天服务器业务类
 class ChatService
 {
@@ -38,6 +42,8 @@ public:
   void addGroup(const TcpConnectionPtr& conn,json& js,Timestamp time);
   //群聊天业务
   void groupChat(const TcpConnectionPtr& conn,json& js,Timestamp time);
+  //拉人进群业务
+  void inviteToGroup(const TcpConnectionPtr& conn,json& js,Timestamp time);
   //处理注销业务
   void loginout(const TcpConnectionPtr& conn,json& js,Timestamp time);
   
@@ -72,6 +78,8 @@ public:
   MsgHandler getHandler(int msgid);
   //从redis消息队列中获取订阅的信息
   void handleRedisSubscribeMessage(long long,string);
+  //处理群组消息分发（AI群聊回复）
+  void handleGroupDispatchMessage(const string& msg);
 private:
     ChatService();
      //存储消息id和其对应的业务处理方法
