@@ -2,6 +2,7 @@
 #include"public.hpp"
 #include<string>
 #include<map>
+#include<set>
 #include<muduo/base/Logging.h>
 #include<iostream>
 #include<vector>
@@ -101,6 +102,7 @@ ChatService::ChatService()
     _msgHandlerMap.insert({ADD_GROUP_MSG ,std::bind(&ChatService::addGroup,this,_1,_2,_3)});
     _msgHandlerMap.insert({GROUP_CHAT_MSG,std::bind(&ChatService::groupChat,this,_1,_2,_3)});
     _msgHandlerMap.insert({INVITE_GROUP_MSG,std::bind(&ChatService::inviteToGroup,this,_1,_2,_3)});
+    _msgHandlerMap.insert({CREATE_INTERVIEW_GROUP_MSG,std::bind(&ChatService::createInterviewGroup,this,_1,_2,_3)});
 
     _msgHandlerMap.insert({FILE_TRANSFER_REQ,std::bind(&ChatService::fileTransferRequest,this,_1,_2,_3)});
     _msgHandlerMap.insert({FILE_TRANSFER_ACK,std::bind(&ChatService::fileTransferAck,this,_1,_2,_3)});
@@ -752,9 +754,10 @@ void ChatService::groupChat(const TcpConnectionPtr& conn,json& js,Timestamp time
 
      vector<int> useridVec=_groupModel.queryGroupUsers(userid,groupid);
 
-     // ==================== AI群聊拦截逻辑（@AI触发） ====================
-     // 只有消息中@了AI，才触发对应AI回复
-     // AI名称与ID映射：旗舰大师(10000)、严厉导师(10001)、温柔学长(10002)、代码审查员(10003)
+     // ==================== AI群聊拦截逻辑 ====================
+     // 两种触发方式：
+     // 1. 显式@：消息中@了某个AI，触发该AI回复
+     // 2. 面试群组智能路由：群组包含面试官矩阵(10004,10005,10006)，自动触发Router AI选择回复
      const int AI_BOT_ID_MIN = 10000;
      const int AI_BOT_ID_MAX = 10099;
      
@@ -765,7 +768,10 @@ void ChatService::groupChat(const TcpConnectionPtr& conn,json& js,Timestamp time
          {"旗舰大师", 10000},
          {"严厉导师", 10001},
          {"温柔学长", 10002},
-         {"代码审查员", 10003}
+         {"代码审查员", 10003},
+         {"严厉大Boss", 10004},
+         {"慈祥老教授", 10005},
+         {"挑刺狂魔", 10006}
      };
      
      for (const auto& pair : aiNameToId) {
@@ -781,21 +787,40 @@ void ChatService::groupChat(const TcpConnectionPtr& conn,json& js,Timestamp time
          }
      }
 
-     // 只有被@的AI才需要回复
+     bool isInterviewGroup = false;
+     set<int> groupUserSet(useridVec.begin(), useridVec.end());
+     if (groupUserSet.count(10004) && groupUserSet.count(10005) && groupUserSet.count(10006)) {
+         isInterviewGroup = true;
+         LOG_INFO << "Detected interview group: " << groupid;
+     }
+
+     vector<int> aiBotIdsToRespond;
      if (!mentionedAiBotIds.empty()) {
-         LOG_INFO << "Group " << groupid << " message mentions " << mentionedAiBotIds.size() << " AI bots, forwarding to Java AI service";
+         aiBotIdsToRespond = mentionedAiBotIds;
+         LOG_INFO << "Group " << groupid << " message mentions " << mentionedAiBotIds.size() << " AI bots";
+     } else if (isInterviewGroup) {
+         for (int id : useridVec) {
+             if (id >= AI_BOT_ID_MIN && id <= AI_BOT_ID_MAX) {
+                 aiBotIdsToRespond.push_back(id);
+             }
+         }
+         LOG_INFO << "Interview group " << groupid << " message triggers smart routing with " << aiBotIdsToRespond.size() << " AI bots";
+     }
+
+     if (!aiBotIdsToRespond.empty()) {
+         LOG_INFO << "Forwarding group message to Java AI service: groupId=" << groupid;
 
          json aiGroupRequest;
          aiGroupRequest["groupId"] = groupid;
          aiGroupRequest["senderId"] = userid;
          aiGroupRequest["senderName"] = sender.getName();
          aiGroupRequest["content"] = messageContent;
-         aiGroupRequest["aiBotIds"] = mentionedAiBotIds;
+         aiGroupRequest["aiBotIds"] = aiBotIdsToRespond;
 
          string aiGroupRequestStr = aiGroupRequest.dump();
          if (_redis.publish(9998, aiGroupRequestStr)) {
              LOG_INFO << "AI group chat request published to Redis: groupId=" << groupid
-                      << ", mentionedAiBotIds count=" << mentionedAiBotIds.size();
+                      << ", aiBotIds count=" << aiBotIdsToRespond.size();
          } else {
              LOG_ERROR << "Failed to publish AI group chat request to Redis";
          }
@@ -926,6 +951,81 @@ void ChatService::inviteToGroup(const TcpConnectionPtr& conn,json& js,Timestamp 
     } else {
         LOG_INFO << "Target user " << targetid << " is AI bot, skipping notification";
     }
+}
+
+void ChatService::createInterviewGroup(const TcpConnectionPtr& conn, json& js, Timestamp time) {
+    LOG_INFO << "do create interview group service!";
+
+    if (!js.contains("id") || !js["id"].is_number()) {
+        LOG_ERROR << "Create interview group request missing required field 'id' or invalid type";
+        json response;
+        response["msgid"] = CREATE_INTERVIEW_GROUP_MSG;
+        response["errno"] = 1;
+        response["errmsg"] = "Invalid request format";
+        conn->send(response.dump());
+        return;
+    }
+
+    int userid = js["id"].get<int>();
+    LOG_INFO << "Creating interview group for user " << userid;
+
+    Group group(-1, "408全真模拟复试现场", "诸神黄昏");
+    if (!_groupModel.createGroup(group)) {
+        LOG_ERROR << "Failed to create interview group";
+        json response;
+        response["msgid"] = CREATE_INTERVIEW_GROUP_MSG;
+        response["errno"] = 2;
+        response["errmsg"] = "Failed to create interview group";
+        conn->send(response.dump());
+        return;
+    }
+
+    int groupid = group.getId();
+    LOG_INFO << "Interview group created with id: " << groupid;
+
+    _groupModel.addGroup(userid, groupid, "creator");
+
+    const int AI_BOT_ID_MIN = 10000;
+    const int AI_BOT_ID_MAX = 10099;
+
+    vector<int> interviewerIds = {10004, 10005, 10006};
+    for (int interviewerId : interviewerIds) {
+        _groupModel.addGroup(interviewerId, groupid, "normal");
+        LOG_INFO << "Added AI interviewer " << interviewerId << " to interview group " << groupid;
+    }
+
+    json response;
+    response["msgid"] = CREATE_INTERVIEW_GROUP_MSG;
+    response["errno"] = 0;
+    response["groupid"] = groupid;
+    response["groupname"] = "408全真模拟复试现场";
+    response["groupdesc"] = "诸神黄昏";
+
+    vector<Group> groupuserVec = _groupModel.queryGroups(userid);
+    if (!groupuserVec.empty()) {
+        vector<string> groupV;
+        for (Group &grp : groupuserVec) {
+            json grpjson;
+            grpjson["id"] = grp.getId();
+            grpjson["groupname"] = grp.getName();
+            grpjson["groupdesc"] = grp.getDesc();
+            vector<string> userV;
+            for (GroupUser &user : grp.getUsers()) {
+                json userJs;
+                userJs["id"] = user.getId();
+                userJs["name"] = user.getName();
+                userJs["state"] = user.getState();
+                userJs["role"] = user.getRole();
+                userV.push_back(userJs.dump());
+            }
+            grpjson["users"] = userV;
+            groupV.push_back(grpjson.dump());
+        }
+        response["groups"] = groupV;
+    }
+
+    conn->send(response.dump());
+    LOG_INFO << "Interview group creation completed for user " << userid << ", groupid: " << groupid;
 }
 
 void ChatService::fileTransferRequest(const TcpConnectionPtr& conn, json& js, Timestamp time) {

@@ -44,6 +44,8 @@ public:
   void groupChat(const TcpConnectionPtr& conn,json& js,Timestamp time);
   //拉人进群业务
   void inviteToGroup(const TcpConnectionPtr& conn,json& js,Timestamp time);
+  //创建面试群组业务
+  void createInterviewGroup(const TcpConnectionPtr& conn,json& js,Timestamp time);
   //处理注销业务
   void loginout(const TcpConnectionPtr& conn,json& js,Timestamp time);
   

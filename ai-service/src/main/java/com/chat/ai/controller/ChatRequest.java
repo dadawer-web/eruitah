@@ -1,6 +1,7 @@
 package com.chat.ai.controller;
 
 import lombok.Data;
+import java.util.List;
 
 @Data
 public class ChatRequest {
@@ -9,4 +10,11 @@ public class ChatRequest {
     private String userName;
     private String sessionId;
     private Integer botId;
+    private List<ImageData> images;
+
+    @Data
+    public static class ImageData {
+        private String base64;
+        private String mimeType;
+    }
 }

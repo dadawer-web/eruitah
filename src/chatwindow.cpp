@@ -211,6 +211,7 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     connect(chatClient, &ChatClient::addGroupResponse, this, &ChatWindow::onAddGroupResponse);
     connect(chatClient, &ChatClient::createGroupResponse, this, &ChatWindow::onCreateGroupResponse);
     connect(chatClient, &ChatClient::inviteGroupResponse, this, &ChatWindow::onInviteGroupResponse);
+    connect(chatClient, &ChatClient::interviewGroupCreated, this, &ChatWindow::onInterviewGroupCreated);
 
     connect(chatClient, &ChatClient::emojiListUpdated, this, &ChatWindow::onEmojiListUpdated);
     connect(chatClient, &ChatClient::avatarUpdated, this, [this](const QString &avatarData) {
@@ -610,25 +611,30 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     QPushButton *createGroupBtn = new QPushButton("创建群组", toolBarWidget);
     QPushButton *joinGroupBtn = new QPushButton("加入群组", toolBarWidget);
     QPushButton *inviteGroupBtn = new QPushButton("邀请进群", toolBarWidget);
+    QPushButton *interviewBtn = new QPushButton("🔥 开启模拟面试", toolBarWidget);
     QPushButton *logoutBtn = new QPushButton("注销", toolBarWidget);
     
     QString btnStyle = "QPushButton { background-color: transparent; border: none; color: #9ca3af; font-size: 13px; padding: 6px 12px; border-radius: 4px; } QPushButton:hover { background-color: #3a3a3a; color: #ececec; } QPushButton:pressed { background-color: #404040; }";
+    QString interviewBtnStyle = "QPushButton { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #ef4444, stop:1 #f97316); border: none; color: white; font-size: 13px; padding: 6px 12px; border-radius: 4px; font-weight: bold; } QPushButton:hover { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #dc2626, stop:1 #ea580c); } QPushButton:pressed { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #b91c1c, stop:1 #c2410c); }";
     addFriendBtn->setStyleSheet(btnStyle);
     createGroupBtn->setStyleSheet(btnStyle);
     joinGroupBtn->setStyleSheet(btnStyle);
     inviteGroupBtn->setStyleSheet(btnStyle);
+    interviewBtn->setStyleSheet(interviewBtnStyle);
     logoutBtn->setStyleSheet(btnStyle);
     
     addFriendBtn->setFont(toolbarFont);
     createGroupBtn->setFont(toolbarFont);
     joinGroupBtn->setFont(toolbarFont);
     inviteGroupBtn->setFont(toolbarFont);
+    interviewBtn->setFont(toolbarFont);
     logoutBtn->setFont(toolbarFont);
     
     toolbarLayout->addWidget(addFriendBtn);
     toolbarLayout->addWidget(createGroupBtn);
     toolbarLayout->addWidget(joinGroupBtn);
     toolbarLayout->addWidget(inviteGroupBtn);
+    toolbarLayout->addWidget(interviewBtn);
     toolbarLayout->addSpacing(8);
     toolbarLayout->addWidget(new QLabel("|", toolBarWidget));
     toolbarLayout->addSpacing(8);
@@ -639,6 +645,7 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     connect(createGroupBtn, &QPushButton::clicked, this, &ChatWindow::onCreateGroup);
     connect(joinGroupBtn, &QPushButton::clicked, this, &ChatWindow::onJoinGroup);
     connect(inviteGroupBtn, &QPushButton::clicked, this, &ChatWindow::onInviteToGroup);
+    connect(interviewBtn, &QPushButton::clicked, this, &ChatWindow::onCreateInterviewGroup);
     connect(logoutBtn, &QPushButton::clicked, this, &ChatWindow::onLogout);
     connect(changeAvatarButton, &QPushButton::clicked, this, [this, userId]() {
         // 打开文件选择对话框
@@ -1080,17 +1087,19 @@ void ChatWindow::createChatWidget(int chatId, const QString &chatName, bool isGr
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(0);
     
-    QListWidget *chatListWidget = new QListWidget;
+    BottomPaddingListWidget *chatListWidget = new BottomPaddingListWidget;
     chatListWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     chatListWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     chatListWidget->setFocusPolicy(Qt::NoFocus);
     chatListWidget->setSelectionMode(QAbstractItemView::NoSelection);
+    chatListWidget->setFrameShape(QFrame::NoFrame);
     chatListWidget->setWordWrap(true);
     chatListWidget->setResizeMode(QListWidget::Adjust);
     chatListWidget->setUniformItemSizes(false);
+    chatListWidget->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     chatListWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     chatListWidget->setStyleSheet(
-        "QListWidget { background-color: #2b2b2b; border: none; outline: none; padding-bottom: 20px; }"
+        "QListWidget { background-color: #2b2b2b; border: none; outline: none; }"
         "QListWidget::item { background-color: transparent; border: none; outline: none; margin-bottom: 8px; }"
         "QListWidget::item:selected { background-color: transparent; }"
         "QListWidget::item:hover { background-color: transparent; }"
@@ -2358,7 +2367,20 @@ void ChatWindow::onInviteGroupResponse(bool success, const QString &message) {
 void ChatWindow::onCreateGroupResponse(bool success, const QString &message) {
     if (success) {
         QMessageBox::information(this, "成功", "创建群组成功！");
-        // 重新请求群组列表
+        chatClient->requestGroupList(userId);
+    } else {
+        QMessageBox::warning(this, "失败", message);
+    }
+}
+
+void ChatWindow::onCreateInterviewGroup() {
+    chatClient->createInterviewGroup(userId);
+}
+
+void ChatWindow::onInterviewGroupCreated(bool success, int groupId, const QString &groupName, const QString &message) {
+    if (success) {
+        QMessageBox::information(this, "模拟面试", 
+            QString("已为您分配专属复试房间「%1」！\n请在群聊列表中查看并开始面试。").arg(groupName));
         chatClient->requestGroupList(userId);
     } else {
         QMessageBox::warning(this, "失败", message);
@@ -3570,14 +3592,15 @@ void ChatWindow::scrollChatToBottom(QListWidget *listWidget)
 {
     if (!listWidget) return;
     
-    listWidget->scrollToBottom();
-    
-    int scrollBarValue = listWidget->verticalScrollBar()->value();
-    int scrollBarMax = listWidget->verticalScrollBar()->maximum();
-    
-    if (scrollBarValue >= scrollBarMax - 10) {
-        listWidget->verticalScrollBar()->setValue(scrollBarMax + 80);
-    }
+    QTimer::singleShot(50, this, [listWidget]() {
+        int lastRow = listWidget->count() - 1;
+        if (lastRow >= 0) {
+            QListWidgetItem *lastItem = listWidget->item(lastRow);
+            if (lastItem) {
+                listWidget->scrollToItem(lastItem, QAbstractItemView::ScrollHint::PositionAtBottom);
+            }
+        }
+    });
 }
 
 // 加载现代化样式表

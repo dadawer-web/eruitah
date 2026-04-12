@@ -139,6 +139,8 @@ public:
 
     void inviteToGroup(int userId, int groupId, int targetId);
 
+    void createInterviewGroup(int userId);
+
     /**
      * @brief Request the list of friends for a user
      * @param userId User ID to query
@@ -300,6 +302,7 @@ private slots:
     void createGroupResponse(bool success, const QString &message);
     void addGroupResponse(bool success, const QString &message);
     void inviteGroupResponse(bool success, const QString &message);
+    void interviewGroupCreated(bool success, int groupId, const QString &groupName, const QString &message);
 
     // File transfer related signals
     void fileTransferRequestReceived(int fromId, const QString &filename, qint64 filesize, const QString &fileId);

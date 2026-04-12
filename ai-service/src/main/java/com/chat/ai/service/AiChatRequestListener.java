@@ -1,5 +1,6 @@
 package com.chat.ai.service;
 
+import com.chat.ai.controller.ChatRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,8 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
@@ -32,10 +35,12 @@ public class AiChatRequestListener {
     private final ObjectMapper objectMapper;
     private final AgentOrchestratorService agentOrchestratorService;
     private final GroupChatService groupChatService;
+    private final MultimodalChatService multimodalChatService;
     private RedisMessageListenerContainer listenerContainer;
 
     private static final String AI_PRIVATE_CHANNEL = "9999";
     private static final String AI_GROUP_CHANNEL = "9998";
+    private static final Pattern IMAGE_PATTERN = Pattern.compile("\\[IMAGE\\]([^,]+),([^\\[]+)");
 
     public AiChatRequestListener(
             StringRedisTemplate stringRedisTemplate,
@@ -44,7 +49,8 @@ public class AiChatRequestListener {
             VectorStore vectorStore,
             ObjectMapper objectMapper,
             AgentOrchestratorService agentOrchestratorService,
-            GroupChatService groupChatService) {
+            GroupChatService groupChatService,
+            MultimodalChatService multimodalChatService) {
         this.stringRedisTemplate = stringRedisTemplate;
         this.redisPubSubService = redisPubSubService;
         this.fastChatClient = fastChatClient;
@@ -52,6 +58,7 @@ public class AiChatRequestListener {
         this.objectMapper = objectMapper;
         this.agentOrchestratorService = agentOrchestratorService;
         this.groupChatService = groupChatService;
+        this.multimodalChatService = multimodalChatService;
     }
 
     @PostConstruct
@@ -120,6 +127,19 @@ public class AiChatRequestListener {
                     agentResult.intent(), agentResult.draftAnswer().length(), agentResult.finalAnswer().length());
 
                 response = agentResult.finalAnswer();
+
+            } else if (AiPersonaRegistry.isProblemSolverBot(botId)) {
+                log.info("[解题大王] 使用 MultimodalChatService 多模态服务");
+                
+                List<ChatRequest.ImageData> images = extractImagesFromMessage(userMessage);
+                String cleanMessage = removeImageTagsFromMessage(userMessage);
+                
+                log.info("[解题大王] 消息中包含 {} 张图片", images.size());
+                
+                MultimodalChatService.ChatResult multimodalResult = multimodalChatService.chat(
+                    userId, botId, cleanMessage.isEmpty() ? "请分析这张图片" : cleanMessage, images);
+                
+                response = multimodalResult.message();
 
             } else {
                 log.info("[{}] 使用fastChatClient（纯Prompt）", AiPersonaRegistry.getBotName(botId));
@@ -211,5 +231,31 @@ public class AiChatRequestListener {
                 }
             }
         }
+    }
+    
+    private List<ChatRequest.ImageData> extractImagesFromMessage(String message) {
+        List<ChatRequest.ImageData> images = new ArrayList<>();
+        Matcher matcher = IMAGE_PATTERN.matcher(message);
+        
+        while (matcher.find()) {
+            String imageType = matcher.group(1);
+            String base64Data = matcher.group(2);
+            
+            String mimeType = "image/" + imageType.toLowerCase();
+            if (imageType.equalsIgnoreCase("jpg")) {
+                mimeType = "image/jpeg";
+            }
+            
+            ChatRequest.ImageData imageData = new ChatRequest.ImageData();
+            imageData.setBase64(base64Data);
+            imageData.setMimeType(mimeType);
+            images.add(imageData);
+        }
+        
+        return images;
+    }
+    
+    private String removeImageTagsFromMessage(String message) {
+        return IMAGE_PATTERN.matcher(message).replaceAll("").trim();
     }
 }

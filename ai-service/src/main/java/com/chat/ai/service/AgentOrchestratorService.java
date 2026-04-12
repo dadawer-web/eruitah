@@ -22,23 +22,32 @@ public class AgentOrchestratorService {
         你是一个意图识别专家。请分析用户的问题，判断其属于以下哪一类：
         
         1. 代码求助：用户需要编写、调试或理解代码，涉及编程语言、算法实现等
-        2. 理论解答：用户询问计算机科学理论知识，如数据结构、操作系统、网络、数据库等
+        2. 理论解答：用户询问计算机科学理论知识、考研相关问题、分数线、招生政策、最新资讯等需要查询或搜索的问题
         3. 日常闲聊：用户的问候、闲聊或与学习无关的内容
+        
+        【重要规则】：
+        - 如果问题涉及"分数线"、"招生"、"政策"、"最新"、"今年"、"2024"、"2025"等时效性内容，必须归类为"理论解答"
+        - 如果用户在问具体的事实性问题（即使需要联网搜索），归类为"理论解答"
+        - 只有纯粹的打招呼、闲聊才归类为"日常闲聊"
         
         请只回复一个词：代码求助、理论解答 或 日常闲聊
         """;
 
     private static final String SOLVER_CODE_SYSTEM_PROMPT = """
         你是一位资深的编程导师，专门帮助计算机考研学生解决代码问题。
-        你可以使用compileCppCode工具来编译和验证C++代码。
+        你可以使用cppCompilerTool工具来编译和运行C++代码，获取真实的编译错误和运行结果。
+        当用户给你代码让你检查Bug或问运行结果时，务必调用工具验证。
         请提供清晰的代码解释和实现建议。
         """;
 
     private static final String SOLVER_THEORY_SYSTEM_PROMPT = """
         你是一位资深的计算机考研辅导老师，精通数据结构、操作系统、计算机网络、数据库等408考试科目。
         
+        你可以使用webSearchTool工具来搜索互联网上的最新信息，如最新的分数线、招生政策等实时数据。
+        
         请严格基于检索到的知识库内容回答问题。如果知识库中有相关内容，请引用并详细解释。
         如果知识库中没有相关内容，请明确告知用户"知识库中暂无此内容"，然后根据你的知识给出参考答案。
+        对于需要实时信息的问题（如分数线、招生政策等），请调用webSearchTool搜索最新信息。
         
         回答格式：
         1. 首先说明是否从知识库中找到了相关内容
@@ -126,8 +135,9 @@ public class AgentOrchestratorService {
             case "代码求助":
                 systemPrompt = SOLVER_CODE_SYSTEM_PROMPT;
                 solverClient = chatClientBuilderProvider.getObject()
-                    .defaultFunctions("compileCppCode")
+                    .defaultFunctions("cppCompilerTool")
                     .build();
+                log.info("[Solver] 代码求助模式：已挂载 cppCompilerTool");
                 break;
                 
             case "理论解答":
@@ -143,7 +153,9 @@ public class AgentOrchestratorService {
                 
                 solverClient = chatClientBuilderProvider.getObject()
                     .defaultAdvisors(new QuestionAnswerAdvisor(vectorStore))
+                    .defaultFunctions("webSearchTool")
                     .build();
+                log.info("[Solver] 理论解答模式：已挂载 RAG + webSearchTool");
                 break;
                 
             case "日常闲聊":

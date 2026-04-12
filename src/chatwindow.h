@@ -60,6 +60,14 @@ struct PendingMessage {
     QString timestamp;
 };
 
+class BottomPaddingListWidget : public QListWidget {
+    Q_OBJECT
+public:
+    explicit BottomPaddingListWidget(QWidget *parent = nullptr) : QListWidget(parent) {
+        setViewportMargins(0, 0, 0, 120);
+    }
+};
+
 // 文件传输信息结构体
 struct FileTransferInfo {
     QString filename;     // 文件名
@@ -212,7 +220,11 @@ public slots:
     void onCreateGroup();
     void onCreateGroupConfirmed();
     void onCreateGroupResponse(bool success, const QString &message);
-    
+
+    // 创建面试群组相关槽函数
+    void onCreateInterviewGroup();
+    void onInterviewGroupCreated(bool success, int groupId, const QString &groupName, const QString &message);
+
     // 加入群组相关槽函数
     void onJoinGroup();
     void onJoinGroupConfirmed();

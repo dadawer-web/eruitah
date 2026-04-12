@@ -23,7 +23,7 @@ spring:
       base-url: https://dashscope.aliyuncs.com/compatible-mode
       chat:
         options:
-          model: qwen3.5-flash
+          model: qwen3.5-plus
           temperature: 0.7
       enabled: true
     vectorstore:
@@ -31,6 +31,13 @@ spring:
         initialize-schema: true
         index-name: rag-knowledge-index
         prefix: "rag:doc:"
+
+multimodal:
+  openai:
+    api-key: sk-8ebb4900479f41f48ace59abe396db6e
+    base-url: https://dashscope.aliyuncs.com/compatible-mode
+    model: qwen3.5-omni-flash
+    temperature: 0.7
 
 embedding:
   siliconflow:
@@ -52,3 +59,7 @@ logging:
   level:
     com.chat.ai: DEBUG
     org.springframework.ai: DEBUG
+
+serper:
+  api-key: 982665e41a8ee751e806a2c9995abee158720263
+  base-url: https://google.serper.dev

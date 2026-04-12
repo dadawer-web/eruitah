@@ -20,6 +20,12 @@
 #include <QAbstractTextDocumentLayout>
 #include <QBuffer>
 #include <QtMath>
+#include <QStackedWidget>
+#include <QVBoxLayout>
+#include <QByteArray>
+#include <QWebEngineView>
+#include <QWebEngineSettings>
+#include <QRandomGenerator>
 
 #include "qtmaterialavatar.h"
 #include "lib/qtmaterialtheme.h"
@@ -37,20 +43,25 @@ MessageWidget::MessageWidget(bool isSender, const QString &text, const QString &
     , m_isSender(isSender)
     , m_senderName(senderName)
     , m_rawText(text)
+    , m_avatarPath(avatarPath)
     , m_headerWidget(nullptr)
     , m_contentContainer(nullptr)
     , m_bubbleWidget(nullptr)
     , m_avatarLabel(nullptr)
     , m_nameLabel(nullptr)
+    , m_contentStack(nullptr)
     , m_contentBrowser(nullptr)
+    , m_imageContainer(nullptr)
+    , m_imageLabel(nullptr)
+    , m_mermaidView(nullptr)
     , m_timeLabel(nullptr)
 {
-    setupUI(text, avatarPath, senderName, timeStr);
+    setupUI(avatarPath, senderName, timeStr);
     applyStyles();
+    processAndSetContent(text);
 }
 
-void MessageWidget::setupUI(const QString &text, const QString &avatarPath, 
-                            const QString &senderName, const QString &timeStr)
+void MessageWidget::setupUI(const QString &avatarPath, const QString &senderName, const QString &timeStr)
 {
     setStyleSheet("background: transparent;");
     
@@ -79,13 +90,11 @@ void MessageWidget::setupUI(const QString &text, const QString &avatarPath,
     
     m_nameLabel = new QLabel(this);
     m_nameLabel->setText(displayName);
-    m_nameLabel->setStyleSheet("color: #9ca3af; font-size: 12px; font-weight: 500; background: transparent;");
     
     m_timeLabel = new QLabel(this);
     m_timeLabel->setText(timeStr.isEmpty() 
         ? QDateTime::currentDateTime().toString("hh:mm") 
         : timeStr);
-    m_timeLabel->setStyleSheet("color: #6b7280; font-size: 11px; background: transparent;");
     
     m_headerWidget = new QWidget(this);
     m_headerWidget->setStyleSheet("background: transparent;");
@@ -106,8 +115,11 @@ void MessageWidget::setupUI(const QString &text, const QString &avatarPath,
     m_bubbleWidget = new QWidget(this);
     m_bubbleWidget->setObjectName("messageBubble");
     QVBoxLayout *bubbleLayout = new QVBoxLayout(m_bubbleWidget);
-    bubbleLayout->setContentsMargins(24, 16, 24, 16);
-    bubbleLayout->setSpacing(0);
+    bubbleLayout->setContentsMargins(12, 8, 12, 8);
+    bubbleLayout->setSpacing(4);
+    
+    m_contentStack = new QStackedWidget(m_bubbleWidget);
+    m_contentStack->setStyleSheet("background: transparent;");
     
     m_contentBrowser = new QTextBrowser(m_bubbleWidget);
     m_contentBrowser->setOpenExternalLinks(true);
@@ -120,19 +132,33 @@ void MessageWidget::setupUI(const QString &text, const QString &avatarPath,
     m_contentBrowser->setLineWrapMode(QTextBrowser::WidgetWidth);
     m_contentBrowser->document()->setDocumentMargin(0);
     m_contentBrowser->viewport()->setContentsMargins(0, 0, 0, 0);
+    m_contentBrowser->viewport()->setAutoFillBackground(false);
+    m_contentBrowser->setAttribute(Qt::WA_TransparentForMouseEvents, true);
     m_contentBrowser->setTextInteractionFlags(Qt::TextBrowserInteraction | Qt::TextSelectableByMouse);
     m_contentBrowser->setMinimumWidth(60);
-    m_contentBrowser->setMaximumWidth(600);
+    m_contentStack->addWidget(m_contentBrowser);
     
-    processAndSetContent(text);
+    m_imageContainer = new QWidget(m_bubbleWidget);
+    m_imageContainer->setStyleSheet("background: transparent;");
+    QVBoxLayout *imageLayout = new QVBoxLayout(m_imageContainer);
+    imageLayout->setContentsMargins(0, 0, 0, 0);
+    imageLayout->setSpacing(4);
+    m_contentStack->addWidget(m_imageContainer);
     
-    bubbleLayout->addWidget(m_contentBrowser);
+    m_mermaidView = new QWebEngineView(m_bubbleWidget);
+    m_mermaidView->setStyleSheet("background: transparent;");
+    m_mermaidView->page()->setBackgroundColor(Qt::transparent);
+    m_contentStack->addWidget(m_mermaidView);
+    
+    m_contentStack->setCurrentWidget(m_contentBrowser);
+    
+    bubbleLayout->addWidget(m_contentStack);
     
     m_contentContainer = new QWidget(this);
     m_contentContainer->setStyleSheet("background: transparent;");
     QVBoxLayout *bodyLayout = new QVBoxLayout(m_contentContainer);
     bodyLayout->setContentsMargins(0, 0, 0, 0);
-    bodyLayout->setSpacing(1);
+    bodyLayout->setSpacing(4);
     bodyLayout->addWidget(m_headerWidget);
     if (!m_isSender) {
         bodyLayout->addWidget(m_bubbleWidget, 0, Qt::AlignLeft);
@@ -188,7 +214,7 @@ void MessageWidget::applyStyles()
     }
     
     QString browserStyle = QString(
-        "QTextBrowser { background-color: transparent; color: #f1f5f9; font-size: 15px; border: none; padding: 0; margin: 0; }"
+        "QTextBrowser { background-color: transparent; color: #f1f5f9; font-size: 14px; border: none; padding: 0; margin: 0; }"
         "QTextBrowser::selection { background-color: #3b82f6; color: #ffffff; }"
         "QTextBrowser viewport { background-color: transparent; padding: 0; margin: 0; }"
     );
@@ -197,114 +223,269 @@ void MessageWidget::applyStyles()
     }
 }
 
-QByteArray MessageWidget::imageDataFromPixmap(const QPixmap &pixmap)
-{
-    QByteArray imageData;
-    QBuffer buffer(&imageData);
-    buffer.open(QIODevice::WriteOnly);
-    pixmap.save(&buffer, "PNG");
-    buffer.close();
-    return imageData;
-}
-
-int MessageWidget::calculateDocumentHeight(QTextDocument *doc, int textWidth)
-{
-    doc->setTextWidth(textWidth);
-    
-    // 使用 documentLayout 获取渲染后的实际尺寸
-    QAbstractTextDocumentLayout *layout = doc->documentLayout();
-    QSizeF docSize = layout->documentSize();
-    
-    // 返回向上取整的高度，并添加更多的安全边距
-    // 长文本可能需要更多的空间
-    int blockCount = doc->blockCount();
-    int extraPadding = qMax(16, blockCount * 2);  // 每个段落额外 2px
-    
-    return qCeil(docSize.height()) + extraPadding + 16;
-}
-
 void MessageWidget::processAndSetContent(const QString &text)
 {
-    QString processedText = text;
+    QString processedText = text.trimmed();
     
-    if (text.startsWith("data:image/") || text.startsWith("[EMOJI_DATA:") || text.startsWith("[IMAGE]")) {
-        QByteArray imageData;
-        
-        if (text.startsWith("data:image/")) {
-            int commaPos = text.indexOf(',');
-            if (commaPos != -1) {
-                imageData = QByteArray::fromBase64(text.mid(commaPos + 1).toUtf8());
-            }
-        } else if (text.startsWith("[EMOJI_DATA:")) {
-            int startPos = text.indexOf(':') + 1;
-            int endPos = text.lastIndexOf(']');
-            if (startPos != -1 && endPos != -1) {
-                imageData = QByteArray::fromBase64(text.mid(startPos, endPos - startPos).toUtf8());
-            }
-        } else if (text.startsWith("[IMAGE]")) {
-            int commaPos = text.indexOf(',');
-            if (commaPos != -1) {
-                imageData = QByteArray::fromBase64(text.mid(commaPos + 1).toUtf8());
-            }
-        }
-        
-        if (!imageData.isEmpty()) {
-            QImage image;
-            if (image.loadFromData(imageData)) {
-                QString base64 = QString(imageData.toBase64());
-                QString imageType = text.contains("png", Qt::CaseInsensitive) ? "png" : "jpeg";
-                processedText = QString("![image](data:image/%1;base64,%2)").arg(imageType).arg(base64);
-            } else {
-                processedText = "[Image load failed]";
-            }
-        }
-    } else if (text.startsWith("image:")) {
-        QString imagePath = text.mid(6);
-        QPixmap pixmap;
-        if (pixmap.load(imagePath)) {
-            QString base64 = QString(imageDataFromPixmap(pixmap).toBase64());
-            processedText = QString("![image](data:image/png;base64,%1)").arg(base64);
-        } else {
-            processedText = "[Image load failed]";
+    if (containsImage(processedText)) {
+        processedText = extractAndDisplayImages(processedText);
+    }
+    
+    if (containsMermaid(processedText)) {
+        QString mermaidCode;
+        QRegularExpression mermaidRegex("```mermaid\\s*\\n([\\s\\S]*?)\\n```");
+        QRegularExpressionMatch match = mermaidRegex.match(processedText);
+        if (match.hasMatch()) {
+            mermaidCode = match.captured(1);
+            renderMermaidDiagram(mermaidCode);
+            processedText = processMermaidInText(processedText);
         }
     }
     
-    processedText = processedText.trimmed();
+    bool isCodeContent = looksLikeCode(processedText);
+    
+    if (isCodeContent) {
+        QString escapedCode = escapeForMarkdown(processedText);
+        m_contentBrowser->setMarkdown("```\n" + escapedCode + "\n```");
+        m_rawText = processedText;
+        
+        m_contentBrowser->setStyleSheet(
+            "QTextBrowser { background-color: transparent; color: #f1f5f9; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 13px; border: none; padding: 0; margin: 0; }"
+            "QTextBrowser::selection { background-color: #3b82f6; color: #ffffff; }"
+            "QTextBrowser viewport { background-color: transparent; padding: 0; margin: 0; }"
+        );
+    } else {
+        m_contentBrowser->setMarkdown(processedText);
+        m_rawText = processedText;
+    }
     
     QTextDocument *doc = m_contentBrowser->document();
     doc->setDocumentMargin(0);
     
-    m_contentBrowser->setMarkdown(processedText);
-    m_rawText = processedText;
+    for (QTextBlock block = doc->begin(); block.isValid(); block = block.next()) {
+        QTextCursor cursor(block);
+        QTextBlockFormat blockFormat = block.blockFormat();
+        blockFormat.setTopMargin(0);
+        blockFormat.setBottomMargin(0);
+        blockFormat.setNonBreakableLines(false);
+        cursor.setBlockFormat(blockFormat);
+    }
     
     const int maxBubbleWidth = 600;
     const int minBubbleWidth = 200;
-    const int horizontalPadding = 48;
-    const int maxTextWidth = maxBubbleWidth - horizontalPadding;
+    const int horizontalPadding = 24;
+    const int verticalPadding = 16;
     
-    int docHeight = calculateDocumentHeight(doc, maxTextWidth);
+    doc->setTextWidth(maxBubbleWidth);
+    doc->adjustSize();
     
-    qreal idealWidth = doc->idealWidth();
-    int actualTextWidth = qMin(qCeil(idealWidth), maxTextWidth);
-    int bubbleWidth = qBound(minBubbleWidth, actualTextWidth + horizontalPadding, maxBubbleWidth);
-    int contentWidth = bubbleWidth - horizontalPadding;
+    int textWidth = qCeil(doc->idealWidth());
+    int textHeight = qCeil(doc->size().height());
     
-    if (contentWidth < maxTextWidth) {
-        docHeight = calculateDocumentHeight(doc, contentWidth);
+    int contentWidth = qMin(textWidth, maxBubbleWidth - horizontalPadding * 2);
+    contentWidth = qMax(minBubbleWidth - horizontalPadding * 2, contentWidth);
+    
+    if (textWidth > contentWidth) {
+        doc->setTextWidth(contentWidth);
+        doc->adjustSize();
+        textHeight = qCeil(doc->size().height());
+    }
+    
+    int bubbleWidth = contentWidth + horizontalPadding * 2;
+    int bubbleHeight = textHeight + verticalPadding * 2;
+    
+    if (!m_imageLabels.isEmpty()) {
+        int totalImageHeight = 0;
+        for (QLabel *imgLabel : m_imageLabels) {
+            totalImageHeight += imgLabel->sizeHint().height() + 8;
+        }
+        bubbleHeight += totalImageHeight;
+        bubbleWidth = qMax(bubbleWidth, 350);
+    }
+    
+    if (m_mermaidView && m_contentStack->currentWidget() == m_mermaidView) {
+        bubbleWidth = 500;
+        bubbleHeight = 400;
     }
     
     m_contentBrowser->setMinimumWidth(contentWidth);
     m_contentBrowser->setMaximumWidth(contentWidth);
-    m_contentBrowser->setMinimumHeight(docHeight);
-    // 不限制最大高度，让内容自动扩展
-    m_contentBrowser->setMaximumHeight(16777215);  // QWIDGETSIZE_MAX
+    m_contentBrowser->setMinimumHeight(textHeight + 10);
+    m_contentBrowser->setMaximumHeight(textHeight + 10);
     
     m_bubbleWidget->setMinimumWidth(bubbleWidth);
     m_bubbleWidget->setMaximumWidth(bubbleWidth);
+    m_bubbleWidget->setMinimumHeight(bubbleHeight);
+    m_bubbleWidget->setMaximumHeight(bubbleHeight);
     
     m_contentBrowser->updateGeometry();
     m_bubbleWidget->updateGeometry();
     updateGeometry();
+}
+
+bool MessageWidget::containsImage(const QString &text)
+{
+    return text.contains("[IMAGE]");
+}
+
+QString MessageWidget::extractAndDisplayImages(const QString &text)
+{
+    QString result = text;
+    QRegularExpression imageRegex("\\[IMAGE\\]([^,]+),([^\\[]+)");
+    QRegularExpressionMatchIterator it = imageRegex.globalMatch(text);
+    
+    while (it.hasNext()) {
+        QRegularExpressionMatch match = it.next();
+        QString imageType = match.captured(1);
+        QString base64Data = match.captured(2);
+        
+        QByteArray imageData = QByteArray::fromBase64(base64Data.toUtf8());
+        QPixmap pixmap;
+        if (pixmap.loadFromData(imageData)) {
+            if (pixmap.width() > 300 || pixmap.height() > 300) {
+                pixmap = pixmap.scaled(300, 300, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+            }
+            
+            QLabel *imageLabel = new QLabel(m_imageContainer);
+            imageLabel->setPixmap(pixmap);
+            imageLabel->setStyleSheet("border-radius: 8px; background: transparent;");
+            imageLabel->setFixedSize(pixmap.size());
+            
+            QVBoxLayout *layout = qobject_cast<QVBoxLayout*>(m_imageContainer->layout());
+            if (layout) {
+                layout->addWidget(imageLabel);
+            }
+            
+            m_imageLabels.append(imageLabel);
+        }
+        
+        result.remove(match.captured(0));
+    }
+    
+    if (!m_imageLabels.isEmpty()) {
+        m_contentStack->setCurrentWidget(m_imageContainer);
+    }
+    
+    return result.trimmed();
+}
+
+bool MessageWidget::containsMermaid(const QString &text)
+{
+    return text.contains("```mermaid");
+}
+
+void MessageWidget::renderMermaidDiagram(const QString &mermaidCode)
+{
+    QString html = QString(R"(
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            background: transparent;
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .mermaid {
+            background: transparent;
+        }
+        .mermaid svg {
+            max-width: 100%%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="mermaid">%1</div>
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'dark',
+            themeVariables: {
+                primaryColor: '#3b82f6',
+                primaryTextColor: '#fff',
+                primaryBorderColor: '#60a5fa',
+                lineColor: '#94a3b8',
+                secondaryColor: '#1e293b',
+                tertiaryColor: '#1e293b',
+                background: '#1e293b',
+                mainBkg: '#1e293b',
+                nodeBorder: '#3b82f6',
+                clusterBkg: '#1e293b',
+                titleColor: '#f1f5f9',
+                edgeLabelBackground: '#1e293b'
+            }
+        });
+    </script>
+</body>
+</html>
+)").arg(mermaidCode.toHtmlEscaped());
+    
+    m_mermaidView->setHtml(html);
+    m_contentStack->setCurrentWidget(m_mermaidView);
+}
+
+QString MessageWidget::processMermaidInText(const QString &text)
+{
+    QString result = text;
+    QRegularExpression mermaidRegex("```mermaid\\s*\\n[\\s\\S]*?\\n```");
+    result.remove(mermaidRegex);
+    return result.trimmed();
+}
+
+bool MessageWidget::looksLikeCode(const QString &text)
+{
+    static QRegularExpression codePatterns[] = {
+        QRegularExpression(R"(#include\s*<[^>]+>)"),
+        QRegularExpression(R"(#include\s*"[^"]+")"),
+        QRegularExpression(R"(\b(int|float|double|char|void|return|if|else|for|while|class|struct|public|private|protected|new|delete|cout|cin|std::|printf|scanf)\b)"),
+        QRegularExpression(R"(\b(def |import |from |print\(|function |var |let |const |=>|\$\{)\b)"),
+        QRegularExpression(R"(\{[\s\S]*\})"),
+        QRegularExpression(R"([\[\](){};]=*)"),
+    };
+    
+    int codeIndicators = 0;
+    for (const auto& pattern : codePatterns) {
+        if (pattern.match(text).hasMatch()) {
+            codeIndicators++;
+        }
+    }
+    
+    if (codeIndicators >= 2) return true;
+    
+    int lineCount = text.count('\n') + 1;
+    if (lineCount >= 3 && (text.contains(';') || text.contains('{') || text.contains('}'))) {
+        return true;
+    }
+    
+    if (text.contains("//") || text.contains("/*") || text.contains("#!")) {
+        return true;
+    }
+    
+    return false;
+}
+
+QString MessageWidget::escapeForMarkdown(const QString &text)
+{
+    QString result = text;
+    result.replace("\\", "\\\\");
+    result.replace("`", "\\`");
+    result.replace("*", "\\*");
+    result.replace("_", "\\_");
+    result.replace("#", "\\#");
+    result.replace("+", "\\+");
+    result.replace("-", "\\-");
+    result.replace("!", "\\!");
+    result.replace("|", "\\|");
+    result.replace("<", "&lt;");
+    result.replace(">", "&gt;");
+    result.replace("&", "&amp;");
+    return result;
 }
 
 void MessageWidget::appendText(const QString &text)
@@ -317,32 +498,48 @@ void MessageWidget::appendText(const QString &text)
         
         m_contentBrowser->setMarkdown(m_rawText);
         
-        const int maxBubbleWidth = 600;
-        const int minBubbleWidth = 200;
-        const int horizontalPadding = 48;
-        const int maxTextWidth = maxBubbleWidth - horizontalPadding;
-        
-        int docHeight = calculateDocumentHeight(doc, maxTextWidth);
-        qreal idealWidth = doc->idealWidth();
-        int actualTextWidth = qMin(qCeil(idealWidth), maxTextWidth);
-        int bubbleWidth = qBound(minBubbleWidth, actualTextWidth + horizontalPadding, maxBubbleWidth);
-        int contentWidth = bubbleWidth - horizontalPadding;
-        
-        if (contentWidth < maxTextWidth) {
-            docHeight = calculateDocumentHeight(doc, contentWidth);
+        for (QTextBlock block = doc->begin(); block.isValid(); block = block.next()) {
+            QTextCursor cursor(block);
+            QTextBlockFormat blockFormat = block.blockFormat();
+            blockFormat.setTopMargin(0);
+            blockFormat.setBottomMargin(0);
+            cursor.setBlockFormat(blockFormat);
         }
+        
+        const int maxBubbleWidth = 600;
+        const int horizontalPadding = 24;
+        const int verticalPadding = 16;
+        const int maxTextWidth = maxBubbleWidth - horizontalPadding * 2;
+        
+        doc->setTextWidth(maxTextWidth);
+        doc->adjustSize();
+        
+        int textWidth = qCeil(doc->idealWidth());
+        int textHeight = qCeil(doc->size().height());
+        
+        int contentWidth = qMin(textWidth, maxTextWidth);
+        
+        if (textWidth > contentWidth) {
+            doc->setTextWidth(contentWidth);
+            doc->adjustSize();
+            textHeight = qCeil(doc->size().height());
+        }
+        
+        int bubbleWidth = contentWidth + horizontalPadding * 2;
+        int bubbleHeight = textHeight + verticalPadding * 2;
         
         m_contentBrowser->setMinimumWidth(contentWidth);
         m_contentBrowser->setMaximumWidth(contentWidth);
-        m_contentBrowser->setMinimumHeight(docHeight);
-        m_contentBrowser->setMaximumHeight(16777215);  // 不限制最大高度
+        m_contentBrowser->setMinimumHeight(textHeight + 10);
+        m_contentBrowser->setMaximumHeight(textHeight + 10);
         
         m_bubbleWidget->setMinimumWidth(bubbleWidth);
         m_bubbleWidget->setMaximumWidth(bubbleWidth);
+        m_bubbleWidget->setMinimumHeight(bubbleHeight);
+        m_bubbleWidget->setMaximumHeight(bubbleHeight);
         
         updateGeometry();
         
-        // 查找父级 QListWidget 并更新大小
         QWidget* parent = this->parentWidget();
         while (parent) {
             QListWidget* listWidget = qobject_cast<QListWidget*>(parent);
@@ -352,7 +549,6 @@ void MessageWidget::appendText(const QString &text)
                     if (item && listWidget->itemWidget(item) == this) {
                         item->setSizeHint(sizeHint());
                         listWidget->updateGeometry();
-                        // 滚动到底部
                         QScrollBar *scrollBar = listWidget->verticalScrollBar();
                         if (scrollBar) {
                             scrollBar->setValue(scrollBar->maximum());
@@ -377,29 +573,45 @@ void MessageWidget::setMarkdownContent(const QString &markdown)
         
         m_contentBrowser->setMarkdown(m_rawText);
         
-        const int maxBubbleWidth = 600;
-        const int minBubbleWidth = 200;
-        const int horizontalPadding = 48;
-        const int maxTextWidth = maxBubbleWidth - horizontalPadding;
-        
-        int docHeight = calculateDocumentHeight(doc, maxTextWidth);
-        
-        qreal idealWidth = doc->idealWidth();
-        int actualTextWidth = qMin(qCeil(idealWidth), maxTextWidth);
-        int bubbleWidth = qBound(minBubbleWidth, actualTextWidth + horizontalPadding, maxBubbleWidth);
-        int contentWidth = bubbleWidth - horizontalPadding;
-        
-        if (contentWidth < maxTextWidth) {
-            docHeight = calculateDocumentHeight(doc, contentWidth);
+        for (QTextBlock block = doc->begin(); block.isValid(); block = block.next()) {
+            QTextCursor cursor(block);
+            QTextBlockFormat blockFormat = block.blockFormat();
+            blockFormat.setTopMargin(0);
+            blockFormat.setBottomMargin(0);
+            cursor.setBlockFormat(blockFormat);
         }
+        
+        const int maxBubbleWidth = 600;
+        const int horizontalPadding = 24;
+        const int verticalPadding = 16;
+        const int maxTextWidth = maxBubbleWidth - horizontalPadding * 2;
+        
+        doc->setTextWidth(maxTextWidth);
+        doc->adjustSize();
+        
+        int textWidth = qCeil(doc->idealWidth());
+        int textHeight = qCeil(doc->size().height());
+        
+        int contentWidth = qMin(textWidth, maxTextWidth);
+        
+        if (textWidth > contentWidth) {
+            doc->setTextWidth(contentWidth);
+            doc->adjustSize();
+            textHeight = qCeil(doc->size().height());
+        }
+        
+        int bubbleWidth = contentWidth + horizontalPadding * 2;
+        int bubbleHeight = textHeight + verticalPadding * 2;
         
         m_contentBrowser->setMinimumWidth(contentWidth);
         m_contentBrowser->setMaximumWidth(contentWidth);
-        m_contentBrowser->setMinimumHeight(docHeight);
-        m_contentBrowser->setMaximumHeight(16777215);  // 不限制最大高度
+        m_contentBrowser->setMinimumHeight(textHeight + 10);
+        m_contentBrowser->setMaximumHeight(textHeight + 10);
         
         m_bubbleWidget->setMinimumWidth(bubbleWidth);
         m_bubbleWidget->setMaximumWidth(bubbleWidth);
+        m_bubbleWidget->setMinimumHeight(bubbleHeight);
+        m_bubbleWidget->setMaximumHeight(bubbleHeight);
         
         updateGeometry();
     }
@@ -407,20 +619,17 @@ void MessageWidget::setMarkdownContent(const QString &markdown)
 
 QSize MessageWidget::sizeHint() const
 {
-    if (!m_contentBrowser || !m_headerWidget) {
+    if (!m_contentBrowser || !m_headerWidget || !m_bubbleWidget) {
         return QWidget::sizeHint();
     }
     
     int headerHeight = m_headerWidget->sizeHint().height();
+    int bubbleHeight = m_bubbleWidget->height();
+    int totalHeight = headerHeight + bubbleHeight + 12;
     
-    // 使用文档的实际高度
-    QTextDocument *doc = m_contentBrowser->document();
-    int docHeight = qCeil(doc->size().height());
+    int totalWidth = m_bubbleWidget->width() + 70;
     
-    int bubbleHeight = docHeight + 32;  // 上下边距各 16px
-    int totalHeight = headerHeight + bubbleHeight + 8;
-    
-    return QSize(width() > 0 ? width() : 800, totalHeight);
+    return QSize(totalWidth, totalHeight);
 }
 
 void MessageWidget::paintEvent(QPaintEvent *event)

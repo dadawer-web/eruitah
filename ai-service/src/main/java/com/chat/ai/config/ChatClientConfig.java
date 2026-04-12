@@ -15,7 +15,7 @@ public class ChatClientConfig {
     public ChatClient smartChatClient(ChatClient.Builder builder, VectorStore vectorStore) {
         return builder
             .defaultAdvisors(new QuestionAnswerAdvisor(vectorStore))
-            .defaultFunctions("compileCppCode")
+            .defaultFunctions("webSearchTool", "cppCompilerTool")
             .build();
     }
 

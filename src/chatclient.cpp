@@ -292,6 +292,14 @@ void ChatClient::inviteToGroup(int userId, int groupId, int targetId) {
     sendJsonMessage(message);
 }
 
+void ChatClient::createInterviewGroup(int userId) {
+    QJsonObject message;
+    message["msgid"] = MsgType::CREATE_INTERVIEW_GROUP_MSG;
+    message["id"] = userId;
+    sendJsonMessage(message);
+    qDebug() << "Interview group creation request sent for user:" << userId;
+}
+
 void ChatClient::requestFriendList(int userId) {
     qDebug() << "[CRITICAL] requestFriendList called with userId:" << userId;
     QJsonObject message;
@@ -911,6 +919,102 @@ void ChatClient::processMessage(const QJsonObject &message) {
         } else {
             qDebug() << "Invite to group success";
             emit inviteGroupResponse(true, "Invite to group success");
+            if (message.contains("groups")) {
+                QList<Group> groupList;
+                if (message["groups"].isArray()) {
+                    QJsonArray groupsArray = message["groups"].toArray();
+                    for (const QJsonValue &value : groupsArray) {
+                        if (value.isString()) {
+                            QString groupStr = value.toString();
+                            QJsonDocument doc = QJsonDocument::fromJson(groupStr.toUtf8());
+                            if (doc.isObject()) {
+                                QJsonObject groupObj = doc.object();
+                                Group groupInfo;
+                                groupInfo.setId(groupObj["id"].toInt());
+                                groupInfo.setName(groupObj["groupname"].toString().toStdString());
+                                groupInfo.setDesc(groupObj["groupdesc"].toString().toStdString());
+                                if (groupObj.contains("users") && groupObj["users"].isArray()) {
+                                    QJsonArray usersArray = groupObj["users"].toArray();
+                                    for (const QJsonValue &userValue : usersArray) {
+                                        GroupUser user;
+                                        if (userValue.isString()) {
+                                            QString userStr = userValue.toString();
+                                            QJsonDocument userDoc = QJsonDocument::fromJson(userStr.toUtf8());
+                                            if (userDoc.isObject()) {
+                                                QJsonObject userObj = userDoc.object();
+                                                user.setId(userObj["id"].toVariant().toLongLong());
+                                                user.setName(userObj["name"].toString().toStdString());
+                                                user.setState(userObj["state"].toString().toStdString());
+                                                user.setRole(userObj["role"].toString().toStdString());
+                                                groupInfo.getUsers().push_back(user);
+                                            }
+                                        } else if (userValue.isObject()) {
+                                            QJsonObject userObj = userValue.toObject();
+                                            user.setId(userObj["id"].toVariant().toLongLong());
+                                            user.setName(userObj["name"].toString().toStdString());
+                                            user.setState(userObj["state"].toString().toStdString());
+                                            user.setRole(userObj["role"].toString().toStdString());
+                                            groupInfo.getUsers().push_back(user);
+                                        }
+                                    }
+                                }
+                                groupList.append(groupInfo);
+                            }
+                        } else if (value.isObject()) {
+                            QJsonObject groupObj = value.toObject();
+                            Group groupInfo;
+                            groupInfo.setId(groupObj["id"].toInt());
+                            groupInfo.setName(groupObj["groupname"].toString().toStdString());
+                            groupInfo.setDesc(groupObj["groupdesc"].toString().toStdString());
+                            if (groupObj.contains("users") && groupObj["users"].isArray()) {
+                                QJsonArray usersArray = groupObj["users"].toArray();
+                                for (const QJsonValue &userValue : usersArray) {
+                                    GroupUser user;
+                                    if (userValue.isString()) {
+                                        QString userStr = userValue.toString();
+                                        QJsonDocument userDoc = QJsonDocument::fromJson(userStr.toUtf8());
+                                        if (userDoc.isObject()) {
+                                            QJsonObject userObj = userDoc.object();
+                                            user.setId(userObj["id"].toVariant().toLongLong());
+                                            user.setName(userObj["name"].toString().toStdString());
+                                            user.setState(userObj["state"].toString().toStdString());
+                                            user.setRole(userObj["role"].toString().toStdString());
+                                            groupInfo.getUsers().push_back(user);
+                                        }
+                                    } else if (userValue.isObject()) {
+                                        QJsonObject userObj = userValue.toObject();
+                                        user.setId(userObj["id"].toVariant().toLongLong());
+                                        user.setName(userObj["name"].toString().toStdString());
+                                        user.setState(userObj["state"].toString().toStdString());
+                                        user.setRole(userObj["role"].toString().toStdString());
+                                        groupInfo.getUsers().push_back(user);
+                                    }
+                                }
+                            }
+                            groupList.append(groupInfo);
+                        }
+                    }
+                }
+                if (!groupList.isEmpty()) {
+                    emit groupListUpdated(groupList);
+                }
+            }
+        }
+        break;
+    }
+    
+    case MsgType::CREATE_INTERVIEW_GROUP_MSG: {
+        qDebug() << "Processing CREATE_INTERVIEW_GROUP_MSG";
+        int errno_val = message["errno"].toInt();
+        if (errno_val != 0) {
+            QString errorMsg = message["errmsg"].toString("Failed to create interview group");
+            qDebug() << "Interview group creation failed:" << errorMsg;
+            emit interviewGroupCreated(false, -1, "", errorMsg);
+        } else {
+            int groupId = message["groupid"].toInt();
+            QString groupName = message["groupname"].toString("408全真模拟复试现场");
+            qDebug() << "Interview group created successfully, groupId:" << groupId;
+            emit interviewGroupCreated(true, groupId, groupName, "Interview group created successfully");
             if (message.contains("groups")) {
                 QList<Group> groupList;
                 if (message["groups"].isArray()) {

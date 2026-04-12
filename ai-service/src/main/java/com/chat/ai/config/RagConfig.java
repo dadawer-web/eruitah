@@ -83,3 +83,8 @@ public class RagConfig {
         log.info("Initialized VectorStore with {} seed knowledge documents", 3);
     }
 }
+/**
+ * 启动时：RagConfig 添加 3 个种子文档 → VectorStore
+上传时：RagService 上传真实文档 → 同一个 VectorStore（追加，不是替换）
+检索时：similaritySearch() 返回所有相关文档（种子 + 真实文档）
+ */
