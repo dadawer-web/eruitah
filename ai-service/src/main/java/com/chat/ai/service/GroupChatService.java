@@ -4,13 +4,17 @@ import com.chat.ai.model.AiTask;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
+import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+
+import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_CONVERSATION_ID_KEY;
+import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_RETRIEVE_SIZE_KEY;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,6 +33,7 @@ import java.util.regex.Pattern;
 public class GroupChatService {
 
     private final GroupChatMemoryService groupChatMemoryService;
+    private final ChatMemory chatMemory;
     private final RedisPubSubService redisPubSubService;
     private final RedisTemplate<String, Object> redisTemplate;
     private final ChatClient smartChatClient;
@@ -88,12 +93,14 @@ public class GroupChatService {
 
     public GroupChatService(
             GroupChatMemoryService groupChatMemoryService,
+            ChatMemory chatMemory,
             RedisPubSubService redisPubSubService,
             RedisTemplate<String, Object> redisTemplate,
             @Qualifier("smartChatClient") ChatClient smartChatClient,
             @Qualifier("fastChatClient") ChatClient fastChatClient,
             ObjectMapper objectMapper) {
         this.groupChatMemoryService = groupChatMemoryService;
+        this.chatMemory = chatMemory;
         this.redisPubSubService = redisPubSubService;
         this.redisTemplate = redisTemplate;
         this.smartChatClient = smartChatClient;
@@ -145,10 +152,7 @@ public class GroupChatService {
             return;
         }
 
-        List<String> recentMessages = groupChatMemoryService.getRecentMessages(groupId, DEFAULT_MESSAGE_COUNT);
-        String chatContext = groupChatMemoryService.formatMessagesForSummary(recentMessages);
-
-        String userPrompt = buildUserPrompt(String.valueOf(senderId), message, chatContext);
+        String conversationId = buildGroupConversationId(groupId);
 
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
@@ -160,7 +164,7 @@ public class GroupChatService {
             }
 
             CompletableFuture<Void> future = CompletableFuture.runAsync(
-                () -> invokeAgentAndPublish(botId, persona, userPrompt, groupId),
+                () -> invokeAgentAndPublish(botId, persona, message, conversationId, groupId),
                 agentExecutor
             );
 
@@ -265,7 +269,7 @@ public class GroupChatService {
      */
     private int routeToInterviewer(String message) {
         try {
-            List<Message> promptMessages = new ArrayList<>();
+            List<org.springframework.ai.chat.messages.Message> promptMessages = new ArrayList<>();
             promptMessages.add(new SystemMessage(ROUTER_SYSTEM_PROMPT));
             promptMessages.add(new UserMessage("用户说：" + message));
 
@@ -323,19 +327,14 @@ public class GroupChatService {
      *
      * @param botId   AI角色ID
      * @param persona AI角色人设
-     * @param userPrompt 用户消息+上下文
+     * @param message 用户原始消息
+     * @param conversationId 会话ID（用于记忆管理）
      * @param groupId 群组ID
      */
     private void invokeAgentAndPublish(int botId, AiPersonaRegistry.AiPersona persona,
-                                        String userPrompt, Long groupId) {
+                                        String message, String conversationId, Long groupId) {
         try {
             long startTime = System.currentTimeMillis();
-
-            List<Message> promptMessages = new ArrayList<>();
-            promptMessages.add(new SystemMessage(persona.systemPrompt()));
-            promptMessages.add(new UserMessage(userPrompt));
-
-            Prompt prompt = new Prompt(promptMessages);
 
             /**
              * 【核心权限判断】
@@ -344,14 +343,27 @@ public class GroupChatService {
              *   - hasRag的角色：人设Prompt中已包含"优先参考知识库"的指引
              *   - hasTools的角色：人设Prompt中已包含"可以编译验证代码"的指引
              *   - 纯Prompt角色：完全依赖人设和上下文
+             * 
+             * 【记忆管理】
+             * 使用 MessageChatMemoryAdvisor 自动管理群聊历史记忆
              */
             String response;
             if (AiPersonaRegistry.isMasterBot(botId)) {
-                response = smartChatClient.prompt(prompt)
+                response = smartChatClient.prompt()
+                    .system(persona.systemPrompt())
+                    .user(message)
+                    .advisors(spec -> spec
+                        .param(CHAT_MEMORY_CONVERSATION_ID_KEY, conversationId)
+                        .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 15))
                     .call()
                     .content();
             } else {
-                response = fastChatClient.prompt(prompt)
+                response = fastChatClient.prompt()
+                    .system(persona.systemPrompt())
+                    .user(message)
+                    .advisors(spec -> spec
+                        .param(CHAT_MEMORY_CONVERSATION_ID_KEY, conversationId)
+                        .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 15))
                     .call()
                     .content();
             }
@@ -378,10 +390,8 @@ public class GroupChatService {
         }
     }
 
-    private String buildUserPrompt(String senderName, String content, String chatContext) {
-        return "【当前群聊上下文】\n" + chatContext + "\n\n"
-            + "【最新消息】\n" + senderName + " 说：" + content + "\n\n"
-            + "请根据你的角色设定，针对这条消息做出回复。";
+    private String buildGroupConversationId(Long groupId) {
+        return "group_" + groupId;
     }
 
     // ==================== 摘要功能原有代码 ====================
@@ -418,7 +428,7 @@ public class GroupChatService {
 
             String chatLog = groupChatMemoryService.formatMessagesForSummary(messages);
 
-            List<Message> promptMessages = new ArrayList<>();
+            List<org.springframework.ai.chat.messages.Message> promptMessages = new ArrayList<>();
             promptMessages.add(new SystemMessage(SUMMARY_SYSTEM_PROMPT));
             promptMessages.add(new UserMessage("以下是群聊记录，请生成摘要：\n\n" + chatLog));
 
@@ -443,6 +453,8 @@ public class GroupChatService {
 
     public void clearGroupMessages(Long groupId) {
         groupChatMemoryService.clearGroupMessages(groupId);
+        String conversationId = buildGroupConversationId(groupId);
+        chatMemory.clear(conversationId);
         log.info("Cleared messages for group: {}", groupId);
     }
 

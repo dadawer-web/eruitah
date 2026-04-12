@@ -1,21 +1,21 @@
 package com.chat.ai.service;
 
-import com.chat.ai.model.ChatMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
+import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.AssistantMessage;
-import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
-import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+
+import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_CONVERSATION_ID_KEY;
+import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_RETRIEVE_SIZE_KEY;
 
 @Slf4j
 @Service
@@ -23,7 +23,7 @@ public class AiChatService {
 
     private final ChatClient smartChatClient;
     private final ChatClient fastChatClient;
-    private final ChatMemoryService chatMemoryService;
+    private final ChatMemory chatMemory;
     private final RedisPubSubService redisPubSubService;
     private final AgentOrchestratorService agentOrchestratorService;
 
@@ -33,12 +33,12 @@ public class AiChatService {
     public AiChatService(
             @Qualifier("smartChatClient") ChatClient smartChatClient,
             @Qualifier("fastChatClient") ChatClient fastChatClient,
-            ChatMemoryService chatMemoryService,
+            ChatMemory chatMemory,
             RedisPubSubService redisPubSubService,
             AgentOrchestratorService agentOrchestratorService) {
         this.smartChatClient = smartChatClient;
         this.fastChatClient = fastChatClient;
-        this.chatMemoryService = chatMemoryService;
+        this.chatMemory = chatMemory;
         this.redisPubSubService = redisPubSubService;
         this.agentOrchestratorService = agentOrchestratorService;
     }
@@ -62,9 +62,9 @@ public class AiChatService {
      * @return ChatResult 包含AI回复和sessionId
      */
     public ChatResult chat(int userId, int botId, String message) {
-        String sessionId = generateSessionId(userId, botId);
-        log.info("1v1聊天: userId={}, botId={}({}), message={}",
-            userId, botId, AiPersonaRegistry.getBotName(botId), message);
+        String conversationId = buildConversationId(userId, botId);
+        log.info("1v1聊天: userId={}, botId={}({}), message={}, conversationId={}",
+            userId, botId, AiPersonaRegistry.getBotName(botId), message, conversationId);
 
         try {
             String response;
@@ -86,41 +86,31 @@ public class AiChatService {
 
                 response = agentResult.finalAnswer();
 
-                chatMemoryService.saveMessage(sessionId, ChatMessage.userMessage(message));
-                chatMemoryService.saveMessage(sessionId, ChatMessage.assistantMessage(response));
+                chatMemory.add(conversationId, List.of(
+                    new UserMessage(message),
+                    new AssistantMessage(response)
+                ));
 
             } else {
                 log.info("[{}] 使用fastChatClient（纯Prompt）", AiPersonaRegistry.getBotName(botId));
 
                 SystemMessage systemMessage = AiPersonaRegistry.getPersonaByBotId(botId);
-                List<ChatMessage> history = chatMemoryService.getChatHistory(sessionId);
 
-                List<Message> messages = new ArrayList<>();
-                messages.add(systemMessage);
-
-                for (ChatMessage msg : history) {
-                    switch (msg.getRole()) {
-                        case USER -> messages.add(new UserMessage(msg.getContent()));
-                        case ASSISTANT -> messages.add(new AssistantMessage(msg.getContent()));
-                        case SYSTEM -> messages.add(new SystemMessage(msg.getContent()));
-                    }
-                }
-                messages.add(new UserMessage(message));
-
-                Prompt prompt = new Prompt(messages);
-                response = fastChatClient.prompt(prompt)
+                response = fastChatClient.prompt()
+                    .system(systemMessage.getContent())
+                    .user(message)
+                    .advisors(spec -> spec
+                        .param(CHAT_MEMORY_CONVERSATION_ID_KEY, conversationId)
+                        .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10))
                     .call()
                     .content();
-
-                chatMemoryService.saveMessage(sessionId, ChatMessage.userMessage(message));
-                chatMemoryService.saveMessage(sessionId, ChatMessage.assistantMessage(response));
             }
 
             log.info("[{}] 回复长度: {}字符", AiPersonaRegistry.getBotName(botId), response.length());
 
             redisPubSubService.publishDirectMessage(userId, response, botId, AiPersonaRegistry.getBotName(botId));
 
-            return new ChatResult(response, sessionId);
+            return new ChatResult(response, conversationId);
 
         } catch (Exception e) {
             log.error("1v1聊天失败: userId={}, botId={}", userId, botId, e);
@@ -139,43 +129,34 @@ public class AiChatService {
      * 流式聊天（保留兼容）
      */
     public Flux<String> streamChat(String userMessage, Integer userId, String userName, String sessionId) {
+        String conversationId;
         if (sessionId == null || sessionId.trim().isEmpty()) {
-            sessionId = generateSessionId(userId, AiPersonaRegistry.MASTER_408_ID);
+            conversationId = buildConversationId(userId, AiPersonaRegistry.MASTER_408_ID);
+        } else {
+            conversationId = sessionId;
         }
 
-        final String finalSessionId = sessionId;
+        final String finalConversationId = conversationId;
 
-        log.info("流式聊天: userId={}, message={}", userId, userMessage);
+        log.info("流式聊天: userId={}, conversationId={}", userId, finalConversationId);
 
         SystemMessage systemMessage = AiPersonaRegistry.getPersonaByBotId(AiPersonaRegistry.MASTER_408_ID);
-        List<ChatMessage> history = chatMemoryService.getChatHistory(finalSessionId);
-
-        List<Message> messages = new ArrayList<>();
-        messages.add(systemMessage);
-
-        for (ChatMessage msg : history) {
-            switch (msg.getRole()) {
-                case USER -> messages.add(new UserMessage(msg.getContent()));
-                case ASSISTANT -> messages.add(new AssistantMessage(msg.getContent()));
-                case SYSTEM -> messages.add(new SystemMessage(msg.getContent()));
-            }
-        }
-        messages.add(new UserMessage(userMessage));
-
-        Prompt prompt = new Prompt(messages);
-
-        chatMemoryService.saveMessage(finalSessionId, ChatMessage.userMessage(userMessage));
 
         final StringBuilder fullResponse = new StringBuilder();
 
         return Flux.using(
             () -> {
-                log.info("Starting stream for session: {}", finalSessionId);
+                log.info("Starting stream for conversation: {}", finalConversationId);
                 return true;
             },
             resource -> Flux.concat(
-                Flux.just(SESSION_ID_PREFIX + finalSessionId + SESSION_ID_SUFFIX + "\n\n"),
-                fastChatClient.prompt(prompt)
+                Flux.just(SESSION_ID_PREFIX + finalConversationId + SESSION_ID_SUFFIX + "\n\n"),
+                fastChatClient.prompt()
+                    .system(systemMessage.getContent())
+                    .user(userMessage)
+                    .advisors(spec -> spec
+                        .param(CHAT_MEMORY_CONVERSATION_ID_KEY, finalConversationId)
+                        .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10))
                     .stream()
                     .content()
                     .doOnNext(content -> {
@@ -187,21 +168,19 @@ public class AiChatService {
                     .map(content -> content + "\n\n")
             ),
             resource -> {
-                String response = fullResponse.toString();
-                log.info("Stream ended, saving assistant message, length: {}", response.length());
-                if (!response.isEmpty()) {
-                    chatMemoryService.saveMessage(finalSessionId, ChatMessage.assistantMessage(response));
-                }
+                log.info("Stream ended for conversation: {}, response length: {}", 
+                    finalConversationId, fullResponse.length());
             }
         ).timeout(Duration.ofSeconds(120));
     }
 
-    private String generateSessionId(Integer userId, int botId) {
-        return "session_" + userId + "_bot" + botId + "_" + UUID.randomUUID().toString().substring(0, 8);
+    private String buildConversationId(Integer userId, int botId) {
+        return "chat_" + userId + "_" + botId;
     }
 
-    public void clearSessionHistory(String sessionId) {
-        chatMemoryService.clearHistory(sessionId);
+    public void clearSessionHistory(String conversationId) {
+        chatMemory.clear(conversationId);
+        log.info("Cleared chat memory for conversation: {}", conversationId);
     }
 
     public record ChatResult(String message, String sessionId) {}

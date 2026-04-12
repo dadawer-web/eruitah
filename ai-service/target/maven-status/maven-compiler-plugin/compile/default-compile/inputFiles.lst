@@ -8,6 +8,7 @@
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/service/RedisPubSubService.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/config/WebSearchToolConfig.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/config/ChatClientConfig.java
+/home/xmy/code/ai-service/src/main/java/com/chat/ai/memory/MessageWrapper.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/service/AiChatRequestListener.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/controller/AiStreamController.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/service/ChatMemoryService.java
@@ -16,6 +17,7 @@
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/config/AsyncConfig.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/config/WebClientConfig.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/controller/AgentRequest.java
+/home/xmy/code/ai-service/src/main/java/com/chat/ai/config/ChatMemoryConfig.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/controller/MindmapRequest.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/service/GroupChatMemoryService.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/controller/ChatResponse.java
@@ -23,6 +25,7 @@
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/config/EmbeddingConfig.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/AiServiceApplication.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/config/RedisVectorStoreConfig.java
+/home/xmy/code/ai-service/src/main/java/com/chat/ai/memory/RedisChatMemory.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/controller/GroupChatResponse.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/controller/AgentController.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/service/AiPersonaRegistry.java

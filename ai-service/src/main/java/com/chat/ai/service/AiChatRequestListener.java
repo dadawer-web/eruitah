@@ -5,10 +5,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
-import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -24,6 +24,9 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_CONVERSATION_ID_KEY;
+import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_RETRIEVE_SIZE_KEY;
+
 @Slf4j
 @Service
 public class AiChatRequestListener {
@@ -36,6 +39,7 @@ public class AiChatRequestListener {
     private final AgentOrchestratorService agentOrchestratorService;
     private final GroupChatService groupChatService;
     private final MultimodalChatService multimodalChatService;
+    private final ChatMemory chatMemory;
     private RedisMessageListenerContainer listenerContainer;
 
     private static final String AI_PRIVATE_CHANNEL = "9999";
@@ -50,7 +54,8 @@ public class AiChatRequestListener {
             ObjectMapper objectMapper,
             AgentOrchestratorService agentOrchestratorService,
             GroupChatService groupChatService,
-            MultimodalChatService multimodalChatService) {
+            MultimodalChatService multimodalChatService,
+            ChatMemory chatMemory) {
         this.stringRedisTemplate = stringRedisTemplate;
         this.redisPubSubService = redisPubSubService;
         this.fastChatClient = fastChatClient;
@@ -59,6 +64,7 @@ public class AiChatRequestListener {
         this.agentOrchestratorService = agentOrchestratorService;
         this.groupChatService = groupChatService;
         this.multimodalChatService = multimodalChatService;
+        this.chatMemory = chatMemory;
     }
 
     @PostConstruct
@@ -111,8 +117,10 @@ public class AiChatRequestListener {
             String userMessage = request.get("message").asText();
             String userName = request.has("userName") ? request.get("userName").asText() : "用户";
 
-            log.info("Processing private AI chat: userId={}, botId={}({}), message={}",
-                userId, botId, AiPersonaRegistry.getBotName(botId), userMessage);
+            String conversationId = buildConversationId(userId, botId);
+
+            log.info("Processing private AI chat: userId={}, botId={}({}), message={}, conversationId={}",
+                userId, botId, AiPersonaRegistry.getBotName(botId), userMessage, conversationId);
 
             String response;
 
@@ -128,6 +136,11 @@ public class AiChatRequestListener {
 
                 response = agentResult.finalAnswer();
 
+                chatMemory.add(conversationId, List.of(
+                    new UserMessage(userMessage),
+                    new AssistantMessage(response)
+                ));
+
             } else if (AiPersonaRegistry.isProblemSolverBot(botId)) {
                 log.info("[解题大王] 使用 MultimodalChatService 多模态服务");
                 
@@ -141,17 +154,22 @@ public class AiChatRequestListener {
                 
                 response = multimodalResult.message();
 
+                chatMemory.add(conversationId, List.of(
+                    new UserMessage(cleanMessage.isEmpty() ? "请分析这张图片" : cleanMessage),
+                    new AssistantMessage(response)
+                ));
+
             } else {
                 log.info("[{}] 使用fastChatClient（纯Prompt）", AiPersonaRegistry.getBotName(botId));
 
                 SystemMessage systemMessage = AiPersonaRegistry.getPersonaByBotId(botId);
 
-                List<Message> messages = new ArrayList<>();
-                messages.add(systemMessage);
-                messages.add(new UserMessage(userMessage));
-
-                Prompt prompt = new Prompt(messages);
-                response = fastChatClient.prompt(prompt)
+                response = fastChatClient.prompt()
+                    .system(systemMessage.getContent())
+                    .user(userMessage)
+                    .advisors(spec -> spec
+                        .param(CHAT_MEMORY_CONVERSATION_ID_KEY, conversationId)
+                        .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10))
                     .call()
                     .content();
             }
@@ -257,5 +275,9 @@ public class AiChatRequestListener {
     
     private String removeImageTagsFromMessage(String message) {
         return IMAGE_PATTERN.matcher(message).replaceAll("").trim();
+    }
+
+    private String buildConversationId(Integer userId, int botId) {
+        return "chat_" + userId + "_" + botId;
     }
 }
