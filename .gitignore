@@ -42,3 +42,12 @@ moc_*.cpp
 qrc_*.cpp
 ui_*.h
 timestamp
+
+# Maven/Gradle build output
+target/
+*.jar
+*.war
+
+# 忽略本地 Git 故障恢复备份文件
+.gitbackup
+.git_backup
