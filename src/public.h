@@ -42,7 +42,18 @@ enum MsgType {
 
     STATE_UPDATE_MSG = 44,
 
-    VOICE_MSG = 60
+    VOICE_MSG = 60,
+
+    FARM_PLANT_MSG = 70,
+    FARM_PLANT_MSG_ACK = 71,
+    FARM_ANSWER_MSG = 72,
+    FARM_ANSWER_MSG_ACK = 73,
+    FARM_QUERY_MSG = 74,
+    FARM_QUERY_MSG_ACK = 75,
+    FARM_HARVEST_MSG = 76,
+    FARM_HARVEST_MSG_ACK = 77,
+    FARM_BROADCAST_MSG = 78,
+    FARM_PLOT_HARVESTED_NOTIFY = 79
 };
 
 constexpr const char* TABLE_USER = "user";
@@ -50,6 +61,8 @@ constexpr const char* TABLE_FRIEND = "friend";
 constexpr const char* TABLE_ALLGROUP = "allgroup";
 constexpr const char* TABLE_GROUPUSER = "groupuser";
 constexpr const char* TABLE_OFFLINEMESSAGE = "offlinemessage";
+constexpr const char* TABLE_FARM_USER = "farm_user";
+constexpr const char* TABLE_FARM_PLOT = "farm_plot";
 
 static const int DEFAULT_SERVER_PORT = 8000;
 

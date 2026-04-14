@@ -20,6 +20,10 @@ set(CLIENT_SOURCES
     messagewidget.h
     customtitlebar.cpp
     customtitlebar.h
+    farmplotitem.cpp
+    farmplotitem.h
+    farmdialog.cpp
+    farmdialog.h
     qtchat.qrc
 )
 

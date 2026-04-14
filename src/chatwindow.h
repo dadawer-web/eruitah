@@ -53,6 +53,8 @@ class QtMaterialIconButton;
 class QtMaterialScrollBar;
 class QtMaterialAvatar;
 
+class FarmDialog;
+
 // 未处理消息结构体
 struct PendingMessage {
     int fromId;
@@ -188,6 +190,8 @@ private:
     qint64 m_pendingVoiceDuration;
     int m_pendingVoiceToId;
 
+    FarmDialog *m_farmDialog;
+
     // 查找联系人方法
     QString getUserNameById(int userId);
     QString getGroupNameById(int groupId);
@@ -279,6 +283,14 @@ public slots:
     
     // 显示表情包对话框
     void showEmojiDialog();
+
+    void onOpenFarm();
+    void onFarmPlantResponse(bool success, int plotId, const QString &message);
+    void onFarmAnswerResponse(bool success, int plotId, const QString &feedback, int score, bool canHarvest);
+    void onFarmQueryResponse(const QJsonArray &plots, int coins, int exp);
+    void onFarmHarvestResponse(bool success, int plotId, const QString &message, int coins);
+    void onFarmPlotHarvested(int plotId, int ownerId);
+    void onFarmBroadcastReceived(const QString &message);
 
 protected:
     void closeEvent(QCloseEvent *event) override;

@@ -42,7 +42,7 @@ public class AiChatRequestListener {
     private final CodeReviewerService codeReviewerService;
     private final ChatMemory chatMemory;
     private final VoiceChatService voiceChatService;
-    private RedisMessageListenerContainer listenerContainer;
+    private final RedisMessageListenerContainer listenerContainer;
 
     private static final String AI_PRIVATE_CHANNEL = "9999";
     private static final String AI_GROUP_CHANNEL = "9998";
@@ -59,7 +59,8 @@ public class AiChatRequestListener {
             MultimodalChatService multimodalChatService,
             CodeReviewerService codeReviewerService,
             ChatMemory chatMemory,
-            VoiceChatService voiceChatService) {
+            VoiceChatService voiceChatService,
+            RedisMessageListenerContainer listenerContainer) {
         this.stringRedisTemplate = stringRedisTemplate;
         this.redisPubSubService = redisPubSubService;
         this.fastChatClient = fastChatClient;
@@ -71,13 +72,11 @@ public class AiChatRequestListener {
         this.codeReviewerService = codeReviewerService;
         this.chatMemory = chatMemory;
         this.voiceChatService = voiceChatService;
+        this.listenerContainer = listenerContainer;
     }
 
     @PostConstruct
     public void start() {
-        listenerContainer = new RedisMessageListenerContainer();
-        listenerContainer.setConnectionFactory(stringRedisTemplate.getConnectionFactory());
-
         MessageListener privateListener = (org.springframework.data.redis.connection.Message message, byte[] pattern) -> {
             String messageBody = new String(message.getBody());
             handlePrivateAiRequest(messageBody);
@@ -90,24 +89,9 @@ public class AiChatRequestListener {
 
         listenerContainer.addMessageListener(privateListener, new ChannelTopic(AI_PRIVATE_CHANNEL));
         listenerContainer.addMessageListener(groupListener, new ChannelTopic(AI_GROUP_CHANNEL));
-        listenerContainer.afterPropertiesSet();
-        listenerContainer.start();
 
         log.info("AI Chat Request Listener started, listening on channels: {} (private), {} (group)", 
             AI_PRIVATE_CHANNEL, AI_GROUP_CHANNEL);
-    }
-
-    @PreDestroy
-    public void stop() {
-        if (listenerContainer != null) {
-            listenerContainer.stop();
-            try {
-                listenerContainer.destroy();
-            } catch (Exception e) {
-                log.debug("Error destroying listener container: {}", e.getMessage());
-            }
-        }
-        log.info("AI Chat Request Listener stopped");
     }
 
     private void handlePrivateAiRequest(String messageBody) {
@@ -128,10 +112,8 @@ public class AiChatRequestListener {
             log.info("Processing private AI chat: userId={}, botId={}({}), message={}, conversationId={}",
                 userId, botId, AiPersonaRegistry.getBotName(botId), userMessage, conversationId);
 
-            String response;
+            String response = null;
 
-            redisPubSubService.publishStreamStart(userId, botId, AiPersonaRegistry.getBotName(botId));
-            
             if (AiPersonaRegistry.isVoiceAssistantBot(botId) && request.has("voiceUrl")) {
                 log.info("[语音小助手] 使用 VoiceChatService 处理语音消息");
                 
@@ -143,17 +125,23 @@ public class AiChatRequestListener {
                 VoiceChatService.VoiceChatResult voiceResult = voiceChatService.handleVoiceChat(
                     voiceUrl, userId, botId, duration);
                 
-                response = voiceResult.textReply();
+                String textReply = voiceResult.textReply();
                 
                 log.info("[语音小助手] ASR转文字: {}, TTS语音URL: {}", 
-                    response.substring(0, Math.min(50, response.length())) + "...",
+                    textReply.substring(0, Math.min(50, textReply.length())) + "...",
                     voiceResult.voiceUrl());
                 
                 if (voiceResult.voiceUrl() != null) {
                     redisPubSubService.publishVoiceMessage(userId, voiceResult.voiceUrl(), voiceResult.duration(), botId, AiPersonaRegistry.getBotName(botId));
                 }
+                
+                log.info("[语音小助手] 语音消息处理完成");
+                return;
+            }
 
-            } else if (AiPersonaRegistry.isMasterBot(botId)) {
+            redisPubSubService.publishStreamStart(userId, botId, AiPersonaRegistry.getBotName(botId));
+
+            if (AiPersonaRegistry.isMasterBot(botId)) {
                 log.info("[旗舰大师] 使用 AgentOrchestratorService 多智能体编排（Router → Solver → Reflection）");
 
                 AgentOrchestratorService.AgentResult agentResult = agentOrchestratorService.processUserQuery(userId, userMessage);

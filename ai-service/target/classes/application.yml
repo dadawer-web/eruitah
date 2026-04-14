@@ -77,9 +77,9 @@ serper:
 voice:
   dashscope:
     api-key: sk-8ebb4900479f41f48ace59abe396db6e
-    asr-model: paraformer-v2
-    tts-model: qwen3-tts-vd-2026-01-26
-    tts-voice: zhimiao_emo
+    asr-model: fun-asr-realtime-2026-02-28
+    tts-model: qwen3-tts-instruct-flash-realtime
+    tts-voice: Cherry
   storage:
     path: /tmp/audio
     url-prefix: http://localhost:8081/audio

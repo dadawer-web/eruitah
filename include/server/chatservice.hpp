@@ -12,6 +12,7 @@
 #include"server/model/friendmodel.hpp"
 #include"server/model/groupmodel.hpp"
 #include"server/model/emojimodel.hpp"
+#include"server/model/farmmodel.hpp"
 #include"server/ai_service_client.hpp"
 using namespace muduo;
 using namespace std;
@@ -69,6 +70,11 @@ public:
   // 头像相关业务
   void uploadAvatar(const TcpConnectionPtr& conn,json& js,Timestamp time);
   void updateAvatar(const TcpConnectionPtr& conn,json& js,Timestamp time);
+
+  void farmPlant(const TcpConnectionPtr& conn, json& js, Timestamp time);
+  void farmAnswer(const TcpConnectionPtr& conn, json& js, Timestamp time);
+  void farmQuery(const TcpConnectionPtr& conn, json& js, Timestamp time);
+  void farmHarvest(const TcpConnectionPtr& conn, json& js, Timestamp time);
   
   //处理客户端异常退出
   void clientCloseException(const TcpConnectionPtr& conn);
@@ -99,6 +105,7 @@ private:
     FriendModel _friendModel;
     GroupModel _groupModel;
     EmojiModel _emojiModel;
+    FarmModel _farmModel;
 
     //redis操作对象
     Redis _redis;

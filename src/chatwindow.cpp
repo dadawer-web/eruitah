@@ -1,5 +1,6 @@
 #include "chatwindow.h"
 #include "messagewidget.h"
+#include "farmdialog.h"
 #include <QDebug>
 #include <QDateTime>
 #include <QInputDialog>
@@ -151,6 +152,7 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     QAudioEncoderSettings audioSettings;
     audioSettings.setQuality(QMultimedia::HighQuality);
     audioSettings.setChannelCount(1);
+    audioSettings.setSampleRate(16000);
     
     QString container = "audio/x-wav";
     QStringList containers = m_audioRecorder->supportedContainers();
@@ -584,6 +586,15 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     // 连接好友状态更新信号
     connect(chatClient, &ChatClient::friendStateUpdated, this, &ChatWindow::onFriendStateUpdated);
 
+    connect(chatClient, &ChatClient::farmPlantResponse, this, &ChatWindow::onFarmPlantResponse);
+    connect(chatClient, &ChatClient::farmAnswerResponse, this, &ChatWindow::onFarmAnswerResponse);
+    connect(chatClient, &ChatClient::farmQueryResponse, this, &ChatWindow::onFarmQueryResponse);
+    connect(chatClient, &ChatClient::farmHarvestResponse, this, &ChatWindow::onFarmHarvestResponse);
+    connect(chatClient, &ChatClient::farmPlotHarvested, this, &ChatWindow::onFarmPlotHarvested);
+    connect(chatClient, &ChatClient::farmBroadcastReceived, this, &ChatWindow::onFarmBroadcastReceived);
+
+    m_farmDialog = nullptr;
+
     connect(chatClient, &ChatClient::fileTransferRequestReceived, this, &ChatWindow::onFileTransferRequestReceived);
     connect(chatClient, &ChatClient::fileTransferAccepted, this, &ChatWindow::onFileTransferAccepted);
     connect(chatClient, &ChatClient::fileTransferDataReceived, this, &ChatWindow::onFileTransferDataReceived);
@@ -673,15 +684,18 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     QPushButton *joinGroupBtn = new QPushButton("加入群组", toolBarWidget);
     QPushButton *inviteGroupBtn = new QPushButton("邀请进群", toolBarWidget);
     QPushButton *interviewBtn = new QPushButton("🔥 开启模拟面试", toolBarWidget);
+    QPushButton *farmBtn = new QPushButton("🌱 408农场", toolBarWidget);
     QPushButton *logoutBtn = new QPushButton("注销", toolBarWidget);
     
     QString btnStyle = "QPushButton { background-color: transparent; border: none; color: #9ca3af; font-size: 13px; padding: 6px 12px; border-radius: 4px; } QPushButton:hover { background-color: #3a3a3a; color: #ececec; } QPushButton:pressed { background-color: #404040; }";
     QString interviewBtnStyle = "QPushButton { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #ef4444, stop:1 #f97316); border: none; color: white; font-size: 13px; padding: 6px 12px; border-radius: 4px; font-weight: bold; } QPushButton:hover { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #dc2626, stop:1 #ea580c); } QPushButton:pressed { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #b91c1c, stop:1 #c2410c); }";
+    QString farmBtnStyle = "QPushButton { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #22c55e, stop:1 #16a34a); border: none; color: white; font-size: 13px; padding: 6px 12px; border-radius: 4px; font-weight: bold; } QPushButton:hover { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #16a34a, stop:1 #15803d); } QPushButton:pressed { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #15803d, stop:1 #166534); }";
     addFriendBtn->setStyleSheet(btnStyle);
     createGroupBtn->setStyleSheet(btnStyle);
     joinGroupBtn->setStyleSheet(btnStyle);
     inviteGroupBtn->setStyleSheet(btnStyle);
     interviewBtn->setStyleSheet(interviewBtnStyle);
+    farmBtn->setStyleSheet(farmBtnStyle);
     logoutBtn->setStyleSheet(btnStyle);
     
     addFriendBtn->setFont(toolbarFont);
@@ -689,6 +703,7 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     joinGroupBtn->setFont(toolbarFont);
     inviteGroupBtn->setFont(toolbarFont);
     interviewBtn->setFont(toolbarFont);
+    farmBtn->setFont(toolbarFont);
     logoutBtn->setFont(toolbarFont);
     
     toolbarLayout->addWidget(addFriendBtn);
@@ -696,6 +711,7 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     toolbarLayout->addWidget(joinGroupBtn);
     toolbarLayout->addWidget(inviteGroupBtn);
     toolbarLayout->addWidget(interviewBtn);
+    toolbarLayout->addWidget(farmBtn);
     toolbarLayout->addSpacing(8);
     toolbarLayout->addWidget(new QLabel("|", toolBarWidget));
     toolbarLayout->addSpacing(8);
@@ -707,6 +723,7 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     connect(joinGroupBtn, &QPushButton::clicked, this, &ChatWindow::onJoinGroup);
     connect(inviteGroupBtn, &QPushButton::clicked, this, &ChatWindow::onInviteToGroup);
     connect(interviewBtn, &QPushButton::clicked, this, &ChatWindow::onCreateInterviewGroup);
+    connect(farmBtn, &QPushButton::clicked, this, &ChatWindow::onOpenFarm);
     connect(logoutBtn, &QPushButton::clicked, this, &ChatWindow::onLogout);
     connect(changeAvatarButton, &QPushButton::clicked, this, [this, userId]() {
         // 打开文件选择对话框
@@ -2827,6 +2844,70 @@ void ChatWindow::onVoiceUploadFinished(QNetworkReply *reply) {
         }
     } else {
         qDebug() << "Voice upload failed:" << json.value("message").toString();
+    }
+}
+
+void ChatWindow::onOpenFarm()
+{
+    if (!m_farmDialog) {
+        m_farmDialog = new FarmDialog(userId, userName, chatClient, this);
+    }
+    m_farmDialog->exec();
+}
+
+void ChatWindow::onFarmPlantResponse(bool success, int plotId, const QString &message)
+{
+    if (m_farmDialog) {
+        m_farmDialog->handlePlantResponse(success, plotId, message);
+    }
+}
+
+void ChatWindow::onFarmAnswerResponse(bool success, int plotId, const QString &feedback, int score, bool canHarvest)
+{
+    if (m_farmDialog) {
+        m_farmDialog->handleAnswerResponse(success, plotId, feedback, score, canHarvest);
+    }
+}
+
+void ChatWindow::onFarmQueryResponse(const QJsonArray &plots, int coins, int exp)
+{
+    if (m_farmDialog) {
+        m_farmDialog->updateUserStats(coins, exp);
+        for (const QJsonValue &val : plots) {
+            QJsonObject obj = val.toObject();
+            m_farmDialog->updatePlotFromServer(
+                obj["plotid"].toInt(),
+                obj["state"].toInt(),
+                obj["question"].toString(),
+                obj["ownerid"].toInt(),
+                obj["ownername"].toString(),
+                obj["subject"].toString()
+            );
+        }
+    }
+}
+
+void ChatWindow::onFarmHarvestResponse(bool success, int plotId, const QString &message, int coins)
+{
+    if (m_farmDialog) {
+        m_farmDialog->handleFarmBroadcast(
+            success ? QString("收菜成功！地块%1，%2 金币+%3").arg(plotId).arg(message).arg(coins)
+                    : QString("收菜失败！地块%1，%2").arg(plotId).arg(message)
+        );
+    }
+}
+
+void ChatWindow::onFarmPlotHarvested(int plotId, int ownerId)
+{
+    if (m_farmDialog) {
+        m_farmDialog->handlePlotHarvested(plotId, ownerId);
+    }
+}
+
+void ChatWindow::onFarmBroadcastReceived(const QString &message)
+{
+    if (m_farmDialog) {
+        m_farmDialog->handleFarmBroadcast(message);
     }
 }
 

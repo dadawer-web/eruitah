@@ -319,6 +319,14 @@ private slots:
     
     // User state update signal
     void friendStateUpdated(qint64 userId, const QString &state);
+
+    // Farm related signals
+    void farmPlantResponse(bool success, int plotId, const QString &message);
+    void farmAnswerResponse(bool success, int plotId, const QString &feedback, int score, bool canHarvest);
+    void farmQueryResponse(const QJsonArray &plots, int coins, int exp);
+    void farmHarvestResponse(bool success, int plotId, const QString &message, int coins);
+    void farmPlotHarvested(int plotId, int ownerId);
+    void farmBroadcastReceived(const QString &message);
 };
 
 #endif // CHATCLIENT_H

@@ -13,7 +13,10 @@
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/service/RerankerService.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/controller/MindmapRequest.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/service/GroupChatMemoryService.java
+/home/xmy/code/ai-service/src/main/java/com/chat/ai/model/HarvestJudgment.java
+/home/xmy/code/ai-service/src/main/java/com/chat/ai/service/FarmRedisListener.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/service/CodeReviewerService.java
+/home/xmy/code/ai-service/src/main/java/com/chat/ai/service/FarmAiJudgeService.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/controller/ChatResponse.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/service/ExamStateManager.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/service/AiTaskConsumer.java
@@ -30,8 +33,10 @@
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/service/QueryRewriteService.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/controller/GroupMessageRequest.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/config/MultimodalConfig.java
+/home/xmy/code/ai-service/src/main/java/com/chat/ai/controller/FarmController.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/controller/RagController.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/service/GroupChatService.java
+/home/xmy/code/ai-service/src/main/java/com/chat/ai/service/FarmService.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/config/RagConfig.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/config/CorsConfig.java
 /home/xmy/code/ai-service/src/main/java/com/chat/ai/service/RagService.java

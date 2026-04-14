@@ -119,6 +119,11 @@ ChatService::ChatService()
     _msgHandlerMap.insert(std::make_pair(UPLOAD_AVATAR_MSG,std::bind(&ChatService::uploadAvatar,this,_1,_2,_3)));
     _msgHandlerMap.insert(std::make_pair(UPDATE_AVATAR_MSG,std::bind(&ChatService::updateAvatar,this,_1,_2,_3)));
 
+    _msgHandlerMap.insert({FARM_PLANT_MSG, std::bind(&ChatService::farmPlant, this, _1, _2, _3)});
+    _msgHandlerMap.insert({FARM_ANSWER_MSG, std::bind(&ChatService::farmAnswer, this, _1, _2, _3)});
+    _msgHandlerMap.insert({FARM_QUERY_MSG, std::bind(&ChatService::farmQuery, this, _1, _2, _3)});
+    _msgHandlerMap.insert({FARM_HARVEST_MSG, std::bind(&ChatService::farmHarvest, this, _1, _2, _3)});
+
     if(_redis.connect()){
         LOG_INFO << "Redis connected successfully!";
         _redis.init_notify_handler(std::bind(&ChatService::handleRedisSubscribeMessage,this,_1,_2));
@@ -128,6 +133,10 @@ ChatService::ChatService()
             LOG_INFO << "Subscribed to group dispatch channel: " << GROUP_DISPATCH_CHANNEL;
         } else {
             LOG_ERROR << "Failed to subscribe to group dispatch channel: " << GROUP_DISPATCH_CHANNEL;
+        }
+
+        if(_redis.subscribe(9996)){
+            LOG_INFO << "Subscribed to farm broadcast channel: 9996";
         }
     }
     else{
@@ -1226,6 +1235,61 @@ void ChatService::handleRedisSubscribeMessage(long long channel, string msg)
         return;
     }
 
+    if (channel == 9996) {
+        json js = json::parse(msg);
+        int msgid = js["msgid"].get<int>();
+        if (msgid == FARM_ANSWER_MSG_ACK) {
+            int userid = js.contains("userid") ? js["userid"].get<int>() : -1;
+            int ownerid = js.contains("ownerid") ? js["ownerid"].get<int>() : -1;
+            bool canHarvest = js["canHarvest"].get<bool>();
+            int score = js["score"].get<int>();
+            string feedback = js["feedback"].get<string>();
+            int plotid = js["plotid"].get<int>();
+
+            if (userid > 0) {
+                lock_guard<mutex> lock(_connMutex);
+                auto it = _userConnMap.find(userid);
+                if (it != _userConnMap.end()) {
+                    it->second->send(msg);
+                    LOG_INFO << "Farm answer ACK forwarded to user " << userid;
+                } else {
+                    _offlineMsgModel.insert(userid, msg);
+                }
+            }
+
+            if (canHarvest && ownerid > 0) {
+                _farmModel.answerPlot(ownerid, plotid, userid, "", score, feedback);
+                _farmModel.updateFarmUserExp(ownerid, 10);
+                _farmModel.updateFarmUserCoins(userid, 50);
+
+                json ownerNotify;
+                ownerNotify["msgid"] = FARM_PLOT_HARVESTED_NOTIFY;
+                ownerNotify["plotid"] = plotid;
+                ownerNotify["ownerid"] = ownerid;
+                ownerNotify["harvesterid"] = userid;
+                ownerNotify["score"] = score;
+                ownerNotify["feedback"] = feedback;
+                {
+                    lock_guard<mutex> lock(_connMutex);
+                    auto ownerIt = _userConnMap.find(ownerid);
+                    if (ownerIt != _userConnMap.end()) {
+                        ownerIt->second->send(ownerNotify.dump());
+                        LOG_INFO << "Notified owner " << ownerid << " about plot " << plotid << " harvested";
+                    }
+                }
+            }
+            return;
+        }
+
+        if (msgid == FARM_BROADCAST_MSG) {
+            lock_guard<mutex> lock(_connMutex);
+            for (auto &pair : _userConnMap) {
+                pair.second->send(msg);
+            }
+            return;
+        }
+    }
+
     lock_guard<mutex> lock(_connMutex);
     auto it = _userConnMap.find(static_cast<int>(channel));
     if (it != _userConnMap.end())
@@ -1592,4 +1656,194 @@ void ChatService::updateAvatar(const TcpConnectionPtr& conn, json& js, Timestamp
         conn->send(response.dump());
     }
     LOG_INFO << "updateAvatar method completed";
+}
+
+void ChatService::farmPlant(const TcpConnectionPtr& conn, json& js, Timestamp time)
+{
+    int userid = js["userid"].get<int>();
+    int plotid = js["plotid"].get<int>();
+    string question = js["question"].get<string>();
+    string subject = js.contains("subject") ? js["subject"].get<string>() : "";
+
+    LOG_INFO << "farmPlant: userid=" << userid << " plotid=" << plotid << " question=" << question;
+
+    _farmModel.initUserFarm(userid);
+
+    FarmPlot existingPlot = _farmModel.queryPlot(userid, plotid);
+    if (existingPlot.state != 0) {
+        json response;
+        response["msgid"] = FARM_PLANT_MSG_ACK;
+        response["errno"] = 1;
+        response["plotid"] = plotid;
+        response["errmsg"] = "这块地已经有菜了！";
+        conn->send(response.dump());
+        return;
+    }
+
+    if (_farmModel.plantPlot(userid, plotid, question, subject)) {
+        _farmModel.updateFarmUserExp(userid, 10);
+        _farmModel.updatePlotState(userid, plotid, 1);
+
+        json response;
+        response["msgid"] = FARM_PLANT_MSG_ACK;
+        response["errno"] = 0;
+        response["plotid"] = plotid;
+        response["errmsg"] = "种菜成功！经验+10";
+        conn->send(response.dump());
+
+        json broadcast;
+        broadcast["msgid"] = FARM_BROADCAST_MSG;
+        broadcast["msg"] = "玩家" + to_string(userid) + "种下了一棵" + subject + "菜！";
+        {
+            lock_guard<mutex> lock(_connMutex);
+            for (auto &pair : _userConnMap) {
+                pair.second->send(broadcast.dump());
+            }
+        }
+    } else {
+        json response;
+        response["msgid"] = FARM_PLANT_MSG_ACK;
+        response["errno"] = 2;
+        response["plotid"] = plotid;
+        response["errmsg"] = "种菜失败，请重试";
+        conn->send(response.dump());
+    }
+}
+
+void ChatService::farmAnswer(const TcpConnectionPtr& conn, json& js, Timestamp time)
+{
+    int userid = js["userid"].get<int>();
+    int plotid = js["plotid"].get<int>();
+    int ownerid = js["ownerid"].get<int>();
+    string question = js["question"].get<string>();
+    string answer = js["answer"].get<string>();
+
+    LOG_INFO << "farmAnswer: userid=" << userid << " plotid=" << plotid << " ownerid=" << ownerid;
+
+    _farmModel.initUserFarm(userid);
+
+    FarmPlot plot = _farmModel.queryPlot(ownerid, plotid);
+    if (plot.state != 1) {
+        json response;
+        response["msgid"] = FARM_ANSWER_MSG_ACK;
+        response["errno"] = 1;
+        response["plotid"] = plotid;
+        response["errmsg"] = "这块地当前不能答题";
+        conn->send(response.dump());
+        return;
+    }
+
+    json aiRequest;
+    aiRequest["action"] = "answer";
+    aiRequest["userid"] = userid;
+    aiRequest["plotid"] = plotid;
+    aiRequest["ownerid"] = ownerid;
+    aiRequest["question"] = question;
+    aiRequest["answer"] = answer;
+
+    _redis.publish(9995, aiRequest.dump());
+
+    LOG_INFO << "Farm answer request sent to AI service for user " << userid << " plot " << plotid;
+}
+
+void ChatService::farmQuery(const TcpConnectionPtr& conn, json& js, Timestamp time)
+{
+    int userid = js["userid"].get<int>();
+    int targetid = js.contains("targetid") ? js["targetid"].get<int>() : userid;
+
+    LOG_INFO << "farmQuery: userid=" << userid << " targetid=" << targetid;
+
+    _farmModel.initUserFarm(targetid);
+
+    FarmUser farmUser = _farmModel.queryFarmUser(targetid);
+    vector<FarmPlot> plots = _farmModel.queryPlotsByOwner(targetid);
+
+    json response;
+    response["msgid"] = FARM_QUERY_MSG_ACK;
+    response["errno"] = 0;
+    response["coins"] = farmUser.coins;
+    response["exp"] = farmUser.exp;
+
+    json plotsArray = json::array();
+    for (auto &plot : plots) {
+        json plotObj;
+        plotObj["plotid"] = plot.plotindex;
+        plotObj["state"] = plot.state;
+        plotObj["question"] = plot.question;
+        plotObj["subject"] = plot.subject;
+        plotObj["ownerid"] = plot.ownerid;
+        plotObj["ownername"] = "";
+        plotsArray.push_back(plotObj);
+    }
+    response["plots"] = plotsArray;
+
+    conn->send(response.dump());
+}
+
+void ChatService::farmHarvest(const TcpConnectionPtr& conn, json& js, Timestamp time)
+{
+    int userid = js["userid"].get<int>();
+    int plotid = js["plotid"].get<int>();
+    int ownerid = js["ownerid"].get<int>();
+
+    LOG_INFO << "farmHarvest: userid=" << userid << " plotid=" << plotid << " ownerid=" << ownerid;
+
+    FarmPlot plot = _farmModel.queryPlot(ownerid, plotid);
+    if (plot.state != 2) {
+        json response;
+        response["msgid"] = FARM_HARVEST_MSG_ACK;
+        response["errno"] = 1;
+        response["plotid"] = plotid;
+        response["errmsg"] = "这块地还不能收割";
+        conn->send(response.dump());
+        return;
+    }
+
+    if (_farmModel.harvestPlot(ownerid, plotid)) {
+        _farmModel.updateFarmUserCoins(userid, 50);
+        _farmModel.updateFarmUserExp(ownerid, 10);
+
+        FarmUser farmUser = _farmModel.queryFarmUser(userid);
+
+        json response;
+        response["msgid"] = FARM_HARVEST_MSG_ACK;
+        response["errno"] = 0;
+        response["plotid"] = plotid;
+        response["errmsg"] = "收菜成功！";
+        response["coins"] = farmUser.coins;
+        conn->send(response.dump());
+
+        json ownerNotify;
+        ownerNotify["msgid"] = FARM_HARVEST_MSG_ACK;
+        ownerNotify["errno"] = 0;
+        ownerNotify["plotid"] = plotid;
+        ownerNotify["ownerid"] = ownerid;
+        ownerNotify["harvested"] = true;
+        ownerNotify["errmsg"] = "你的菜被收割了！经验+10";
+        {
+            lock_guard<mutex> lock(_connMutex);
+            auto it = _userConnMap.find(ownerid);
+            if (it != _userConnMap.end()) {
+                it->second->send(ownerNotify.dump());
+                LOG_INFO << "Notified owner " << ownerid << " about harvest";
+            }
+        }
+
+        json broadcast;
+        broadcast["msgid"] = FARM_BROADCAST_MSG;
+        broadcast["msg"] = "玩家" + to_string(userid) + "成功收割了玩家" + to_string(ownerid) + "的菜！";
+        {
+            lock_guard<mutex> lock(_connMutex);
+            for (auto &pair : _userConnMap) {
+                pair.second->send(broadcast.dump());
+            }
+        }
+    } else {
+        json response;
+        response["msgid"] = FARM_HARVEST_MSG_ACK;
+        response["errno"] = 2;
+        response["plotid"] = plotid;
+        response["errmsg"] = "收菜失败";
+        conn->send(response.dump());
+    }
 }

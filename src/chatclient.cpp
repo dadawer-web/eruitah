@@ -1527,8 +1527,69 @@ void ChatClient::processMessage(const QJsonObject &message) {
     }
     
     default: {
-        // 未知消息类型处理 - 增强系统健壮性
-        qWarning() << "Unknown message type:" << msgType;
+        if (msgType >= 70 && msgType <= 78) {
+            switch (msgType) {
+            case MsgType::FARM_PLANT_MSG_ACK: {
+                int errno_val = message["errno"].toInt();
+                int plotId = message["plotid"].toInt();
+                QString msg = message["errmsg"].toString();
+                bool success = (errno_val == 0);
+                emit farmPlantResponse(success, plotId, success ? "种菜成功！" : msg);
+                break;
+            }
+            case MsgType::FARM_ANSWER_MSG_ACK: {
+                int errno_val = message["errno"].toInt();
+                int plotId = message["plotid"].toInt();
+                if (errno_val == 0) {
+                    bool canHarvest = message["canHarvest"].toBool();
+                    int score = message["score"].toInt();
+                    QString feedback = message["feedback"].toString();
+                    emit farmAnswerResponse(true, plotId, feedback, score, canHarvest);
+                } else {
+                    QString errorMsg = message["errmsg"].toString();
+                    emit farmAnswerResponse(false, plotId, errorMsg, 0, false);
+                }
+                break;
+            }
+            case MsgType::FARM_QUERY_MSG_ACK: {
+                int coins = message["coins"].toInt();
+                int exp = message["exp"].toInt();
+                QJsonArray plots = message["plots"].toArray();
+                emit farmQueryResponse(plots, coins, exp);
+                break;
+            }
+            case MsgType::FARM_HARVEST_MSG_ACK: {
+                int errno_val = message["errno"].toInt();
+                int plotId = message["plotid"].toInt();
+                QString msg = message["errmsg"].toString();
+                int coins = message.contains("coins") ? message["coins"].toInt() : 0;
+                
+                if (message.contains("harvested") && message["harvested"].toBool()) {
+                    int ownerId = message["ownerid"].toInt();
+                    emit farmPlotHarvested(plotId, ownerId);
+                } else {
+                    emit farmHarvestResponse(errno_val == 0, plotId, msg, coins);
+                }
+                break;
+            }
+            case MsgType::FARM_BROADCAST_MSG: {
+                QString broadcastMsg = message["msg"].toString();
+                emit farmBroadcastReceived(broadcastMsg);
+                break;
+            }
+            case MsgType::FARM_PLOT_HARVESTED_NOTIFY: {
+                int plotId = message["plotid"].toInt();
+                int ownerId = message["ownerid"].toInt();
+                emit farmPlotHarvested(plotId, ownerId);
+                break;
+            }
+            default:
+                qWarning() << "Unknown farm message type:" << msgType;
+                break;
+            }
+        } else {
+            qWarning() << "Unknown message type:" << msgType;
+        }
         break;
     }
     }
