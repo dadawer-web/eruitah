@@ -5,9 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
-import org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,12 +15,9 @@ public class ChatClientConfig {
 
     @Bean
     @Qualifier("smartChatClient")
-    public ChatClient smartChatClient(ChatClient.Builder builder, VectorStore vectorStore, ChatMemory chatMemory) {
+    public ChatClient smartChatClient(ChatClient.Builder builder, ChatMemory chatMemory) {
         return builder
-            .defaultAdvisors(
-                new QuestionAnswerAdvisor(vectorStore),
-                new MessageChatMemoryAdvisor(chatMemory)
-            )
+            .defaultAdvisors(new MessageChatMemoryAdvisor(chatMemory))
             .defaultFunctions("webSearchTool", "cppCompilerTool")
             .build();
     }

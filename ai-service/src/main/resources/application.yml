@@ -31,6 +31,9 @@ spring:
         initialize-schema: true
         index-name: rag-knowledge-index
         prefix: "rag:doc:"
+  web:
+    resources:
+      static-locations: file:/tmp/audio/
 
 multimodal:
   openai:
@@ -44,6 +47,13 @@ embedding:
     api-key: 
     base-url: https://api.siliconflow.cn
     model: BAAI/bge-m3
+
+reranker:
+  siliconflow:
+    api-key:
+    base-url: https://api.siliconflow.cn
+    model: BAAI/bge-reranker-v2-m3
+    top-n: 3
 
 chat:
   memory:
@@ -63,3 +73,13 @@ logging:
 serper:
   api-key: 
   base-url: https://google.serper.dev
+
+voice:
+  dashscope:
+    api-key: 
+    asr-model: paraformer-v2
+    tts-model: qwen3-tts-vd-2026-01-26
+    tts-voice: zhimiao_emo
+  storage:
+    path: /tmp/audio
+    url-prefix: http://localhost:8081/audio

@@ -55,6 +55,10 @@ MessageWidget::MessageWidget(bool isSender, const QString &text, const QString &
     , m_imageLabel(nullptr)
     , m_mermaidView(nullptr)
     , m_timeLabel(nullptr)
+    , m_voiceContainer(nullptr)
+    , m_playVoiceBtn(nullptr)
+    , m_mediaPlayer(nullptr)
+    , m_voiceDuration(0)
 {
     setupUI(avatarPath, senderName, timeStr);
     applyStyles();
@@ -149,6 +153,54 @@ void MessageWidget::setupUI(const QString &avatarPath, const QString &senderName
     m_mermaidView->setStyleSheet("background: transparent;");
     m_mermaidView->page()->setBackgroundColor(Qt::transparent);
     m_contentStack->addWidget(m_mermaidView);
+    
+    m_voiceContainer = new QWidget(m_bubbleWidget);
+    m_voiceContainer->setStyleSheet("background: transparent;");
+    QHBoxLayout *voiceLayout = new QHBoxLayout(m_voiceContainer);
+    voiceLayout->setContentsMargins(8, 4, 8, 4);
+    voiceLayout->setSpacing(8);
+    
+    m_playVoiceBtn = new QPushButton("▶️ 语音消息", m_voiceContainer);
+    m_playVoiceBtn->setStyleSheet(
+        "QPushButton { background-color: #3b82f6; color: #ffffff; border: none; border-radius: 16px; "
+        "padding: 8px 16px; font-size: 14px; min-width: 120px; }"
+        "QPushButton:hover { background-color: #2563eb; }"
+        "QPushButton:pressed { background-color: #1d4ed8; }"
+    );
+    m_playVoiceBtn->setCursor(Qt::PointingHandCursor);
+    voiceLayout->addWidget(m_playVoiceBtn);
+    voiceLayout->addStretch();
+    
+    m_contentStack->addWidget(m_voiceContainer);
+    m_voiceContainer->hide();
+    
+    m_mediaPlayer = new QMediaPlayer(this);
+    connect(m_mediaPlayer, &QMediaPlayer::stateChanged, this, &MessageWidget::onMediaStateChanged);
+    connect(m_mediaPlayer, &QMediaPlayer::positionChanged, this, [this](qint64 position) {
+        if (m_mediaPlayer && m_mediaPlayer->duration() > 0) {
+            if (position >= m_mediaPlayer->duration() - 100) {
+                qDebug() << "Voice playback finished (position:" << position << "duration:" << m_mediaPlayer->duration() << ")";
+                QString btnText = m_voiceDuration > 0 
+                    ? QString("▶️ 语音消息 %1s").arg(m_voiceDuration) 
+                    : QString("▶️ 语音消息");
+                m_playVoiceBtn->setText(btnText);
+                m_playVoiceBtn->setStyleSheet(
+                    "QPushButton { background-color: #3b82f6; color: #ffffff; border: none; border-radius: 16px; "
+                    "padding: 8px 16px; font-size: 14px; min-width: 120px; }"
+                    "QPushButton:hover { background-color: #2563eb; }"
+                    "QPushButton:pressed { background-color: #1d4ed8; }"
+                );
+            }
+        }
+    });
+    connect(m_mediaPlayer, QOverload<QMediaPlayer::Error>::of(&QMediaPlayer::error), this, [this](QMediaPlayer::Error error) {
+        qDebug() << "Media player error:" << error;
+        QString btnText = m_voiceDuration > 0 
+            ? QString("▶️ 语音消息 %1s").arg(m_voiceDuration) 
+            : QString("▶️ 语音消息");
+        m_playVoiceBtn->setText(btnText);
+    });
+    connect(m_playVoiceBtn, &QPushButton::clicked, this, &MessageWidget::onPlayVoiceClicked);
     
     m_contentStack->setCurrentWidget(m_contentBrowser);
     
@@ -630,6 +682,82 @@ QSize MessageWidget::sizeHint() const
     int totalWidth = m_bubbleWidget->width() + 70;
     
     return QSize(totalWidth, totalHeight);
+}
+
+void MessageWidget::setVoiceContent(const QString &audioPath, int duration) {
+    m_voiceUrl = audioPath;
+    m_voiceDuration = duration;
+    
+    m_contentStack->setCurrentWidget(m_voiceContainer);
+    m_voiceContainer->show();
+    
+    QString btnText = duration > 0 
+        ? QString("▶️ 语音消息 %1s").arg(duration) 
+        : QString("▶️ 语音消息");
+    m_playVoiceBtn->setText(btnText);
+    
+    m_bubbleWidget->setMinimumWidth(200);
+    m_bubbleWidget->setMaximumWidth(300);
+    m_bubbleWidget->setMinimumHeight(50);
+    m_bubbleWidget->setMaximumHeight(50);
+    
+    updateGeometry();
+}
+
+void MessageWidget::onPlayVoiceClicked() {
+    if (!m_mediaPlayer || m_voiceUrl.isEmpty()) {
+        return;
+    }
+    
+    qDebug() << "onPlayVoiceClicked - voiceUrl:" << m_voiceUrl;
+    
+    if (m_mediaPlayer->state() == QMediaPlayer::PlayingState) {
+        m_mediaPlayer->stop();
+        QString btnText = m_voiceDuration > 0 
+            ? QString("▶️ 语音消息 %1s").arg(m_voiceDuration) 
+            : QString("▶️ 语音消息");
+        m_playVoiceBtn->setText(btnText);
+        m_playVoiceBtn->setStyleSheet(
+            "QPushButton { background-color: #3b82f6; color: #ffffff; border: none; border-radius: 16px; "
+            "padding: 8px 16px; font-size: 14px; min-width: 120px; }"
+            "QPushButton:hover { background-color: #2563eb; }"
+            "QPushButton:pressed { background-color: #1d4ed8; }"
+        );
+    } else {
+        QUrl mediaUrl;
+        if (m_voiceUrl.startsWith("http://") || m_voiceUrl.startsWith("https://")) {
+            mediaUrl = QUrl(m_voiceUrl);
+            qDebug() << "Playing from HTTP URL:" << mediaUrl.toString();
+        } else if (m_voiceUrl.startsWith("/")) {
+            mediaUrl = QUrl::fromLocalFile(m_voiceUrl);
+            qDebug() << "Playing from local file:" << mediaUrl.toString();
+        } else {
+            mediaUrl = QUrl::fromLocalFile(m_voiceUrl);
+            qDebug() << "Playing as local path:" << mediaUrl.toString();
+        }
+        
+        m_mediaPlayer->setMedia(mediaUrl);
+        m_mediaPlayer->play();
+        
+        QString btnText = m_voiceDuration > 0 
+            ? QString("🔊 播放中 %1s").arg(m_voiceDuration) 
+            : QString("🔊 播放中");
+        m_playVoiceBtn->setText(btnText);
+        m_playVoiceBtn->setStyleSheet(
+            "QPushButton { background-color: #ef4444; color: #ffffff; border: none; border-radius: 16px; "
+            "padding: 8px 16px; font-size: 14px; min-width: 120px; }"
+            "QPushButton:hover { background-color: #dc2626; }"
+        );
+    }
+}
+
+void MessageWidget::onMediaStateChanged(QMediaPlayer::State state) {
+    if (state == QMediaPlayer::StoppedState) {
+        QString btnText = m_voiceDuration > 0 
+            ? QString("▶️ 语音消息 %1s").arg(m_voiceDuration) 
+            : QString("▶️ 语音消息");
+        m_playVoiceBtn->setText(btnText);
+    }
 }
 
 void MessageWidget::paintEvent(QPaintEvent *event)

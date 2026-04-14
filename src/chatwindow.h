@@ -38,6 +38,9 @@
 #include <QtConcurrent>
 #include <QFuture>
 #include <QFutureWatcher>
+#include <QAudioRecorder>
+#include <QAudioProbe>
+#include <QDir>
 #include "chatclient.h"
 #include "models/user.h"
 #include "models/group.h"
@@ -176,6 +179,15 @@ private:
     // RAG知识库上传相关
     QNetworkAccessManager *ragNetworkManager;
 
+    // 语音录音相关
+    QPushButton *m_voiceBtn;
+    QAudioRecorder *m_audioRecorder;
+    QString m_audioFilePath;
+    qint64 m_voiceRecordStartTime;
+    QNetworkAccessManager *m_voiceUploadManager;
+    qint64 m_pendingVoiceDuration;
+    int m_pendingVoiceToId;
+
     // 查找联系人方法
     QString getUserNameById(int userId);
     QString getGroupNameById(int groupId);
@@ -188,7 +200,10 @@ private:
     QString generateChatKey(int chatId, bool isGroup);
     void updateTabText(int chatId, bool isGroup, const QString &chatName);
     QListWidgetItem* addMessageToChatList(QListWidget *listWidget, bool isSender, const QString &message, const QString &avatarPath, const QString &timeStr, const QString &senderName = QString());
+    QListWidgetItem* addVoiceMessageToChatList(QListWidget *listWidget, bool isSender, const QString &voiceUrl, int duration, const QString &avatarPath, const QString &timeStr, const QString &senderName = QString());
     QString loadModernStylesheet();
+    QString getMyAvatarPath();
+    QString getFriendAvatarPath(int friendId);
     void scrollChatToBottom(QListWidget *listWidget);
 
 public slots:
@@ -205,6 +220,7 @@ public slots:
     void onSendEmoji();
     void onReceiveMessage(int fromId, const QString &message, const QString &fromName = "", bool isGroup = false, int groupId = -1, const QString &timestamp = "");
     void onReceiveGroupMessage(int groupId, int fromId, const QString &userName, const QString &message, const QString &timestamp = "");
+    void onReceiveVoiceMessage(qint64 fromId, const QString &voiceUrl, int duration, const QString &fromName, const QString &timestamp);
     
     // 列表更新槽函数
     void onFriendListUpdated(const QList<User> &friends);
@@ -253,6 +269,13 @@ public slots:
     
     // 表情包相关槽函数
     void onEmojiListUpdated(const QList<QJsonObject> &emojis);
+    
+    // 语音录音相关槽函数
+    void onVoiceBtnPressed();
+    void onVoiceBtnReleased();
+    void onVoiceUploadFinished(QNetworkReply *reply);
+    void onAudioRecorderStateChanged(QAudioRecorder::State state);
+    void uploadVoiceFile();
     
     // 显示表情包对话框
     void showEmojiDialog();

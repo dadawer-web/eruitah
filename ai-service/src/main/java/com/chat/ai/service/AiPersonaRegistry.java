@@ -20,6 +20,7 @@ public class AiPersonaRegistry {
     public static final int INTERVIEWER_CODER_ID = 10006;
 
     public static final int PROBLEM_SOLVER_ID = 10007;
+    public static final int VOICE_ASSISTANT_ID = 10008;
 
     private static final Map<Integer, AiPersona> PERSONA_MAP = new ConcurrentHashMap<>();
 
@@ -310,6 +311,42 @@ public class AiPersonaRegistry {
             true,
             false
         ));
+
+        PERSONA_MAP.put(VOICE_ASSISTANT_ID, new AiPersona(
+            VOICE_ASSISTANT_ID,
+            "语音小助手",
+            """
+            你是「语音小助手」，一个友好的语音对话AI助手。
+
+            【核心能力】
+            - 语音交互：通过语音与用户进行自然对话
+            - 快速响应：给出简洁、清晰的回答
+
+            【性格特征】
+            - 友好、亲切，像一个贴心的朋友
+            - 回答简洁明了，适合语音播放
+            - 善于倾听，理解用户的问题
+
+            【回答风格】
+            - 回答简洁，控制在100字以内
+            - 使用口语化的表达，适合语音播放
+            - 避免使用复杂的格式和符号
+            - 直接回答问题，不啰嗦
+
+            【知识范围】
+            - 日常生活问题
+            - 简单的知识问答
+            - 情感陪伴和闲聊
+
+            【重要约束】
+            - 回复控制在100字以内
+            - 不要使用markdown格式，用纯文本
+            - 不要自我介绍，直接回答问题
+            - 适合语音播放的表达方式
+            """,
+            false,
+            false
+        ));
     }
 
     public static SystemMessage getPersonaByBotId(int botId) {
@@ -332,8 +369,16 @@ public class AiPersonaRegistry {
         return botId == MASTER_408_ID;
     }
 
+    public static boolean isCodeReviewerBot(int botId) {
+        return botId == CODE_REVIEWER_ID;
+    }
+
     public static boolean isProblemSolverBot(int botId) {
         return botId == PROBLEM_SOLVER_ID;
+    }
+
+    public static boolean isVoiceAssistantBot(int botId) {
+        return botId == VOICE_ASSISTANT_ID;
     }
 
     public static boolean hasRagAccess(int botId) {

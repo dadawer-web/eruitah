@@ -96,6 +96,7 @@ ChatService::ChatService()
     _msgHandlerMap.insert({LOGINOUT_MSG,std::bind(&ChatService::loginout,this,_1,_2,_3)});
     _msgHandlerMap.insert({REG_MSG,std::bind(&ChatService::reg,this,_1,_2,_3)});
     _msgHandlerMap.insert({ONE_CHAT_MSG,std::bind(&ChatService::oneChat,this,_1,_2,_3)});
+    _msgHandlerMap.insert({VOICE_MSG,std::bind(&ChatService::oneChat,this,_1,_2,_3)});
     _msgHandlerMap.insert({ADD_FRIEND_MSG,std::bind(&ChatService::addFriend,this,_1,_2,_3)});
 
     _msgHandlerMap.insert({CREATE_GROUP_MSG ,std::bind(&ChatService::createGroup,this,_1,_2,_3)});
@@ -488,21 +489,22 @@ void ChatService::oneChat(const TcpConnectionPtr& conn,json& js,Timestamp time){
             userMessage = js.value("message", "");
         }
 
-        if (userMessage.empty()) {
-            LOG_ERROR << "Empty message sent to AI Bot";
-            return;
-        }
-
-        // 构造AI任务请求，投递到Redis桥交给Java AI服务处理
-        // 包含：发送者ID、AI角色ID(botId)、消息内容
         json aiRequest;
         aiRequest["userId"] = fromId;
         aiRequest["botId"] = toid;
         aiRequest["message"] = userMessage;
         aiRequest["userName"] = senderName;
+        
+        if (js.contains("voiceUrl") && !js["voiceUrl"].is_null()) {
+            aiRequest["voiceUrl"] = js["voiceUrl"];
+            LOG_INFO << "Voice message to AI Bot, voiceUrl included";
+        }
+        
+        if (js.contains("duration") && !js["duration"].is_null()) {
+            aiRequest["duration"] = js["duration"];
+            LOG_INFO << "Voice message duration included";
+        }
 
-        // 将AI请求发布到Redis的AI任务频道
-        // Java端的AiChatService会订阅该频道并处理
         string aiRequestStr = aiRequest.dump();
         if (_redis.publish(9999, aiRequestStr)) {
             LOG_INFO << "AI chat request published to Redis: userId=" << fromId << ", botId=" << toid;
@@ -510,8 +512,6 @@ void ChatService::oneChat(const TcpConnectionPtr& conn,json& js,Timestamp time){
             LOG_ERROR << "Failed to publish AI chat request to Redis";
         }
 
-        // AI用户不需要存储离线消息，AI服务会通过Redis返回回复
-        // 离线消息表仅用于普通用户离线时保存消息
         return;
     }
 

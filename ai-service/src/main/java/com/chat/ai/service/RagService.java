@@ -8,19 +8,17 @@ import org.springframework.ai.reader.pdf.PagePdfDocumentReader;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.core.io.buffer.DataBufferUtils;
-import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -50,7 +48,7 @@ public class RagService {
                     .then(Mono.fromCallable(() -> {
                         log.info("文件已保存到临时路径: {}, 大小: {} bytes", tempFilePath, tempFile.length());
                         
-                        List<Document> rawDocuments = readDocuments(tempFile, filename);
+                        List<Document> rawDocuments = readDocuments(tempFile, filename, tempDir);
                         log.info("从文件 [{}] 中读取到 {} 个原始文档片段", filename, rawDocuments.size());
 
                         if (rawDocuments.isEmpty()) {
@@ -76,26 +74,28 @@ public class RagService {
                         return splitDocuments.size();
                     }))
                     .doFinally(signalType -> {
-                        boolean deleted = tempFile.delete();
-                        log.debug("临时文件删除: {}", deleted ? "成功" : "失败");
-                        try {
-                            Files.deleteIfExists(tempDir);
-                        } catch (IOException e) {
-                            log.warn("临时目录删除失败: {}", e.getMessage());
-                        }
+                        deleteDirectory(tempDir.toFile());
                     });
             });
     }
 
-    private List<Document> readDocuments(File file, String filename) {
+    private List<Document> readDocuments(File file, String filename, Path tempDir) {
         String lowerName = filename.toLowerCase();
 
         if (lowerName.endsWith(".pdf")) {
-            log.info("检测到PDF文件，使用 PagePdfDocumentReader 读取: {}", filename);
+            log.info("检测到PDF文件，尝试使用 PagePdfDocumentReader 读取: {}", filename);
             PagePdfDocumentReader pdfReader = new PagePdfDocumentReader(
                 new FileSystemResource(file)
             );
-            return pdfReader.get();
+            List<Document> documents = pdfReader.get();
+            
+            if (!documents.isEmpty()) {
+                log.info("PagePdfDocumentReader 成功读取 {} 个文档片段", documents.size());
+                return documents;
+            }
+            
+            log.info("PagePdfDocumentReader 读取到 0 个文档，可能是扫描版PDF，尝试OCR...");
+            return readPdfWithOcr(file, filename, tempDir);
         }
 
         if (lowerName.endsWith(".txt")) {
@@ -105,5 +105,127 @@ public class RagService {
         }
 
         throw new IllegalArgumentException("不支持的文件格式: " + filename);
+    }
+
+    private List<Document> readPdfWithOcr(File pdfFile, String filename, Path tempDir) {
+        try {
+            Path ocrImageDir = tempDir.resolve("ocr_images");
+            Files.createDirectories(ocrImageDir);
+            
+            String imagePrefix = ocrImageDir.resolve("page").toString();
+            
+            log.info("正在将PDF转换为图片...");
+            ProcessBuilder pdfToPpm = new ProcessBuilder(
+                "pdftoppm",
+                "-png",
+                "-r", "150",
+                pdfFile.getAbsolutePath(),
+                imagePrefix
+            );
+            pdfToPpm.redirectErrorStream(true);
+            Process pdfProcess = pdfToPpm.start();
+            int pdfExitCode = pdfProcess.waitFor();
+            
+            if (pdfExitCode != 0) {
+                String error = readProcessOutput(pdfProcess);
+                log.error("pdftoppm 失败: {}", error);
+                return List.of();
+            }
+            
+            File[] imageFiles = ocrImageDir.toFile().listFiles((dir, name) -> name.endsWith(".png"));
+            if (imageFiles == null || imageFiles.length == 0) {
+                log.warn("未生成任何图片文件");
+                return List.of();
+            }
+            
+            log.info("生成了 {} 张图片，开始OCR识别...", imageFiles.length);
+            
+            List<Document> documents = new ArrayList<>();
+            StringBuilder allText = new StringBuilder();
+            
+            java.util.Arrays.sort(imageFiles, (a, b) -> a.getName().compareTo(b.getName()));
+            
+            for (int i = 0; i < imageFiles.length; i++) {
+                File imageFile = imageFiles[i];
+                log.info("OCR处理第 {}/{} 页: {}", i + 1, imageFiles.length, imageFile.getName());
+                
+                String pageText = ocrImage(imageFile);
+                if (!pageText.isBlank()) {
+                    allText.append(pageText).append("\n\n");
+                }
+            }
+            
+            if (!allText.isEmpty()) {
+                Document doc = new Document(allText.toString(), Map.of(
+                    "source_file", filename,
+                    "ocr_processed", "true"
+                ));
+                documents.add(doc);
+                log.info("OCR完成，共提取 {} 字符", allText.length());
+            }
+            
+            return documents;
+            
+        } catch (Exception e) {
+            log.error("OCR处理失败", e);
+            return List.of();
+        }
+    }
+
+    private String ocrImage(File imageFile) throws Exception {
+        ProcessBuilder tesseract = new ProcessBuilder(
+            "tesseract",
+            imageFile.getAbsolutePath(),
+            "stdout",
+            "-l", "chi_sim+eng"
+        );
+        tesseract.redirectErrorStream(true);
+        
+        Process process = tesseract.start();
+        StringBuilder result = new StringBuilder();
+        
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(process.getInputStream(), "UTF-8"))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                result.append(line).append("\n");
+            }
+        }
+        
+        int exitCode = process.waitFor();
+        if (exitCode != 0) {
+            log.warn("tesseract 退出码: {}", exitCode);
+        }
+        
+        return result.toString().trim();
+    }
+
+    private String readProcessOutput(Process process) throws Exception {
+        StringBuilder output = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(process.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line).append("\n");
+            }
+        }
+        return output.toString();
+    }
+
+    private void deleteDirectory(File directory) {
+        if (directory.exists()) {
+            File[] files = directory.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isDirectory()) {
+                        deleteDirectory(file);
+                    } else {
+                        file.delete();
+                    }
+                }
+            }
+            directory.delete();
+            log.debug("临时目录已清理: {}", directory.getAbsolutePath());
+        }
     }
 }

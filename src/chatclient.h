@@ -101,12 +101,8 @@ public:
      */
     void sendGroupMessage(int groupId, const QString &message);
     
-    /**
-     * @brief Upload an emoji to the server
-     * @param userId Current user ID
-     * @param emojiName Emoji name
-     * @param imageData Base64 encoded image data
-     */
+    void sendVoiceMessage(int toId, const QString &voiceUrl, int duration);
+    
     void uploadEmoji(int userId, const QString &emojiName, const QString &imageData);
     
     /**
@@ -289,6 +285,7 @@ private slots:
     // Message related signals
     void messageReceived(int fromId, const QString &message, const QString &fromName = "", bool isGroup = false, int groupId = -1, const QString &timestamp = "");
     void groupMessageReceived(int groupId, int fromId, const QString &userName, const QString &message, const QString &timestamp = "", const QString &avatar = "");
+    void voiceMessageReceived(qint64 fromId, const QString &voiceUrl, int duration, const QString &fromName, const QString &timestamp);
 
     // Friend related signals
     void friendListUpdated(const QList<User> &friends);        // New friend list available

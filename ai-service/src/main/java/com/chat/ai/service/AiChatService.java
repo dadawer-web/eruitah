@@ -79,7 +79,7 @@ public class AiChatService {
             if (AiPersonaRegistry.isMasterBot(botId)) {
                 log.info("[旗舰大师] 使用 AgentOrchestratorService 多智能体编排（Router → Solver → Reflection）");
 
-                AgentOrchestratorService.AgentResult agentResult = agentOrchestratorService.processUserQuery(message);
+                AgentOrchestratorService.AgentResult agentResult = agentOrchestratorService.processUserQuery(userId, message);
 
                 log.info("[旗舰大师] 意图: {}, 初稿长度: {}, 最终答案长度: {}",
                     agentResult.intent(), agentResult.draftAnswer().length(), agentResult.finalAnswer().length());

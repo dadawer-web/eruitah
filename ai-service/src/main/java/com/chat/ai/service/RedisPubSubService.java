@@ -197,4 +197,30 @@ public class RedisPubSubService {
             log.error("Error publishing stream end to user: {}", userId, e);
         }
     }
+
+    /**
+     * 发送语音消息给用户
+     */
+    public void publishVoiceMessage(Integer userId, String voiceUrl, int duration, int botId, String botName) {
+        String channel = String.valueOf(userId);
+
+        try {
+            Map<String, Object> message = new HashMap<>();
+            message.put("msgid", 60);
+            message.put("from", botId);
+            message.put("toid", userId);
+            message.put("voiceUrl", voiceUrl);
+            message.put("duration", duration);
+            message.put("name", botName);
+            message.put("timestamp", Instant.now().toEpochMilli());
+
+            String jsonMessage = objectMapper.writeValueAsString(message);
+            stringRedisTemplate.convertAndSend(channel, jsonMessage);
+
+            log.info("Published voice message to user: {}, voiceUrl: {}", userId, voiceUrl);
+
+        } catch (Exception e) {
+            log.error("Error publishing voice message to user: {}", userId, e);
+        }
+    }
 }

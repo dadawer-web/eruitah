@@ -7,7 +7,7 @@ include_directories(${PROJECT_SOURCE_DIR}/qt-material-widgets/components)
 include_directories(${PROJECT_SOURCE_DIR}/qt-material-widgets/components/lib)
 
 # 查找Qt包
-find_package(Qt5 COMPONENTS Widgets Network Concurrent Svg WebEngineWidgets REQUIRED)
+find_package(Qt5 COMPONENTS Widgets Network Concurrent Svg WebEngineWidgets Multimedia REQUIRED)
 
 # 设置muduo路径（如果客户端需要用到）
 set(MUDUO_ROOT_DIR "/home/xmy/muduo")
@@ -127,8 +127,8 @@ add_executable(ChatClient ${CLIENT_SOURCES} ${MATERIAL_SOURCES})
 add_executable(QtChat ${QT_CHAT_SOURCES} ${MATERIAL_SOURCES})
 
 # 指定可执行文件所依赖的库
-target_link_libraries(ChatClient Qt5::Widgets Qt5::Network Qt5::Concurrent Qt5::Svg Qt5::WebEngineWidgets muduo_net muduo_base pthread mysqlclient hiredis)
-target_link_libraries(QtChat Qt5::Widgets Qt5::Network Qt5::Concurrent Qt5::Svg Qt5::WebEngineWidgets muduo_net muduo_base pthread mysqlclient hiredis)
+target_link_libraries(ChatClient Qt5::Widgets Qt5::Network Qt5::Concurrent Qt5::Svg Qt5::WebEngineWidgets Qt5::Multimedia muduo_net muduo_base pthread mysqlclient hiredis)
+target_link_libraries(QtChat Qt5::Widgets Qt5::Network Qt5::Concurrent Qt5::Svg Qt5::WebEngineWidgets Qt5::Multimedia muduo_net muduo_base pthread mysqlclient hiredis)
 
 # 启用Qt的MOC处理
 set_target_properties(ChatClient PROPERTIES

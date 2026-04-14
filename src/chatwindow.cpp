@@ -24,6 +24,8 @@
 #include <QFont>
 #include <QPainterPath>
 #include <QProcess>
+#include <QAudioEncoderSettings>
+#include <QVideoEncoderSettings>
 
 // Material 组件头文件
 #include "qtmaterialtextfield.h"
@@ -121,6 +123,64 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     ragNetworkManager = new QNetworkAccessManager(this);
     connect(ragNetworkManager, &QNetworkAccessManager::finished, this, &ChatWindow::onRagUploadFinished);
     
+    m_audioRecorder = new QAudioRecorder(this);
+    m_audioFilePath = QDir::tempPath() + "/chat_record_temp.wav";
+    
+    qDebug() << "=== Audio Recorder Initialization ===";
+    qDebug() << "Available audio inputs:" << m_audioRecorder->audioInputs();
+    qDebug() << "Default audio input:" << m_audioRecorder->defaultAudioInput();
+    qDebug() << "Supported containers:" << m_audioRecorder->supportedContainers();
+    qDebug() << "Supported audio codecs:" << m_audioRecorder->supportedAudioCodecs();
+    
+    QString audioInput = m_audioRecorder->defaultAudioInput();
+    if (audioInput.isEmpty()) {
+        QStringList inputs = m_audioRecorder->audioInputs();
+        if (!inputs.isEmpty()) {
+            audioInput = inputs.first();
+            qDebug() << "Using first available audio input:" << audioInput;
+        } else {
+            qDebug() << "ERROR: No audio input devices available!";
+        }
+    }
+    
+    if (!audioInput.isEmpty()) {
+        m_audioRecorder->setAudioInput(audioInput);
+        qDebug() << "Audio input set to:" << audioInput;
+    }
+    
+    QAudioEncoderSettings audioSettings;
+    audioSettings.setQuality(QMultimedia::HighQuality);
+    audioSettings.setChannelCount(1);
+    
+    QString container = "audio/x-wav";
+    QStringList containers = m_audioRecorder->supportedContainers();
+    if (containers.contains("audio/x-wav")) {
+        container = "audio/x-wav";
+    } else if (containers.contains("wav")) {
+        container = "wav";
+    } else if (!containers.isEmpty()) {
+        container = containers.first();
+    }
+    qDebug() << "Using container format:" << container;
+    
+    m_audioRecorder->setEncodingSettings(audioSettings, QVideoEncoderSettings(), container);
+    
+    QUrl outputUrl = QUrl::fromLocalFile(m_audioFilePath);
+    m_audioRecorder->setOutputLocation(outputUrl);
+    qDebug() << "Output location set to:" << outputUrl.toString();
+    qDebug() << "Actual output location:" << m_audioRecorder->outputLocation().toString();
+    
+    m_voiceBtn = nullptr;
+    m_voiceRecordStartTime = 0;
+    m_pendingVoiceDuration = 0;
+    m_pendingVoiceToId = -1;
+    m_voiceUploadManager = new QNetworkAccessManager(this);
+    connect(m_voiceUploadManager, &QNetworkAccessManager::finished, this, &ChatWindow::onVoiceUploadFinished);
+    connect(m_audioRecorder, &QAudioRecorder::stateChanged, this, &ChatWindow::onAudioRecorderStateChanged);
+    connect(m_audioRecorder, QOverload<QMediaRecorder::Error>::of(&QAudioRecorder::error), this, [this](QMediaRecorder::Error error) {
+        qDebug() << "Audio recorder error:" << error << "-" << m_audioRecorder->errorString();
+    });
+    
     contactTreeWidget = new QTreeWidget;
     contactTreeWidget->setContextMenuPolicy(Qt::CustomContextMenu);
     contactTreeWidget->setContentsMargins(0, 0, 0, 0);
@@ -205,6 +265,7 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     connect(chatClient, &ChatClient::disconnected, this, &ChatWindow::onDisconnected);
     connect(chatClient, &ChatClient::messageReceived, this, &ChatWindow::onReceiveMessage);
     connect(chatClient, &ChatClient::groupMessageReceived, this, &ChatWindow::onReceiveGroupMessage);
+    connect(chatClient, &ChatClient::voiceMessageReceived, this, &ChatWindow::onReceiveVoiceMessage);
     connect(chatClient, &ChatClient::friendListUpdated, this, &ChatWindow::onFriendListUpdated);
     connect(chatClient, &ChatClient::groupListUpdated, this, &ChatWindow::onGroupListUpdated);
     connect(chatClient, &ChatClient::addFriendResponse, this, &ChatWindow::onAddFriendResponse);
@@ -838,6 +899,122 @@ void ChatWindow::updateTabText(int chatId, bool isGroup, const QString &chatName
     }
 }
 
+QString ChatWindow::getMyAvatarPath() {
+    QString myAvatarPath = ":/icons/user.png";
+    
+    if (currentUserAvatarData.isEmpty()) {
+        return myAvatarPath;
+    }
+    
+    QString cleanBase64 = currentUserAvatarData.trimmed();
+    
+    if (cleanBase64.startsWith("data:image/")) {
+        int commaPos = cleanBase64.indexOf(',');
+        if (commaPos != -1) {
+            cleanBase64 = cleanBase64.mid(commaPos + 1);
+        }
+    }
+    
+    QByteArray decodedData = QByteArray::fromBase64(cleanBase64.toUtf8());
+    
+    if (decodedData.isEmpty()) {
+        return myAvatarPath;
+    }
+    
+    if (decodedData.size() >= 4 && decodedData[0] == '/' && decodedData[1] == '9' && decodedData[2] == 'j' && decodedData[3] == '/') {
+        decodedData = QByteArray::fromBase64(decodedData);
+    }
+    
+    QImage avatarImage;
+    bool loadSuccess = avatarImage.loadFromData(decodedData);
+    
+    if (!loadSuccess) {
+        loadSuccess = avatarImage.loadFromData(decodedData, "PNG");
+    }
+    if (!loadSuccess) {
+        loadSuccess = avatarImage.loadFromData(decodedData, "JPEG");
+    }
+    if (!loadSuccess) {
+        loadSuccess = avatarImage.loadFromData(decodedData, "BMP");
+    }
+    
+    if (loadSuccess) {
+        QPixmap avatarPixmap = QPixmap::fromImage(avatarImage);
+        QString tempAvatarPath = QCoreApplication::applicationDirPath() + "/temp_avatar_current.png";
+        if (avatarPixmap.save(tempAvatarPath)) {
+            myAvatarPath = tempAvatarPath;
+        }
+    }
+    
+    return myAvatarPath;
+}
+
+QString ChatWindow::getFriendAvatarPath(int friendId) {
+    QString avatarPath = ":/icons/user.png";
+    
+    if (!friendMap.contains(friendId)) {
+        qDebug() << "getFriendAvatarPath: friendId" << friendId << "not in friendMap";
+        return avatarPath;
+    }
+    
+    User friendUser = friendMap[friendId];
+    std::string avatarStdStr = friendUser.getAvatar();
+    
+    if (avatarStdStr.empty()) {
+        qDebug() << "getFriendAvatarPath: friendId" << friendId << "has empty avatar";
+        return avatarPath;
+    }
+    
+    QString avatarDataStr = QString::fromStdString(avatarStdStr);
+    qDebug() << "getFriendAvatarPath: friendId" << friendId << "avatar data length:" << avatarDataStr.length();
+    
+    QString cleanBase64 = avatarDataStr.trimmed();
+    
+    if (cleanBase64.startsWith("data:image/")) {
+        int commaPos = cleanBase64.indexOf(',');
+        if (commaPos != -1) {
+            cleanBase64 = cleanBase64.mid(commaPos + 1);
+        }
+    }
+    
+    QByteArray decodedData = QByteArray::fromBase64(cleanBase64.toUtf8());
+    
+    if (decodedData.isEmpty()) {
+        qDebug() << "getFriendAvatarPath: decoded data is empty";
+        return avatarPath;
+    }
+    
+    if (decodedData.size() >= 4 && decodedData[0] == '/' && decodedData[1] == '9' && decodedData[2] == 'j' && decodedData[3] == '/') {
+        decodedData = QByteArray::fromBase64(decodedData);
+    }
+    
+    QImage avatarImage;
+    bool loadSuccess = avatarImage.loadFromData(decodedData);
+    
+    if (!loadSuccess) {
+        loadSuccess = avatarImage.loadFromData(decodedData, "PNG");
+    }
+    if (!loadSuccess) {
+        loadSuccess = avatarImage.loadFromData(decodedData, "JPEG");
+    }
+    if (!loadSuccess) {
+        loadSuccess = avatarImage.loadFromData(decodedData, "BMP");
+    }
+    
+    if (loadSuccess) {
+        QPixmap avatarPixmap = QPixmap::fromImage(avatarImage);
+        QString tempAvatarPath = QDir::tempPath() + QString("/avatar_%1.png").arg(friendId);
+        if (avatarPixmap.save(tempAvatarPath)) {
+            avatarPath = tempAvatarPath;
+            qDebug() << "getFriendAvatarPath: saved avatar to" << tempAvatarPath;
+        }
+    } else {
+        qDebug() << "getFriendAvatarPath: failed to load image from decoded data";
+    }
+    
+    return avatarPath;
+}
+
 QListWidgetItem* ChatWindow::addMessageToChatList(QListWidget *listWidget, bool isSender, const QString &message, const QString &avatarPath, const QString &timeStr, const QString &senderName) {
     QListWidgetItem *item = new QListWidgetItem(listWidget);
     
@@ -851,6 +1028,41 @@ QListWidgetItem* ChatWindow::addMessageToChatList(QListWidget *listWidget, bool 
     }
     
     MessageWidget *messageWidget = new MessageWidget(isSender, message, avatarPath, finalSenderName, timeStr);
+    
+    item->setSizeHint(messageWidget->sizeHint());
+    
+    listWidget->setItemWidget(item, messageWidget);
+    
+    listWidget->updateGeometry();
+    listWidget->repaint();
+    
+    QScrollBar *scrollBar = listWidget->verticalScrollBar();
+    if (scrollBar) {
+        scrollBar->setValue(scrollBar->maximum());
+        
+        QTimer::singleShot(10, listWidget, [this, listWidget]() {
+            scrollChatToBottom(listWidget);
+        });
+    }
+    
+    return item;
+}
+
+QListWidgetItem* ChatWindow::addVoiceMessageToChatList(QListWidget *listWidget, bool isSender, const QString &voiceUrl, int duration, const QString &avatarPath, const QString &timeStr, const QString &senderName) {
+    QListWidgetItem *item = new QListWidgetItem(listWidget);
+    
+    QString finalSenderName;
+    if (!senderName.isEmpty()) {
+        finalSenderName = senderName;
+    } else if (isSender) {
+        finalSenderName = this->userName;
+    } else {
+        finalSenderName = "User";
+    }
+    
+    QString displayText = QString("[语音消息 %1秒]").arg(duration);
+    MessageWidget *messageWidget = new MessageWidget(isSender, displayText, avatarPath, finalSenderName, timeStr);
+    messageWidget->setVoiceContent(voiceUrl, duration);
     
     item->setSizeHint(messageWidget->sizeHint());
     
@@ -891,147 +1103,13 @@ void ChatWindow::onSendMessage()
     int chatId = currentWidget->property("chatId").toInt();
     bool isGroup = currentWidget->property("isGroup").toBool();
 
-    // 显示自己发送的消息 - 使用聊天气泡
-            QString timeStr = QDateTime::currentDateTime().toString("hh:mm:ss");
-            // 使用自己的头像
-            QString myAvatarPath = ":/icons/user.png"; // 默认头像
-            // 尝试从当前用户头像数据中获取
-            qDebug() << "ChatWindow: onSendMessage - currentUserAvatarData length:" << currentUserAvatarData.length();
-            if (!currentUserAvatarData.isEmpty()) {
-                // 头像数据存在，使用它
-                qDebug() << "ChatWindow: onSendMessage - Avatar data exists, processing...";
-                
-                // 检查Base64数据的有效性
-                QByteArray base64Bytes = currentUserAvatarData.toUtf8();
-                qDebug() << "ChatWindow: onSendMessage - Base64 data length:" << base64Bytes.length();
-                qDebug() << "ChatWindow: onSendMessage - Base64 data preview:" << currentUserAvatarData.left(50) << "...";
-                
-                // 移除可能的空白字符
-                QString cleanBase64 = currentUserAvatarData.trimmed();
-                qDebug() << "ChatWindow: onSendMessage - Clean Base64 length:" << cleanBase64.length();
-                
-                // 尝试解码
-                    QByteArray decodedData = QByteArray::fromBase64(cleanBase64.toUtf8());
-                    qDebug() << "ChatWindow: onSendMessage - Decoded data length:" << decodedData.length();
-                    
-                    // 检查解码后的数据是否为空
-                    if (decodedData.isEmpty()) {
-                        qDebug() << "ChatWindow: onSendMessage - Decoded data is empty!";
-                    } else {
-                        // 检查解码后的数据的前几个字节，了解文件格式
-                        if (decodedData.size() >= 4) {
-                            qDebug() << "ChatWindow: onSendMessage - First 4 bytes of decoded data:" 
-                                     << QString::asprintf("%02X %02X %02X %02X", 
-                                                         (unsigned char)decodedData[0],
-                                                         (unsigned char)decodedData[1],
-                                                         (unsigned char)decodedData[2],
-                                                         (unsigned char)decodedData[3]);
-                            
-                            // 检查是否仍然是Base64编码的数据
-                            // 常见的Base64编码JPEG开头是 "/9j/"
-                            if (decodedData.size() >= 4 && decodedData[0] == '/' && decodedData[1] == '9' && decodedData[2] == 'j' && decodedData[3] == '/') {
-                                qDebug() << "ChatWindow: onSendMessage - Decoded data is still Base64 encoded, decoding again...";
-                                // 再次解码
-                                QByteArray redecodedData = QByteArray::fromBase64(decodedData);
-                                qDebug() << "ChatWindow: onSendMessage - Redecoded data length:" << redecodedData.length();
-                                
-                                // 检查再次解码后的数据
-                                if (redecodedData.size() >= 4) {
-                                    qDebug() << "ChatWindow: onSendMessage - First 4 bytes of redecode data:" 
-                                             << QString::asprintf("%02X %02X %02X %02X", 
-                                                                 (unsigned char)redecodedData[0],
-                                                                 (unsigned char)redecodedData[1],
-                                                                 (unsigned char)redecodedData[2],
-                                                                 (unsigned char)redecodedData[3]);
-                                }
-                                
-                                decodedData = redecodedData;
-                            }
-                        }
-                    
-                    // 尝试使用QImage加载，可能更宽松
-                    QImage avatarImage;
-                    bool loadSuccess = false;
-                    
-                    // 尝试自动检测格式
-                    loadSuccess = avatarImage.loadFromData(decodedData);
-                    qDebug() << "ChatWindow: onSendMessage - QImage auto-detect success:" << loadSuccess;
-                    
-                    if (!loadSuccess) {
-                        // 尝试常见的图片格式
-                        loadSuccess = avatarImage.loadFromData(decodedData, "PNG");
-                        qDebug() << "ChatWindow: onSendMessage - QImage PNG success:" << loadSuccess;
-                        
-                        if (!loadSuccess) {
-                            loadSuccess = avatarImage.loadFromData(decodedData, "JPEG");
-                            qDebug() << "ChatWindow: onSendMessage - QImage JPEG success:" << loadSuccess;
-                            
-                            if (!loadSuccess) {
-                                loadSuccess = avatarImage.loadFromData(decodedData, "BMP");
-                                qDebug() << "ChatWindow: onSendMessage - QImage BMP success:" << loadSuccess;
-                            }
-                        }
-                    }
-                    
-                    if (loadSuccess) {
-                        qDebug() << "ChatWindow: onSendMessage - Image loaded successfully, size:" << avatarImage.size();
-                        // 转换QImage为QPixmap
-                        QPixmap avatarPixmap = QPixmap::fromImage(avatarImage);
-                        // 保存到临时文件
-                        QString tempAvatarPath = QCoreApplication::applicationDirPath() + "/temp_avatar_current.png";
-                        qDebug() << "ChatWindow: onSendMessage - Saving avatar to:" << tempAvatarPath;
-                        if (avatarPixmap.save(tempAvatarPath)) {
-                            myAvatarPath = tempAvatarPath;
-                            qDebug() << "ChatWindow: onSendMessage - Avatar saved successfully";
-                        } else {
-                            qDebug() << "ChatWindow: onSendMessage - Failed to save avatar to temp file";
-                        }
-                    } else {
-                        qDebug() << "ChatWindow: onSendMessage - Failed to load avatar from data";
-                        // 保存解码后的数据到文件以便分析
-                        QString tempFileName = QCoreApplication::applicationDirPath() + "/temp_avatar_debug.bin";
-                        QFile tempFile(tempFileName);
-                        if (tempFile.open(QIODevice::WriteOnly)) {
-                            qint64 bytesWritten = tempFile.write(decodedData);
-                            tempFile.close();
-                            qDebug() << "ChatWindow: onSendMessage - Saved decoded avatar data to" << tempFileName << "bytes written:" << bytesWritten;
-                        }
-                        
-                        // 尝试保存为JPEG文件并加载
-                        QString tempJpegFileName = QCoreApplication::applicationDirPath() + "/temp_avatar_debug.jpg";
-                        QFile tempJpegFile(tempJpegFileName);
-                        if (tempJpegFile.open(QIODevice::WriteOnly)) {
-                            qint64 bytesWritten = tempJpegFile.write(decodedData);
-                            tempJpegFile.close();
-                            qDebug() << "ChatWindow: onSendMessage - Saved decoded avatar data to" << tempJpegFileName << "bytes written:" << bytesWritten;
-                            
-                            // 尝试从文件加载
-                            QImage fileImage;
-                            bool fileLoadSuccess = fileImage.load(tempJpegFileName);
-                            qDebug() << "ChatWindow: onSendMessage - Loaded from JPEG file, success:" << fileLoadSuccess;
-                            
-                            if (fileLoadSuccess) {
-                                qDebug() << "ChatWindow: onSendMessage - Image size from file:" << fileImage.size();
-                                // 转换为QPixmap
-                                QPixmap avatarPixmap = QPixmap::fromImage(fileImage);
-                                // 保存到临时文件
-                                QString tempAvatarPath = QCoreApplication::applicationDirPath() + "/temp_avatar_current.png";
-                                if (avatarPixmap.save(tempAvatarPath)) {
-                                    myAvatarPath = tempAvatarPath;
-                                    qDebug() << "ChatWindow: onSendMessage - Avatar saved successfully from file";
-                                }
-                            }
-                        }
-                    }
-                }
-            } else {
-                qDebug() << "ChatWindow: onSendMessage - No avatar data available, using default";
-            }
-            qDebug() << "ChatWindow: onSendMessage - Final avatar path:" << myAvatarPath;
-            addMessageToChatList(chatListWidget, true, message, myAvatarPath, timeStr);
-            inputEdit->clear();
+    QString timeStr = QDateTime::currentDateTime().toString("hh:mm:ss");
+    QString myAvatarPath = getMyAvatarPath();
+    
+    qDebug() << "ChatWindow: onSendMessage - avatarPath:" << myAvatarPath;
+    addMessageToChatList(chatListWidget, true, message, myAvatarPath, timeStr);
+    inputEdit->clear();
 
-    // 发送消息
     if (isGroup) {
         chatClient->sendGroupMessage(chatId, message);
     } else {
@@ -1245,7 +1323,18 @@ void ChatWindow::createChatWidget(int chatId, const QString &chatName, bool isGr
     uploadKnowledgeButton->setCornerRadius(8);
     uploadKnowledgeButton->setFontSize(13);
     
+    m_voiceBtn = new QPushButton("🎤 按住说话", this);
+    m_voiceBtn->setMinimumHeight(40);
+    m_voiceBtn->setFixedWidth(120);
+    m_voiceBtn->setStyleSheet(
+        "QPushButton { background-color: #2a2a2a; color: #9ca3af; border: none; border-radius: 8px; font-size: 14px; }"
+        "QPushButton:hover { background-color: #3a3a3a; }"
+    );
+    connect(m_voiceBtn, &QPushButton::pressed, this, &ChatWindow::onVoiceBtnPressed);
+    connect(m_voiceBtn, &QPushButton::released, this, &ChatWindow::onVoiceBtnReleased);
+    
     buttonLayout->addWidget(sendButton);
+    buttonLayout->addWidget(m_voiceBtn);
     buttonLayout->addWidget(sendEmojiButton);
     buttonLayout->addWidget(sendImageButton);
     buttonLayout->addWidget(sendFileButton);
@@ -1946,6 +2035,62 @@ void ChatWindow::onReceiveGroupMessage(int groupId, int fromId, const QString &u
     }
 }
 
+void ChatWindow::onReceiveVoiceMessage(qint64 fromId, const QString &voiceUrl, int duration, const QString &fromName, const QString &timestamp) {
+    qDebug() << "Received voice message from" << fromId << "(" << fromName << "):" << voiceUrl << "duration:" << duration;
+    
+    QString senderName = fromName.isEmpty() ? QString("用户 %1").arg(fromId) : fromName;
+    
+    QListWidget *chatListWidget = nullptr;
+    QWidget *chatWidget = nullptr;
+    
+    for (int i = 0; i < chatTabWidget->count(); ++i) {
+        if (chatTabWidget->widget(i)->property("chatId").toLongLong() == fromId &&
+            chatTabWidget->widget(i)->property("isGroup").toBool() == false) {
+            chatWidget = chatTabWidget->widget(i);
+            if (chatComponents.contains(chatWidget)) {
+                chatListWidget = chatComponents[chatWidget].chatListWidget;
+            }
+            break;
+        }
+    }
+    
+    if (!chatListWidget) {
+        createChatWidget(fromId, senderName, false);
+        
+        for (int i = 0; i < chatTabWidget->count(); ++i) {
+            if (chatTabWidget->widget(i)->property("chatId").toLongLong() == fromId &&
+                chatTabWidget->widget(i)->property("isGroup").toBool() == false) {
+                chatWidget = chatTabWidget->widget(i);
+                if (chatComponents.contains(chatWidget)) {
+                    chatListWidget = chatComponents[chatWidget].chatListWidget;
+                }
+                break;
+            }
+        }
+    }
+    
+    if (chatListWidget) {
+        QString timeStr = timestamp.isEmpty() ? 
+            QDateTime::currentDateTime().toString("hh:mm") : timestamp;
+        
+        QString senderAvatarPath = getFriendAvatarPath(fromId);
+        
+        qDebug() << "onReceiveVoiceMessage: fromId=" << fromId << ", senderAvatarPath=" << senderAvatarPath;
+        
+        addVoiceMessageToChatList(chatListWidget, false, voiceUrl, duration, senderAvatarPath, timeStr, senderName);
+        scrollChatToBottom(chatListWidget);
+        
+        if (chatTabWidget->currentWidget() != chatWidget) {
+            for (int i = 0; i < chatTabWidget->count(); ++i) {
+                if (chatTabWidget->widget(i) == chatWidget) {
+                    chatTabWidget->setCurrentIndex(i);
+                    break;
+                }
+            }
+        }
+    }
+}
+
 void ChatWindow::onFriendListUpdated(const QList<User> &friends) {
     qDebug() << "[CRITICAL] Received friend list update, count:" << friends.size();
     
@@ -2505,6 +2650,184 @@ void ChatWindow::showContextMenu(const QPoint &pos) {
     }
     
     menu->popup(contactTreeWidget->viewport()->mapToGlobal(pos));
+}
+
+void ChatWindow::onVoiceBtnPressed() {
+    qDebug() << "onVoiceBtnPressed called, current recorder state:" << m_audioRecorder->state();
+    qDebug() << "Audio input:" << m_audioRecorder->audioInput();
+    qDebug() << "Output location:" << m_audioRecorder->outputLocation().toString();
+    
+    if (m_audioRecorder->state() == QAudioRecorder::StoppedState) {
+        m_voiceBtn->setText("松开 发送");
+        m_voiceBtn->setStyleSheet(
+            "QPushButton { background-color: #4a4a4a; color: #ffffff; border: none; border-radius: 8px; font-size: 14px; }"
+            "QPushButton:hover { background-color: #5a5a5a; }"
+        );
+        m_voiceRecordStartTime = QDateTime::currentMSecsSinceEpoch();
+        m_audioRecorder->record();
+        qDebug() << "Called record(), new state:" << m_audioRecorder->state();
+        
+        if (m_audioRecorder->error() != QMediaRecorder::NoError) {
+            qDebug() << "Recorder error:" << m_audioRecorder->errorString();
+        }
+    } else {
+        qDebug() << "Recorder not in StoppedState, current state:" << m_audioRecorder->state();
+    }
+}
+
+void ChatWindow::onVoiceBtnReleased() {
+    qDebug() << "onVoiceBtnReleased called, current recorder state:" << m_audioRecorder->state();
+    
+    if (m_audioRecorder->state() == QAudioRecorder::RecordingState) {
+        qDebug() << "Stopping recorder...";
+        m_audioRecorder->stop();
+        qDebug() << "After stop(), recorder state:" << m_audioRecorder->state();
+    } else {
+        qDebug() << "Recorder not in RecordingState, might have failed to start";
+    }
+    
+    m_voiceBtn->setText("🎤 按住说话");
+    m_voiceBtn->setStyleSheet(
+        "QPushButton { background-color: #2a2a2a; color: #9ca3af; border: none; border-radius: 8px; font-size: 14px; }"
+        "QPushButton:hover { background-color: #3a3a3a; }"
+    );
+    
+    qint64 duration = (QDateTime::currentMSecsSinceEpoch() - m_voiceRecordStartTime) / 1000;
+    if (duration < 1) {
+        qDebug() << "Voice message too short, ignored";
+        m_pendingVoiceDuration = 0;
+        m_pendingVoiceToId = -1;
+        return;
+    }
+    
+    m_pendingVoiceDuration = duration;
+    
+    QWidget *currentWidget = chatTabWidget->currentWidget();
+    if (!currentWidget) {
+        qDebug() << "No active chat window";
+        m_pendingVoiceDuration = 0;
+        m_pendingVoiceToId = -1;
+        return;
+    }
+    
+    int toId = currentWidget->property("chatId").toInt();
+    bool isGroup = currentWidget->property("isGroup").toBool();
+    
+    if (isGroup) {
+        qDebug() << "Voice message to group not supported yet";
+        m_pendingVoiceDuration = 0;
+        m_pendingVoiceToId = -1;
+        return;
+    }
+    
+    m_pendingVoiceToId = toId;
+    qDebug() << "Voice recording stopped, waiting for file to be saved. Duration:" << duration << "s, toId:" << toId;
+    
+    QTimer::singleShot(200, this, &ChatWindow::uploadVoiceFile);
+}
+
+void ChatWindow::onAudioRecorderStateChanged(QAudioRecorder::State state) {
+    qDebug() << "Audio recorder state changed to:" << state;
+}
+
+void ChatWindow::uploadVoiceFile() {
+    if (m_pendingVoiceDuration <= 0 || m_pendingVoiceToId <= 0) {
+        qDebug() << "Invalid pending voice data, skipping upload. duration:" << m_pendingVoiceDuration << "toId:" << m_pendingVoiceToId;
+        return;
+    }
+    
+    qint64 duration = m_pendingVoiceDuration;
+    int toId = m_pendingVoiceToId;
+    
+    m_pendingVoiceDuration = 0;
+    m_pendingVoiceToId = -1;
+    
+    QFile *audioFile = new QFile(m_audioFilePath);
+    if (!audioFile->exists()) {
+        qDebug() << "Audio file does not exist:" << m_audioFilePath;
+        delete audioFile;
+        return;
+    }
+    
+    if (!audioFile->open(QIODevice::ReadOnly)) {
+        qDebug() << "Failed to open audio file:" << m_audioFilePath;
+        delete audioFile;
+        return;
+    }
+    
+    qDebug() << "Audio file opened successfully, size:" << audioFile->size() << "bytes";
+    
+    QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
+    
+    QHttpPart audioPart;
+    audioPart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("audio/wav"));
+    audioPart.setHeader(QNetworkRequest::ContentDispositionHeader, 
+        QVariant("form-data; name=\"audio\"; filename=\"voice.wav\""));
+    audioPart.setBodyDevice(audioFile);
+    audioFile->setParent(multiPart);
+    
+    multiPart->append(audioPart);
+    
+    QHttpPart userIdPart;
+    userIdPart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"userId\""));
+    userIdPart.setBody(QString::number(userId).toUtf8());
+    multiPart->append(userIdPart);
+    
+    QHttpPart toIdPart;
+    toIdPart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"toId\""));
+    toIdPart.setBody(QString::number(toId).toUtf8());
+    multiPart->append(toIdPart);
+    
+    QHttpPart durationPart;
+    durationPart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"duration\""));
+    durationPart.setBody(QString::number(duration).toUtf8());
+    multiPart->append(durationPart);
+    
+    QNetworkRequest request(QUrl("http://127.0.0.1:8081/api/voice/upload"));
+    QNetworkReply *reply = m_voiceUploadManager->post(request, multiPart);
+    multiPart->setParent(reply);
+    
+    reply->setProperty("toId", toId);
+    reply->setProperty("duration", QVariant::fromValue(duration));
+    
+    qDebug() << "Uploading voice file to server, toId:" << toId << ", duration:" << duration;
+}
+
+void ChatWindow::onVoiceUploadFinished(QNetworkReply *reply) {
+    reply->deleteLater();
+    
+    if (reply->error() != QNetworkReply::NoError) {
+        qDebug() << "Voice upload failed:" << reply->errorString();
+        return;
+    }
+    
+    QByteArray responseData = reply->readAll();
+    QJsonDocument doc = QJsonDocument::fromJson(responseData);
+    QJsonObject json = doc.object();
+    
+    if (json.value("success").toBool()) {
+        QString voiceUrl = json.value("url").toString();
+        int toId = reply->property("toId").toInt();
+        int duration = reply->property("duration").toInt();
+        
+        qDebug() << "Voice uploaded successfully, URL:" << voiceUrl;
+        
+        chatClient->sendVoiceMessage(toId, voiceUrl, duration);
+        
+        QWidget *currentWidget = chatTabWidget->currentWidget();
+        if (currentWidget && chatComponents.contains(currentWidget)) {
+            QListWidget *chatListWidget = chatComponents[currentWidget].chatListWidget;
+            QString timeStr = QDateTime::currentDateTime().toString("hh:mm");
+            QString myAvatarPath = getMyAvatarPath();
+            
+            qDebug() << "Voice message - userName:" << userName << ", avatarPath:" << myAvatarPath;
+            
+            addVoiceMessageToChatList(chatListWidget, true, voiceUrl, duration, myAvatarPath, timeStr, userName);
+            scrollChatToBottom(chatListWidget);
+        }
+    } else {
+        qDebug() << "Voice upload failed:" << json.value("message").toString();
+    }
 }
 
 void ChatWindow::closeEvent(QCloseEvent *event) {

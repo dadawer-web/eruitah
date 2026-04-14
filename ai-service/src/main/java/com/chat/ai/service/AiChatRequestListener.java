@@ -39,7 +39,9 @@ public class AiChatRequestListener {
     private final AgentOrchestratorService agentOrchestratorService;
     private final GroupChatService groupChatService;
     private final MultimodalChatService multimodalChatService;
+    private final CodeReviewerService codeReviewerService;
     private final ChatMemory chatMemory;
+    private final VoiceChatService voiceChatService;
     private RedisMessageListenerContainer listenerContainer;
 
     private static final String AI_PRIVATE_CHANNEL = "9999";
@@ -55,7 +57,9 @@ public class AiChatRequestListener {
             AgentOrchestratorService agentOrchestratorService,
             GroupChatService groupChatService,
             MultimodalChatService multimodalChatService,
-            ChatMemory chatMemory) {
+            CodeReviewerService codeReviewerService,
+            ChatMemory chatMemory,
+            VoiceChatService voiceChatService) {
         this.stringRedisTemplate = stringRedisTemplate;
         this.redisPubSubService = redisPubSubService;
         this.fastChatClient = fastChatClient;
@@ -64,7 +68,9 @@ public class AiChatRequestListener {
         this.agentOrchestratorService = agentOrchestratorService;
         this.groupChatService = groupChatService;
         this.multimodalChatService = multimodalChatService;
+        this.codeReviewerService = codeReviewerService;
         this.chatMemory = chatMemory;
+        this.voiceChatService = voiceChatService;
     }
 
     @PostConstruct
@@ -126,10 +132,31 @@ public class AiChatRequestListener {
 
             redisPubSubService.publishStreamStart(userId, botId, AiPersonaRegistry.getBotName(botId));
             
-            if (AiPersonaRegistry.isMasterBot(botId)) {
+            if (AiPersonaRegistry.isVoiceAssistantBot(botId) && request.has("voiceUrl")) {
+                log.info("[语音小助手] 使用 VoiceChatService 处理语音消息");
+                
+                String voiceUrl = request.get("voiceUrl").asText();
+                int duration = request.has("duration") ? request.get("duration").asInt() : 0;
+                
+                log.info("[语音小助手] voiceUrl={}, duration={}s", voiceUrl, duration);
+                
+                VoiceChatService.VoiceChatResult voiceResult = voiceChatService.handleVoiceChat(
+                    voiceUrl, userId, botId, duration);
+                
+                response = voiceResult.textReply();
+                
+                log.info("[语音小助手] ASR转文字: {}, TTS语音URL: {}", 
+                    response.substring(0, Math.min(50, response.length())) + "...",
+                    voiceResult.voiceUrl());
+                
+                if (voiceResult.voiceUrl() != null) {
+                    redisPubSubService.publishVoiceMessage(userId, voiceResult.voiceUrl(), voiceResult.duration(), botId, AiPersonaRegistry.getBotName(botId));
+                }
+
+            } else if (AiPersonaRegistry.isMasterBot(botId)) {
                 log.info("[旗舰大师] 使用 AgentOrchestratorService 多智能体编排（Router → Solver → Reflection）");
 
-                AgentOrchestratorService.AgentResult agentResult = agentOrchestratorService.processUserQuery(userMessage);
+                AgentOrchestratorService.AgentResult agentResult = agentOrchestratorService.processUserQuery(userId, userMessage);
 
                 log.info("[旗舰大师] 意图: {}, 初稿长度: {}, 最终答案长度: {}",
                     agentResult.intent(), agentResult.draftAnswer().length(), agentResult.finalAnswer().length());
@@ -156,6 +183,16 @@ public class AiChatRequestListener {
 
                 chatMemory.add(conversationId, List.of(
                     new UserMessage(cleanMessage.isEmpty() ? "请分析这张图片" : cleanMessage),
+                    new AssistantMessage(response)
+                ));
+
+            } else if (AiPersonaRegistry.isCodeReviewerBot(botId)) {
+                log.info("[代码审查员] 使用 CodeReviewerService + MCP文件系统工具");
+
+                response = codeReviewerService.reviewCode(userMessage);
+
+                chatMemory.add(conversationId, List.of(
+                    new UserMessage(userMessage),
                     new AssistantMessage(response)
                 ));
 

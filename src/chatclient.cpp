@@ -240,7 +240,18 @@ void ChatClient::sendGroupMessage(int groupId, const QString &message) {
     sendJsonMessage(msgObj);
 }
 
-// 上传表情包到服务器
+void ChatClient::sendVoiceMessage(int toId, const QString &voiceUrl, int duration) {
+    QJsonObject msgObj;
+    msgObj["msgid"] = MsgType::VOICE_MSG;
+    msgObj["from"] = -1;
+    msgObj["toid"] = toId;
+    msgObj["voiceUrl"] = voiceUrl;
+    msgObj["duration"] = duration;
+    msgObj["msg"] = QString("[语音消息 %1秒]").arg(duration);
+    sendJsonMessage(msgObj);
+    qDebug() << "Voice message sent to user" << toId << ", url:" << voiceUrl;
+}
+
 void ChatClient::uploadEmoji(int userId, const QString &emojiName, const QString &imageData) {
     QJsonObject message;
     message["msgid"] = MsgType::UPLOAD_EMOJI_MSG; // 假设服务器支持的消息类型
@@ -685,6 +696,23 @@ void ChatClient::processMessage(const QJsonObject &message) {
         if (toId == this->currentUserId) {
             qDebug() << "Received private message from" << fromId << "(" << fromName << "):" << msgContent << "at" << timestamp;
             emit messageReceived(fromId, msgContent, fromName, false, -1, timestamp);
+        }
+        break;
+    }
+    
+    case MsgType::VOICE_MSG: {
+        qDebug() << "Processing VOICE_MSG";
+        qint64 fromId = message["from"].toVariant().toLongLong();
+        QString fromName = message.contains("fromName") ? message["fromName"].toString() : message["name"].toString();
+        QString voiceUrl = message["voiceUrl"].toString();
+        int duration = message["duration"].toInt(0);
+        QString timestamp = message.contains("timestamp") ? message["timestamp"].toString() : "";
+        qint64 toId = message.contains("toid") ? message["toid"].toVariant().toLongLong() : message["to"].toVariant().toLongLong();
+        
+        qDebug() << "Received voice message from" << fromId << "(" << fromName << "):" << voiceUrl << "duration:" << duration << "at" << timestamp;
+        
+        if (toId == this->currentUserId) {
+            emit voiceMessageReceived(fromId, voiceUrl, duration, fromName, timestamp);
         }
         break;
     }

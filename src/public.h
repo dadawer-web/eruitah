@@ -40,7 +40,9 @@ enum MsgType {
     UPDATE_AVATAR_MSG = 42,
     UPDATE_AVATAR_MSG_ACK = 43,
 
-    STATE_UPDATE_MSG = 44
+    STATE_UPDATE_MSG = 44,
+
+    VOICE_MSG = 60
 };
 
 constexpr const char* TABLE_USER = "user";

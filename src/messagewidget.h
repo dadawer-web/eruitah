@@ -8,12 +8,15 @@
 
 #include <QWidget>
 #include <QLabel>
+#include <QPushButton>
 #include <QTextBrowser>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QDateTime>
 #include <QPixmap>
 #include <QStackedWidget>
+#include <QMediaPlayer>
+#include <QUrl>
 
 class QtMaterialAvatar;
 class QWebEngineView;
@@ -28,6 +31,7 @@ public:
     
     void appendText(const QString &text);
     void setMarkdownContent(const QString &markdown);
+    void setVoiceContent(const QString &audioPath, int duration = 0);
     QSize sizeHint() const override;
     
     QtMaterialAvatar* avatarLabel() const { return m_avatarLabel; }
@@ -39,6 +43,10 @@ public:
 
 protected:
     void paintEvent(QPaintEvent *event) override;
+
+private slots:
+    void onPlayVoiceClicked();
+    void onMediaStateChanged(QMediaPlayer::State state);
 
 private:
     void setupUI(const QString &avatarPath, const QString &senderName, const QString &timeStr);
@@ -68,6 +76,12 @@ private:
     QLabel *m_imageLabel;
     QWebEngineView *m_mermaidView;
     QLabel *m_timeLabel;
+    
+    QWidget *m_voiceContainer;
+    QPushButton *m_playVoiceBtn;
+    QMediaPlayer *m_mediaPlayer;
+    QString m_voiceUrl;
+    int m_voiceDuration;
     
     QList<QLabel*> m_imageLabels;
 };
