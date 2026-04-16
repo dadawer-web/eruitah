@@ -24,6 +24,7 @@ public class AgentOrchestratorService {
     private final QueryRewriteService queryRewriteService;
     private final HybridRetrievalService hybridRetrievalService;
     private final RerankerService rerankerService;
+    private final GraphExamService graphExamService;
 
     private static final Set<String> EXAM_KEYWORDS = Set.of(
         "刷题", "抽卡", "考考我", "测试", "出题", "做题", "测验", "考试", "练习",
@@ -142,7 +143,8 @@ public class AgentOrchestratorService {
             ExamStateManager examStateManager,
             QueryRewriteService queryRewriteService,
             HybridRetrievalService hybridRetrievalService,
-            RerankerService rerankerService) {
+            RerankerService rerankerService,
+            GraphExamService graphExamService) {
         this.chatClientBuilderProvider = chatClientBuilderProvider;
         this.vectorStore = vectorStore;
         this.cppCompilerToolCallback = cppCompilerToolCallback;
@@ -150,6 +152,7 @@ public class AgentOrchestratorService {
         this.queryRewriteService = queryRewriteService;
         this.hybridRetrievalService = hybridRetrievalService;
         this.rerankerService = rerankerService;
+        this.graphExamService = graphExamService;
     }
 
     public AgentResult processUserQuery(String userMessage) {
@@ -196,10 +199,39 @@ public class AgentOrchestratorService {
     }
 
     private String executeExamSkillWorkflow(Integer userId, String userMessage) {
-        log.info("[ExamSkill:出题] 开始出题工作流, userId: {}, message: {}", userId, userMessage);
+        log.info("[ExamSkill:出题] ========== 开始出题工作流 ==========");
+        log.info("[ExamSkill:出题] userId: {}, message: {}", userId, userMessage);
 
-        ExamQuestion question = retrieveQuestionFromKnowledge(userMessage);
-        log.info("[ExamSkill:出题] 知识召回完成, 题目: {}", question.question());
+        String graphBasedConcept = null;
+        String graphContext = "";
+        
+        if (userId != null) {
+            log.info("[ExamSkill:图谱分析] 开始分析用户 {} 的认知图谱...", userId);
+            
+            graphBasedConcept = graphExamService.selectNextQuestionConcept(String.valueOf(userId)).orElse(null);
+            
+            if (graphBasedConcept != null) {
+                log.info("[ExamSkill:图谱驱动] ✅ 根据认知图谱选择薄弱考点: {}", graphBasedConcept);
+                
+                List<GraphExamService.WeakPoint> weakPoints = graphExamService.findWeakPointsForPrerequisiteChain(String.valueOf(userId));
+                if (!weakPoints.isEmpty()) {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("【图谱分析】用户当前薄弱考点：\n");
+                    for (GraphExamService.WeakPoint wp : weakPoints) {
+                        sb.append(String.format("- %s (掌握度: %.0f%%, 影响 %d 个后续考点)\n", 
+                            wp.conceptName(), wp.score() * 100, wp.impactCount()));
+                    }
+                    graphContext = sb.toString();
+                    log.info("[ExamSkill:图谱上下文] \n{}", graphContext);
+                }
+            } else {
+                log.info("[ExamSkill:图谱分析] 用户暂无图谱数据，将使用RAG知识库出题");
+            }
+        }
+
+        log.info("[ExamSkill:RAG检索] 开始从知识库召回考题...");
+        ExamQuestion question = retrieveQuestionFromKnowledge(userMessage, graphBasedConcept, graphContext);
+        log.info("[ExamSkill:出题] ✅ 知识召回完成, 题目: {}", question.question());
 
         ExamStateManager.ExamContext context = new ExamStateManager.ExamContext(
             question.subject(),
@@ -211,18 +243,33 @@ public class AgentOrchestratorService {
         log.info("[ExamSkill:出题] 已为用户 {} 设置考试状态", userId);
 
         String examPrompt = buildExamPrompt(question);
-        log.info("[ExamSkill:出题] 出题工作流完成");
+        if (graphBasedConcept != null) {
+            examPrompt += String.format("\n\n🎯 图谱定向：本题针对你的薄弱考点「%s」", graphBasedConcept);
+        }
+        log.info("[ExamSkill:出题] ========== 出题工作流完成 ==========");
         return examPrompt;
     }
 
     private ExamQuestion retrieveQuestionFromKnowledge(String userMessage) {
-        log.info("[ExamSkill:知识召回] 开始从知识库召回考题...");
+        return retrieveQuestionFromKnowledge(userMessage, null, "");
+    }
+
+    private ExamQuestion retrieveQuestionFromKnowledge(String userMessage, String targetConcept) {
+        return retrieveQuestionFromKnowledge(userMessage, targetConcept, "");
+    }
+
+    private ExamQuestion retrieveQuestionFromKnowledge(String userMessage, String targetConcept, String graphContext) {
+        log.info("[ExamSkill:知识召回] 开始从知识库召回考题... 目标考点: {}", targetConcept);
+
+        String effectiveQuery = targetConcept != null ? 
+            "请出一道关于" + targetConcept + "的408考研选择题" : userMessage;
 
         try {
-            List<String> subQueries = queryRewriteService.rewriteQuery(userMessage);
+            List<String> subQueries = queryRewriteService.rewriteQuery(effectiveQuery);
             List<Document> candidateDocs = hybridRetrievalService.hybridSearch(subQueries);
             
-            String rerankQuery = subQueries.size() > 1 ? subQueries.get(1) : userMessage;
+            String rerankQuery = targetConcept != null ? targetConcept : 
+                (subQueries.size() > 1 ? subQueries.get(1) : userMessage);
             log.info("[ExamSkill:知识召回] 使用子问题进行重排: {}", rerankQuery);
             
             List<Document> rerankedDocs = rerankerService.rerank(rerankQuery, candidateDocs);
@@ -234,13 +281,25 @@ public class AgentOrchestratorService {
                 String source = (String) topDoc.getMetadata().getOrDefault("source", "408考研综合");
                 String topic = (String) topDoc.getMetadata().getOrDefault("topic", "综合");
 
+                String combinedContext = knowledgeContent;
+                if (!graphContext.isEmpty()) {
+                    combinedContext = graphContext + "\n【RAG知识库】\n" + knowledgeContent;
+                    log.info("[ExamSkill:综合出题] 已整合图谱上下文和RAG知识库");
+                }
+
                 for (int attempt = 1; attempt <= 2; attempt++) {
                     log.info("[ExamSkill:出题] 第{}次尝试生成题目...", attempt);
                     
                     ChatClient extractorClient = chatClientBuilderProvider.getObject().build();
+                    String prompt = "用户请求：" + userMessage + "\n\n";
+                    if (targetConcept != null) {
+                        prompt += "【重点考点】" + targetConcept + "\n\n";
+                    }
+                    prompt += "请基于以下综合材料出一道408选择题：\n\n" + combinedContext;
+                    
                     String extractionResult = extractorClient.prompt()
                         .system(EXAM_QUESTION_EXTRACTOR_PROMPT)
-                        .user("用户请求：" + userMessage + "\n\n请基于以下知识材料出一道408选择题：\n\n" + knowledgeContent)
+                        .user(prompt)
                         .call()
                         .content();
 
@@ -389,10 +448,41 @@ public class AgentOrchestratorService {
 
         String gradingResult = performGrading(context.questionStem(), context.standardAnswer(), userAnswer);
 
+        int score = extractScoreFromGrading(gradingResult);
+        graphExamService.processExamAnswer(
+            String.valueOf(userId), 
+            context.questionStem(), 
+            userAnswer, 
+            context.standardAnswer(), 
+            score
+        );
+        log.info("[ExamSkill:图谱联动] 已更新用户 {} 的知识图谱掌握度, 得分: {}", userId, score);
+
         examStateManager.exitExamState(userId);
         log.info("[ExamSkill:判卷] 判卷完成，已清除用户 {} 的考试状态", userId);
 
-        return gradingResult;
+        String weakPointHint = graphExamService.findCriticalWeakPoint(String.valueOf(userId))
+            .map(wp -> String.format("\n\n🎯 图谱分析：建议重点复习「%s」（影响 %d 个后续考点）", 
+                wp.conceptName(), wp.impactCount()))
+            .orElse("");
+
+        return gradingResult + weakPointHint;
+    }
+
+    private int extractScoreFromGrading(String gradingResult) {
+        try {
+            int scoreStart = gradingResult.indexOf("【得分】");
+            if (scoreStart != -1) {
+                String scorePart = gradingResult.substring(scoreStart + 4);
+                int scoreEnd = scorePart.indexOf("/");
+                if (scoreEnd != -1) {
+                    return Integer.parseInt(scorePart.substring(0, scoreEnd).trim());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Failed to extract score from grading result", e);
+        }
+        return 50;
     }
 
     private String performGrading(String questionStem, String standardAnswer, String userAnswer) {

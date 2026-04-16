@@ -8,8 +8,8 @@ import org.springframework.ai.reader.pdf.PagePdfDocumentReader;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Mono;
 
 import java.io.BufferedReader;
@@ -29,8 +29,12 @@ public class RagService {
 
     private final VectorStore vectorStore;
 
-    public Mono<Integer> uploadAndIndexDocument(FilePart filePart) {
-        String filename = filePart.filename();
+    public Mono<Integer> uploadAndIndexDocument(MultipartFile multipartFile) {
+        String filename = multipartFile.getOriginalFilename();
+        if (filename == null) {
+            filename = multipartFile.getName();
+        }
+        final String finalFilename = filename;
         String lowerName = filename.toLowerCase();
         
         if (!lowerName.endsWith(".txt") && !lowerName.endsWith(".pdf")) {
@@ -39,44 +43,49 @@ public class RagService {
             ));
         }
 
-        return Mono.fromCallable(() -> Files.createTempDirectory("rag-upload-"))
-            .flatMap(tempDir -> {
-                Path tempFilePath = tempDir.resolve(filename);
-                File tempFile = tempFilePath.toFile();
-
-                return filePart.transferTo(tempFile)
-                    .then(Mono.fromCallable(() -> {
-                        log.info("文件已保存到临时路径: {}, 大小: {} bytes", tempFilePath, tempFile.length());
-                        
-                        List<Document> rawDocuments = readDocuments(tempFile, filename, tempDir);
-                        log.info("从文件 [{}] 中读取到 {} 个原始文档片段", filename, rawDocuments.size());
-
-                        if (rawDocuments.isEmpty()) {
-                            log.warn("文件 [{}] 内容为空，跳过处理", filename);
-                            return 0;
-                        }
-
-                        TokenTextSplitter splitter = new TokenTextSplitter();
-                        List<Document> splitDocuments = splitter.apply(rawDocuments);
-                        log.info("切分后生成 {} 个文档块（Chunk）", splitDocuments.size());
-
-                        for (int i = 0; i < splitDocuments.size(); i++) {
-                            Document doc = splitDocuments.get(i);
-                            doc.getMetadata().putIfAbsent("source_file", filename);
-                            doc.getMetadata().putIfAbsent("chunk_index", i);
-                            log.debug("Chunk[{}]: content length={}, metadata={}", 
-                                i, doc.getContent().length(), doc.getMetadata());
-                        }
-
-                        vectorStore.add(splitDocuments);
-                        log.info("成功将 {} 个文档块写入 VectorStore", splitDocuments.size());
-
-                        return splitDocuments.size();
-                    }))
-                    .doFinally(signalType -> {
-                        deleteDirectory(tempDir.toFile());
-                    });
+        try {
+            Path tempDir = Files.createTempDirectory("rag-upload-");
+            Path tempFilePath = tempDir.resolve(finalFilename);
+            multipartFile.transferTo(tempFilePath);
+            File tempFile = tempFilePath.toFile();
+            
+            log.info("文件已保存到临时路径: {}, 大小: {} bytes", tempFilePath, tempFile.length());
+            
+            return Mono.fromCallable(() -> {
+                int result = processDocumentFile(tempFile, finalFilename, tempDir);
+                deleteDirectory(tempDir.toFile());
+                return result;
             });
+        } catch (IOException e) {
+            return Mono.error(e);
+        }
+    }
+
+    private int processDocumentFile(File tempFile, String filename, Path tempDir) {
+        List<Document> rawDocuments = readDocuments(tempFile, filename, tempDir);
+        log.info("从文件 [{}] 中读取到 {} 个原始文档片段", filename, rawDocuments.size());
+
+        if (rawDocuments.isEmpty()) {
+            log.warn("文件 [{}] 内容为空，跳过处理", filename);
+            return 0;
+        }
+
+        TokenTextSplitter splitter = new TokenTextSplitter();
+        List<Document> splitDocuments = splitter.apply(rawDocuments);
+        log.info("切分后生成 {} 个文档块（Chunk）", splitDocuments.size());
+
+        for (int i = 0; i < splitDocuments.size(); i++) {
+            Document doc = splitDocuments.get(i);
+            doc.getMetadata().putIfAbsent("source_file", filename);
+            doc.getMetadata().putIfAbsent("chunk_index", i);
+            log.debug("Chunk[{}]: content length={}, metadata={}", 
+                i, doc.getContent().length(), doc.getMetadata());
+        }
+
+        vectorStore.add(splitDocuments);
+        log.info("成功将 {} 个文档块写入 VectorStore", splitDocuments.size());
+
+        return splitDocuments.size();
     }
 
     private List<Document> readDocuments(File file, String filename, Path tempDir) {
@@ -84,18 +93,23 @@ public class RagService {
 
         if (lowerName.endsWith(".pdf")) {
             log.info("检测到PDF文件，尝试使用 PagePdfDocumentReader 读取: {}", filename);
-            PagePdfDocumentReader pdfReader = new PagePdfDocumentReader(
-                new FileSystemResource(file)
-            );
-            List<Document> documents = pdfReader.get();
-            
-            if (!documents.isEmpty()) {
-                log.info("PagePdfDocumentReader 成功读取 {} 个文档片段", documents.size());
-                return documents;
+            try {
+                PagePdfDocumentReader pdfReader = new PagePdfDocumentReader(
+                    new FileSystemResource(file)
+                );
+                List<Document> documents = pdfReader.get();
+                
+                if (!documents.isEmpty()) {
+                    log.info("PagePdfDocumentReader 成功读取 {} 个文档片段", documents.size());
+                    return documents;
+                }
+                
+                log.info("PagePdfDocumentReader 读取到 0 个文档，可能是扫描版PDF，尝试OCR...");
+                return readPdfWithOcr(file, filename, tempDir);
+            } catch (Exception e) {
+                log.warn("PagePdfDocumentReader 读取失败，尝试OCR: {}", e.getMessage());
+                return readPdfWithOcr(file, filename, tempDir);
             }
-            
-            log.info("PagePdfDocumentReader 读取到 0 个文档，可能是扫描版PDF，尝试OCR...");
-            return readPdfWithOcr(file, filename, tempDir);
         }
 
         if (lowerName.endsWith(".txt")) {

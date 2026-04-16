@@ -50,6 +50,7 @@ public class FarmService {
 
             if (judgment.canHarvest()) {
                 sendBroadcast(userId, ownerId, judgment.feedback());
+                farmAiJudgeService.extractAndSaveKnowledgeGraph(userId, question, answer, judgment.score());
             }
 
             return judgment;

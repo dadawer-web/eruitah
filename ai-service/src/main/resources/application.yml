@@ -4,6 +4,17 @@ server:
 spring:
   application:
     name: ai-service
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50MB
+      max-request-size: 50MB
+      file-size-threshold: 2KB
+  neo4j:
+    uri: bolt://localhost:7687
+    authentication:
+      username: neo4j
+      password: 12345678
   data:
     redis:
       host: localhost

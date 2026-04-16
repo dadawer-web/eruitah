@@ -1269,12 +1269,23 @@ void ChatService::handleRedisSubscribeMessage(long long channel, string msg)
                 ownerNotify["harvesterid"] = userid;
                 ownerNotify["score"] = score;
                 ownerNotify["feedback"] = feedback;
+                string ownerNotifyStr = ownerNotify.dump();
+
                 {
                     lock_guard<mutex> lock(_connMutex);
                     auto ownerIt = _userConnMap.find(ownerid);
                     if (ownerIt != _userConnMap.end()) {
-                        ownerIt->second->send(ownerNotify.dump());
-                        LOG_INFO << "Notified owner " << ownerid << " about plot " << plotid << " harvested";
+                        ownerIt->second->send(ownerNotifyStr);
+                        LOG_INFO << "Notified owner " << ownerid << " about plot " << plotid << " harvested (local)";
+                    } else {
+                        User ownerUser = _userModel.query(ownerid);
+                        if (ownerUser.getState() == "online") {
+                            _redis.publish(ownerid, ownerNotifyStr);
+                            LOG_INFO << "Notified owner " << ownerid << " about plot " << plotid << " harvested (via Redis)";
+                        } else {
+                            _offlineMsgModel.insert(ownerid, ownerNotifyStr);
+                            LOG_INFO << "Stored offline notification for owner " << ownerid << " about plot " << plotid << " harvested";
+                        }
                     }
                 }
             }

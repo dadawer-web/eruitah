@@ -10,5 +10,6 @@
     <file>icons/exit.png</file>
     <file>styles.qss</file>
     <file>styles_dark.qss</file>
+    <file>html/graph.html</file>
 </qresource>
 </RCC>

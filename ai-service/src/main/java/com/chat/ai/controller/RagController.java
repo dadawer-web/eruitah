@@ -3,9 +3,10 @@ package com.chat.ai.controller;
 import com.chat.ai.service.RagService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
@@ -19,18 +20,24 @@ public class RagController {
 
     private final RagService ragService;
 
-    @PostMapping("/upload")
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Mono<ResponseEntity<Map<String, Object>>> uploadDocument(
-            @RequestPart("file") FilePart file) {
+            @RequestPart("file") MultipartFile file) {
 
-        String filename = file.filename();
+        String filename = file.getOriginalFilename();
         if (filename == null || filename.isBlank()) {
             log.warn("上传的文件名为空");
             return Mono.just(ResponseEntity.badRequest()
                 .body(createErrorMap("上传文件名不能为空")));
         }
 
-        log.info("收到RAG文档上传请求: filename={}", filename);
+        if (file.isEmpty()) {
+            log.warn("上传的文件为空");
+            return Mono.just(ResponseEntity.badRequest()
+                .body(createErrorMap("上传文件不能为空")));
+        }
+
+        log.info("收到RAG文档上传请求: filename={}, size={}KB", filename, file.getSize() / 1024);
 
         return ragService.uploadAndIndexDocument(file)
             .<ResponseEntity<Map<String, Object>>>map(chunkCount -> {

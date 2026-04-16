@@ -3,6 +3,17 @@
 #include <iostream>
 #include <cstring>
 
+static string escapeString(const string &input)
+{
+    string result = input;
+    size_t pos = 0;
+    while ((pos = result.find("'", pos)) != string::npos) {
+        result.replace(pos, 1, "''");
+        pos += 2;
+    }
+    return result;
+}
+
 bool FarmModel::initTable()
 {
     const char *sql = "CREATE TABLE IF NOT EXISTS farm_user ("
@@ -127,9 +138,12 @@ bool FarmModel::updateFarmUserExp(int userid, int expDelta)
 
 bool FarmModel::plantPlot(int ownerid, int plotindex, const string &question, const string &subject)
 {
-    char sql[1024] = {0};
+    string escapedQuestion = escapeString(question);
+    string escapedSubject = escapeString(subject);
+    
+    char sql[2048] = {0};
     sprintf(sql, "UPDATE farm_plot SET state=1, question='%s', subject='%s', answererid=NULL, answer=NULL, score=NULL, feedback=NULL, planted_at=NOW() WHERE ownerid=%d AND plotindex=%d",
-            question.c_str(), subject.c_str(), ownerid, plotindex);
+            escapedQuestion.c_str(), escapedSubject.c_str(), ownerid, plotindex);
 
     MySQL mysql;
     if (mysql.connect()) {
@@ -216,9 +230,12 @@ bool FarmModel::updatePlotState(int ownerid, int plotindex, int state)
 
 bool FarmModel::answerPlot(int ownerid, int plotindex, int answererid, const string &answer, int score, const string &feedback)
 {
-    char sql[2048] = {0};
+    string escapedFeedback = escapeString(feedback);
+    string escapedAnswer = escapeString(answer);
+    
+    char sql[4096] = {0};
     sprintf(sql, "UPDATE farm_plot SET state=0, answererid=%d, answer='%s', score=%d, feedback='%s', harvested_at=NOW() WHERE ownerid=%d AND plotindex=%d",
-            answererid, answer.c_str(), score, feedback.c_str(), ownerid, plotindex);
+            answererid, escapedAnswer.c_str(), score, escapedFeedback.c_str(), ownerid, plotindex);
 
     MySQL mysql;
     if (mysql.connect()) {
