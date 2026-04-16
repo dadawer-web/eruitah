@@ -1,5 +1,6 @@
 package com.chat.ai.controller;
 
+import com.chat.ai.config.annotation.RateLimit;
 import com.chat.ai.service.AiChatService;
 import com.chat.ai.service.AiPersonaRegistry;
 import com.chat.ai.service.MultimodalChatService;
@@ -18,6 +19,8 @@ public class AiController {
     private final MultimodalChatService multimodalChatService;
 
     @PostMapping("/chat")
+    @RateLimit(dimension = RateLimit.Dimension.USER, count = 30, interval = 1, timeUnit = RateLimit.TimeUnit.MINUTES)
+    @RateLimit(dimension = RateLimit.Dimension.IP, count = 60, interval = 1, timeUnit = RateLimit.TimeUnit.MINUTES)
     public ResponseEntity<ChatResponse> chat(@RequestBody ChatRequest request) {
         log.info("Received chat request: userId={}, botId={}, message={}, images={}",
             request.getUserId(), request.getBotId(), request.getMessage(),
@@ -87,6 +90,8 @@ public class AiController {
     }
 
     @PostMapping("/mindmap")
+    @RateLimit(dimension = RateLimit.Dimension.USER, count = 10, interval = 1, timeUnit = RateLimit.TimeUnit.MINUTES)
+    @RateLimit(dimension = RateLimit.Dimension.IP, count = 20, interval = 1, timeUnit = RateLimit.TimeUnit.MINUTES)
     public ResponseEntity<ChatResponse> generateMindmap(@RequestBody MindmapRequest request) {
         log.info("Received mindmap request: userId={}, topic={}", request.getUserId(), request.getTopic());
 

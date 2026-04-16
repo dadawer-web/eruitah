@@ -233,22 +233,37 @@ public class GraphExamService {
     }
 
     public List<WeakPoint> findWeakPointsForPrerequisiteChain(String userId) {
+        return findWeakPointsForSubject(userId, null);
+    }
+
+    public List<WeakPoint> findWeakPointsForSubject(String userId, String targetSubject) {
         ensureUserNodeExists(userId);
+        
+        String subjectFilter = "";
+        if (targetSubject != null) {
+            subjectFilter = "AND (c.subject = $targetSubject OR EXISTS {" +
+                "MATCH (c)-[:BELONGS_TO*1..10]->(root:Concept {name: $targetSubject})" +
+                "})";
+        }
         
         String cypher = """
             MATCH (u:User {userId: $userId})-[r:COGNITION]->(c:Concept)
-            WHERE r.score < 0.6
+            WHERE r.score < 0.6 %s
             OPTIONAL MATCH (c)-[:BELONGS_TO]->(parent:Concept)
             RETURN c.name AS conceptName, c.subject AS subject, r.score AS score, 
                    count(parent) AS impactCount
             ORDER BY impactCount DESC, score ASC
             LIMIT 5
-            """;
+            """.formatted(subjectFilter);
 
-        Collection<Map<String, Object>> results = neo4jClient.query(cypher)
-            .bind(userId).to("userId")
-            .fetch()
-            .all();
+        var query = neo4jClient.query(cypher)
+            .bind(userId).to("userId");
+        
+        if (targetSubject != null) {
+            query = query.bind(targetSubject).to("targetSubject");
+        }
+
+        Collection<Map<String, Object>> results = query.fetch().all();
 
         return results.stream()
             .map(m -> new WeakPoint(
@@ -261,14 +276,25 @@ public class GraphExamService {
     }
 
     public LearningPath generateDynamicLearningPath(String userId) {
-        return generateDynamicLearningPath(userId, Collections.emptySet());
+        return generateDynamicLearningPath(userId, Collections.emptySet(), null);
     }
 
     public LearningPath generateDynamicLearningPath(String userId, Set<String> excludeConcepts) {
+        return generateDynamicLearningPath(userId, excludeConcepts, null);
+    }
+
+    public LearningPath generateDynamicLearningPath(String userId, Set<String> excludeConcepts, String targetSubject) {
         ensureUserNodeExists(userId);
         
         String excludeList = excludeConcepts.isEmpty() ? "" : 
             "AND NOT all.name IN ['" + String.join("','", excludeConcepts) + "']";
+        
+        String subjectFilter = "";
+        if (targetSubject != null) {
+            subjectFilter = "AND (all.subject = $targetSubject OR EXISTS {" +
+                "MATCH (all)-[:BELONGS_TO*1..10]->(root:Concept {name: $targetSubject})" +
+                "})";
+        }
         
         String cypher = """
             MATCH (u:User {userId: $userId})
@@ -279,17 +305,22 @@ public class GraphExamService {
             }
             AND all.level >= 3 AND all.level <= 5
             %s
+            %s
             OPTIONAL MATCH (all)-[:BELONGS_TO]->(parent:Concept)
             RETURN all.name AS conceptName, all.subject AS subject, 
                    count(parent) AS upstreamDependencies
             ORDER BY rand()
             LIMIT 10
-            """.formatted(excludeList);
+            """.formatted(excludeList, subjectFilter);
 
-        Collection<Map<String, Object>> results = neo4jClient.query(cypher)
-            .bind(userId).to("userId")
-            .fetch()
-            .all();
+        var query = neo4jClient.query(cypher)
+            .bind(userId).to("userId");
+        
+        if (targetSubject != null) {
+            query = query.bind(targetSubject).to("targetSubject");
+        }
+
+        Collection<Map<String, Object>> results = query.fetch().all();
 
         List<String> concepts = results.stream()
             .map(m -> (String) m.get("conceptName"))
@@ -306,10 +337,14 @@ public class GraphExamService {
     }
 
     public Optional<String> selectNextQuestionConcept(String userId) {
+        return selectNextQuestionConcept(userId, null);
+    }
+
+    public Optional<String> selectNextQuestionConcept(String userId, String targetSubject) {
         Set<String> recentConcepts = getRecentQuestionConcepts(userId);
-        log.info("用户 {} 最近出过的考点: {}", userId, recentConcepts);
+        log.info("用户 {} 最近出过的考点: {}, 目标科目: {}", userId, recentConcepts, targetSubject);
         
-        Optional<WeakPoint> criticalWeak = findCriticalWeakPoint(userId);
+        Optional<WeakPoint> criticalWeak = findCriticalWeakPointForSubject(userId, targetSubject);
         
         if (criticalWeak.isPresent()) {
             WeakPoint wp = criticalWeak.get();
@@ -321,7 +356,7 @@ public class GraphExamService {
             }
         }
 
-        LearningPath path = generateDynamicLearningPath(userId, recentConcepts);
+        LearningPath path = generateDynamicLearningPath(userId, recentConcepts, targetSubject);
         if (!path.concepts().isEmpty()) {
             List<String> availableConcepts = path.concepts().stream()
                 .filter(c -> !recentConcepts.contains(c))
@@ -336,18 +371,31 @@ public class GraphExamService {
             }
         }
 
+        String subjectFilter = "";
+        if (targetSubject != null) {
+            subjectFilter = "AND (c.subject = $targetSubject OR EXISTS {" +
+                "MATCH (c)-[:BELONGS_TO*1..10]->(root:Concept {name: $targetSubject})" +
+                "})";
+        }
+        
         String randomCypher = """
             MATCH (c:Concept)
-            WHERE c.level >= 3 AND c.level <= 5
+            WHERE c.level >= 3 AND c.level <= 5 %s
             RETURN c.name as name
             ORDER BY rand()
             LIMIT 10
-            """;
+            """.formatted(subjectFilter);
         
-        List<String> randomConcepts = neo4jClient.query(randomCypher)
-            .fetch()
-            .all()
-            .stream()
+        Collection<Map<String, Object>> randomResults;
+        if (targetSubject != null) {
+            randomResults = neo4jClient.query(randomCypher)
+                .bind(targetSubject).to("targetSubject")
+                .fetch().all();
+        } else {
+            randomResults = neo4jClient.query(randomCypher).fetch().all();
+        }
+        
+        List<String> randomConcepts = randomResults.stream()
             .map(m -> (String) m.get("name"))
             .filter(name -> !recentConcepts.contains(name))
             .collect(Collectors.toList());
@@ -360,6 +408,43 @@ public class GraphExamService {
         }
         
         return Optional.empty();
+    }
+
+    private Optional<WeakPoint> findCriticalWeakPointForSubject(String userId, String targetSubject) {
+        ensureUserNodeExists(userId);
+        
+        String subjectFilter = "";
+        if (targetSubject != null) {
+            subjectFilter = "AND (c.subject = $targetSubject OR EXISTS {" +
+                "MATCH (c)-[:BELONGS_TO*1..10]->(root:Concept {name: $targetSubject})" +
+                "})";
+        }
+        
+        String cypher = """
+            MATCH (u:User {userId: $userId})-[r:COGNITION]->(c:Concept)
+            WHERE r.score < 0.6 %s
+            MATCH (c)-[:BELONGS_TO]->(parent:Concept)
+            RETURN c.name AS focusPoint, c.subject AS subject, r.score AS currentScore, 
+                   count(parent) AS impactCount
+            ORDER BY impactCount DESC, currentScore ASC
+            LIMIT 1
+            """.formatted(subjectFilter);
+
+        var query = neo4jClient.query(cypher)
+            .bind(userId).to("userId");
+        
+        if (targetSubject != null) {
+            query = query.bind(targetSubject).to("targetSubject");
+        }
+
+        return query.fetch()
+            .one()
+            .map(m -> new WeakPoint(
+                (String) m.get("focusPoint"),
+                m.get("currentScore") != null ? ((Number) m.get("currentScore")).doubleValue() : 0.0,
+                m.get("impactCount") != null ? ((Number) m.get("impactCount")).intValue() : 0,
+                (String) m.get("subject")
+            ));
     }
 
     private Set<String> getRecentQuestionConcepts(String userId) {

@@ -1,11 +1,15 @@
 package com.chat.ai.service;
 
+import com.chat.ai.config.ai.StructuredOutputInvoker;
+import com.chat.ai.exception.BusinessException;
+import com.chat.ai.exception.ErrorCode;
 import com.chat.ai.model.HarvestJudgment;
 import com.chat.ai.model.graph.KnowledgeTriplet;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Async;
@@ -22,18 +26,40 @@ public class FarmAiJudgeService {
     private final KnowledgeExtractorService knowledgeExtractorService;
     private final GraphExamService graphExamService;
     private final StringRedisTemplate stringRedisTemplate;
+    private final StructuredOutputInvoker structuredOutputInvoker;
+
+    private static final String JUDGE_SYSTEM_PROMPT = """
+            你是一个极其严格的 408 计算机考研阅卷官。
+            现在有一位玩家在"408农场"中试图回答别人的问题来收菜。
+            
+            请严格判断该答案是否正确、切中要害。
+            如果正确，canHarvest设为true；如果有明显事实错误或太敷衍，设为false。
+            
+            请严格按照以下JSON格式返回：
+            {"canHarvest": boolean, "score": number(0-100), "feedback": "string"}
+            """;
+
+    private static final String EXTRACT_SYSTEM_PROMPT = """
+            根据以下408考研问答，提取出该用户成功掌握的1到3个核心专业术语（如：死锁预防、页面置换、TCP三次握手）。
+            只返回专业术语，不要解释。
+            
+            请严格按照以下JSON数组格式返回：
+            ["术语1", "术语2"]
+            """;
 
     public FarmAiJudgeService(
             @Qualifier("fastChatClient") ChatClient chatClient,
             ObjectMapper objectMapper,
             KnowledgeExtractorService knowledgeExtractorService,
             GraphExamService graphExamService,
-            StringRedisTemplate stringRedisTemplate) {
+            StringRedisTemplate stringRedisTemplate,
+            StructuredOutputInvoker structuredOutputInvoker) {
         this.chatClient = chatClient;
         this.objectMapper = objectMapper;
         this.knowledgeExtractorService = knowledgeExtractorService;
         this.graphExamService = graphExamService;
         this.stringRedisTemplate = stringRedisTemplate;
+        this.structuredOutputInvoker = structuredOutputInvoker;
     }
 
     public HarvestJudgment judgeAnswer(String question, String studentAnswer) {
@@ -42,35 +68,28 @@ public class FarmAiJudgeService {
                 question.substring(0, Math.min(50, question.length())),
                 studentAnswer.substring(0, Math.min(50, studentAnswer.length())));
 
-            String prompt = """
-                    你是一个极其严格的 408 计算机考研阅卷官。
-                    现在有一位玩家在"408农场"中试图回答别人的问题来收菜。
-                    
-                    【原问题】：%s
-                    【玩家答案】：%s
-                    
-                    请严格判断该答案是否正确、切中要害。
-                    如果正确，canHarvest设为true；如果有明显事实错误或太敷衍，设为false。
-                    
-                    请严格按照以下JSON格式返回，不要包含任何其他文字：
-                    {"canHarvest": true或false, "score": 0到100的整数, "feedback": "简短评语"}
-                    """.formatted(question, studentAnswer);
+            String userPrompt = String.format("【原问题】：%s\n【玩家答案】：%s", question, studentAnswer);
 
-            String aiResponse = chatClient.prompt()
-                .user(prompt)
-                .call()
-                .content();
+            BeanOutputConverter<HarvestJudgment> converter = new BeanOutputConverter<>(HarvestJudgment.class);
 
-            log.info("Farm AI raw response: {}", aiResponse);
+            HarvestJudgment judgment = structuredOutputInvoker.invoke(
+                chatClient,
+                JUDGE_SYSTEM_PROMPT,
+                userPrompt,
+                converter,
+                ErrorCode.AI_SERVICE_ERROR,
+                "AI判卷失败：",
+                "farm_judge",
+                log
+            );
 
-            String jsonStr = cleanJsonResponse(aiResponse);
-
-            HarvestJudgment judgment = objectMapper.readValue(jsonStr, HarvestJudgment.class);
             log.info("Farm AI judgment: canHarvest={}, score={}, feedback={}",
                 judgment.canHarvest(), judgment.score(), judgment.feedback());
 
             return judgment;
 
+        } catch (BusinessException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Error in farm AI judgment, defaulting to false", e);
             return new HarvestJudgment(false, 0, "AI判卷出错，请重试");
@@ -82,16 +101,9 @@ public class FarmAiJudgeService {
         try {
             log.info("Starting async knowledge graph extraction for user={}", userId);
 
-            String extractPrompt = """
-                    根据以下408考研问答，提取出该用户成功掌握的1到3个核心专业术语（如：死锁预防、页面置换、TCP三次握手）。
-                    只返回专业术语，不要解释。
-                    
-                    【问题】：%s
-                    【答案】：%s
-                    
-                    请严格按照以下JSON数组格式返回，不要包含任何其他文字：
-                    ["术语1", "术语2"]
-                    """.formatted(question, answer);
+            String userPrompt = String.format("【问题】：%s\n【答案】：%s", question, answer);
+
+            String extractPrompt = EXTRACT_SYSTEM_PROMPT + "\n\n" + userPrompt;
 
             String aiResponse = chatClient.prompt()
                 .user(extractPrompt)

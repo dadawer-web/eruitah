@@ -94,3 +94,12 @@ voice:
   storage:
     path: /tmp/audio
     url-prefix: http://localhost:8081/audio
+
+app:
+  ai:
+    structured-max-attempts: 2
+    structured-include-last-error: true
+    structured-retry-use-repair-prompt: true
+    structured-retry-append-strict-json-instruction: true
+    structured-error-message-max-length: 200
+    structured-metrics-enabled: true

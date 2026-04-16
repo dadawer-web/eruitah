@@ -1,5 +1,6 @@
 package com.chat.ai.controller;
 
+import com.chat.ai.config.annotation.RateLimit;
 import com.chat.ai.model.HarvestJudgment;
 import com.chat.ai.service.FarmService;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,8 @@ public class FarmController {
     }
 
     @PostMapping("/judge")
+    @RateLimit(dimension = RateLimit.Dimension.USER, count = 5, interval = 1, timeUnit = RateLimit.TimeUnit.MINUTES)
+    @RateLimit(dimension = RateLimit.Dimension.IP, count = 10, interval = 1, timeUnit = RateLimit.TimeUnit.MINUTES)
     public ResponseEntity<HarvestJudgment> judgeAnswer(@RequestBody Map<String, Object> request) {
         try {
             int userId = ((Number) request.get("userId")).intValue();

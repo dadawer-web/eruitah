@@ -1,5 +1,6 @@
 package com.chat.ai.controller;
 
+import com.chat.ai.config.annotation.RateLimit;
 import com.chat.ai.service.RagService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,8 @@ public class RagController {
     private final RagService ragService;
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @RateLimit(dimension = RateLimit.Dimension.USER, count = 10, interval = 1, timeUnit = RateLimit.TimeUnit.MINUTES)
+    @RateLimit(dimension = RateLimit.Dimension.IP, count = 20, interval = 1, timeUnit = RateLimit.TimeUnit.MINUTES)
     public Mono<ResponseEntity<Map<String, Object>>> uploadDocument(
             @RequestPart("file") MultipartFile file) {
 

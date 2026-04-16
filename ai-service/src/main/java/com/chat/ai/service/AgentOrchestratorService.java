@@ -202,18 +202,23 @@ public class AgentOrchestratorService {
         log.info("[ExamSkill:出题] ========== 开始出题工作流 ==========");
         log.info("[ExamSkill:出题] userId: {}, message: {}", userId, userMessage);
 
+        String targetSubject = extractTargetSubject(userMessage);
+        if (targetSubject != null) {
+            log.info("[ExamSkill:意图识别] 用户指定科目: {}", targetSubject);
+        }
+
         String graphBasedConcept = null;
         String graphContext = "";
         
         if (userId != null) {
             log.info("[ExamSkill:图谱分析] 开始分析用户 {} 的认知图谱...", userId);
             
-            graphBasedConcept = graphExamService.selectNextQuestionConcept(String.valueOf(userId)).orElse(null);
+            graphBasedConcept = graphExamService.selectNextQuestionConcept(String.valueOf(userId), targetSubject).orElse(null);
             
             if (graphBasedConcept != null) {
                 log.info("[ExamSkill:图谱驱动] ✅ 根据认知图谱选择薄弱考点: {}", graphBasedConcept);
                 
-                List<GraphExamService.WeakPoint> weakPoints = graphExamService.findWeakPointsForPrerequisiteChain(String.valueOf(userId));
+                List<GraphExamService.WeakPoint> weakPoints = graphExamService.findWeakPointsForSubject(String.valueOf(userId), targetSubject);
                 if (!weakPoints.isEmpty()) {
                     StringBuilder sb = new StringBuilder();
                     sb.append("【图谱分析】用户当前薄弱考点：\n");
@@ -230,7 +235,7 @@ public class AgentOrchestratorService {
         }
 
         log.info("[ExamSkill:RAG检索] 开始从知识库召回考题...");
-        ExamQuestion question = retrieveQuestionFromKnowledge(userMessage, graphBasedConcept, graphContext);
+        ExamQuestion question = retrieveQuestionFromKnowledge(userMessage, graphBasedConcept, graphContext, targetSubject);
         log.info("[ExamSkill:出题] ✅ 知识召回完成, 题目: {}", question.question());
 
         ExamStateManager.ExamContext context = new ExamStateManager.ExamContext(
@@ -243,6 +248,9 @@ public class AgentOrchestratorService {
         log.info("[ExamSkill:出题] 已为用户 {} 设置考试状态", userId);
 
         String examPrompt = buildExamPrompt(question);
+        if (targetSubject != null) {
+            examPrompt += String.format("\n\n📚 科目限定：本题严格限定在【%s】范围内", targetSubject);
+        }
         if (graphBasedConcept != null) {
             examPrompt += String.format("\n\n🎯 图谱定向：本题针对你的薄弱考点「%s」", graphBasedConcept);
         }
@@ -250,26 +258,54 @@ public class AgentOrchestratorService {
         return examPrompt;
     }
 
+    private String extractTargetSubject(String userMessage) {
+        String msg = userMessage.toLowerCase();
+        
+        if (msg.contains("数据结构")) {
+            return "数据结构";
+        }
+        if (msg.contains("操作系统") || msg.contains("os")) {
+            return "计算机操作系统";
+        }
+        if (msg.contains("组成原理") || msg.contains("计组")) {
+            return "计算机组成原理";
+        }
+        if (msg.contains("计算机网络") || msg.contains("计网")) {
+            return "计算机网络";
+        }
+        
+        return null;
+    }
+
     private ExamQuestion retrieveQuestionFromKnowledge(String userMessage) {
-        return retrieveQuestionFromKnowledge(userMessage, null, "");
+        return retrieveQuestionFromKnowledge(userMessage, null, "", null);
     }
 
     private ExamQuestion retrieveQuestionFromKnowledge(String userMessage, String targetConcept) {
-        return retrieveQuestionFromKnowledge(userMessage, targetConcept, "");
+        return retrieveQuestionFromKnowledge(userMessage, targetConcept, "", null);
     }
 
     private ExamQuestion retrieveQuestionFromKnowledge(String userMessage, String targetConcept, String graphContext) {
-        log.info("[ExamSkill:知识召回] 开始从知识库召回考题... 目标考点: {}", targetConcept);
+        return retrieveQuestionFromKnowledge(userMessage, targetConcept, graphContext, null);
+    }
+
+    private ExamQuestion retrieveQuestionFromKnowledge(String userMessage, String targetConcept, String graphContext, String targetSubject) {
+        log.info("[ExamSkill:知识召回] 开始从知识库召回考题... 目标考点: {}, 目标科目: {}", targetConcept, targetSubject);
 
         String effectiveQuery = targetConcept != null ? 
             "请出一道关于" + targetConcept + "的408考研选择题" : userMessage;
+        
+        if (targetSubject != null && targetConcept == null) {
+            effectiveQuery = "请出一道" + targetSubject + "的408考研选择题";
+        }
 
         try {
             List<String> subQueries = queryRewriteService.rewriteQuery(effectiveQuery);
             List<Document> candidateDocs = hybridRetrievalService.hybridSearch(subQueries);
             
             String rerankQuery = targetConcept != null ? targetConcept : 
-                (subQueries.size() > 1 ? subQueries.get(1) : userMessage);
+                (targetSubject != null ? targetSubject : 
+                (subQueries.size() > 1 ? subQueries.get(1) : userMessage));
             log.info("[ExamSkill:知识召回] 使用子问题进行重排: {}", rerankQuery);
             
             List<Document> rerankedDocs = rerankerService.rerank(rerankQuery, candidateDocs);
@@ -292,6 +328,9 @@ public class AgentOrchestratorService {
                     
                     ChatClient extractorClient = chatClientBuilderProvider.getObject().build();
                     String prompt = "用户请求：" + userMessage + "\n\n";
+                    if (targetSubject != null) {
+                        prompt += "【科目限定】必须出" + targetSubject + "相关的题目，绝对不能跨学科！\n\n";
+                    }
                     if (targetConcept != null) {
                         prompt += "【重点考点】" + targetConcept + "\n\n";
                     }

@@ -110,7 +110,9 @@ bool ChatClient::connectToServer(const QString &host, quint16 port) {
     bool connected = socket->waitForConnected(5000);
     
     if (connected) {
-        qDebug() << "ChatClient: Successfully connected to server";
+        socket->setSocketOption(QAbstractSocket::LowDelayOption, 1);
+        socket->setSocketOption(QAbstractSocket::KeepAliveOption, 1);
+        qDebug() << "ChatClient: Successfully connected to server with TCP_NODELAY enabled";
         isConnected = true;
         emit connectionStateChanged(true);
         qDebug() << "ChatClient: Connection established, socket state:" << socket->state() << "connected:" << socket->isOpen();

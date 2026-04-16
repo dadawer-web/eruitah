@@ -28,6 +28,11 @@ ChatServer::ChatServer(EventLoop* loop,
     }
 //上报连接相关信息的回调函数
     void ChatServer:: onConnection(const TcpConnectionPtr &conn){
+        if(conn->connected()){
+            conn->setTcpNoDelay(true);
+            LOG_INFO << "New connection from " << conn->peerAddress().toIpPort() 
+                     << " with TCP_NODELAY enabled";
+        }
         //客户端断开连接 
         if(!conn->connected()){
             ChatService::instance()->clientCloseException(conn);

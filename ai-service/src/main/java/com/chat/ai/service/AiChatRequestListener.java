@@ -21,6 +21,8 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -43,6 +45,7 @@ public class AiChatRequestListener {
     private final ChatMemory chatMemory;
     private final VoiceChatService voiceChatService;
     private final RedisMessageListenerContainer listenerContainer;
+    private final Executor streamTaskExecutor;
 
     private static final String AI_PRIVATE_CHANNEL = "9999";
     private static final String AI_GROUP_CHANNEL = "9998";
@@ -60,7 +63,8 @@ public class AiChatRequestListener {
             CodeReviewerService codeReviewerService,
             ChatMemory chatMemory,
             VoiceChatService voiceChatService,
-            RedisMessageListenerContainer listenerContainer) {
+            RedisMessageListenerContainer listenerContainer,
+            Executor streamTaskExecutor) {
         this.stringRedisTemplate = stringRedisTemplate;
         this.redisPubSubService = redisPubSubService;
         this.fastChatClient = fastChatClient;
@@ -73,18 +77,19 @@ public class AiChatRequestListener {
         this.chatMemory = chatMemory;
         this.voiceChatService = voiceChatService;
         this.listenerContainer = listenerContainer;
+        this.streamTaskExecutor = streamTaskExecutor;
     }
 
     @PostConstruct
     public void start() {
         MessageListener privateListener = (org.springframework.data.redis.connection.Message message, byte[] pattern) -> {
             String messageBody = new String(message.getBody());
-            handlePrivateAiRequest(messageBody);
+            handlePrivateAiRequestAsync(messageBody);
         };
 
         MessageListener groupListener = (org.springframework.data.redis.connection.Message message, byte[] pattern) -> {
             String messageBody = new String(message.getBody());
-            handleGroupAiRequest(messageBody);
+            handleGroupAiRequestAsync(messageBody);
         };
 
         listenerContainer.addMessageListener(privateListener, new ChannelTopic(AI_PRIVATE_CHANNEL));
@@ -92,6 +97,14 @@ public class AiChatRequestListener {
 
         log.info("AI Chat Request Listener started, listening on channels: {} (private), {} (group)", 
             AI_PRIVATE_CHANNEL, AI_GROUP_CHANNEL);
+    }
+
+    private void handlePrivateAiRequestAsync(String messageBody) {
+        CompletableFuture.runAsync(() -> handlePrivateAiRequest(messageBody), streamTaskExecutor);
+    }
+
+    private void handleGroupAiRequestAsync(String messageBody) {
+        CompletableFuture.runAsync(() -> handleGroupAiRequest(messageBody), streamTaskExecutor);
     }
 
     private void handlePrivateAiRequest(String messageBody) {
@@ -109,123 +122,158 @@ public class AiChatRequestListener {
 
             String conversationId = buildConversationId(userId, botId);
 
-            log.info("Processing private AI chat: userId={}, botId={}({}), message={}, conversationId={}",
-                userId, botId, AiPersonaRegistry.getBotName(botId), userMessage, conversationId);
-
-            String response = null;
+            log.info("Processing private AI chat: userId={}, botId={}({}), message={}",
+                userId, botId, AiPersonaRegistry.getBotName(botId), userMessage);
 
             if (AiPersonaRegistry.isVoiceAssistantBot(botId) && request.has("voiceUrl")) {
-                log.info("[语音小助手] 使用 VoiceChatService 处理语音消息");
-                
-                String voiceUrl = request.get("voiceUrl").asText();
-                int duration = request.has("duration") ? request.get("duration").asInt() : 0;
-                
-                log.info("[语音小助手] voiceUrl={}, duration={}s", voiceUrl, duration);
-                
-                VoiceChatService.VoiceChatResult voiceResult = voiceChatService.handleVoiceChat(
-                    voiceUrl, userId, botId, duration);
-                
-                String textReply = voiceResult.textReply();
-                
-                log.info("[语音小助手] ASR转文字: {}, TTS语音URL: {}", 
-                    textReply.substring(0, Math.min(50, textReply.length())) + "...",
-                    voiceResult.voiceUrl());
-                
-                if (voiceResult.voiceUrl() != null) {
-                    redisPubSubService.publishVoiceMessage(userId, voiceResult.voiceUrl(), voiceResult.duration(), botId, AiPersonaRegistry.getBotName(botId));
-                }
-                
-                log.info("[语音小助手] 语音消息处理完成");
+                handleVoiceAssistant(userId, botId, request);
                 return;
             }
 
             redisPubSubService.publishStreamStart(userId, botId, AiPersonaRegistry.getBotName(botId));
 
             if (AiPersonaRegistry.isMasterBot(botId)) {
-                log.info("[旗舰大师] 使用 AgentOrchestratorService 多智能体编排（Router → Solver → Reflection）");
-
-                AgentOrchestratorService.AgentResult agentResult = agentOrchestratorService.processUserQuery(userId, userMessage);
-
-                log.info("[旗舰大师] 意图: {}, 初稿长度: {}, 最终答案长度: {}",
-                    agentResult.intent(), agentResult.draftAnswer().length(), agentResult.finalAnswer().length());
-
-                response = agentResult.finalAnswer();
-
-                chatMemory.add(conversationId, List.of(
-                    new UserMessage(userMessage),
-                    new AssistantMessage(response)
-                ));
-
+                handleMasterBotStream(userId, botId, userMessage, conversationId);
             } else if (AiPersonaRegistry.isProblemSolverBot(botId)) {
-                log.info("[解题大王] 使用 MultimodalChatService 多模态服务");
-                
-                List<ChatRequest.ImageData> images = extractImagesFromMessage(userMessage);
-                String cleanMessage = removeImageTagsFromMessage(userMessage);
-                
-                log.info("[解题大王] 消息中包含 {} 张图片", images.size());
-                
-                MultimodalChatService.ChatResult multimodalResult = multimodalChatService.chat(
-                    userId, botId, cleanMessage.isEmpty() ? "请分析这张图片" : cleanMessage, images);
-                
-                response = multimodalResult.message();
-
-                chatMemory.add(conversationId, List.of(
-                    new UserMessage(cleanMessage.isEmpty() ? "请分析这张图片" : cleanMessage),
-                    new AssistantMessage(response)
-                ));
-
+                handleProblemSolverStream(userId, botId, userMessage, conversationId);
             } else if (AiPersonaRegistry.isCodeReviewerBot(botId)) {
-                log.info("[代码审查员] 使用 CodeReviewerService + MCP文件系统工具");
-
-                response = codeReviewerService.reviewCode(userMessage);
-
-                chatMemory.add(conversationId, List.of(
-                    new UserMessage(userMessage),
-                    new AssistantMessage(response)
-                ));
-
+                handleCodeReviewerStream(userId, botId, userMessage, conversationId);
             } else {
-                log.info("[{}] 使用fastChatClient（纯Prompt）", AiPersonaRegistry.getBotName(botId));
-
-                SystemMessage systemMessage = AiPersonaRegistry.getPersonaByBotId(botId);
-
-                response = fastChatClient.prompt()
-                    .system(systemMessage.getContent())
-                    .user(userMessage)
-                    .advisors(spec -> spec
-                        .param(CHAT_MEMORY_CONVERSATION_ID_KEY, conversationId)
-                        .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10))
-                    .call()
-                    .content();
+                handleNormalBotStream(userId, botId, userMessage, conversationId);
             }
-
-            log.info("[{}] 回复长度: {}字符", AiPersonaRegistry.getBotName(botId), response.length());
-            
-            int chunkSize = 20;
-            for (int i = 0; i < response.length(); i += chunkSize) {
-                int end = Math.min(i + chunkSize, response.length());
-                String chunk = response.substring(i, end);
-                redisPubSubService.publishStreamChunk(userId, chunk, botId, AiPersonaRegistry.getBotName(botId));
-                Thread.sleep(30);
-            }
-            
-            redisPubSubService.publishStreamEnd(userId, botId, AiPersonaRegistry.getBotName(botId));
-
-            log.info("Private AI response sent to user: {}", userId);
 
         } catch (Exception e) {
             log.error("Error handling private AI request: {}", messageBody, e);
-            
-            if (userId != null && botId > 0) {
-                try {
-                    String errorMessage = "抱歉，AI处理您的请求时出现错误，请稍后重试。";
-                    redisPubSubService.publishStreamChunk(userId, errorMessage, botId, AiPersonaRegistry.getBotName(botId));
-                    redisPubSubService.publishStreamEnd(userId, botId, AiPersonaRegistry.getBotName(botId));
-                    log.info("Sent error message and stream end to user: {}", userId);
-                } catch (Exception ex) {
-                    log.error("Error sending error message to user: {}", userId, ex);
+            sendErrorAndEnd(userId, botId, "抱歉，AI处理您的请求时出现错误，请稍后重试。");
+        }
+    }
+
+    private void handleNormalBotStream(int userId, int botId, String userMessage, String conversationId) {
+        SystemMessage systemMessage = AiPersonaRegistry.getPersonaByBotId(botId);
+        StringBuilder fullAnswer = new StringBuilder();
+        
+        final long startTime = System.currentTimeMillis();
+        final int[] tokenCount = {0};
+
+        log.info("[{}] 开始真流式调用 LLM: {}", AiPersonaRegistry.getBotName(botId), startTime);
+
+        fastChatClient.prompt()
+            .system(systemMessage.getContent())
+            .user(userMessage)
+            .advisors(spec -> spec
+                .param(CHAT_MEMORY_CONVERSATION_ID_KEY, conversationId)
+                .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10))
+            .stream()
+            .content()
+            .doOnNext(token -> {
+                if (token != null && !token.isEmpty()) {
+                    fullAnswer.append(token);
+                    tokenCount[0]++;
+                    if (tokenCount[0] <= 5 || tokenCount[0] % 20 == 0) {
+                        log.info("[{}] Token#{}: [{}], 耗时: {}ms", 
+                            AiPersonaRegistry.getBotName(botId), tokenCount[0], token, System.currentTimeMillis() - startTime);
+                    }
+                    redisPubSubService.publishStreamChunk(userId, token, botId, AiPersonaRegistry.getBotName(botId));
                 }
+            })
+            .doOnError(error -> {
+                log.error("[{}] Stream error: {}", AiPersonaRegistry.getBotName(botId), error.getMessage());
+                sendErrorAndEnd(userId, botId, "AI 流式输出出错: " + error.getMessage());
+            })
+            .doOnComplete(() -> {
+                long endTime = System.currentTimeMillis();
+                log.info("[{}] 真流式输出完成，Token数: {}, 总耗时: {}ms, 平均每Token: {}ms", 
+                    AiPersonaRegistry.getBotName(botId), tokenCount[0], endTime - startTime,
+                    tokenCount[0] > 0 ? (endTime - startTime) / tokenCount[0] : 0);
+                
+                chatMemory.add(conversationId, List.of(
+                    new UserMessage(userMessage),
+                    new AssistantMessage(fullAnswer.toString())
+                ));
+                
+                redisPubSubService.publishStreamEnd(userId, botId, AiPersonaRegistry.getBotName(botId));
+            })
+            .subscribe();
+    }
+
+    private void handleMasterBotStream(int userId, int botId, String userMessage, String conversationId) {
+        log.info("[旗舰大师] 使用 AgentOrchestratorService 多智能体编排");
+
+        AgentOrchestratorService.AgentResult agentResult = agentOrchestratorService.processUserQuery(userId, userMessage);
+
+        log.info("[旗舰大师] 意图: {}, 最终答案长度: {}", agentResult.intent(), agentResult.finalAnswer().length());
+
+        String response = agentResult.finalAnswer();
+
+        chatMemory.add(conversationId, List.of(
+            new UserMessage(userMessage),
+            new AssistantMessage(response)
+        ));
+
+        sendResponseInChunks(userId, botId, response);
+        redisPubSubService.publishStreamEnd(userId, botId, AiPersonaRegistry.getBotName(botId));
+    }
+
+    private void handleProblemSolverStream(int userId, int botId, String userMessage, String conversationId) {
+        log.info("[解题大王] 使用 MultimodalChatService");
+        
+        List<ChatRequest.ImageData> images = extractImagesFromMessage(userMessage);
+        String cleanMessage = removeImageTagsFromMessage(userMessage);
+        
+        log.info("[解题大王] 消息中包含 {} 张图片", images.size());
+        
+        MultimodalChatService.ChatResult multimodalResult = multimodalChatService.chat(
+            userId, botId, cleanMessage.isEmpty() ? "请分析这张图片" : cleanMessage, images);
+        
+        String response = multimodalResult.message();
+
+        chatMemory.add(conversationId, List.of(
+            new UserMessage(cleanMessage.isEmpty() ? "请分析这张图片" : cleanMessage),
+            new AssistantMessage(response)
+        ));
+
+        sendResponseInChunks(userId, botId, response);
+        redisPubSubService.publishStreamEnd(userId, botId, AiPersonaRegistry.getBotName(botId));
+    }
+
+    private void handleCodeReviewerStream(int userId, int botId, String userMessage, String conversationId) {
+        log.info("[代码审查员] 使用 CodeReviewerService");
+
+        String response = codeReviewerService.reviewCode(userMessage);
+
+        chatMemory.add(conversationId, List.of(
+            new UserMessage(userMessage),
+            new AssistantMessage(response)
+        ));
+
+        sendResponseInChunks(userId, botId, response);
+        redisPubSubService.publishStreamEnd(userId, botId, AiPersonaRegistry.getBotName(botId));
+    }
+
+    private void handleVoiceAssistant(Integer userId, int botId, JsonNode request) {
+        try {
+            log.info("[语音小助手] 处理语音消息");
+            
+            String voiceUrl = request.get("voiceUrl").asText();
+            int duration = request.has("duration") ? request.get("duration").asInt() : 0;
+            
+            VoiceChatService.VoiceChatResult voiceResult = voiceChatService.handleVoiceChat(
+                voiceUrl, userId, botId, duration);
+            
+            String textReply = voiceResult.textReply();
+            
+            log.info("[语音小助手] ASR转文字: {}, TTS语音URL: {}", 
+                textReply.substring(0, Math.min(50, textReply.length())) + "...",
+                voiceResult.voiceUrl());
+            
+            if (voiceResult.voiceUrl() != null) {
+                redisPubSubService.publishVoiceMessage(userId, voiceResult.voiceUrl(), voiceResult.duration(), 
+                    botId, AiPersonaRegistry.getBotName(botId));
             }
+            
+            log.info("[语音小助手] 语音消息处理完成");
+        } catch (Exception e) {
+            log.error("[语音小助手] 处理失败", e);
         }
     }
 
@@ -238,7 +286,6 @@ public class AiChatRequestListener {
             JsonNode request = objectMapper.readTree(messageBody);
             groupId = request.get("groupId").asLong();
             int senderId = request.get("senderId").asInt();
-            String senderName = request.has("senderName") ? request.get("senderName").asText() : "用户";
             String content = request.get("content").asText();
             
             JsonNode aiBotIdsNode = request.get("aiBotIds");
@@ -249,8 +296,7 @@ public class AiChatRequestListener {
                 }
             }
 
-            log.info("Processing group AI chat: groupId={}, senderId={}, senderName={}, content={}, aiBotIds={}",
-                groupId, senderId, senderName, content, aiBotIds);
+            log.info("Processing group AI chat: groupId={}, senderId={}, aiBotIds={}", groupId, senderId, aiBotIds);
 
             if (aiBotIds.isEmpty()) {
                 log.warn("No AI bots in group request, skipping");
@@ -259,19 +305,36 @@ public class AiChatRequestListener {
 
             groupChatService.handleMultiAgentChat(groupId, senderId, content, aiBotIds);
 
-            log.info("Group AI chat dispatched to {} bots for group: {}", aiBotIds.size(), groupId);
-
         } catch (Exception e) {
             log.error("Error handling group AI request: {}", messageBody, e);
             
             if (groupId != null) {
-                try {
-                    String errorMessage = "抱歉，AI处理群聊请求时出现错误。";
-                    redisPubSubService.publishAgentGroupMessage(groupId, errorMessage, 10000, "AI助手", "AI_ERROR");
-                    log.info("Sent error message to group: {}", groupId);
-                } catch (Exception ex) {
-                    log.error("Error sending error message to group: {}", groupId, ex);
-                }
+                redisPubSubService.publishAgentGroupMessage(groupId, "抱歉，AI处理群聊请求时出现错误。", 
+                    10000, "AI助手", "AI_ERROR");
+            }
+        }
+    }
+    
+    private void sendResponseInChunks(Integer userId, int botId, String response) {
+        if (response == null || response.isEmpty()) {
+            return;
+        }
+        
+        int chunkSize = 3;
+        for (int i = 0; i < response.length(); i += chunkSize) {
+            int end = Math.min(i + chunkSize, response.length());
+            String chunk = response.substring(i, end);
+            redisPubSubService.publishStreamChunk(userId, chunk, botId, AiPersonaRegistry.getBotName(botId));
+        }
+    }
+
+    private void sendErrorAndEnd(Integer userId, int botId, String errorMessage) {
+        if (userId != null && botId > 0) {
+            try {
+                redisPubSubService.publishStreamChunk(userId, errorMessage, botId, AiPersonaRegistry.getBotName(botId));
+                redisPubSubService.publishStreamEnd(userId, botId, AiPersonaRegistry.getBotName(botId));
+            } catch (Exception ex) {
+                log.error("Error sending error message to user: {}", userId, ex);
             }
         }
     }

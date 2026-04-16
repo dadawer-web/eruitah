@@ -1,5 +1,6 @@
 package com.chat.ai.controller;
 
+import com.chat.ai.config.annotation.RateLimit;
 import com.chat.ai.service.AgentOrchestratorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,8 @@ public class AgentController {
     private final AgentOrchestratorService agentOrchestratorService;
 
     @PostMapping("/chat")
+    @RateLimit(dimension = RateLimit.Dimension.USER, count = 20, interval = 1, timeUnit = RateLimit.TimeUnit.MINUTES)
+    @RateLimit(dimension = RateLimit.Dimension.IP, count = 40, interval = 1, timeUnit = RateLimit.TimeUnit.MINUTES)
     public ResponseEntity<Map<String, Object>> chat(@RequestBody AgentRequest request) {
         log.info("收到多智能体工作流请求: userId={}, message={}", 
             request.getUserId(), request.getMessage());
