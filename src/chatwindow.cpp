@@ -2,6 +2,7 @@
 #include "messagewidget.h"
 #include "farmdialog.h"
 #include "knowledgegraphdialog.h"
+#include "realtimevoicedialog.h"
 #include <QDebug>
 #include <QDateTime>
 #include <QInputDialog>
@@ -595,6 +596,8 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     connect(chatClient, &ChatClient::farmBroadcastReceived, this, &ChatWindow::onFarmBroadcastReceived);
 
     m_farmDialog = nullptr;
+    m_realtimeVoiceDialog = nullptr;
+    m_realtimeVoiceBtn = nullptr;
 
     connect(chatClient, &ChatClient::fileTransferRequestReceived, this, &ChatWindow::onFileTransferRequestReceived);
     connect(chatClient, &ChatClient::fileTransferAccepted, this, &ChatWindow::onFileTransferAccepted);
@@ -1363,6 +1366,18 @@ void ChatWindow::createChatWidget(int chatId, const QString &chatName, bool isGr
     buttonLayout->addWidget(sendImageButton);
     buttonLayout->addWidget(sendFileButton);
     buttonLayout->addWidget(uploadKnowledgeButton);
+    
+    if (chatId == 10009) {
+        m_realtimeVoiceBtn = new QPushButton("📞 实时通话", this);
+        m_realtimeVoiceBtn->setMinimumHeight(40);
+        m_realtimeVoiceBtn->setFixedWidth(120);
+        m_realtimeVoiceBtn->setStyleSheet(
+            "QPushButton { background-color: #1a73e8; color: white; border: none; border-radius: 8px; font-size: 14px; }"
+            "QPushButton:hover { background-color: #1557b0; }"
+        );
+        connect(m_realtimeVoiceBtn, &QPushButton::clicked, this, &ChatWindow::onRealtimeVoiceCall);
+        buttonLayout->addWidget(m_realtimeVoiceBtn);
+    }
     
     connect(sendEmojiButton, &QtMaterialFlatButton::clicked, this, &ChatWindow::onSendEmoji);
     
@@ -4102,4 +4117,38 @@ QString ChatWindow::loadModernStylesheet()
     style += "QToolTip { background-color: #2a2a2a; border: 1px solid #2f2f2f; border-radius: 6px; padding: 6px 10px; color: #ececec; }";
     
     return style;
+}
+
+void ChatWindow::onRealtimeVoiceCall()
+{
+    if (m_realtimeVoiceDialog) {
+        if (m_realtimeVoiceDialog->isVisible()) {
+            m_realtimeVoiceDialog->raise();
+            m_realtimeVoiceDialog->activateWindow();
+            return;
+        }
+        m_realtimeVoiceDialog->deleteLater();
+        m_realtimeVoiceDialog = nullptr;
+    }
+    
+    m_realtimeVoiceDialog = new RealtimeVoiceDialog(userId, 10009, this);
+    connect(m_realtimeVoiceDialog, &QDialog::finished, this, [this]() {
+        if (m_realtimeVoiceDialog) {
+            m_realtimeVoiceDialog->deleteLater();
+            m_realtimeVoiceDialog = nullptr;
+        }
+    });
+    connect(m_realtimeVoiceDialog, &QObject::destroyed, this, [this]() {
+        m_realtimeVoiceDialog = nullptr;
+    });
+    
+    m_realtimeVoiceDialog->show();
+    m_realtimeVoiceDialog->startSession();
+}
+
+void ChatWindow::onRealtimeVoiceCallEnded()
+{
+    if (m_realtimeVoiceDialog) {
+        m_realtimeVoiceDialog->close();
+    }
 }

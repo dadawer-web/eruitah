@@ -2,20 +2,17 @@
 #include "protobuf_codec.h"
 #include <muduo/base/Logging.h>
 
-using namespace muduo;
-using namespace muduo::net;
-
 ChatServer::ChatServer(EventLoop* loop,
                        const InetAddress& listenAddr,
                        const InetAddress& javaBackendAddr)
     : server_(loop, listenAddr, "ChatServer"),
       rpcChannel_(std::make_shared<RpcChannel>(loop, javaBackendAddr)) {
-    
     server_.setConnectionCallback(
-        std::bind(&ChatServer::onClientConnection, this, _1));
+        std::bind(&ChatServer::onClientConnection, this, std::placeholders::_1));
     server_.setMessageCallback(
-        std::bind(&ChatServer::onClientMessage, this, _1, _2, _3));
-    
+        std::bind(&ChatServer::onClientMessage, this, std::placeholders::_1,
+                  std::placeholders::_2, std::placeholders::_3));
+
     threadPool_.setMaxQueueSize(100);
 }
 
@@ -35,7 +32,7 @@ void ChatServer::onClientConnection(const TcpConnectionPtr& conn) {
         LOG_INFO << "Client connected: " << conn->peerAddress().toIpPort();
     } else {
         LOG_INFO << "Client disconnected: " << conn->peerAddress().toIpPort();
-        
+
         std::lock_guard<std::mutex> lock(mutex_);
         for (auto it = clientConnections_.begin(); it != clientConnections_.end(); ) {
             if (it->second == conn) {
@@ -47,63 +44,85 @@ void ChatServer::onClientConnection(const TcpConnectionPtr& conn) {
     }
 }
 
-void ChatServer::onClientMessage(const TcpConnectionPtr& conn, 
-                                  Buffer* buf, 
+void ChatServer::onClientMessage(const TcpConnectionPtr& conn,
+                                  Buffer* buf,
                                   Timestamp time) {
-    static ProtobufCodec codec([](const TcpConnectionPtr&, 
-                                   const std::shared_ptr<google::protobuf::Message>&) {});
-    
-    codec.onMessage(conn, buf, time, 
-        [this, conn](const TcpConnectionPtr&, 
-                     const std::shared_ptr<google::protobuf::Message>& msg) {
-            auto request = std::dynamic_pointer_cast<bridge::ChatRequest>(msg);
-            if (!request) {
-                LOG_ERROR << "Invalid message type";
-                return;
-            }
-            
-            {
-                std::lock_guard<std::mutex> lock(mutex_);
-                clientConnections_[request->session_id()] = conn;
-            }
-            
-            threadPool_.run([this, request, conn]() {
-                bridge::ChatResponse response;
-                bridge::ChatController controller;
-                
-                this->Chat(&controller, request.get(), &response, nullptr);
-                
-                if (!controller.Failed()) {
-                    ProtobufCodec codec([](const TcpConnectionPtr&, 
-                                           const std::shared_ptr<google::protobuf::Message>&) {});
-                    codec.send(conn, response);
+    ProtobufCodec codec([this, conn](const TcpConnectionPtr&,
+                                      const std::shared_ptr<google::protobuf::Message>& msg) {
+        if (auto chatReq = std::dynamic_pointer_cast<bridge::ChatRequest>(msg)) {
+            handleChatRequest(conn, chatReq);
+        } else if (auto groupReq = std::dynamic_pointer_cast<bridge::GroupChatRequest>(msg)) {
+            handleGroupChatRequest(conn, groupReq);
+        } else {
+            LOG_WARN << "Unknown message type: " << msg->GetTypeName();
+        }
+    });
+
+    codec.onMessage(conn, buf, time);
+}
+
+void ChatServer::handleChatRequest(const TcpConnectionPtr& conn,
+                                    const std::shared_ptr<bridge::ChatRequest>& request) {
+    LOG_INFO << "Chat request from user=" << request->user_id()
+             << " bot=" << request->bot_id()
+             << " msg=" << request->message().substr(0, 50);
+
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        clientConnections_[request->session_id()] = conn;
+    }
+
+    auto response = std::make_shared<bridge::ChatResponse>();
+
+    rpcChannel_->callMethod(
+        "ChatService", "Chat",
+        *request, response,
+        [this, conn, request, response](std::shared_ptr<google::protobuf::Message> resp) {
+            if (resp) {
+                auto chatResp = std::dynamic_pointer_cast<bridge::ChatResponse>(resp);
+                if (chatResp) {
+                    ProtobufCodec sendCodec(
+                        [](const TcpConnectionPtr&,
+                           const std::shared_ptr<google::protobuf::Message>&) {});
+                    sendCodec.send(conn, *chatResp);
+                    LOG_INFO << "Sent chat response to user=" << chatResp->user_id();
                 }
-            });
+            } else {
+                bridge::ChatResponse errorResp;
+                errorResp.set_user_id(request->user_id());
+                errorResp.set_bot_id(request->bot_id());
+                errorResp.set_success(false);
+                errorResp.set_error("Java backend unavailable");
+                errorResp.set_timestamp(Timestamp::now().microSecondsSinceEpoch());
+
+                ProtobufCodec sendCodec(
+                    [](const TcpConnectionPtr&,
+                       const std::shared_ptr<google::protobuf::Message>&) {});
+                sendCodec.send(conn, errorResp);
+                LOG_ERROR << "Java backend unavailable for user=" << request->user_id();
+            }
         });
 }
 
-void ChatServer::Chat(google::protobuf::RpcController* controller,
-                      const bridge::ChatRequest* request,
-                      bridge::ChatResponse* response,
-                      google::protobuf::Closure* done) {
-    if (!rpcChannel_->connected()) {
-        controller->SetFailed("Java backend not connected");
-        LOG_ERROR << "Java backend not connected";
-        if (done) done->Run();
-        return;
-    }
-    
-    LOG_INFO << "Forwarding chat request from user: " << request->user_id()
-             << " session: " << request->session_id();
-    
-    bridge::ChatRequest forwardRequest;
-    forwardRequest.CopyFrom(*request);
-    forwardRequest.set_timestamp(Timestamp::now().microSecondsSinceEpoch());
-    
-    rpcChannel_->CallMethod(
-        bridge::ChatService::descriptor()->FindMethodByName("Chat"),
-        controller,
-        &forwardRequest,
-        response,
-        done);
+void ChatServer::handleGroupChatRequest(const TcpConnectionPtr& conn,
+                                         const std::shared_ptr<bridge::GroupChatRequest>& request) {
+    LOG_INFO << "Group chat request from group=" << request->group_id()
+             << " sender=" << request->sender_id();
+
+    auto response = std::make_shared<bridge::GroupChatResponse>();
+
+    rpcChannel_->callMethod(
+        "ChatService", "GroupChat",
+        *request, response,
+        [this, conn, response](std::shared_ptr<google::protobuf::Message> resp) {
+            if (resp) {
+                auto groupResp = std::dynamic_pointer_cast<bridge::GroupChatResponse>(resp);
+                if (groupResp) {
+                    ProtobufCodec sendCodec(
+                        [](const TcpConnectionPtr&,
+                           const std::shared_ptr<google::protobuf::Message>&) {});
+                    sendCodec.send(conn, *groupResp);
+                }
+            }
+        });
 }

@@ -19,53 +19,83 @@ public final class ChatProto {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>string session_id = 1;</code>
-     * @return The sessionId.
-     */
-    java.lang.String getSessionId();
-    /**
-     * <code>string session_id = 1;</code>
-     * @return The bytes for sessionId.
-     */
-    com.google.protobuf.ByteString
-        getSessionIdBytes();
-
-    /**
-     * <code>string user_id = 2;</code>
+     * <code>int32 user_id = 1;</code>
      * @return The userId.
      */
-    java.lang.String getUserId();
-    /**
-     * <code>string user_id = 2;</code>
-     * @return The bytes for userId.
-     */
-    com.google.protobuf.ByteString
-        getUserIdBytes();
+    int getUserId();
 
     /**
-     * <code>string message = 3;</code>
+     * <code>int32 bot_id = 2;</code>
+     * @return The botId.
+     */
+    int getBotId();
+
+    /**
+     * <code>string user_name = 3;</code>
+     * @return The userName.
+     */
+    java.lang.String getUserName();
+    /**
+     * <code>string user_name = 3;</code>
+     * @return The bytes for userName.
+     */
+    com.google.protobuf.ByteString
+        getUserNameBytes();
+
+    /**
+     * <code>string message = 4;</code>
      * @return The message.
      */
     java.lang.String getMessage();
     /**
-     * <code>string message = 3;</code>
+     * <code>string message = 4;</code>
      * @return The bytes for message.
      */
     com.google.protobuf.ByteString
         getMessageBytes();
 
     /**
-     * <code>int64 timestamp = 4;</code>
+     * <code>string session_id = 5;</code>
+     * @return The sessionId.
+     */
+    java.lang.String getSessionId();
+    /**
+     * <code>string session_id = 5;</code>
+     * @return The bytes for sessionId.
+     */
+    com.google.protobuf.ByteString
+        getSessionIdBytes();
+
+    /**
+     * <code>int64 timestamp = 6;</code>
      * @return The timestamp.
      */
     long getTimestamp();
 
     /**
-     * <code>map&lt;string, string&gt; metadata = 5;</code>
+     * <code>string voice_url = 7;</code>
+     * @return The voiceUrl.
+     */
+    java.lang.String getVoiceUrl();
+    /**
+     * <code>string voice_url = 7;</code>
+     * @return The bytes for voiceUrl.
+     */
+    com.google.protobuf.ByteString
+        getVoiceUrlBytes();
+
+    /**
+     * <code>int32 voice_duration = 8;</code>
+     * @return The voiceDuration.
+     */
+    int getVoiceDuration();
+
+    /**
+     * <code>map&lt;string, string&gt; metadata = 9;</code>
      */
     int getMetadataCount();
     /**
-     * <code>map&lt;string, string&gt; metadata = 5;</code>
+     * <code>map&lt;string, string&gt; metadata = 9;</code>
      */
     boolean containsMetadata(
         java.lang.String key);
@@ -76,12 +106,12 @@ public final class ChatProto {
     java.util.Map<java.lang.String, java.lang.String>
     getMetadata();
     /**
-     * <code>map&lt;string, string&gt; metadata = 5;</code>
+     * <code>map&lt;string, string&gt; metadata = 9;</code>
      */
     java.util.Map<java.lang.String, java.lang.String>
     getMetadataMap();
     /**
-     * <code>map&lt;string, string&gt; metadata = 5;</code>
+     * <code>map&lt;string, string&gt; metadata = 9;</code>
      */
     /* nullable */
 java.lang.String getMetadataOrDefault(
@@ -89,7 +119,7 @@ java.lang.String getMetadataOrDefault(
         /* nullable */
 java.lang.String defaultValue);
     /**
-     * <code>map&lt;string, string&gt; metadata = 5;</code>
+     * <code>map&lt;string, string&gt; metadata = 9;</code>
      */
     java.lang.String getMetadataOrThrow(
         java.lang.String key);
@@ -107,9 +137,10 @@ java.lang.String defaultValue);
       super(builder);
     }
     private ChatRequest() {
-      sessionId_ = "";
-      userId_ = "";
+      userName_ = "";
       message_ = "";
+      sessionId_ = "";
+      voiceUrl_ = "";
     }
 
     @java.lang.Override
@@ -134,7 +165,7 @@ java.lang.String defaultValue);
     protected com.google.protobuf.MapField internalGetMapField(
         int number) {
       switch (number) {
-        case 5:
+        case 9:
           return internalGetMetadata();
         default:
           throw new RuntimeException(
@@ -149,89 +180,72 @@ java.lang.String defaultValue);
               com.bridge.proto.ChatProto.ChatRequest.class, com.bridge.proto.ChatProto.ChatRequest.Builder.class);
     }
 
-    public static final int SESSION_ID_FIELD_NUMBER = 1;
-    @SuppressWarnings("serial")
-    private volatile java.lang.Object sessionId_ = "";
+    public static final int USER_ID_FIELD_NUMBER = 1;
+    private int userId_ = 0;
     /**
-     * <code>string session_id = 1;</code>
-     * @return The sessionId.
-     */
-    @java.lang.Override
-    public java.lang.String getSessionId() {
-      java.lang.Object ref = sessionId_;
-      if (ref instanceof java.lang.String) {
-        return (java.lang.String) ref;
-      } else {
-        com.google.protobuf.ByteString bs = 
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        sessionId_ = s;
-        return s;
-      }
-    }
-    /**
-     * <code>string session_id = 1;</code>
-     * @return The bytes for sessionId.
-     */
-    @java.lang.Override
-    public com.google.protobuf.ByteString
-        getSessionIdBytes() {
-      java.lang.Object ref = sessionId_;
-      if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        sessionId_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-
-    public static final int USER_ID_FIELD_NUMBER = 2;
-    @SuppressWarnings("serial")
-    private volatile java.lang.Object userId_ = "";
-    /**
-     * <code>string user_id = 2;</code>
+     * <code>int32 user_id = 1;</code>
      * @return The userId.
      */
     @java.lang.Override
-    public java.lang.String getUserId() {
-      java.lang.Object ref = userId_;
+    public int getUserId() {
+      return userId_;
+    }
+
+    public static final int BOT_ID_FIELD_NUMBER = 2;
+    private int botId_ = 0;
+    /**
+     * <code>int32 bot_id = 2;</code>
+     * @return The botId.
+     */
+    @java.lang.Override
+    public int getBotId() {
+      return botId_;
+    }
+
+    public static final int USER_NAME_FIELD_NUMBER = 3;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object userName_ = "";
+    /**
+     * <code>string user_name = 3;</code>
+     * @return The userName.
+     */
+    @java.lang.Override
+    public java.lang.String getUserName() {
+      java.lang.Object ref = userName_;
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
         com.google.protobuf.ByteString bs = 
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        userId_ = s;
+        userName_ = s;
         return s;
       }
     }
     /**
-     * <code>string user_id = 2;</code>
-     * @return The bytes for userId.
+     * <code>string user_name = 3;</code>
+     * @return The bytes for userName.
      */
     @java.lang.Override
     public com.google.protobuf.ByteString
-        getUserIdBytes() {
-      java.lang.Object ref = userId_;
+        getUserNameBytes() {
+      java.lang.Object ref = userName_;
       if (ref instanceof java.lang.String) {
         com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
-        userId_ = b;
+        userName_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
       }
     }
 
-    public static final int MESSAGE_FIELD_NUMBER = 3;
+    public static final int MESSAGE_FIELD_NUMBER = 4;
     @SuppressWarnings("serial")
     private volatile java.lang.Object message_ = "";
     /**
-     * <code>string message = 3;</code>
+     * <code>string message = 4;</code>
      * @return The message.
      */
     @java.lang.Override
@@ -248,7 +262,7 @@ java.lang.String defaultValue);
       }
     }
     /**
-     * <code>string message = 3;</code>
+     * <code>string message = 4;</code>
      * @return The bytes for message.
      */
     @java.lang.Override
@@ -266,10 +280,49 @@ java.lang.String defaultValue);
       }
     }
 
-    public static final int TIMESTAMP_FIELD_NUMBER = 4;
+    public static final int SESSION_ID_FIELD_NUMBER = 5;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object sessionId_ = "";
+    /**
+     * <code>string session_id = 5;</code>
+     * @return The sessionId.
+     */
+    @java.lang.Override
+    public java.lang.String getSessionId() {
+      java.lang.Object ref = sessionId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        sessionId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string session_id = 5;</code>
+     * @return The bytes for sessionId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getSessionIdBytes() {
+      java.lang.Object ref = sessionId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        sessionId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int TIMESTAMP_FIELD_NUMBER = 6;
     private long timestamp_ = 0L;
     /**
-     * <code>int64 timestamp = 4;</code>
+     * <code>int64 timestamp = 6;</code>
      * @return The timestamp.
      */
     @java.lang.Override
@@ -277,7 +330,57 @@ java.lang.String defaultValue);
       return timestamp_;
     }
 
-    public static final int METADATA_FIELD_NUMBER = 5;
+    public static final int VOICE_URL_FIELD_NUMBER = 7;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object voiceUrl_ = "";
+    /**
+     * <code>string voice_url = 7;</code>
+     * @return The voiceUrl.
+     */
+    @java.lang.Override
+    public java.lang.String getVoiceUrl() {
+      java.lang.Object ref = voiceUrl_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        voiceUrl_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string voice_url = 7;</code>
+     * @return The bytes for voiceUrl.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getVoiceUrlBytes() {
+      java.lang.Object ref = voiceUrl_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        voiceUrl_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int VOICE_DURATION_FIELD_NUMBER = 8;
+    private int voiceDuration_ = 0;
+    /**
+     * <code>int32 voice_duration = 8;</code>
+     * @return The voiceDuration.
+     */
+    @java.lang.Override
+    public int getVoiceDuration() {
+      return voiceDuration_;
+    }
+
+    public static final int METADATA_FIELD_NUMBER = 9;
     private static final class MetadataDefaultEntryHolder {
       static final com.google.protobuf.MapEntry<
           java.lang.String, java.lang.String> defaultEntry =
@@ -304,7 +407,7 @@ java.lang.String defaultValue);
       return internalGetMetadata().getMap().size();
     }
     /**
-     * <code>map&lt;string, string&gt; metadata = 5;</code>
+     * <code>map&lt;string, string&gt; metadata = 9;</code>
      */
     @java.lang.Override
     public boolean containsMetadata(
@@ -321,14 +424,14 @@ java.lang.String defaultValue);
       return getMetadataMap();
     }
     /**
-     * <code>map&lt;string, string&gt; metadata = 5;</code>
+     * <code>map&lt;string, string&gt; metadata = 9;</code>
      */
     @java.lang.Override
     public java.util.Map<java.lang.String, java.lang.String> getMetadataMap() {
       return internalGetMetadata().getMap();
     }
     /**
-     * <code>map&lt;string, string&gt; metadata = 5;</code>
+     * <code>map&lt;string, string&gt; metadata = 9;</code>
      */
     @java.lang.Override
     public /* nullable */
@@ -342,7 +445,7 @@ java.lang.String defaultValue) {
       return map.containsKey(key) ? map.get(key) : defaultValue;
     }
     /**
-     * <code>map&lt;string, string&gt; metadata = 5;</code>
+     * <code>map&lt;string, string&gt; metadata = 9;</code>
      */
     @java.lang.Override
     public java.lang.String getMetadataOrThrow(
@@ -370,24 +473,36 @@ java.lang.String defaultValue) {
     @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(sessionId_)) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, sessionId_);
+      if (userId_ != 0) {
+        output.writeInt32(1, userId_);
       }
-      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(userId_)) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, userId_);
+      if (botId_ != 0) {
+        output.writeInt32(2, botId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(userName_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, userName_);
       }
       if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(message_)) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, message_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 4, message_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(sessionId_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 5, sessionId_);
       }
       if (timestamp_ != 0L) {
-        output.writeInt64(4, timestamp_);
+        output.writeInt64(6, timestamp_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(voiceUrl_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 7, voiceUrl_);
+      }
+      if (voiceDuration_ != 0) {
+        output.writeInt32(8, voiceDuration_);
       }
       com.google.protobuf.GeneratedMessageV3
         .serializeStringMapTo(
           output,
           internalGetMetadata(),
           MetadataDefaultEntryHolder.defaultEntry,
-          5);
+          9);
       getUnknownFields().writeTo(output);
     }
 
@@ -397,18 +512,33 @@ java.lang.String defaultValue) {
       if (size != -1) return size;
 
       size = 0;
-      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(sessionId_)) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, sessionId_);
+      if (userId_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(1, userId_);
       }
-      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(userId_)) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, userId_);
+      if (botId_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(2, botId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(userName_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, userName_);
       }
       if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(message_)) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, message_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, message_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(sessionId_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, sessionId_);
       }
       if (timestamp_ != 0L) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(4, timestamp_);
+          .computeInt64Size(6, timestamp_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(voiceUrl_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(7, voiceUrl_);
+      }
+      if (voiceDuration_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(8, voiceDuration_);
       }
       for (java.util.Map.Entry<java.lang.String, java.lang.String> entry
            : internalGetMetadata().getMap().entrySet()) {
@@ -418,7 +548,7 @@ java.lang.String defaultValue) {
             .setValue(entry.getValue())
             .build();
         size += com.google.protobuf.CodedOutputStream
-            .computeMessageSize(5, metadata__);
+            .computeMessageSize(9, metadata__);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
@@ -435,14 +565,22 @@ java.lang.String defaultValue) {
       }
       com.bridge.proto.ChatProto.ChatRequest other = (com.bridge.proto.ChatProto.ChatRequest) obj;
 
-      if (!getSessionId()
-          .equals(other.getSessionId())) return false;
-      if (!getUserId()
-          .equals(other.getUserId())) return false;
+      if (getUserId()
+          != other.getUserId()) return false;
+      if (getBotId()
+          != other.getBotId()) return false;
+      if (!getUserName()
+          .equals(other.getUserName())) return false;
       if (!getMessage()
           .equals(other.getMessage())) return false;
+      if (!getSessionId()
+          .equals(other.getSessionId())) return false;
       if (getTimestamp()
           != other.getTimestamp()) return false;
+      if (!getVoiceUrl()
+          .equals(other.getVoiceUrl())) return false;
+      if (getVoiceDuration()
+          != other.getVoiceDuration()) return false;
       if (!internalGetMetadata().equals(
           other.internalGetMetadata())) return false;
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
@@ -456,15 +594,23 @@ java.lang.String defaultValue) {
       }
       int hash = 41;
       hash = (19 * hash) + getDescriptor().hashCode();
-      hash = (37 * hash) + SESSION_ID_FIELD_NUMBER;
-      hash = (53 * hash) + getSessionId().hashCode();
       hash = (37 * hash) + USER_ID_FIELD_NUMBER;
-      hash = (53 * hash) + getUserId().hashCode();
+      hash = (53 * hash) + getUserId();
+      hash = (37 * hash) + BOT_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getBotId();
+      hash = (37 * hash) + USER_NAME_FIELD_NUMBER;
+      hash = (53 * hash) + getUserName().hashCode();
       hash = (37 * hash) + MESSAGE_FIELD_NUMBER;
       hash = (53 * hash) + getMessage().hashCode();
+      hash = (37 * hash) + SESSION_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getSessionId().hashCode();
       hash = (37 * hash) + TIMESTAMP_FIELD_NUMBER;
       hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
           getTimestamp());
+      hash = (37 * hash) + VOICE_URL_FIELD_NUMBER;
+      hash = (53 * hash) + getVoiceUrl().hashCode();
+      hash = (37 * hash) + VOICE_DURATION_FIELD_NUMBER;
+      hash = (53 * hash) + getVoiceDuration();
       if (!internalGetMetadata().getMap().isEmpty()) {
         hash = (37 * hash) + METADATA_FIELD_NUMBER;
         hash = (53 * hash) + internalGetMetadata().hashCode();
@@ -580,7 +726,7 @@ java.lang.String defaultValue) {
       protected com.google.protobuf.MapField internalGetMapField(
           int number) {
         switch (number) {
-          case 5:
+          case 9:
             return internalGetMetadata();
           default:
             throw new RuntimeException(
@@ -591,7 +737,7 @@ java.lang.String defaultValue) {
       protected com.google.protobuf.MapField internalGetMutableMapField(
           int number) {
         switch (number) {
-          case 5:
+          case 9:
             return internalGetMutableMetadata();
           default:
             throw new RuntimeException(
@@ -620,10 +766,14 @@ java.lang.String defaultValue) {
       public Builder clear() {
         super.clear();
         bitField0_ = 0;
-        sessionId_ = "";
-        userId_ = "";
+        userId_ = 0;
+        botId_ = 0;
+        userName_ = "";
         message_ = "";
+        sessionId_ = "";
         timestamp_ = 0L;
+        voiceUrl_ = "";
+        voiceDuration_ = 0;
         internalGetMutableMetadata().clear();
         return this;
       }
@@ -659,18 +809,30 @@ java.lang.String defaultValue) {
       private void buildPartial0(com.bridge.proto.ChatProto.ChatRequest result) {
         int from_bitField0_ = bitField0_;
         if (((from_bitField0_ & 0x00000001) != 0)) {
-          result.sessionId_ = sessionId_;
-        }
-        if (((from_bitField0_ & 0x00000002) != 0)) {
           result.userId_ = userId_;
         }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.botId_ = botId_;
+        }
         if (((from_bitField0_ & 0x00000004) != 0)) {
-          result.message_ = message_;
+          result.userName_ = userName_;
         }
         if (((from_bitField0_ & 0x00000008) != 0)) {
-          result.timestamp_ = timestamp_;
+          result.message_ = message_;
         }
         if (((from_bitField0_ & 0x00000010) != 0)) {
+          result.sessionId_ = sessionId_;
+        }
+        if (((from_bitField0_ & 0x00000020) != 0)) {
+          result.timestamp_ = timestamp_;
+        }
+        if (((from_bitField0_ & 0x00000040) != 0)) {
+          result.voiceUrl_ = voiceUrl_;
+        }
+        if (((from_bitField0_ & 0x00000080) != 0)) {
+          result.voiceDuration_ = voiceDuration_;
+        }
+        if (((from_bitField0_ & 0x00000100) != 0)) {
           result.metadata_ = internalGetMetadata();
           result.metadata_.makeImmutable();
         }
@@ -720,27 +882,41 @@ java.lang.String defaultValue) {
 
       public Builder mergeFrom(com.bridge.proto.ChatProto.ChatRequest other) {
         if (other == com.bridge.proto.ChatProto.ChatRequest.getDefaultInstance()) return this;
-        if (!other.getSessionId().isEmpty()) {
-          sessionId_ = other.sessionId_;
-          bitField0_ |= 0x00000001;
-          onChanged();
+        if (other.getUserId() != 0) {
+          setUserId(other.getUserId());
         }
-        if (!other.getUserId().isEmpty()) {
-          userId_ = other.userId_;
-          bitField0_ |= 0x00000002;
+        if (other.getBotId() != 0) {
+          setBotId(other.getBotId());
+        }
+        if (!other.getUserName().isEmpty()) {
+          userName_ = other.userName_;
+          bitField0_ |= 0x00000004;
           onChanged();
         }
         if (!other.getMessage().isEmpty()) {
           message_ = other.message_;
-          bitField0_ |= 0x00000004;
+          bitField0_ |= 0x00000008;
+          onChanged();
+        }
+        if (!other.getSessionId().isEmpty()) {
+          sessionId_ = other.sessionId_;
+          bitField0_ |= 0x00000010;
           onChanged();
         }
         if (other.getTimestamp() != 0L) {
           setTimestamp(other.getTimestamp());
         }
+        if (!other.getVoiceUrl().isEmpty()) {
+          voiceUrl_ = other.voiceUrl_;
+          bitField0_ |= 0x00000040;
+          onChanged();
+        }
+        if (other.getVoiceDuration() != 0) {
+          setVoiceDuration(other.getVoiceDuration());
+        }
         internalGetMutableMetadata().mergeFrom(
             other.internalGetMetadata());
-        bitField0_ |= 0x00000010;
+        bitField0_ |= 0x00000100;
         this.mergeUnknownFields(other.getUnknownFields());
         onChanged();
         return this;
@@ -767,35 +943,55 @@ java.lang.String defaultValue) {
               case 0:
                 done = true;
                 break;
-              case 10: {
-                sessionId_ = input.readStringRequireUtf8();
+              case 8: {
+                userId_ = input.readInt32();
                 bitField0_ |= 0x00000001;
                 break;
-              } // case 10
-              case 18: {
-                userId_ = input.readStringRequireUtf8();
+              } // case 8
+              case 16: {
+                botId_ = input.readInt32();
                 bitField0_ |= 0x00000002;
                 break;
-              } // case 18
+              } // case 16
               case 26: {
-                message_ = input.readStringRequireUtf8();
+                userName_ = input.readStringRequireUtf8();
                 bitField0_ |= 0x00000004;
                 break;
               } // case 26
-              case 32: {
-                timestamp_ = input.readInt64();
+              case 34: {
+                message_ = input.readStringRequireUtf8();
                 bitField0_ |= 0x00000008;
                 break;
-              } // case 32
+              } // case 34
               case 42: {
+                sessionId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000010;
+                break;
+              } // case 42
+              case 48: {
+                timestamp_ = input.readInt64();
+                bitField0_ |= 0x00000020;
+                break;
+              } // case 48
+              case 58: {
+                voiceUrl_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000040;
+                break;
+              } // case 58
+              case 64: {
+                voiceDuration_ = input.readInt32();
+                bitField0_ |= 0x00000080;
+                break;
+              } // case 64
+              case 74: {
                 com.google.protobuf.MapEntry<java.lang.String, java.lang.String>
                 metadata__ = input.readMessage(
                     MetadataDefaultEntryHolder.defaultEntry.getParserForType(), extensionRegistry);
                 internalGetMutableMetadata().getMutableMap().put(
                     metadata__.getKey(), metadata__.getValue());
-                bitField0_ |= 0x00000010;
+                bitField0_ |= 0x00000100;
                 break;
-              } // case 42
+              } // case 74
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -813,153 +1009,145 @@ java.lang.String defaultValue) {
       }
       private int bitField0_;
 
-      private java.lang.Object sessionId_ = "";
+      private int userId_ ;
       /**
-       * <code>string session_id = 1;</code>
-       * @return The sessionId.
+       * <code>int32 user_id = 1;</code>
+       * @return The userId.
        */
-      public java.lang.String getSessionId() {
-        java.lang.Object ref = sessionId_;
-        if (!(ref instanceof java.lang.String)) {
-          com.google.protobuf.ByteString bs =
-              (com.google.protobuf.ByteString) ref;
-          java.lang.String s = bs.toStringUtf8();
-          sessionId_ = s;
-          return s;
-        } else {
-          return (java.lang.String) ref;
-        }
+      @java.lang.Override
+      public int getUserId() {
+        return userId_;
       }
       /**
-       * <code>string session_id = 1;</code>
-       * @return The bytes for sessionId.
-       */
-      public com.google.protobuf.ByteString
-          getSessionIdBytes() {
-        java.lang.Object ref = sessionId_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          sessionId_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <code>string session_id = 1;</code>
-       * @param value The sessionId to set.
+       * <code>int32 user_id = 1;</code>
+       * @param value The userId to set.
        * @return This builder for chaining.
        */
-      public Builder setSessionId(
-          java.lang.String value) {
-        if (value == null) { throw new NullPointerException(); }
-        sessionId_ = value;
+      public Builder setUserId(int value) {
+        
+        userId_ = value;
         bitField0_ |= 0x00000001;
         onChanged();
         return this;
       }
       /**
-       * <code>string session_id = 1;</code>
+       * <code>int32 user_id = 1;</code>
        * @return This builder for chaining.
        */
-      public Builder clearSessionId() {
-        sessionId_ = getDefaultInstance().getSessionId();
+      public Builder clearUserId() {
         bitField0_ = (bitField0_ & ~0x00000001);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>string session_id = 1;</code>
-       * @param value The bytes for sessionId to set.
-       * @return This builder for chaining.
-       */
-      public Builder setSessionIdBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) { throw new NullPointerException(); }
-        checkByteStringIsUtf8(value);
-        sessionId_ = value;
-        bitField0_ |= 0x00000001;
+        userId_ = 0;
         onChanged();
         return this;
       }
 
-      private java.lang.Object userId_ = "";
+      private int botId_ ;
       /**
-       * <code>string user_id = 2;</code>
-       * @return The userId.
+       * <code>int32 bot_id = 2;</code>
+       * @return The botId.
        */
-      public java.lang.String getUserId() {
-        java.lang.Object ref = userId_;
+      @java.lang.Override
+      public int getBotId() {
+        return botId_;
+      }
+      /**
+       * <code>int32 bot_id = 2;</code>
+       * @param value The botId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setBotId(int value) {
+        
+        botId_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int32 bot_id = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearBotId() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        botId_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object userName_ = "";
+      /**
+       * <code>string user_name = 3;</code>
+       * @return The userName.
+       */
+      public java.lang.String getUserName() {
+        java.lang.Object ref = userName_;
         if (!(ref instanceof java.lang.String)) {
           com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
-          userId_ = s;
+          userName_ = s;
           return s;
         } else {
           return (java.lang.String) ref;
         }
       }
       /**
-       * <code>string user_id = 2;</code>
-       * @return The bytes for userId.
+       * <code>string user_name = 3;</code>
+       * @return The bytes for userName.
        */
       public com.google.protobuf.ByteString
-          getUserIdBytes() {
-        java.lang.Object ref = userId_;
+          getUserNameBytes() {
+        java.lang.Object ref = userName_;
         if (ref instanceof String) {
           com.google.protobuf.ByteString b = 
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
-          userId_ = b;
+          userName_ = b;
           return b;
         } else {
           return (com.google.protobuf.ByteString) ref;
         }
       }
       /**
-       * <code>string user_id = 2;</code>
-       * @param value The userId to set.
+       * <code>string user_name = 3;</code>
+       * @param value The userName to set.
        * @return This builder for chaining.
        */
-      public Builder setUserId(
+      public Builder setUserName(
           java.lang.String value) {
         if (value == null) { throw new NullPointerException(); }
-        userId_ = value;
-        bitField0_ |= 0x00000002;
+        userName_ = value;
+        bitField0_ |= 0x00000004;
         onChanged();
         return this;
       }
       /**
-       * <code>string user_id = 2;</code>
+       * <code>string user_name = 3;</code>
        * @return This builder for chaining.
        */
-      public Builder clearUserId() {
-        userId_ = getDefaultInstance().getUserId();
-        bitField0_ = (bitField0_ & ~0x00000002);
+      public Builder clearUserName() {
+        userName_ = getDefaultInstance().getUserName();
+        bitField0_ = (bitField0_ & ~0x00000004);
         onChanged();
         return this;
       }
       /**
-       * <code>string user_id = 2;</code>
-       * @param value The bytes for userId to set.
+       * <code>string user_name = 3;</code>
+       * @param value The bytes for userName to set.
        * @return This builder for chaining.
        */
-      public Builder setUserIdBytes(
+      public Builder setUserNameBytes(
           com.google.protobuf.ByteString value) {
         if (value == null) { throw new NullPointerException(); }
         checkByteStringIsUtf8(value);
-        userId_ = value;
-        bitField0_ |= 0x00000002;
+        userName_ = value;
+        bitField0_ |= 0x00000004;
         onChanged();
         return this;
       }
 
       private java.lang.Object message_ = "";
       /**
-       * <code>string message = 3;</code>
+       * <code>string message = 4;</code>
        * @return The message.
        */
       public java.lang.String getMessage() {
@@ -975,7 +1163,7 @@ java.lang.String defaultValue) {
         }
       }
       /**
-       * <code>string message = 3;</code>
+       * <code>string message = 4;</code>
        * @return The bytes for message.
        */
       public com.google.protobuf.ByteString
@@ -992,7 +1180,7 @@ java.lang.String defaultValue) {
         }
       }
       /**
-       * <code>string message = 3;</code>
+       * <code>string message = 4;</code>
        * @param value The message to set.
        * @return This builder for chaining.
        */
@@ -1000,22 +1188,22 @@ java.lang.String defaultValue) {
           java.lang.String value) {
         if (value == null) { throw new NullPointerException(); }
         message_ = value;
-        bitField0_ |= 0x00000004;
+        bitField0_ |= 0x00000008;
         onChanged();
         return this;
       }
       /**
-       * <code>string message = 3;</code>
+       * <code>string message = 4;</code>
        * @return This builder for chaining.
        */
       public Builder clearMessage() {
         message_ = getDefaultInstance().getMessage();
-        bitField0_ = (bitField0_ & ~0x00000004);
+        bitField0_ = (bitField0_ & ~0x00000008);
         onChanged();
         return this;
       }
       /**
-       * <code>string message = 3;</code>
+       * <code>string message = 4;</code>
        * @param value The bytes for message to set.
        * @return This builder for chaining.
        */
@@ -1024,14 +1212,86 @@ java.lang.String defaultValue) {
         if (value == null) { throw new NullPointerException(); }
         checkByteStringIsUtf8(value);
         message_ = value;
-        bitField0_ |= 0x00000004;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object sessionId_ = "";
+      /**
+       * <code>string session_id = 5;</code>
+       * @return The sessionId.
+       */
+      public java.lang.String getSessionId() {
+        java.lang.Object ref = sessionId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          sessionId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string session_id = 5;</code>
+       * @return The bytes for sessionId.
+       */
+      public com.google.protobuf.ByteString
+          getSessionIdBytes() {
+        java.lang.Object ref = sessionId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          sessionId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string session_id = 5;</code>
+       * @param value The sessionId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSessionId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        sessionId_ = value;
+        bitField0_ |= 0x00000010;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string session_id = 5;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSessionId() {
+        sessionId_ = getDefaultInstance().getSessionId();
+        bitField0_ = (bitField0_ & ~0x00000010);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string session_id = 5;</code>
+       * @param value The bytes for sessionId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSessionIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        sessionId_ = value;
+        bitField0_ |= 0x00000010;
         onChanged();
         return this;
       }
 
       private long timestamp_ ;
       /**
-       * <code>int64 timestamp = 4;</code>
+       * <code>int64 timestamp = 6;</code>
        * @return The timestamp.
        */
       @java.lang.Override
@@ -1039,24 +1299,128 @@ java.lang.String defaultValue) {
         return timestamp_;
       }
       /**
-       * <code>int64 timestamp = 4;</code>
+       * <code>int64 timestamp = 6;</code>
        * @param value The timestamp to set.
        * @return This builder for chaining.
        */
       public Builder setTimestamp(long value) {
         
         timestamp_ = value;
-        bitField0_ |= 0x00000008;
+        bitField0_ |= 0x00000020;
         onChanged();
         return this;
       }
       /**
-       * <code>int64 timestamp = 4;</code>
+       * <code>int64 timestamp = 6;</code>
        * @return This builder for chaining.
        */
       public Builder clearTimestamp() {
-        bitField0_ = (bitField0_ & ~0x00000008);
+        bitField0_ = (bitField0_ & ~0x00000020);
         timestamp_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object voiceUrl_ = "";
+      /**
+       * <code>string voice_url = 7;</code>
+       * @return The voiceUrl.
+       */
+      public java.lang.String getVoiceUrl() {
+        java.lang.Object ref = voiceUrl_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          voiceUrl_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string voice_url = 7;</code>
+       * @return The bytes for voiceUrl.
+       */
+      public com.google.protobuf.ByteString
+          getVoiceUrlBytes() {
+        java.lang.Object ref = voiceUrl_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          voiceUrl_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string voice_url = 7;</code>
+       * @param value The voiceUrl to set.
+       * @return This builder for chaining.
+       */
+      public Builder setVoiceUrl(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        voiceUrl_ = value;
+        bitField0_ |= 0x00000040;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string voice_url = 7;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearVoiceUrl() {
+        voiceUrl_ = getDefaultInstance().getVoiceUrl();
+        bitField0_ = (bitField0_ & ~0x00000040);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string voice_url = 7;</code>
+       * @param value The bytes for voiceUrl to set.
+       * @return This builder for chaining.
+       */
+      public Builder setVoiceUrlBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        voiceUrl_ = value;
+        bitField0_ |= 0x00000040;
+        onChanged();
+        return this;
+      }
+
+      private int voiceDuration_ ;
+      /**
+       * <code>int32 voice_duration = 8;</code>
+       * @return The voiceDuration.
+       */
+      @java.lang.Override
+      public int getVoiceDuration() {
+        return voiceDuration_;
+      }
+      /**
+       * <code>int32 voice_duration = 8;</code>
+       * @param value The voiceDuration to set.
+       * @return This builder for chaining.
+       */
+      public Builder setVoiceDuration(int value) {
+        
+        voiceDuration_ = value;
+        bitField0_ |= 0x00000080;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int32 voice_duration = 8;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearVoiceDuration() {
+        bitField0_ = (bitField0_ & ~0x00000080);
+        voiceDuration_ = 0;
         onChanged();
         return this;
       }
@@ -1080,7 +1444,7 @@ java.lang.String defaultValue) {
         if (!metadata_.isMutable()) {
           metadata_ = metadata_.copy();
         }
-        bitField0_ |= 0x00000010;
+        bitField0_ |= 0x00000100;
         onChanged();
         return metadata_;
       }
@@ -1088,7 +1452,7 @@ java.lang.String defaultValue) {
         return internalGetMetadata().getMap().size();
       }
       /**
-       * <code>map&lt;string, string&gt; metadata = 5;</code>
+       * <code>map&lt;string, string&gt; metadata = 9;</code>
        */
       @java.lang.Override
       public boolean containsMetadata(
@@ -1105,14 +1469,14 @@ java.lang.String defaultValue) {
         return getMetadataMap();
       }
       /**
-       * <code>map&lt;string, string&gt; metadata = 5;</code>
+       * <code>map&lt;string, string&gt; metadata = 9;</code>
        */
       @java.lang.Override
       public java.util.Map<java.lang.String, java.lang.String> getMetadataMap() {
         return internalGetMetadata().getMap();
       }
       /**
-       * <code>map&lt;string, string&gt; metadata = 5;</code>
+       * <code>map&lt;string, string&gt; metadata = 9;</code>
        */
       @java.lang.Override
       public /* nullable */
@@ -1126,7 +1490,7 @@ java.lang.String defaultValue) {
         return map.containsKey(key) ? map.get(key) : defaultValue;
       }
       /**
-       * <code>map&lt;string, string&gt; metadata = 5;</code>
+       * <code>map&lt;string, string&gt; metadata = 9;</code>
        */
       @java.lang.Override
       public java.lang.String getMetadataOrThrow(
@@ -1140,13 +1504,13 @@ java.lang.String defaultValue) {
         return map.get(key);
       }
       public Builder clearMetadata() {
-        bitField0_ = (bitField0_ & ~0x00000010);
+        bitField0_ = (bitField0_ & ~0x00000100);
         internalGetMutableMetadata().getMutableMap()
             .clear();
         return this;
       }
       /**
-       * <code>map&lt;string, string&gt; metadata = 5;</code>
+       * <code>map&lt;string, string&gt; metadata = 9;</code>
        */
       public Builder removeMetadata(
           java.lang.String key) {
@@ -1161,11 +1525,11 @@ java.lang.String defaultValue) {
       @java.lang.Deprecated
       public java.util.Map<java.lang.String, java.lang.String>
           getMutableMetadata() {
-        bitField0_ |= 0x00000010;
+        bitField0_ |= 0x00000100;
         return internalGetMutableMetadata().getMutableMap();
       }
       /**
-       * <code>map&lt;string, string&gt; metadata = 5;</code>
+       * <code>map&lt;string, string&gt; metadata = 9;</code>
        */
       public Builder putMetadata(
           java.lang.String key,
@@ -1174,17 +1538,17 @@ java.lang.String defaultValue) {
         if (value == null) { throw new NullPointerException("map value"); }
         internalGetMutableMetadata().getMutableMap()
             .put(key, value);
-        bitField0_ |= 0x00000010;
+        bitField0_ |= 0x00000100;
         return this;
       }
       /**
-       * <code>map&lt;string, string&gt; metadata = 5;</code>
+       * <code>map&lt;string, string&gt; metadata = 9;</code>
        */
       public Builder putAllMetadata(
           java.util.Map<java.lang.String, java.lang.String> values) {
         internalGetMutableMetadata().getMutableMap()
             .putAll(values);
-        bitField0_ |= 0x00000010;
+        bitField0_ |= 0x00000100;
         return this;
       }
       @java.lang.Override
@@ -1256,59 +1620,107 @@ java.lang.String defaultValue) {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>string session_id = 1;</code>
+     * <code>int32 user_id = 1;</code>
+     * @return The userId.
+     */
+    int getUserId();
+
+    /**
+     * <code>int32 bot_id = 2;</code>
+     * @return The botId.
+     */
+    int getBotId();
+
+    /**
+     * <code>string bot_name = 3;</code>
+     * @return The botName.
+     */
+    java.lang.String getBotName();
+    /**
+     * <code>string bot_name = 3;</code>
+     * @return The bytes for botName.
+     */
+    com.google.protobuf.ByteString
+        getBotNameBytes();
+
+    /**
+     * <code>string message = 4;</code>
+     * @return The message.
+     */
+    java.lang.String getMessage();
+    /**
+     * <code>string message = 4;</code>
+     * @return The bytes for message.
+     */
+    com.google.protobuf.ByteString
+        getMessageBytes();
+
+    /**
+     * <code>string session_id = 5;</code>
      * @return The sessionId.
      */
     java.lang.String getSessionId();
     /**
-     * <code>string session_id = 1;</code>
+     * <code>string session_id = 5;</code>
      * @return The bytes for sessionId.
      */
     com.google.protobuf.ByteString
         getSessionIdBytes();
 
     /**
-     * <code>string reply = 2;</code>
-     * @return The reply.
+     * <code>bool success = 6;</code>
+     * @return The success.
      */
-    java.lang.String getReply();
+    boolean getSuccess();
+
     /**
-     * <code>string reply = 2;</code>
-     * @return The bytes for reply.
+     * <code>string error = 7;</code>
+     * @return The error.
+     */
+    java.lang.String getError();
+    /**
+     * <code>string error = 7;</code>
+     * @return The bytes for error.
      */
     com.google.protobuf.ByteString
-        getReplyBytes();
+        getErrorBytes();
 
     /**
-     * <code>int32 status = 3;</code>
-     * @return The status.
+     * <code>int32 msg_type = 8;</code>
+     * @return The msgType.
      */
-    int getStatus();
+    int getMsgType();
 
     /**
-     * <code>string error_message = 4;</code>
-     * @return The errorMessage.
+     * <code>string voice_url = 9;</code>
+     * @return The voiceUrl.
      */
-    java.lang.String getErrorMessage();
+    java.lang.String getVoiceUrl();
     /**
-     * <code>string error_message = 4;</code>
-     * @return The bytes for errorMessage.
+     * <code>string voice_url = 9;</code>
+     * @return The bytes for voiceUrl.
      */
     com.google.protobuf.ByteString
-        getErrorMessageBytes();
+        getVoiceUrlBytes();
 
     /**
-     * <code>int64 timestamp = 5;</code>
+     * <code>int32 voice_duration = 10;</code>
+     * @return The voiceDuration.
+     */
+    int getVoiceDuration();
+
+    /**
+     * <code>int64 timestamp = 11;</code>
      * @return The timestamp.
      */
     long getTimestamp();
 
     /**
-     * <code>map&lt;string, string&gt; metadata = 6;</code>
+     * <code>map&lt;string, string&gt; metadata = 12;</code>
      */
     int getMetadataCount();
     /**
-     * <code>map&lt;string, string&gt; metadata = 6;</code>
+     * <code>map&lt;string, string&gt; metadata = 12;</code>
      */
     boolean containsMetadata(
         java.lang.String key);
@@ -1319,12 +1731,12 @@ java.lang.String defaultValue) {
     java.util.Map<java.lang.String, java.lang.String>
     getMetadata();
     /**
-     * <code>map&lt;string, string&gt; metadata = 6;</code>
+     * <code>map&lt;string, string&gt; metadata = 12;</code>
      */
     java.util.Map<java.lang.String, java.lang.String>
     getMetadataMap();
     /**
-     * <code>map&lt;string, string&gt; metadata = 6;</code>
+     * <code>map&lt;string, string&gt; metadata = 12;</code>
      */
     /* nullable */
 java.lang.String getMetadataOrDefault(
@@ -1332,7 +1744,7 @@ java.lang.String getMetadataOrDefault(
         /* nullable */
 java.lang.String defaultValue);
     /**
-     * <code>map&lt;string, string&gt; metadata = 6;</code>
+     * <code>map&lt;string, string&gt; metadata = 12;</code>
      */
     java.lang.String getMetadataOrThrow(
         java.lang.String key);
@@ -1350,9 +1762,11 @@ java.lang.String defaultValue);
       super(builder);
     }
     private ChatResponse() {
+      botName_ = "";
+      message_ = "";
       sessionId_ = "";
-      reply_ = "";
-      errorMessage_ = "";
+      error_ = "";
+      voiceUrl_ = "";
     }
 
     @java.lang.Override
@@ -1377,7 +1791,7 @@ java.lang.String defaultValue);
     protected com.google.protobuf.MapField internalGetMapField(
         int number) {
       switch (number) {
-        case 6:
+        case 12:
           return internalGetMetadata();
         default:
           throw new RuntimeException(
@@ -1392,11 +1806,111 @@ java.lang.String defaultValue);
               com.bridge.proto.ChatProto.ChatResponse.class, com.bridge.proto.ChatProto.ChatResponse.Builder.class);
     }
 
-    public static final int SESSION_ID_FIELD_NUMBER = 1;
+    public static final int USER_ID_FIELD_NUMBER = 1;
+    private int userId_ = 0;
+    /**
+     * <code>int32 user_id = 1;</code>
+     * @return The userId.
+     */
+    @java.lang.Override
+    public int getUserId() {
+      return userId_;
+    }
+
+    public static final int BOT_ID_FIELD_NUMBER = 2;
+    private int botId_ = 0;
+    /**
+     * <code>int32 bot_id = 2;</code>
+     * @return The botId.
+     */
+    @java.lang.Override
+    public int getBotId() {
+      return botId_;
+    }
+
+    public static final int BOT_NAME_FIELD_NUMBER = 3;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object botName_ = "";
+    /**
+     * <code>string bot_name = 3;</code>
+     * @return The botName.
+     */
+    @java.lang.Override
+    public java.lang.String getBotName() {
+      java.lang.Object ref = botName_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        botName_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string bot_name = 3;</code>
+     * @return The bytes for botName.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getBotNameBytes() {
+      java.lang.Object ref = botName_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        botName_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int MESSAGE_FIELD_NUMBER = 4;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object message_ = "";
+    /**
+     * <code>string message = 4;</code>
+     * @return The message.
+     */
+    @java.lang.Override
+    public java.lang.String getMessage() {
+      java.lang.Object ref = message_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        message_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string message = 4;</code>
+     * @return The bytes for message.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getMessageBytes() {
+      java.lang.Object ref = message_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        message_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int SESSION_ID_FIELD_NUMBER = 5;
     @SuppressWarnings("serial")
     private volatile java.lang.Object sessionId_ = "";
     /**
-     * <code>string session_id = 1;</code>
+     * <code>string session_id = 5;</code>
      * @return The sessionId.
      */
     @java.lang.Override
@@ -1413,7 +1927,7 @@ java.lang.String defaultValue);
       }
     }
     /**
-     * <code>string session_id = 1;</code>
+     * <code>string session_id = 5;</code>
      * @return The bytes for sessionId.
      */
     @java.lang.Override
@@ -1431,99 +1945,121 @@ java.lang.String defaultValue);
       }
     }
 
-    public static final int REPLY_FIELD_NUMBER = 2;
-    @SuppressWarnings("serial")
-    private volatile java.lang.Object reply_ = "";
+    public static final int SUCCESS_FIELD_NUMBER = 6;
+    private boolean success_ = false;
     /**
-     * <code>string reply = 2;</code>
-     * @return The reply.
+     * <code>bool success = 6;</code>
+     * @return The success.
      */
     @java.lang.Override
-    public java.lang.String getReply() {
-      java.lang.Object ref = reply_;
+    public boolean getSuccess() {
+      return success_;
+    }
+
+    public static final int ERROR_FIELD_NUMBER = 7;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object error_ = "";
+    /**
+     * <code>string error = 7;</code>
+     * @return The error.
+     */
+    @java.lang.Override
+    public java.lang.String getError() {
+      java.lang.Object ref = error_;
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
         com.google.protobuf.ByteString bs = 
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        reply_ = s;
+        error_ = s;
         return s;
       }
     }
     /**
-     * <code>string reply = 2;</code>
-     * @return The bytes for reply.
+     * <code>string error = 7;</code>
+     * @return The bytes for error.
      */
     @java.lang.Override
     public com.google.protobuf.ByteString
-        getReplyBytes() {
-      java.lang.Object ref = reply_;
+        getErrorBytes() {
+      java.lang.Object ref = error_;
       if (ref instanceof java.lang.String) {
         com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
-        reply_ = b;
+        error_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
       }
     }
 
-    public static final int STATUS_FIELD_NUMBER = 3;
-    private int status_ = 0;
+    public static final int MSG_TYPE_FIELD_NUMBER = 8;
+    private int msgType_ = 0;
     /**
-     * <code>int32 status = 3;</code>
-     * @return The status.
+     * <code>int32 msg_type = 8;</code>
+     * @return The msgType.
      */
     @java.lang.Override
-    public int getStatus() {
-      return status_;
+    public int getMsgType() {
+      return msgType_;
     }
 
-    public static final int ERROR_MESSAGE_FIELD_NUMBER = 4;
+    public static final int VOICE_URL_FIELD_NUMBER = 9;
     @SuppressWarnings("serial")
-    private volatile java.lang.Object errorMessage_ = "";
+    private volatile java.lang.Object voiceUrl_ = "";
     /**
-     * <code>string error_message = 4;</code>
-     * @return The errorMessage.
+     * <code>string voice_url = 9;</code>
+     * @return The voiceUrl.
      */
     @java.lang.Override
-    public java.lang.String getErrorMessage() {
-      java.lang.Object ref = errorMessage_;
+    public java.lang.String getVoiceUrl() {
+      java.lang.Object ref = voiceUrl_;
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
         com.google.protobuf.ByteString bs = 
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        errorMessage_ = s;
+        voiceUrl_ = s;
         return s;
       }
     }
     /**
-     * <code>string error_message = 4;</code>
-     * @return The bytes for errorMessage.
+     * <code>string voice_url = 9;</code>
+     * @return The bytes for voiceUrl.
      */
     @java.lang.Override
     public com.google.protobuf.ByteString
-        getErrorMessageBytes() {
-      java.lang.Object ref = errorMessage_;
+        getVoiceUrlBytes() {
+      java.lang.Object ref = voiceUrl_;
       if (ref instanceof java.lang.String) {
         com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
-        errorMessage_ = b;
+        voiceUrl_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
       }
     }
 
-    public static final int TIMESTAMP_FIELD_NUMBER = 5;
+    public static final int VOICE_DURATION_FIELD_NUMBER = 10;
+    private int voiceDuration_ = 0;
+    /**
+     * <code>int32 voice_duration = 10;</code>
+     * @return The voiceDuration.
+     */
+    @java.lang.Override
+    public int getVoiceDuration() {
+      return voiceDuration_;
+    }
+
+    public static final int TIMESTAMP_FIELD_NUMBER = 11;
     private long timestamp_ = 0L;
     /**
-     * <code>int64 timestamp = 5;</code>
+     * <code>int64 timestamp = 11;</code>
      * @return The timestamp.
      */
     @java.lang.Override
@@ -1531,7 +2067,7 @@ java.lang.String defaultValue);
       return timestamp_;
     }
 
-    public static final int METADATA_FIELD_NUMBER = 6;
+    public static final int METADATA_FIELD_NUMBER = 12;
     private static final class MetadataDefaultEntryHolder {
       static final com.google.protobuf.MapEntry<
           java.lang.String, java.lang.String> defaultEntry =
@@ -1558,7 +2094,7 @@ java.lang.String defaultValue);
       return internalGetMetadata().getMap().size();
     }
     /**
-     * <code>map&lt;string, string&gt; metadata = 6;</code>
+     * <code>map&lt;string, string&gt; metadata = 12;</code>
      */
     @java.lang.Override
     public boolean containsMetadata(
@@ -1575,14 +2111,14 @@ java.lang.String defaultValue);
       return getMetadataMap();
     }
     /**
-     * <code>map&lt;string, string&gt; metadata = 6;</code>
+     * <code>map&lt;string, string&gt; metadata = 12;</code>
      */
     @java.lang.Override
     public java.util.Map<java.lang.String, java.lang.String> getMetadataMap() {
       return internalGetMetadata().getMap();
     }
     /**
-     * <code>map&lt;string, string&gt; metadata = 6;</code>
+     * <code>map&lt;string, string&gt; metadata = 12;</code>
      */
     @java.lang.Override
     public /* nullable */
@@ -1596,7 +2132,7 @@ java.lang.String defaultValue) {
       return map.containsKey(key) ? map.get(key) : defaultValue;
     }
     /**
-     * <code>map&lt;string, string&gt; metadata = 6;</code>
+     * <code>map&lt;string, string&gt; metadata = 12;</code>
      */
     @java.lang.Override
     public java.lang.String getMetadataOrThrow(
@@ -1624,27 +2160,45 @@ java.lang.String defaultValue) {
     @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
+      if (userId_ != 0) {
+        output.writeInt32(1, userId_);
+      }
+      if (botId_ != 0) {
+        output.writeInt32(2, botId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(botName_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, botName_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(message_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 4, message_);
+      }
       if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(sessionId_)) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, sessionId_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 5, sessionId_);
       }
-      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(reply_)) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, reply_);
+      if (success_ != false) {
+        output.writeBool(6, success_);
       }
-      if (status_ != 0) {
-        output.writeInt32(3, status_);
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(error_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 7, error_);
       }
-      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(errorMessage_)) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 4, errorMessage_);
+      if (msgType_ != 0) {
+        output.writeInt32(8, msgType_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(voiceUrl_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 9, voiceUrl_);
+      }
+      if (voiceDuration_ != 0) {
+        output.writeInt32(10, voiceDuration_);
       }
       if (timestamp_ != 0L) {
-        output.writeInt64(5, timestamp_);
+        output.writeInt64(11, timestamp_);
       }
       com.google.protobuf.GeneratedMessageV3
         .serializeStringMapTo(
           output,
           internalGetMetadata(),
           MetadataDefaultEntryHolder.defaultEntry,
-          6);
+          12);
       getUnknownFields().writeTo(output);
     }
 
@@ -1654,22 +2208,44 @@ java.lang.String defaultValue) {
       if (size != -1) return size;
 
       size = 0;
-      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(sessionId_)) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, sessionId_);
-      }
-      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(reply_)) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, reply_);
-      }
-      if (status_ != 0) {
+      if (userId_ != 0) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(3, status_);
+          .computeInt32Size(1, userId_);
       }
-      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(errorMessage_)) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, errorMessage_);
+      if (botId_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(2, botId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(botName_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, botName_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(message_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, message_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(sessionId_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, sessionId_);
+      }
+      if (success_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(6, success_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(error_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(7, error_);
+      }
+      if (msgType_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(8, msgType_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(voiceUrl_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(9, voiceUrl_);
+      }
+      if (voiceDuration_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(10, voiceDuration_);
       }
       if (timestamp_ != 0L) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(5, timestamp_);
+          .computeInt64Size(11, timestamp_);
       }
       for (java.util.Map.Entry<java.lang.String, java.lang.String> entry
            : internalGetMetadata().getMap().entrySet()) {
@@ -1679,7 +2255,7 @@ java.lang.String defaultValue) {
             .setValue(entry.getValue())
             .build();
         size += com.google.protobuf.CodedOutputStream
-            .computeMessageSize(6, metadata__);
+            .computeMessageSize(12, metadata__);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
@@ -1696,14 +2272,26 @@ java.lang.String defaultValue) {
       }
       com.bridge.proto.ChatProto.ChatResponse other = (com.bridge.proto.ChatProto.ChatResponse) obj;
 
+      if (getUserId()
+          != other.getUserId()) return false;
+      if (getBotId()
+          != other.getBotId()) return false;
+      if (!getBotName()
+          .equals(other.getBotName())) return false;
+      if (!getMessage()
+          .equals(other.getMessage())) return false;
       if (!getSessionId()
           .equals(other.getSessionId())) return false;
-      if (!getReply()
-          .equals(other.getReply())) return false;
-      if (getStatus()
-          != other.getStatus()) return false;
-      if (!getErrorMessage()
-          .equals(other.getErrorMessage())) return false;
+      if (getSuccess()
+          != other.getSuccess()) return false;
+      if (!getError()
+          .equals(other.getError())) return false;
+      if (getMsgType()
+          != other.getMsgType()) return false;
+      if (!getVoiceUrl()
+          .equals(other.getVoiceUrl())) return false;
+      if (getVoiceDuration()
+          != other.getVoiceDuration()) return false;
       if (getTimestamp()
           != other.getTimestamp()) return false;
       if (!internalGetMetadata().equals(
@@ -1719,14 +2307,27 @@ java.lang.String defaultValue) {
       }
       int hash = 41;
       hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + USER_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getUserId();
+      hash = (37 * hash) + BOT_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getBotId();
+      hash = (37 * hash) + BOT_NAME_FIELD_NUMBER;
+      hash = (53 * hash) + getBotName().hashCode();
+      hash = (37 * hash) + MESSAGE_FIELD_NUMBER;
+      hash = (53 * hash) + getMessage().hashCode();
       hash = (37 * hash) + SESSION_ID_FIELD_NUMBER;
       hash = (53 * hash) + getSessionId().hashCode();
-      hash = (37 * hash) + REPLY_FIELD_NUMBER;
-      hash = (53 * hash) + getReply().hashCode();
-      hash = (37 * hash) + STATUS_FIELD_NUMBER;
-      hash = (53 * hash) + getStatus();
-      hash = (37 * hash) + ERROR_MESSAGE_FIELD_NUMBER;
-      hash = (53 * hash) + getErrorMessage().hashCode();
+      hash = (37 * hash) + SUCCESS_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getSuccess());
+      hash = (37 * hash) + ERROR_FIELD_NUMBER;
+      hash = (53 * hash) + getError().hashCode();
+      hash = (37 * hash) + MSG_TYPE_FIELD_NUMBER;
+      hash = (53 * hash) + getMsgType();
+      hash = (37 * hash) + VOICE_URL_FIELD_NUMBER;
+      hash = (53 * hash) + getVoiceUrl().hashCode();
+      hash = (37 * hash) + VOICE_DURATION_FIELD_NUMBER;
+      hash = (53 * hash) + getVoiceDuration();
       hash = (37 * hash) + TIMESTAMP_FIELD_NUMBER;
       hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
           getTimestamp());
@@ -1845,7 +2446,7 @@ java.lang.String defaultValue) {
       protected com.google.protobuf.MapField internalGetMapField(
           int number) {
         switch (number) {
-          case 6:
+          case 12:
             return internalGetMetadata();
           default:
             throw new RuntimeException(
@@ -1856,7 +2457,7 @@ java.lang.String defaultValue) {
       protected com.google.protobuf.MapField internalGetMutableMapField(
           int number) {
         switch (number) {
-          case 6:
+          case 12:
             return internalGetMutableMetadata();
           default:
             throw new RuntimeException(
@@ -1885,10 +2486,16 @@ java.lang.String defaultValue) {
       public Builder clear() {
         super.clear();
         bitField0_ = 0;
+        userId_ = 0;
+        botId_ = 0;
+        botName_ = "";
+        message_ = "";
         sessionId_ = "";
-        reply_ = "";
-        status_ = 0;
-        errorMessage_ = "";
+        success_ = false;
+        error_ = "";
+        msgType_ = 0;
+        voiceUrl_ = "";
+        voiceDuration_ = 0;
         timestamp_ = 0L;
         internalGetMutableMetadata().clear();
         return this;
@@ -1925,21 +2532,39 @@ java.lang.String defaultValue) {
       private void buildPartial0(com.bridge.proto.ChatProto.ChatResponse result) {
         int from_bitField0_ = bitField0_;
         if (((from_bitField0_ & 0x00000001) != 0)) {
-          result.sessionId_ = sessionId_;
+          result.userId_ = userId_;
         }
         if (((from_bitField0_ & 0x00000002) != 0)) {
-          result.reply_ = reply_;
+          result.botId_ = botId_;
         }
         if (((from_bitField0_ & 0x00000004) != 0)) {
-          result.status_ = status_;
+          result.botName_ = botName_;
         }
         if (((from_bitField0_ & 0x00000008) != 0)) {
-          result.errorMessage_ = errorMessage_;
+          result.message_ = message_;
         }
         if (((from_bitField0_ & 0x00000010) != 0)) {
-          result.timestamp_ = timestamp_;
+          result.sessionId_ = sessionId_;
         }
         if (((from_bitField0_ & 0x00000020) != 0)) {
+          result.success_ = success_;
+        }
+        if (((from_bitField0_ & 0x00000040) != 0)) {
+          result.error_ = error_;
+        }
+        if (((from_bitField0_ & 0x00000080) != 0)) {
+          result.msgType_ = msgType_;
+        }
+        if (((from_bitField0_ & 0x00000100) != 0)) {
+          result.voiceUrl_ = voiceUrl_;
+        }
+        if (((from_bitField0_ & 0x00000200) != 0)) {
+          result.voiceDuration_ = voiceDuration_;
+        }
+        if (((from_bitField0_ & 0x00000400) != 0)) {
+          result.timestamp_ = timestamp_;
+        }
+        if (((from_bitField0_ & 0x00000800) != 0)) {
           result.metadata_ = internalGetMetadata();
           result.metadata_.makeImmutable();
         }
@@ -1989,30 +2614,52 @@ java.lang.String defaultValue) {
 
       public Builder mergeFrom(com.bridge.proto.ChatProto.ChatResponse other) {
         if (other == com.bridge.proto.ChatProto.ChatResponse.getDefaultInstance()) return this;
-        if (!other.getSessionId().isEmpty()) {
-          sessionId_ = other.sessionId_;
-          bitField0_ |= 0x00000001;
+        if (other.getUserId() != 0) {
+          setUserId(other.getUserId());
+        }
+        if (other.getBotId() != 0) {
+          setBotId(other.getBotId());
+        }
+        if (!other.getBotName().isEmpty()) {
+          botName_ = other.botName_;
+          bitField0_ |= 0x00000004;
           onChanged();
         }
-        if (!other.getReply().isEmpty()) {
-          reply_ = other.reply_;
-          bitField0_ |= 0x00000002;
-          onChanged();
-        }
-        if (other.getStatus() != 0) {
-          setStatus(other.getStatus());
-        }
-        if (!other.getErrorMessage().isEmpty()) {
-          errorMessage_ = other.errorMessage_;
+        if (!other.getMessage().isEmpty()) {
+          message_ = other.message_;
           bitField0_ |= 0x00000008;
           onChanged();
+        }
+        if (!other.getSessionId().isEmpty()) {
+          sessionId_ = other.sessionId_;
+          bitField0_ |= 0x00000010;
+          onChanged();
+        }
+        if (other.getSuccess() != false) {
+          setSuccess(other.getSuccess());
+        }
+        if (!other.getError().isEmpty()) {
+          error_ = other.error_;
+          bitField0_ |= 0x00000040;
+          onChanged();
+        }
+        if (other.getMsgType() != 0) {
+          setMsgType(other.getMsgType());
+        }
+        if (!other.getVoiceUrl().isEmpty()) {
+          voiceUrl_ = other.voiceUrl_;
+          bitField0_ |= 0x00000100;
+          onChanged();
+        }
+        if (other.getVoiceDuration() != 0) {
+          setVoiceDuration(other.getVoiceDuration());
         }
         if (other.getTimestamp() != 0L) {
           setTimestamp(other.getTimestamp());
         }
         internalGetMutableMetadata().mergeFrom(
             other.internalGetMetadata());
-        bitField0_ |= 0x00000020;
+        bitField0_ |= 0x00000800;
         this.mergeUnknownFields(other.getUnknownFields());
         onChanged();
         return this;
@@ -2039,40 +2686,70 @@ java.lang.String defaultValue) {
               case 0:
                 done = true;
                 break;
-              case 10: {
-                sessionId_ = input.readStringRequireUtf8();
+              case 8: {
+                userId_ = input.readInt32();
                 bitField0_ |= 0x00000001;
                 break;
-              } // case 10
-              case 18: {
-                reply_ = input.readStringRequireUtf8();
+              } // case 8
+              case 16: {
+                botId_ = input.readInt32();
                 bitField0_ |= 0x00000002;
                 break;
-              } // case 18
-              case 24: {
-                status_ = input.readInt32();
+              } // case 16
+              case 26: {
+                botName_ = input.readStringRequireUtf8();
                 bitField0_ |= 0x00000004;
                 break;
-              } // case 24
+              } // case 26
               case 34: {
-                errorMessage_ = input.readStringRequireUtf8();
+                message_ = input.readStringRequireUtf8();
                 bitField0_ |= 0x00000008;
                 break;
               } // case 34
-              case 40: {
-                timestamp_ = input.readInt64();
+              case 42: {
+                sessionId_ = input.readStringRequireUtf8();
                 bitField0_ |= 0x00000010;
                 break;
-              } // case 40
-              case 50: {
+              } // case 42
+              case 48: {
+                success_ = input.readBool();
+                bitField0_ |= 0x00000020;
+                break;
+              } // case 48
+              case 58: {
+                error_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000040;
+                break;
+              } // case 58
+              case 64: {
+                msgType_ = input.readInt32();
+                bitField0_ |= 0x00000080;
+                break;
+              } // case 64
+              case 74: {
+                voiceUrl_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000100;
+                break;
+              } // case 74
+              case 80: {
+                voiceDuration_ = input.readInt32();
+                bitField0_ |= 0x00000200;
+                break;
+              } // case 80
+              case 88: {
+                timestamp_ = input.readInt64();
+                bitField0_ |= 0x00000400;
+                break;
+              } // case 88
+              case 98: {
                 com.google.protobuf.MapEntry<java.lang.String, java.lang.String>
                 metadata__ = input.readMessage(
                     MetadataDefaultEntryHolder.defaultEntry.getParserForType(), extensionRegistry);
                 internalGetMutableMetadata().getMutableMap().put(
                     metadata__.getKey(), metadata__.getValue());
-                bitField0_ |= 0x00000020;
+                bitField0_ |= 0x00000800;
                 break;
-              } // case 50
+              } // case 98
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -2090,9 +2767,217 @@ java.lang.String defaultValue) {
       }
       private int bitField0_;
 
+      private int userId_ ;
+      /**
+       * <code>int32 user_id = 1;</code>
+       * @return The userId.
+       */
+      @java.lang.Override
+      public int getUserId() {
+        return userId_;
+      }
+      /**
+       * <code>int32 user_id = 1;</code>
+       * @param value The userId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setUserId(int value) {
+        
+        userId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int32 user_id = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearUserId() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        userId_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int botId_ ;
+      /**
+       * <code>int32 bot_id = 2;</code>
+       * @return The botId.
+       */
+      @java.lang.Override
+      public int getBotId() {
+        return botId_;
+      }
+      /**
+       * <code>int32 bot_id = 2;</code>
+       * @param value The botId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setBotId(int value) {
+        
+        botId_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int32 bot_id = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearBotId() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        botId_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object botName_ = "";
+      /**
+       * <code>string bot_name = 3;</code>
+       * @return The botName.
+       */
+      public java.lang.String getBotName() {
+        java.lang.Object ref = botName_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          botName_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string bot_name = 3;</code>
+       * @return The bytes for botName.
+       */
+      public com.google.protobuf.ByteString
+          getBotNameBytes() {
+        java.lang.Object ref = botName_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          botName_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string bot_name = 3;</code>
+       * @param value The botName to set.
+       * @return This builder for chaining.
+       */
+      public Builder setBotName(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        botName_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string bot_name = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearBotName() {
+        botName_ = getDefaultInstance().getBotName();
+        bitField0_ = (bitField0_ & ~0x00000004);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string bot_name = 3;</code>
+       * @param value The bytes for botName to set.
+       * @return This builder for chaining.
+       */
+      public Builder setBotNameBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        botName_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object message_ = "";
+      /**
+       * <code>string message = 4;</code>
+       * @return The message.
+       */
+      public java.lang.String getMessage() {
+        java.lang.Object ref = message_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          message_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string message = 4;</code>
+       * @return The bytes for message.
+       */
+      public com.google.protobuf.ByteString
+          getMessageBytes() {
+        java.lang.Object ref = message_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          message_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string message = 4;</code>
+       * @param value The message to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMessage(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        message_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string message = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMessage() {
+        message_ = getDefaultInstance().getMessage();
+        bitField0_ = (bitField0_ & ~0x00000008);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string message = 4;</code>
+       * @param value The bytes for message to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMessageBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        message_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+
       private java.lang.Object sessionId_ = "";
       /**
-       * <code>string session_id = 1;</code>
+       * <code>string session_id = 5;</code>
        * @return The sessionId.
        */
       public java.lang.String getSessionId() {
@@ -2108,7 +2993,7 @@ java.lang.String defaultValue) {
         }
       }
       /**
-       * <code>string session_id = 1;</code>
+       * <code>string session_id = 5;</code>
        * @return The bytes for sessionId.
        */
       public com.google.protobuf.ByteString
@@ -2125,7 +3010,7 @@ java.lang.String defaultValue) {
         }
       }
       /**
-       * <code>string session_id = 1;</code>
+       * <code>string session_id = 5;</code>
        * @param value The sessionId to set.
        * @return This builder for chaining.
        */
@@ -2133,22 +3018,22 @@ java.lang.String defaultValue) {
           java.lang.String value) {
         if (value == null) { throw new NullPointerException(); }
         sessionId_ = value;
-        bitField0_ |= 0x00000001;
+        bitField0_ |= 0x00000010;
         onChanged();
         return this;
       }
       /**
-       * <code>string session_id = 1;</code>
+       * <code>string session_id = 5;</code>
        * @return This builder for chaining.
        */
       public Builder clearSessionId() {
         sessionId_ = getDefaultInstance().getSessionId();
-        bitField0_ = (bitField0_ & ~0x00000001);
+        bitField0_ = (bitField0_ & ~0x00000010);
         onChanged();
         return this;
       }
       /**
-       * <code>string session_id = 1;</code>
+       * <code>string session_id = 5;</code>
        * @param value The bytes for sessionId to set.
        * @return This builder for chaining.
        */
@@ -2157,190 +3042,254 @@ java.lang.String defaultValue) {
         if (value == null) { throw new NullPointerException(); }
         checkByteStringIsUtf8(value);
         sessionId_ = value;
-        bitField0_ |= 0x00000001;
+        bitField0_ |= 0x00000010;
         onChanged();
         return this;
       }
 
-      private java.lang.Object reply_ = "";
+      private boolean success_ ;
       /**
-       * <code>string reply = 2;</code>
-       * @return The reply.
-       */
-      public java.lang.String getReply() {
-        java.lang.Object ref = reply_;
-        if (!(ref instanceof java.lang.String)) {
-          com.google.protobuf.ByteString bs =
-              (com.google.protobuf.ByteString) ref;
-          java.lang.String s = bs.toStringUtf8();
-          reply_ = s;
-          return s;
-        } else {
-          return (java.lang.String) ref;
-        }
-      }
-      /**
-       * <code>string reply = 2;</code>
-       * @return The bytes for reply.
-       */
-      public com.google.protobuf.ByteString
-          getReplyBytes() {
-        java.lang.Object ref = reply_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          reply_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <code>string reply = 2;</code>
-       * @param value The reply to set.
-       * @return This builder for chaining.
-       */
-      public Builder setReply(
-          java.lang.String value) {
-        if (value == null) { throw new NullPointerException(); }
-        reply_ = value;
-        bitField0_ |= 0x00000002;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>string reply = 2;</code>
-       * @return This builder for chaining.
-       */
-      public Builder clearReply() {
-        reply_ = getDefaultInstance().getReply();
-        bitField0_ = (bitField0_ & ~0x00000002);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>string reply = 2;</code>
-       * @param value The bytes for reply to set.
-       * @return This builder for chaining.
-       */
-      public Builder setReplyBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) { throw new NullPointerException(); }
-        checkByteStringIsUtf8(value);
-        reply_ = value;
-        bitField0_ |= 0x00000002;
-        onChanged();
-        return this;
-      }
-
-      private int status_ ;
-      /**
-       * <code>int32 status = 3;</code>
-       * @return The status.
+       * <code>bool success = 6;</code>
+       * @return The success.
        */
       @java.lang.Override
-      public int getStatus() {
-        return status_;
+      public boolean getSuccess() {
+        return success_;
       }
       /**
-       * <code>int32 status = 3;</code>
-       * @param value The status to set.
+       * <code>bool success = 6;</code>
+       * @param value The success to set.
        * @return This builder for chaining.
        */
-      public Builder setStatus(int value) {
+      public Builder setSuccess(boolean value) {
         
-        status_ = value;
-        bitField0_ |= 0x00000004;
+        success_ = value;
+        bitField0_ |= 0x00000020;
         onChanged();
         return this;
       }
       /**
-       * <code>int32 status = 3;</code>
+       * <code>bool success = 6;</code>
        * @return This builder for chaining.
        */
-      public Builder clearStatus() {
-        bitField0_ = (bitField0_ & ~0x00000004);
-        status_ = 0;
+      public Builder clearSuccess() {
+        bitField0_ = (bitField0_ & ~0x00000020);
+        success_ = false;
         onChanged();
         return this;
       }
 
-      private java.lang.Object errorMessage_ = "";
+      private java.lang.Object error_ = "";
       /**
-       * <code>string error_message = 4;</code>
-       * @return The errorMessage.
+       * <code>string error = 7;</code>
+       * @return The error.
        */
-      public java.lang.String getErrorMessage() {
-        java.lang.Object ref = errorMessage_;
+      public java.lang.String getError() {
+        java.lang.Object ref = error_;
         if (!(ref instanceof java.lang.String)) {
           com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
-          errorMessage_ = s;
+          error_ = s;
           return s;
         } else {
           return (java.lang.String) ref;
         }
       }
       /**
-       * <code>string error_message = 4;</code>
-       * @return The bytes for errorMessage.
+       * <code>string error = 7;</code>
+       * @return The bytes for error.
        */
       public com.google.protobuf.ByteString
-          getErrorMessageBytes() {
-        java.lang.Object ref = errorMessage_;
+          getErrorBytes() {
+        java.lang.Object ref = error_;
         if (ref instanceof String) {
           com.google.protobuf.ByteString b = 
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
-          errorMessage_ = b;
+          error_ = b;
           return b;
         } else {
           return (com.google.protobuf.ByteString) ref;
         }
       }
       /**
-       * <code>string error_message = 4;</code>
-       * @param value The errorMessage to set.
+       * <code>string error = 7;</code>
+       * @param value The error to set.
        * @return This builder for chaining.
        */
-      public Builder setErrorMessage(
+      public Builder setError(
           java.lang.String value) {
         if (value == null) { throw new NullPointerException(); }
-        errorMessage_ = value;
-        bitField0_ |= 0x00000008;
+        error_ = value;
+        bitField0_ |= 0x00000040;
         onChanged();
         return this;
       }
       /**
-       * <code>string error_message = 4;</code>
+       * <code>string error = 7;</code>
        * @return This builder for chaining.
        */
-      public Builder clearErrorMessage() {
-        errorMessage_ = getDefaultInstance().getErrorMessage();
-        bitField0_ = (bitField0_ & ~0x00000008);
+      public Builder clearError() {
+        error_ = getDefaultInstance().getError();
+        bitField0_ = (bitField0_ & ~0x00000040);
         onChanged();
         return this;
       }
       /**
-       * <code>string error_message = 4;</code>
-       * @param value The bytes for errorMessage to set.
+       * <code>string error = 7;</code>
+       * @param value The bytes for error to set.
        * @return This builder for chaining.
        */
-      public Builder setErrorMessageBytes(
+      public Builder setErrorBytes(
           com.google.protobuf.ByteString value) {
         if (value == null) { throw new NullPointerException(); }
         checkByteStringIsUtf8(value);
-        errorMessage_ = value;
-        bitField0_ |= 0x00000008;
+        error_ = value;
+        bitField0_ |= 0x00000040;
+        onChanged();
+        return this;
+      }
+
+      private int msgType_ ;
+      /**
+       * <code>int32 msg_type = 8;</code>
+       * @return The msgType.
+       */
+      @java.lang.Override
+      public int getMsgType() {
+        return msgType_;
+      }
+      /**
+       * <code>int32 msg_type = 8;</code>
+       * @param value The msgType to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMsgType(int value) {
+        
+        msgType_ = value;
+        bitField0_ |= 0x00000080;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int32 msg_type = 8;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMsgType() {
+        bitField0_ = (bitField0_ & ~0x00000080);
+        msgType_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object voiceUrl_ = "";
+      /**
+       * <code>string voice_url = 9;</code>
+       * @return The voiceUrl.
+       */
+      public java.lang.String getVoiceUrl() {
+        java.lang.Object ref = voiceUrl_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          voiceUrl_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string voice_url = 9;</code>
+       * @return The bytes for voiceUrl.
+       */
+      public com.google.protobuf.ByteString
+          getVoiceUrlBytes() {
+        java.lang.Object ref = voiceUrl_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          voiceUrl_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string voice_url = 9;</code>
+       * @param value The voiceUrl to set.
+       * @return This builder for chaining.
+       */
+      public Builder setVoiceUrl(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        voiceUrl_ = value;
+        bitField0_ |= 0x00000100;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string voice_url = 9;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearVoiceUrl() {
+        voiceUrl_ = getDefaultInstance().getVoiceUrl();
+        bitField0_ = (bitField0_ & ~0x00000100);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string voice_url = 9;</code>
+       * @param value The bytes for voiceUrl to set.
+       * @return This builder for chaining.
+       */
+      public Builder setVoiceUrlBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        voiceUrl_ = value;
+        bitField0_ |= 0x00000100;
+        onChanged();
+        return this;
+      }
+
+      private int voiceDuration_ ;
+      /**
+       * <code>int32 voice_duration = 10;</code>
+       * @return The voiceDuration.
+       */
+      @java.lang.Override
+      public int getVoiceDuration() {
+        return voiceDuration_;
+      }
+      /**
+       * <code>int32 voice_duration = 10;</code>
+       * @param value The voiceDuration to set.
+       * @return This builder for chaining.
+       */
+      public Builder setVoiceDuration(int value) {
+        
+        voiceDuration_ = value;
+        bitField0_ |= 0x00000200;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int32 voice_duration = 10;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearVoiceDuration() {
+        bitField0_ = (bitField0_ & ~0x00000200);
+        voiceDuration_ = 0;
         onChanged();
         return this;
       }
 
       private long timestamp_ ;
       /**
-       * <code>int64 timestamp = 5;</code>
+       * <code>int64 timestamp = 11;</code>
        * @return The timestamp.
        */
       @java.lang.Override
@@ -2348,23 +3297,23 @@ java.lang.String defaultValue) {
         return timestamp_;
       }
       /**
-       * <code>int64 timestamp = 5;</code>
+       * <code>int64 timestamp = 11;</code>
        * @param value The timestamp to set.
        * @return This builder for chaining.
        */
       public Builder setTimestamp(long value) {
         
         timestamp_ = value;
-        bitField0_ |= 0x00000010;
+        bitField0_ |= 0x00000400;
         onChanged();
         return this;
       }
       /**
-       * <code>int64 timestamp = 5;</code>
+       * <code>int64 timestamp = 11;</code>
        * @return This builder for chaining.
        */
       public Builder clearTimestamp() {
-        bitField0_ = (bitField0_ & ~0x00000010);
+        bitField0_ = (bitField0_ & ~0x00000400);
         timestamp_ = 0L;
         onChanged();
         return this;
@@ -2389,7 +3338,7 @@ java.lang.String defaultValue) {
         if (!metadata_.isMutable()) {
           metadata_ = metadata_.copy();
         }
-        bitField0_ |= 0x00000020;
+        bitField0_ |= 0x00000800;
         onChanged();
         return metadata_;
       }
@@ -2397,7 +3346,7 @@ java.lang.String defaultValue) {
         return internalGetMetadata().getMap().size();
       }
       /**
-       * <code>map&lt;string, string&gt; metadata = 6;</code>
+       * <code>map&lt;string, string&gt; metadata = 12;</code>
        */
       @java.lang.Override
       public boolean containsMetadata(
@@ -2414,14 +3363,14 @@ java.lang.String defaultValue) {
         return getMetadataMap();
       }
       /**
-       * <code>map&lt;string, string&gt; metadata = 6;</code>
+       * <code>map&lt;string, string&gt; metadata = 12;</code>
        */
       @java.lang.Override
       public java.util.Map<java.lang.String, java.lang.String> getMetadataMap() {
         return internalGetMetadata().getMap();
       }
       /**
-       * <code>map&lt;string, string&gt; metadata = 6;</code>
+       * <code>map&lt;string, string&gt; metadata = 12;</code>
        */
       @java.lang.Override
       public /* nullable */
@@ -2435,7 +3384,7 @@ java.lang.String defaultValue) {
         return map.containsKey(key) ? map.get(key) : defaultValue;
       }
       /**
-       * <code>map&lt;string, string&gt; metadata = 6;</code>
+       * <code>map&lt;string, string&gt; metadata = 12;</code>
        */
       @java.lang.Override
       public java.lang.String getMetadataOrThrow(
@@ -2449,13 +3398,13 @@ java.lang.String defaultValue) {
         return map.get(key);
       }
       public Builder clearMetadata() {
-        bitField0_ = (bitField0_ & ~0x00000020);
+        bitField0_ = (bitField0_ & ~0x00000800);
         internalGetMutableMetadata().getMutableMap()
             .clear();
         return this;
       }
       /**
-       * <code>map&lt;string, string&gt; metadata = 6;</code>
+       * <code>map&lt;string, string&gt; metadata = 12;</code>
        */
       public Builder removeMetadata(
           java.lang.String key) {
@@ -2470,11 +3419,11 @@ java.lang.String defaultValue) {
       @java.lang.Deprecated
       public java.util.Map<java.lang.String, java.lang.String>
           getMutableMetadata() {
-        bitField0_ |= 0x00000020;
+        bitField0_ |= 0x00000800;
         return internalGetMutableMetadata().getMutableMap();
       }
       /**
-       * <code>map&lt;string, string&gt; metadata = 6;</code>
+       * <code>map&lt;string, string&gt; metadata = 12;</code>
        */
       public Builder putMetadata(
           java.lang.String key,
@@ -2483,17 +3432,17 @@ java.lang.String defaultValue) {
         if (value == null) { throw new NullPointerException("map value"); }
         internalGetMutableMetadata().getMutableMap()
             .put(key, value);
-        bitField0_ |= 0x00000020;
+        bitField0_ |= 0x00000800;
         return this;
       }
       /**
-       * <code>map&lt;string, string&gt; metadata = 6;</code>
+       * <code>map&lt;string, string&gt; metadata = 12;</code>
        */
       public Builder putAllMetadata(
           java.util.Map<java.lang.String, java.lang.String> values) {
         internalGetMutableMetadata().getMutableMap()
             .putAll(values);
-        bitField0_ |= 0x00000020;
+        bitField0_ |= 0x00000800;
         return this;
       }
       @java.lang.Override
@@ -2555,6 +3504,2261 @@ java.lang.String defaultValue) {
 
     @java.lang.Override
     public com.bridge.proto.ChatProto.ChatResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface GroupChatRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:bridge.GroupChatRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>int64 group_id = 1;</code>
+     * @return The groupId.
+     */
+    long getGroupId();
+
+    /**
+     * <code>int32 sender_id = 2;</code>
+     * @return The senderId.
+     */
+    int getSenderId();
+
+    /**
+     * <code>string sender_name = 3;</code>
+     * @return The senderName.
+     */
+    java.lang.String getSenderName();
+    /**
+     * <code>string sender_name = 3;</code>
+     * @return The bytes for senderName.
+     */
+    com.google.protobuf.ByteString
+        getSenderNameBytes();
+
+    /**
+     * <code>string content = 4;</code>
+     * @return The content.
+     */
+    java.lang.String getContent();
+    /**
+     * <code>string content = 4;</code>
+     * @return The bytes for content.
+     */
+    com.google.protobuf.ByteString
+        getContentBytes();
+
+    /**
+     * <code>repeated int32 ai_bot_ids = 5;</code>
+     * @return A list containing the aiBotIds.
+     */
+    java.util.List<java.lang.Integer> getAiBotIdsList();
+    /**
+     * <code>repeated int32 ai_bot_ids = 5;</code>
+     * @return The count of aiBotIds.
+     */
+    int getAiBotIdsCount();
+    /**
+     * <code>repeated int32 ai_bot_ids = 5;</code>
+     * @param index The index of the element to return.
+     * @return The aiBotIds at the given index.
+     */
+    int getAiBotIds(int index);
+
+    /**
+     * <code>int64 timestamp = 6;</code>
+     * @return The timestamp.
+     */
+    long getTimestamp();
+  }
+  /**
+   * Protobuf type {@code bridge.GroupChatRequest}
+   */
+  public static final class GroupChatRequest extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:bridge.GroupChatRequest)
+      GroupChatRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use GroupChatRequest.newBuilder() to construct.
+    private GroupChatRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private GroupChatRequest() {
+      senderName_ = "";
+      content_ = "";
+      aiBotIds_ = emptyIntList();
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new GroupChatRequest();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_GroupChatRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_GroupChatRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.bridge.proto.ChatProto.GroupChatRequest.class, com.bridge.proto.ChatProto.GroupChatRequest.Builder.class);
+    }
+
+    public static final int GROUP_ID_FIELD_NUMBER = 1;
+    private long groupId_ = 0L;
+    /**
+     * <code>int64 group_id = 1;</code>
+     * @return The groupId.
+     */
+    @java.lang.Override
+    public long getGroupId() {
+      return groupId_;
+    }
+
+    public static final int SENDER_ID_FIELD_NUMBER = 2;
+    private int senderId_ = 0;
+    /**
+     * <code>int32 sender_id = 2;</code>
+     * @return The senderId.
+     */
+    @java.lang.Override
+    public int getSenderId() {
+      return senderId_;
+    }
+
+    public static final int SENDER_NAME_FIELD_NUMBER = 3;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object senderName_ = "";
+    /**
+     * <code>string sender_name = 3;</code>
+     * @return The senderName.
+     */
+    @java.lang.Override
+    public java.lang.String getSenderName() {
+      java.lang.Object ref = senderName_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        senderName_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string sender_name = 3;</code>
+     * @return The bytes for senderName.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getSenderNameBytes() {
+      java.lang.Object ref = senderName_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        senderName_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int CONTENT_FIELD_NUMBER = 4;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object content_ = "";
+    /**
+     * <code>string content = 4;</code>
+     * @return The content.
+     */
+    @java.lang.Override
+    public java.lang.String getContent() {
+      java.lang.Object ref = content_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        content_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string content = 4;</code>
+     * @return The bytes for content.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getContentBytes() {
+      java.lang.Object ref = content_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        content_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int AI_BOT_IDS_FIELD_NUMBER = 5;
+    @SuppressWarnings("serial")
+    private com.google.protobuf.Internal.IntList aiBotIds_;
+    /**
+     * <code>repeated int32 ai_bot_ids = 5;</code>
+     * @return A list containing the aiBotIds.
+     */
+    @java.lang.Override
+    public java.util.List<java.lang.Integer>
+        getAiBotIdsList() {
+      return aiBotIds_;
+    }
+    /**
+     * <code>repeated int32 ai_bot_ids = 5;</code>
+     * @return The count of aiBotIds.
+     */
+    public int getAiBotIdsCount() {
+      return aiBotIds_.size();
+    }
+    /**
+     * <code>repeated int32 ai_bot_ids = 5;</code>
+     * @param index The index of the element to return.
+     * @return The aiBotIds at the given index.
+     */
+    public int getAiBotIds(int index) {
+      return aiBotIds_.getInt(index);
+    }
+    private int aiBotIdsMemoizedSerializedSize = -1;
+
+    public static final int TIMESTAMP_FIELD_NUMBER = 6;
+    private long timestamp_ = 0L;
+    /**
+     * <code>int64 timestamp = 6;</code>
+     * @return The timestamp.
+     */
+    @java.lang.Override
+    public long getTimestamp() {
+      return timestamp_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      if (groupId_ != 0L) {
+        output.writeInt64(1, groupId_);
+      }
+      if (senderId_ != 0) {
+        output.writeInt32(2, senderId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(senderName_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, senderName_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(content_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 4, content_);
+      }
+      if (getAiBotIdsList().size() > 0) {
+        output.writeUInt32NoTag(42);
+        output.writeUInt32NoTag(aiBotIdsMemoizedSerializedSize);
+      }
+      for (int i = 0; i < aiBotIds_.size(); i++) {
+        output.writeInt32NoTag(aiBotIds_.getInt(i));
+      }
+      if (timestamp_ != 0L) {
+        output.writeInt64(6, timestamp_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (groupId_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(1, groupId_);
+      }
+      if (senderId_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(2, senderId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(senderName_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, senderName_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(content_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, content_);
+      }
+      {
+        int dataSize = 0;
+        for (int i = 0; i < aiBotIds_.size(); i++) {
+          dataSize += com.google.protobuf.CodedOutputStream
+            .computeInt32SizeNoTag(aiBotIds_.getInt(i));
+        }
+        size += dataSize;
+        if (!getAiBotIdsList().isEmpty()) {
+          size += 1;
+          size += com.google.protobuf.CodedOutputStream
+              .computeInt32SizeNoTag(dataSize);
+        }
+        aiBotIdsMemoizedSerializedSize = dataSize;
+      }
+      if (timestamp_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(6, timestamp_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.bridge.proto.ChatProto.GroupChatRequest)) {
+        return super.equals(obj);
+      }
+      com.bridge.proto.ChatProto.GroupChatRequest other = (com.bridge.proto.ChatProto.GroupChatRequest) obj;
+
+      if (getGroupId()
+          != other.getGroupId()) return false;
+      if (getSenderId()
+          != other.getSenderId()) return false;
+      if (!getSenderName()
+          .equals(other.getSenderName())) return false;
+      if (!getContent()
+          .equals(other.getContent())) return false;
+      if (!getAiBotIdsList()
+          .equals(other.getAiBotIdsList())) return false;
+      if (getTimestamp()
+          != other.getTimestamp()) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + GROUP_ID_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getGroupId());
+      hash = (37 * hash) + SENDER_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getSenderId();
+      hash = (37 * hash) + SENDER_NAME_FIELD_NUMBER;
+      hash = (53 * hash) + getSenderName().hashCode();
+      hash = (37 * hash) + CONTENT_FIELD_NUMBER;
+      hash = (53 * hash) + getContent().hashCode();
+      if (getAiBotIdsCount() > 0) {
+        hash = (37 * hash) + AI_BOT_IDS_FIELD_NUMBER;
+        hash = (53 * hash) + getAiBotIdsList().hashCode();
+      }
+      hash = (37 * hash) + TIMESTAMP_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getTimestamp());
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.bridge.proto.ChatProto.GroupChatRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.GroupChatRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.GroupChatRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.GroupChatRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.GroupChatRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.GroupChatRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.GroupChatRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.GroupChatRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.GroupChatRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.GroupChatRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.GroupChatRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.GroupChatRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.bridge.proto.ChatProto.GroupChatRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code bridge.GroupChatRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:bridge.GroupChatRequest)
+        com.bridge.proto.ChatProto.GroupChatRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_GroupChatRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_GroupChatRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.bridge.proto.ChatProto.GroupChatRequest.class, com.bridge.proto.ChatProto.GroupChatRequest.Builder.class);
+      }
+
+      // Construct using com.bridge.proto.ChatProto.GroupChatRequest.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        groupId_ = 0L;
+        senderId_ = 0;
+        senderName_ = "";
+        content_ = "";
+        aiBotIds_ = emptyIntList();
+        timestamp_ = 0L;
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_GroupChatRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.GroupChatRequest getDefaultInstanceForType() {
+        return com.bridge.proto.ChatProto.GroupChatRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.GroupChatRequest build() {
+        com.bridge.proto.ChatProto.GroupChatRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.GroupChatRequest buildPartial() {
+        com.bridge.proto.ChatProto.GroupChatRequest result = new com.bridge.proto.ChatProto.GroupChatRequest(this);
+        buildPartialRepeatedFields(result);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartialRepeatedFields(com.bridge.proto.ChatProto.GroupChatRequest result) {
+        if (((bitField0_ & 0x00000010) != 0)) {
+          aiBotIds_.makeImmutable();
+          bitField0_ = (bitField0_ & ~0x00000010);
+        }
+        result.aiBotIds_ = aiBotIds_;
+      }
+
+      private void buildPartial0(com.bridge.proto.ChatProto.GroupChatRequest result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.groupId_ = groupId_;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.senderId_ = senderId_;
+        }
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.senderName_ = senderName_;
+        }
+        if (((from_bitField0_ & 0x00000008) != 0)) {
+          result.content_ = content_;
+        }
+        if (((from_bitField0_ & 0x00000020) != 0)) {
+          result.timestamp_ = timestamp_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.bridge.proto.ChatProto.GroupChatRequest) {
+          return mergeFrom((com.bridge.proto.ChatProto.GroupChatRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.bridge.proto.ChatProto.GroupChatRequest other) {
+        if (other == com.bridge.proto.ChatProto.GroupChatRequest.getDefaultInstance()) return this;
+        if (other.getGroupId() != 0L) {
+          setGroupId(other.getGroupId());
+        }
+        if (other.getSenderId() != 0) {
+          setSenderId(other.getSenderId());
+        }
+        if (!other.getSenderName().isEmpty()) {
+          senderName_ = other.senderName_;
+          bitField0_ |= 0x00000004;
+          onChanged();
+        }
+        if (!other.getContent().isEmpty()) {
+          content_ = other.content_;
+          bitField0_ |= 0x00000008;
+          onChanged();
+        }
+        if (!other.aiBotIds_.isEmpty()) {
+          if (aiBotIds_.isEmpty()) {
+            aiBotIds_ = other.aiBotIds_;
+            bitField0_ = (bitField0_ & ~0x00000010);
+          } else {
+            ensureAiBotIdsIsMutable();
+            aiBotIds_.addAll(other.aiBotIds_);
+          }
+          onChanged();
+        }
+        if (other.getTimestamp() != 0L) {
+          setTimestamp(other.getTimestamp());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 8: {
+                groupId_ = input.readInt64();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 8
+              case 16: {
+                senderId_ = input.readInt32();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 16
+              case 26: {
+                senderName_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 26
+              case 34: {
+                content_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000008;
+                break;
+              } // case 34
+              case 40: {
+                int v = input.readInt32();
+                ensureAiBotIdsIsMutable();
+                aiBotIds_.addInt(v);
+                break;
+              } // case 40
+              case 42: {
+                int length = input.readRawVarint32();
+                int limit = input.pushLimit(length);
+                ensureAiBotIdsIsMutable();
+                while (input.getBytesUntilLimit() > 0) {
+                  aiBotIds_.addInt(input.readInt32());
+                }
+                input.popLimit(limit);
+                break;
+              } // case 42
+              case 48: {
+                timestamp_ = input.readInt64();
+                bitField0_ |= 0x00000020;
+                break;
+              } // case 48
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private long groupId_ ;
+      /**
+       * <code>int64 group_id = 1;</code>
+       * @return The groupId.
+       */
+      @java.lang.Override
+      public long getGroupId() {
+        return groupId_;
+      }
+      /**
+       * <code>int64 group_id = 1;</code>
+       * @param value The groupId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setGroupId(long value) {
+        
+        groupId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 group_id = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearGroupId() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        groupId_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private int senderId_ ;
+      /**
+       * <code>int32 sender_id = 2;</code>
+       * @return The senderId.
+       */
+      @java.lang.Override
+      public int getSenderId() {
+        return senderId_;
+      }
+      /**
+       * <code>int32 sender_id = 2;</code>
+       * @param value The senderId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSenderId(int value) {
+        
+        senderId_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int32 sender_id = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSenderId() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        senderId_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object senderName_ = "";
+      /**
+       * <code>string sender_name = 3;</code>
+       * @return The senderName.
+       */
+      public java.lang.String getSenderName() {
+        java.lang.Object ref = senderName_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          senderName_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string sender_name = 3;</code>
+       * @return The bytes for senderName.
+       */
+      public com.google.protobuf.ByteString
+          getSenderNameBytes() {
+        java.lang.Object ref = senderName_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          senderName_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string sender_name = 3;</code>
+       * @param value The senderName to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSenderName(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        senderName_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string sender_name = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSenderName() {
+        senderName_ = getDefaultInstance().getSenderName();
+        bitField0_ = (bitField0_ & ~0x00000004);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string sender_name = 3;</code>
+       * @param value The bytes for senderName to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSenderNameBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        senderName_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object content_ = "";
+      /**
+       * <code>string content = 4;</code>
+       * @return The content.
+       */
+      public java.lang.String getContent() {
+        java.lang.Object ref = content_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          content_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string content = 4;</code>
+       * @return The bytes for content.
+       */
+      public com.google.protobuf.ByteString
+          getContentBytes() {
+        java.lang.Object ref = content_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          content_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string content = 4;</code>
+       * @param value The content to set.
+       * @return This builder for chaining.
+       */
+      public Builder setContent(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        content_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string content = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearContent() {
+        content_ = getDefaultInstance().getContent();
+        bitField0_ = (bitField0_ & ~0x00000008);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string content = 4;</code>
+       * @param value The bytes for content to set.
+       * @return This builder for chaining.
+       */
+      public Builder setContentBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        content_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+
+      private com.google.protobuf.Internal.IntList aiBotIds_ = emptyIntList();
+      private void ensureAiBotIdsIsMutable() {
+        if (!((bitField0_ & 0x00000010) != 0)) {
+          aiBotIds_ = mutableCopy(aiBotIds_);
+          bitField0_ |= 0x00000010;
+        }
+      }
+      /**
+       * <code>repeated int32 ai_bot_ids = 5;</code>
+       * @return A list containing the aiBotIds.
+       */
+      public java.util.List<java.lang.Integer>
+          getAiBotIdsList() {
+        return ((bitField0_ & 0x00000010) != 0) ?
+                 java.util.Collections.unmodifiableList(aiBotIds_) : aiBotIds_;
+      }
+      /**
+       * <code>repeated int32 ai_bot_ids = 5;</code>
+       * @return The count of aiBotIds.
+       */
+      public int getAiBotIdsCount() {
+        return aiBotIds_.size();
+      }
+      /**
+       * <code>repeated int32 ai_bot_ids = 5;</code>
+       * @param index The index of the element to return.
+       * @return The aiBotIds at the given index.
+       */
+      public int getAiBotIds(int index) {
+        return aiBotIds_.getInt(index);
+      }
+      /**
+       * <code>repeated int32 ai_bot_ids = 5;</code>
+       * @param index The index to set the value at.
+       * @param value The aiBotIds to set.
+       * @return This builder for chaining.
+       */
+      public Builder setAiBotIds(
+          int index, int value) {
+        
+        ensureAiBotIdsIsMutable();
+        aiBotIds_.setInt(index, value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated int32 ai_bot_ids = 5;</code>
+       * @param value The aiBotIds to add.
+       * @return This builder for chaining.
+       */
+      public Builder addAiBotIds(int value) {
+        
+        ensureAiBotIdsIsMutable();
+        aiBotIds_.addInt(value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated int32 ai_bot_ids = 5;</code>
+       * @param values The aiBotIds to add.
+       * @return This builder for chaining.
+       */
+      public Builder addAllAiBotIds(
+          java.lang.Iterable<? extends java.lang.Integer> values) {
+        ensureAiBotIdsIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, aiBotIds_);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated int32 ai_bot_ids = 5;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearAiBotIds() {
+        aiBotIds_ = emptyIntList();
+        bitField0_ = (bitField0_ & ~0x00000010);
+        onChanged();
+        return this;
+      }
+
+      private long timestamp_ ;
+      /**
+       * <code>int64 timestamp = 6;</code>
+       * @return The timestamp.
+       */
+      @java.lang.Override
+      public long getTimestamp() {
+        return timestamp_;
+      }
+      /**
+       * <code>int64 timestamp = 6;</code>
+       * @param value The timestamp to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTimestamp(long value) {
+        
+        timestamp_ = value;
+        bitField0_ |= 0x00000020;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 timestamp = 6;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTimestamp() {
+        bitField0_ = (bitField0_ & ~0x00000020);
+        timestamp_ = 0L;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:bridge.GroupChatRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:bridge.GroupChatRequest)
+    private static final com.bridge.proto.ChatProto.GroupChatRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.bridge.proto.ChatProto.GroupChatRequest();
+    }
+
+    public static com.bridge.proto.ChatProto.GroupChatRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<GroupChatRequest>
+        PARSER = new com.google.protobuf.AbstractParser<GroupChatRequest>() {
+      @java.lang.Override
+      public GroupChatRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<GroupChatRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<GroupChatRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.bridge.proto.ChatProto.GroupChatRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface GroupChatResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:bridge.GroupChatResponse)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>int64 group_id = 1;</code>
+     * @return The groupId.
+     */
+    long getGroupId();
+
+    /**
+     * <code>int32 bot_id = 2;</code>
+     * @return The botId.
+     */
+    int getBotId();
+
+    /**
+     * <code>string bot_name = 3;</code>
+     * @return The botName.
+     */
+    java.lang.String getBotName();
+    /**
+     * <code>string bot_name = 3;</code>
+     * @return The bytes for botName.
+     */
+    com.google.protobuf.ByteString
+        getBotNameBytes();
+
+    /**
+     * <code>string content = 4;</code>
+     * @return The content.
+     */
+    java.lang.String getContent();
+    /**
+     * <code>string content = 4;</code>
+     * @return The bytes for content.
+     */
+    com.google.protobuf.ByteString
+        getContentBytes();
+
+    /**
+     * <code>bool success = 5;</code>
+     * @return The success.
+     */
+    boolean getSuccess();
+
+    /**
+     * <code>string error = 6;</code>
+     * @return The error.
+     */
+    java.lang.String getError();
+    /**
+     * <code>string error = 6;</code>
+     * @return The bytes for error.
+     */
+    com.google.protobuf.ByteString
+        getErrorBytes();
+
+    /**
+     * <code>int64 timestamp = 7;</code>
+     * @return The timestamp.
+     */
+    long getTimestamp();
+  }
+  /**
+   * Protobuf type {@code bridge.GroupChatResponse}
+   */
+  public static final class GroupChatResponse extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:bridge.GroupChatResponse)
+      GroupChatResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use GroupChatResponse.newBuilder() to construct.
+    private GroupChatResponse(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private GroupChatResponse() {
+      botName_ = "";
+      content_ = "";
+      error_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new GroupChatResponse();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_GroupChatResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_GroupChatResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.bridge.proto.ChatProto.GroupChatResponse.class, com.bridge.proto.ChatProto.GroupChatResponse.Builder.class);
+    }
+
+    public static final int GROUP_ID_FIELD_NUMBER = 1;
+    private long groupId_ = 0L;
+    /**
+     * <code>int64 group_id = 1;</code>
+     * @return The groupId.
+     */
+    @java.lang.Override
+    public long getGroupId() {
+      return groupId_;
+    }
+
+    public static final int BOT_ID_FIELD_NUMBER = 2;
+    private int botId_ = 0;
+    /**
+     * <code>int32 bot_id = 2;</code>
+     * @return The botId.
+     */
+    @java.lang.Override
+    public int getBotId() {
+      return botId_;
+    }
+
+    public static final int BOT_NAME_FIELD_NUMBER = 3;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object botName_ = "";
+    /**
+     * <code>string bot_name = 3;</code>
+     * @return The botName.
+     */
+    @java.lang.Override
+    public java.lang.String getBotName() {
+      java.lang.Object ref = botName_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        botName_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string bot_name = 3;</code>
+     * @return The bytes for botName.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getBotNameBytes() {
+      java.lang.Object ref = botName_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        botName_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int CONTENT_FIELD_NUMBER = 4;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object content_ = "";
+    /**
+     * <code>string content = 4;</code>
+     * @return The content.
+     */
+    @java.lang.Override
+    public java.lang.String getContent() {
+      java.lang.Object ref = content_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        content_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string content = 4;</code>
+     * @return The bytes for content.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getContentBytes() {
+      java.lang.Object ref = content_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        content_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int SUCCESS_FIELD_NUMBER = 5;
+    private boolean success_ = false;
+    /**
+     * <code>bool success = 5;</code>
+     * @return The success.
+     */
+    @java.lang.Override
+    public boolean getSuccess() {
+      return success_;
+    }
+
+    public static final int ERROR_FIELD_NUMBER = 6;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object error_ = "";
+    /**
+     * <code>string error = 6;</code>
+     * @return The error.
+     */
+    @java.lang.Override
+    public java.lang.String getError() {
+      java.lang.Object ref = error_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        error_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string error = 6;</code>
+     * @return The bytes for error.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getErrorBytes() {
+      java.lang.Object ref = error_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        error_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int TIMESTAMP_FIELD_NUMBER = 7;
+    private long timestamp_ = 0L;
+    /**
+     * <code>int64 timestamp = 7;</code>
+     * @return The timestamp.
+     */
+    @java.lang.Override
+    public long getTimestamp() {
+      return timestamp_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (groupId_ != 0L) {
+        output.writeInt64(1, groupId_);
+      }
+      if (botId_ != 0) {
+        output.writeInt32(2, botId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(botName_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, botName_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(content_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 4, content_);
+      }
+      if (success_ != false) {
+        output.writeBool(5, success_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(error_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 6, error_);
+      }
+      if (timestamp_ != 0L) {
+        output.writeInt64(7, timestamp_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (groupId_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(1, groupId_);
+      }
+      if (botId_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(2, botId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(botName_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, botName_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(content_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, content_);
+      }
+      if (success_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(5, success_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(error_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, error_);
+      }
+      if (timestamp_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(7, timestamp_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.bridge.proto.ChatProto.GroupChatResponse)) {
+        return super.equals(obj);
+      }
+      com.bridge.proto.ChatProto.GroupChatResponse other = (com.bridge.proto.ChatProto.GroupChatResponse) obj;
+
+      if (getGroupId()
+          != other.getGroupId()) return false;
+      if (getBotId()
+          != other.getBotId()) return false;
+      if (!getBotName()
+          .equals(other.getBotName())) return false;
+      if (!getContent()
+          .equals(other.getContent())) return false;
+      if (getSuccess()
+          != other.getSuccess()) return false;
+      if (!getError()
+          .equals(other.getError())) return false;
+      if (getTimestamp()
+          != other.getTimestamp()) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + GROUP_ID_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getGroupId());
+      hash = (37 * hash) + BOT_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getBotId();
+      hash = (37 * hash) + BOT_NAME_FIELD_NUMBER;
+      hash = (53 * hash) + getBotName().hashCode();
+      hash = (37 * hash) + CONTENT_FIELD_NUMBER;
+      hash = (53 * hash) + getContent().hashCode();
+      hash = (37 * hash) + SUCCESS_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getSuccess());
+      hash = (37 * hash) + ERROR_FIELD_NUMBER;
+      hash = (53 * hash) + getError().hashCode();
+      hash = (37 * hash) + TIMESTAMP_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getTimestamp());
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.bridge.proto.ChatProto.GroupChatResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.GroupChatResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.GroupChatResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.GroupChatResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.GroupChatResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.GroupChatResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.GroupChatResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.GroupChatResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.GroupChatResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.GroupChatResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.GroupChatResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.GroupChatResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.bridge.proto.ChatProto.GroupChatResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code bridge.GroupChatResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:bridge.GroupChatResponse)
+        com.bridge.proto.ChatProto.GroupChatResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_GroupChatResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_GroupChatResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.bridge.proto.ChatProto.GroupChatResponse.class, com.bridge.proto.ChatProto.GroupChatResponse.Builder.class);
+      }
+
+      // Construct using com.bridge.proto.ChatProto.GroupChatResponse.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        groupId_ = 0L;
+        botId_ = 0;
+        botName_ = "";
+        content_ = "";
+        success_ = false;
+        error_ = "";
+        timestamp_ = 0L;
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_GroupChatResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.GroupChatResponse getDefaultInstanceForType() {
+        return com.bridge.proto.ChatProto.GroupChatResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.GroupChatResponse build() {
+        com.bridge.proto.ChatProto.GroupChatResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.GroupChatResponse buildPartial() {
+        com.bridge.proto.ChatProto.GroupChatResponse result = new com.bridge.proto.ChatProto.GroupChatResponse(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(com.bridge.proto.ChatProto.GroupChatResponse result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.groupId_ = groupId_;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.botId_ = botId_;
+        }
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.botName_ = botName_;
+        }
+        if (((from_bitField0_ & 0x00000008) != 0)) {
+          result.content_ = content_;
+        }
+        if (((from_bitField0_ & 0x00000010) != 0)) {
+          result.success_ = success_;
+        }
+        if (((from_bitField0_ & 0x00000020) != 0)) {
+          result.error_ = error_;
+        }
+        if (((from_bitField0_ & 0x00000040) != 0)) {
+          result.timestamp_ = timestamp_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.bridge.proto.ChatProto.GroupChatResponse) {
+          return mergeFrom((com.bridge.proto.ChatProto.GroupChatResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.bridge.proto.ChatProto.GroupChatResponse other) {
+        if (other == com.bridge.proto.ChatProto.GroupChatResponse.getDefaultInstance()) return this;
+        if (other.getGroupId() != 0L) {
+          setGroupId(other.getGroupId());
+        }
+        if (other.getBotId() != 0) {
+          setBotId(other.getBotId());
+        }
+        if (!other.getBotName().isEmpty()) {
+          botName_ = other.botName_;
+          bitField0_ |= 0x00000004;
+          onChanged();
+        }
+        if (!other.getContent().isEmpty()) {
+          content_ = other.content_;
+          bitField0_ |= 0x00000008;
+          onChanged();
+        }
+        if (other.getSuccess() != false) {
+          setSuccess(other.getSuccess());
+        }
+        if (!other.getError().isEmpty()) {
+          error_ = other.error_;
+          bitField0_ |= 0x00000020;
+          onChanged();
+        }
+        if (other.getTimestamp() != 0L) {
+          setTimestamp(other.getTimestamp());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 8: {
+                groupId_ = input.readInt64();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 8
+              case 16: {
+                botId_ = input.readInt32();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 16
+              case 26: {
+                botName_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 26
+              case 34: {
+                content_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000008;
+                break;
+              } // case 34
+              case 40: {
+                success_ = input.readBool();
+                bitField0_ |= 0x00000010;
+                break;
+              } // case 40
+              case 50: {
+                error_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000020;
+                break;
+              } // case 50
+              case 56: {
+                timestamp_ = input.readInt64();
+                bitField0_ |= 0x00000040;
+                break;
+              } // case 56
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private long groupId_ ;
+      /**
+       * <code>int64 group_id = 1;</code>
+       * @return The groupId.
+       */
+      @java.lang.Override
+      public long getGroupId() {
+        return groupId_;
+      }
+      /**
+       * <code>int64 group_id = 1;</code>
+       * @param value The groupId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setGroupId(long value) {
+        
+        groupId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 group_id = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearGroupId() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        groupId_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private int botId_ ;
+      /**
+       * <code>int32 bot_id = 2;</code>
+       * @return The botId.
+       */
+      @java.lang.Override
+      public int getBotId() {
+        return botId_;
+      }
+      /**
+       * <code>int32 bot_id = 2;</code>
+       * @param value The botId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setBotId(int value) {
+        
+        botId_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int32 bot_id = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearBotId() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        botId_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object botName_ = "";
+      /**
+       * <code>string bot_name = 3;</code>
+       * @return The botName.
+       */
+      public java.lang.String getBotName() {
+        java.lang.Object ref = botName_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          botName_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string bot_name = 3;</code>
+       * @return The bytes for botName.
+       */
+      public com.google.protobuf.ByteString
+          getBotNameBytes() {
+        java.lang.Object ref = botName_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          botName_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string bot_name = 3;</code>
+       * @param value The botName to set.
+       * @return This builder for chaining.
+       */
+      public Builder setBotName(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        botName_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string bot_name = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearBotName() {
+        botName_ = getDefaultInstance().getBotName();
+        bitField0_ = (bitField0_ & ~0x00000004);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string bot_name = 3;</code>
+       * @param value The bytes for botName to set.
+       * @return This builder for chaining.
+       */
+      public Builder setBotNameBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        botName_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object content_ = "";
+      /**
+       * <code>string content = 4;</code>
+       * @return The content.
+       */
+      public java.lang.String getContent() {
+        java.lang.Object ref = content_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          content_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string content = 4;</code>
+       * @return The bytes for content.
+       */
+      public com.google.protobuf.ByteString
+          getContentBytes() {
+        java.lang.Object ref = content_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          content_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string content = 4;</code>
+       * @param value The content to set.
+       * @return This builder for chaining.
+       */
+      public Builder setContent(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        content_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string content = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearContent() {
+        content_ = getDefaultInstance().getContent();
+        bitField0_ = (bitField0_ & ~0x00000008);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string content = 4;</code>
+       * @param value The bytes for content to set.
+       * @return This builder for chaining.
+       */
+      public Builder setContentBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        content_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+
+      private boolean success_ ;
+      /**
+       * <code>bool success = 5;</code>
+       * @return The success.
+       */
+      @java.lang.Override
+      public boolean getSuccess() {
+        return success_;
+      }
+      /**
+       * <code>bool success = 5;</code>
+       * @param value The success to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSuccess(boolean value) {
+        
+        success_ = value;
+        bitField0_ |= 0x00000010;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool success = 5;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSuccess() {
+        bitField0_ = (bitField0_ & ~0x00000010);
+        success_ = false;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object error_ = "";
+      /**
+       * <code>string error = 6;</code>
+       * @return The error.
+       */
+      public java.lang.String getError() {
+        java.lang.Object ref = error_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          error_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string error = 6;</code>
+       * @return The bytes for error.
+       */
+      public com.google.protobuf.ByteString
+          getErrorBytes() {
+        java.lang.Object ref = error_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          error_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string error = 6;</code>
+       * @param value The error to set.
+       * @return This builder for chaining.
+       */
+      public Builder setError(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        error_ = value;
+        bitField0_ |= 0x00000020;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string error = 6;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearError() {
+        error_ = getDefaultInstance().getError();
+        bitField0_ = (bitField0_ & ~0x00000020);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string error = 6;</code>
+       * @param value The bytes for error to set.
+       * @return This builder for chaining.
+       */
+      public Builder setErrorBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        error_ = value;
+        bitField0_ |= 0x00000020;
+        onChanged();
+        return this;
+      }
+
+      private long timestamp_ ;
+      /**
+       * <code>int64 timestamp = 7;</code>
+       * @return The timestamp.
+       */
+      @java.lang.Override
+      public long getTimestamp() {
+        return timestamp_;
+      }
+      /**
+       * <code>int64 timestamp = 7;</code>
+       * @param value The timestamp to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTimestamp(long value) {
+        
+        timestamp_ = value;
+        bitField0_ |= 0x00000040;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 timestamp = 7;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTimestamp() {
+        bitField0_ = (bitField0_ & ~0x00000040);
+        timestamp_ = 0L;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:bridge.GroupChatResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:bridge.GroupChatResponse)
+    private static final com.bridge.proto.ChatProto.GroupChatResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.bridge.proto.ChatProto.GroupChatResponse();
+    }
+
+    public static com.bridge.proto.ChatProto.GroupChatResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<GroupChatResponse>
+        PARSER = new com.google.protobuf.AbstractParser<GroupChatResponse>() {
+      @java.lang.Override
+      public GroupChatResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<GroupChatResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<GroupChatResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.bridge.proto.ChatProto.GroupChatResponse getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
 
@@ -3872,6 +7076,16 @@ java.lang.String defaultValue) {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_bridge_ChatResponse_MetadataEntry_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_GroupChatRequest_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_GroupChatRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_GroupChatResponse_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_GroupChatResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_bridge_RpcMessage_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -3885,25 +7099,35 @@ java.lang.String defaultValue) {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\nchat.proto\022\006bridge\"\274\001\n\013ChatRequest\022\022\n\n" +
-      "session_id\030\001 \001(\t\022\017\n\007user_id\030\002 \001(\t\022\017\n\007mes" +
-      "sage\030\003 \001(\t\022\021\n\ttimestamp\030\004 \001(\003\0223\n\010metadat" +
-      "a\030\005 \003(\0132!.bridge.ChatRequest.MetadataEnt" +
-      "ry\032/\n\rMetadataEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005valu" +
-      "e\030\002 \001(\t:\0028\001\"\322\001\n\014ChatResponse\022\022\n\nsession_" +
-      "id\030\001 \001(\t\022\r\n\005reply\030\002 \001(\t\022\016\n\006status\030\003 \001(\005\022" +
-      "\025\n\rerror_message\030\004 \001(\t\022\021\n\ttimestamp\030\005 \001(" +
-      "\003\0224\n\010metadata\030\006 \003(\0132\".bridge.ChatRespons" +
-      "e.MetadataEntry\032/\n\rMetadataEntry\022\013\n\003key\030" +
-      "\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001\"\321\001\n\nRpcMessage\022" +
-      "%\n\004type\030\001 \001(\0162\027.bridge.RpcMessage.Type\022\n" +
-      "\n\002id\030\002 \001(\003\022\024\n\014service_name\030\003 \001(\t\022\023\n\013meth" +
-      "od_name\030\004 \001(\t\022\017\n\007payload\030\005 \001(\014\022\022\n\nerror_" +
-      "code\030\006 \001(\005\022\022\n\nerror_desc\030\007 \001(\t\",\n\004Type\022\013" +
-      "\n\007REQUEST\020\000\022\014\n\010RESPONSE\020\001\022\t\n\005ERROR\020\0022@\n\013" +
-      "ChatService\0221\n\004Chat\022\023.bridge.ChatRequest" +
-      "\032\024.bridge.ChatResponseB \n\020com.bridge.pro" +
-      "toB\tChatProto\200\001\000b\006proto3"
+      "\n\nchat.proto\022\006bridge\"\212\002\n\013ChatRequest\022\017\n\007" +
+      "user_id\030\001 \001(\005\022\016\n\006bot_id\030\002 \001(\005\022\021\n\tuser_na" +
+      "me\030\003 \001(\t\022\017\n\007message\030\004 \001(\t\022\022\n\nsession_id\030" +
+      "\005 \001(\t\022\021\n\ttimestamp\030\006 \001(\003\022\021\n\tvoice_url\030\007 " +
+      "\001(\t\022\026\n\016voice_duration\030\010 \001(\005\0223\n\010metadata\030" +
+      "\t \003(\0132!.bridge.ChatRequest.MetadataEntry" +
+      "\032/\n\rMetadataEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030" +
+      "\002 \001(\t:\0028\001\"\275\002\n\014ChatResponse\022\017\n\007user_id\030\001 " +
+      "\001(\005\022\016\n\006bot_id\030\002 \001(\005\022\020\n\010bot_name\030\003 \001(\t\022\017\n" +
+      "\007message\030\004 \001(\t\022\022\n\nsession_id\030\005 \001(\t\022\017\n\007su" +
+      "ccess\030\006 \001(\010\022\r\n\005error\030\007 \001(\t\022\020\n\010msg_type\030\010" +
+      " \001(\005\022\021\n\tvoice_url\030\t \001(\t\022\026\n\016voice_duratio" +
+      "n\030\n \001(\005\022\021\n\ttimestamp\030\013 \001(\003\0224\n\010metadata\030\014" +
+      " \003(\0132\".bridge.ChatResponse.MetadataEntry" +
+      "\032/\n\rMetadataEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030" +
+      "\002 \001(\t:\0028\001\"\204\001\n\020GroupChatRequest\022\020\n\010group_" +
+      "id\030\001 \001(\003\022\021\n\tsender_id\030\002 \001(\005\022\023\n\013sender_na" +
+      "me\030\003 \001(\t\022\017\n\007content\030\004 \001(\t\022\022\n\nai_bot_ids\030" +
+      "\005 \003(\005\022\021\n\ttimestamp\030\006 \001(\003\"\213\001\n\021GroupChatRe" +
+      "sponse\022\020\n\010group_id\030\001 \001(\003\022\016\n\006bot_id\030\002 \001(\005" +
+      "\022\020\n\010bot_name\030\003 \001(\t\022\017\n\007content\030\004 \001(\t\022\017\n\007s" +
+      "uccess\030\005 \001(\010\022\r\n\005error\030\006 \001(\t\022\021\n\ttimestamp" +
+      "\030\007 \001(\003\"\321\001\n\nRpcMessage\022%\n\004type\030\001 \001(\0162\027.br" +
+      "idge.RpcMessage.Type\022\n\n\002id\030\002 \001(\003\022\024\n\014serv" +
+      "ice_name\030\003 \001(\t\022\023\n\013method_name\030\004 \001(\t\022\017\n\007p" +
+      "ayload\030\005 \001(\014\022\022\n\nerror_code\030\006 \001(\005\022\022\n\nerro" +
+      "r_desc\030\007 \001(\t\",\n\004Type\022\013\n\007REQUEST\020\000\022\014\n\010RES" +
+      "PONSE\020\001\022\t\n\005ERROR\020\002B\035\n\020com.bridge.protoB\t" +
+      "ChatProtob\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -3914,7 +7138,7 @@ java.lang.String defaultValue) {
     internal_static_bridge_ChatRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_bridge_ChatRequest_descriptor,
-        new java.lang.String[] { "SessionId", "UserId", "Message", "Timestamp", "Metadata", });
+        new java.lang.String[] { "UserId", "BotId", "UserName", "Message", "SessionId", "Timestamp", "VoiceUrl", "VoiceDuration", "Metadata", });
     internal_static_bridge_ChatRequest_MetadataEntry_descriptor =
       internal_static_bridge_ChatRequest_descriptor.getNestedTypes().get(0);
     internal_static_bridge_ChatRequest_MetadataEntry_fieldAccessorTable = new
@@ -3926,15 +7150,27 @@ java.lang.String defaultValue) {
     internal_static_bridge_ChatResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_bridge_ChatResponse_descriptor,
-        new java.lang.String[] { "SessionId", "Reply", "Status", "ErrorMessage", "Timestamp", "Metadata", });
+        new java.lang.String[] { "UserId", "BotId", "BotName", "Message", "SessionId", "Success", "Error", "MsgType", "VoiceUrl", "VoiceDuration", "Timestamp", "Metadata", });
     internal_static_bridge_ChatResponse_MetadataEntry_descriptor =
       internal_static_bridge_ChatResponse_descriptor.getNestedTypes().get(0);
     internal_static_bridge_ChatResponse_MetadataEntry_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_bridge_ChatResponse_MetadataEntry_descriptor,
         new java.lang.String[] { "Key", "Value", });
-    internal_static_bridge_RpcMessage_descriptor =
+    internal_static_bridge_GroupChatRequest_descriptor =
       getDescriptor().getMessageTypes().get(2);
+    internal_static_bridge_GroupChatRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_GroupChatRequest_descriptor,
+        new java.lang.String[] { "GroupId", "SenderId", "SenderName", "Content", "AiBotIds", "Timestamp", });
+    internal_static_bridge_GroupChatResponse_descriptor =
+      getDescriptor().getMessageTypes().get(3);
+    internal_static_bridge_GroupChatResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_GroupChatResponse_descriptor,
+        new java.lang.String[] { "GroupId", "BotId", "BotName", "Content", "Success", "Error", "Timestamp", });
+    internal_static_bridge_RpcMessage_descriptor =
+      getDescriptor().getMessageTypes().get(4);
     internal_static_bridge_RpcMessage_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_bridge_RpcMessage_descriptor,

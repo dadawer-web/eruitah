@@ -8,32 +8,33 @@
 #include "chat.pb.h"
 #include <memory>
 #include <unordered_map>
+#include <mutex>
 
 using namespace muduo;
 using namespace muduo::net;
 
-class ChatServer : public bridge::ChatService {
+class ChatServer {
 public:
     ChatServer(EventLoop* loop,
                const InetAddress& listenAddr,
                const InetAddress& javaBackendAddr);
-    
+
     void start();
     void setThreadNum(int numThreads);
 
 private:
     void onClientConnection(const TcpConnectionPtr& conn);
     void onClientMessage(const TcpConnectionPtr& conn, Buffer* buf, Timestamp time);
-    
-    void Chat(google::protobuf::RpcController* controller,
-              const bridge::ChatRequest* request,
-              bridge::ChatResponse* response,
-              google::protobuf::Closure* done) override;
+
+    void handleChatRequest(const TcpConnectionPtr& conn,
+                           const std::shared_ptr<bridge::ChatRequest>& request);
+    void handleGroupChatRequest(const TcpConnectionPtr& conn,
+                                const std::shared_ptr<bridge::GroupChatRequest>& request);
 
     TcpServer server_;
     RpcChannelPtr rpcChannel_;
     ThreadPool threadPool_;
-    
+
     std::mutex mutex_;
     std::unordered_map<std::string, TcpConnectionPtr> clientConnections_;
 };

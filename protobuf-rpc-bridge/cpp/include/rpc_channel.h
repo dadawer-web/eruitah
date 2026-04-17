@@ -4,25 +4,27 @@
 #include <muduo/net/TcpClient.h>
 #include <muduo/net/TcpConnection.h>
 #include <muduo/net/EventLoop.h>
-#include <google/protobuf/service.h>
-#include <google/protobuf/descriptor.h>
+#include <google/protobuf/message.h>
 #include <map>
 #include <mutex>
 #include <memory>
+#include <functional>
 
 using namespace muduo;
 using namespace muduo::net;
 
-class RpcChannel : public google::protobuf::RpcChannel {
+class RpcChannel {
 public:
-    RpcChannel(EventLoop* loop, const InetAddress& serverAddr);
-    ~RpcChannel() override;
+    typedef std::function<void(std::shared_ptr<google::protobuf::Message>)> ResponseCallback;
 
-    void CallMethod(const google::protobuf::MethodDescriptor* method,
-                    google::protobuf::RpcController* controller,
-                    const google::protobuf::Message* request,
-                    google::protobuf::Message* response,
-                    google::protobuf::Closure* done) override;
+    RpcChannel(EventLoop* loop, const InetAddress& serverAddr);
+    ~RpcChannel();
+
+    void callMethod(const std::string& serviceName,
+                    const std::string& methodName,
+                    const google::protobuf::Message& request,
+                    std::shared_ptr<google::protobuf::Message> response,
+                    ResponseCallback done);
 
     void connect();
     void disconnect();
@@ -34,8 +36,8 @@ private:
     void onMessage(const TcpConnectionPtr& conn, Buffer* buf, Timestamp time);
 
     struct OutstandingCall {
-        google::protobuf::Message* response;
-        google::protobuf::Closure* done;
+        std::shared_ptr<google::protobuf::Message> response;
+        ResponseCallback done;
     };
 
     TcpClient client_;

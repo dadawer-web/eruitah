@@ -50,7 +50,7 @@ multimodal:
   openai:
     api-key: 
     base-url: https://dashscope.aliyuncs.com/compatible-mode
-    model: qwen3.5-omni-flash
+    model: qwen3.5-omni-flash-2026-03-15
     temperature: 0.7
 
 embedding:

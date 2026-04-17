@@ -55,6 +55,7 @@ class QtMaterialAvatar;
 
 class FarmDialog;
 class KnowledgeGraphDialog;
+class RealtimeVoiceDialog;
 
 // 未处理消息结构体
 struct PendingMessage {
@@ -192,6 +193,8 @@ private:
     int m_pendingVoiceToId;
 
     FarmDialog *m_farmDialog;
+    RealtimeVoiceDialog *m_realtimeVoiceDialog;
+    QPushButton *m_realtimeVoiceBtn;
 
     // 查找联系人方法
     QString getUserNameById(int userId);
@@ -293,6 +296,9 @@ public slots:
     void onFarmHarvestResponse(bool success, int plotId, const QString &message, int coins);
     void onFarmPlotHarvested(int plotId, int ownerId);
     void onFarmBroadcastReceived(const QString &message);
+    
+    void onRealtimeVoiceCall();
+    void onRealtimeVoiceCallEnded();
 
 protected:
     void closeEvent(QCloseEvent *event) override;

@@ -3,30 +3,28 @@
 #include <muduo/base/Logging.h>
 #include <google/protobuf/descriptor.h>
 #include <zlib.h>
-
-using namespace muduo;
-using namespace muduo::net;
+#include <cstring>
 
 void ProtobufCodec::onMessage(const TcpConnectionPtr& conn,
                                Buffer* buf,
                                Timestamp receiveTime) {
-    while (buf->readableBytes() >= kMinMessageLen) {
+    while (buf->readableBytes() >= static_cast<size_t>(kMinMessageLen + kHeaderLen)) {
         int32_t len = buf->peekInt32();
-        
+
         if (len > kMaxMessageLen || len < kMinMessageLen) {
             LOG_ERROR << "Invalid length " << len;
             conn->shutdown();
             break;
         }
-        
-        if (buf->readableBytes() >= implicit_cast<size_t>(len + kHeaderLen)) {
+
+        if (buf->readableBytes() >= implicit_cast<size_t>(len + kHeaderLen + kHeaderLen)) {
             ErrorCode errorCode = kNoError;
-            std::shared_ptr<google::protobuf::Message> message = 
-                parse(buf->peek(), len + kHeaderLen, &errorCode);
-            
+            std::shared_ptr<google::protobuf::Message> message =
+                parse(buf->peek(), len + kHeaderLen + kHeaderLen, &errorCode);
+
             if (errorCode == kNoError && message) {
                 messageCallback_(conn, message);
-                buf->retrieve(len + kHeaderLen);
+                buf->retrieve(len + kHeaderLen + kHeaderLen);
             } else {
                 LOG_ERROR << "Parse error: " << errorCodeToString(errorCode);
                 conn->shutdown();
@@ -41,110 +39,106 @@ void ProtobufCodec::onMessage(const TcpConnectionPtr& conn,
 void ProtobufCodec::send(const TcpConnectionPtr& conn,
                          const google::protobuf::Message& message) {
     Buffer buf;
-    
-    int byte_size = message.ByteSizeLong();
-    buf.ensureWritableBytes(byte_size + 2 * kHeaderLen);
-    
-    buf.writeInt32(byte_size + 2 * kHeaderLen);
-    
+
     const std::string& typeName = message.GetTypeName();
     int32_t nameLen = static_cast<int32_t>(typeName.size() + 1);
-    buf.writeInt32(nameLen);
+    std::string serialized;
+    message.SerializeToString(&serialized);
+    int32_t payloadLen = static_cast<int32_t>(serialized.size());
+    int32_t totalLen = 2 * kHeaderLen + nameLen + payloadLen;
+
+    buf.ensureWritableBytes(totalLen + kHeaderLen);
+
+    buf.appendInt32(totalLen);
+    buf.appendInt32(nameLen);
     buf.append(typeName.c_str(), nameLen);
-    
-    uint8_t* start = reinterpret_cast<uint8_t*>(buf.beginWrite());
-    uint8_t* end = message.SerializeWithCachedSizesToArray(start);
-    if (end - start != byte_size) {
-        LOG_ERROR << "Serialize error";
-    }
-    buf.hasWritten(byte_size);
-    
+    buf.append(serialized.data(), payloadLen);
+
     int32_t checkSum = static_cast<int32_t>(
-        ::adler32(1, 
+        ::adler32(1,
                   reinterpret_cast<const Bytef*>(buf.peek()),
                   static_cast<int>(buf.readableBytes())));
-    buf.writeInt32(checkSum);
-    
+    buf.appendInt32(checkSum);
+
     conn->send(&buf);
 }
 
-const std::string& ProtobufCodec::errorCodeToString(ErrorCode errorCode) {
-    static const std::string kNoErrorStr = "NoError";
-    static const std::string kInvalidLengthStr = "InvalidLength";
-    static const std::string kCheckSumErrorStr = "CheckSumError";
-    static const std::string kInvalidNameLenStr = "InvalidNameLen";
-    static const std::string kUnknownMessageTypeStr = "UnknownMessageType";
-    static const std::string kParseErrorStr = "ParseError";
-    
+const std::string ProtobufCodec::errorCodeToString(ErrorCode errorCode) {
     switch (errorCode) {
-        case kNoError:
-            return kNoErrorStr;
-        case kInvalidLength:
-            return kInvalidLengthStr;
-        case kCheckSumError:
-            return kCheckSumErrorStr;
-        case kInvalidNameLen:
-            return kInvalidNameLenStr;
-        case kUnknownMessageType:
-            return kUnknownMessageTypeStr;
-        case kParseError:
-            return kParseErrorStr;
-        default:
-            return kNoErrorStr;
+        case kNoError: return "NoError";
+        case kInvalidLength: return "InvalidLength";
+        case kCheckSumError: return "CheckSumError";
+        case kInvalidNameLen: return "InvalidNameLen";
+        case kUnknownMessageType: return "UnknownMessageType";
+        case kParseError: return "ParseError";
+        default: return "UnknownError";
     }
 }
 
 std::shared_ptr<google::protobuf::Message> ProtobufCodec::parse(
-    const void* buf, int len, ErrorCode* error) {
-    
-    const char* data = static_cast<const char*>(buf);
-    int32_t totalLen = *reinterpret_cast<const int32_t*>(data);
-    
-    if (totalLen != len) {
+    const char* data, int totalBufLen, ErrorCode* error) {
+
+    const char* ptr = data;
+    int32_t totalLen;
+    std::memcpy(&totalLen, ptr, kHeaderLen);
+    ptr += kHeaderLen;
+
+    if (totalLen + kHeaderLen > totalBufLen) {
         *error = kInvalidLength;
         return nullptr;
     }
-    
-    int32_t expectedCheckSum = *reinterpret_cast<const int32_t*>(data + len - kHeaderLen);
+
+    int32_t nameLen;
+    std::memcpy(&nameLen, ptr, kHeaderLen);
+    ptr += kHeaderLen;
+
+    if (nameLen < 2 || nameLen > totalLen - 2 * kHeaderLen) {
+        *error = kInvalidNameLen;
+        return nullptr;
+    }
+
+    std::string typeName(ptr, nameLen - 1);
+    ptr += nameLen;
+
+    int32_t payloadLen = totalLen - 2 * kHeaderLen - nameLen;
+    const char* payload = ptr;
+    ptr += payloadLen;
+
+    int32_t expectedCheckSum;
+    std::memcpy(&expectedCheckSum, ptr, kHeaderLen);
+
     int32_t checkSum = static_cast<int32_t>(
-        ::adler32(1, reinterpret_cast<const Bytef*>(data), len - kHeaderLen));
-    
+        ::adler32(1,
+                  reinterpret_cast<const Bytef*>(data),
+                  totalLen + kHeaderLen));
     if (checkSum != expectedCheckSum) {
         *error = kCheckSumError;
         return nullptr;
     }
-    
-    int32_t nameLen = *reinterpret_cast<const int32_t*>(data + kHeaderLen);
-    if (nameLen < 2 || nameLen > len - 2 * kHeaderLen) {
-        *error = kInvalidNameLen;
-        return nullptr;
-    }
-    
-    const char* typeName = data + 2 * kHeaderLen;
-    std::string typeStr(typeName, nameLen - 1);
-    
+
     google::protobuf::Message* message = nullptr;
-    
-    if (typeStr == "bridge.ChatRequest") {
+
+    if (typeName == "bridge.ChatRequest") {
         message = new bridge::ChatRequest();
-    } else if (typeStr == "bridge.ChatResponse") {
+    } else if (typeName == "bridge.ChatResponse") {
         message = new bridge::ChatResponse();
-    } else if (typeStr == "bridge.RpcMessage") {
+    } else if (typeName == "bridge.GroupChatRequest") {
+        message = new bridge::GroupChatRequest();
+    } else if (typeName == "bridge.GroupChatResponse") {
+        message = new bridge::GroupChatResponse();
+    } else if (typeName == "bridge.RpcMessage") {
         message = new bridge::RpcMessage();
     } else {
         *error = kUnknownMessageType;
         return nullptr;
     }
-    
-    const char* payload = data + 2 * kHeaderLen + nameLen;
-    int payloadLen = len - 3 * kHeaderLen - nameLen;
-    
+
     if (!message->ParseFromArray(payload, payloadLen)) {
         delete message;
         *error = kParseError;
         return nullptr;
     }
-    
+
     *error = kNoError;
     return std::shared_ptr<google::protobuf::Message>(message);
 }

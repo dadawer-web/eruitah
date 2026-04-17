@@ -3,52 +3,46 @@
 #include "chat.pb.h"
 #include <muduo/base/Logging.h>
 
-using namespace muduo;
-using namespace muduo::net;
-
 RpcChannel::RpcChannel(EventLoop* loop, const InetAddress& serverAddr)
     : client_(loop, serverAddr, "RpcChannel"),
       id_(0) {
     client_.setConnectionCallback(
-        std::bind(&RpcChannel::onConnection, this, _1));
+        std::bind(&RpcChannel::onConnection, this, std::placeholders::_1));
     client_.setMessageCallback(
-        std::bind(&RpcChannel::onMessage, this, _1, _2, _3));
+        std::bind(&RpcChannel::onMessage, this, std::placeholders::_1,
+                  std::placeholders::_2, std::placeholders::_3));
 }
 
 RpcChannel::~RpcChannel() {
     disconnect();
 }
 
-void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
-                             google::protobuf::RpcController* controller,
-                             const google::protobuf::Message* request,
-                             google::protobuf::Message* response,
-                             google::protobuf::Closure* done) {
+void RpcChannel::callMethod(const std::string& serviceName,
+                             const std::string& methodName,
+                             const google::protobuf::Message& request,
+                             std::shared_ptr<google::protobuf::Message> response,
+                             ResponseCallback done) {
     if (!connected()) {
         LOG_ERROR << "Not connected to Java backend";
-        if (done) {
-            done->Run();
-        }
+        if (done) done(nullptr);
         return;
     }
 
     bridge::RpcMessage rpcMessage;
     rpcMessage.set_type(bridge::RpcMessage::REQUEST);
-    
+
     {
         std::lock_guard<std::mutex> lock(mutex_);
         rpcMessage.set_id(++id_);
     }
-    
-    rpcMessage.set_service_name(method->service()->name());
-    rpcMessage.set_method_name(method->name());
-    
+
+    rpcMessage.set_service_name(serviceName);
+    rpcMessage.set_method_name(methodName);
+
     std::string serialized;
-    if (!request->SerializeToString(&serialized)) {
+    if (!request.SerializeToString(&serialized)) {
         LOG_ERROR << "Failed to serialize request";
-        if (done) {
-            done->Run();
-        }
+        if (done) done(nullptr);
         return;
     }
     rpcMessage.set_payload(serialized);
@@ -61,12 +55,12 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
         outstandingCalls_[rpcMessage.id()] = call;
     }
 
-    ProtobufCodec codec([](const TcpConnectionPtr&, 
+    ProtobufCodec codec([](const TcpConnectionPtr&,
                            const std::shared_ptr<google::protobuf::Message>&) {});
     codec.send(conn_, rpcMessage);
-    
-    LOG_INFO << "Sent RPC request: " << method->service()->name() 
-             << "." << method->name() << " id=" << rpcMessage.id();
+
+    LOG_INFO << "Sent RPC request: " << serviceName
+             << "." << methodName << " id=" << rpcMessage.id();
 }
 
 void RpcChannel::connect() {
@@ -79,7 +73,7 @@ void RpcChannel::disconnect() {
 
 void RpcChannel::onConnection(const TcpConnectionPtr& conn) {
     std::lock_guard<std::mutex> lock(mutex_);
-    
+
     if (conn->connected()) {
         conn_ = conn;
         LOG_INFO << "Connected to Java backend: " << conn->peerAddress().toIpPort();
@@ -91,11 +85,8 @@ void RpcChannel::onConnection(const TcpConnectionPtr& conn) {
 }
 
 void RpcChannel::onMessage(const TcpConnectionPtr& conn, Buffer* buf, Timestamp time) {
-    static ProtobufCodec codec([](const TcpConnectionPtr&, 
-                                   const std::shared_ptr<google::protobuf::Message>&) {});
-    
-    codec.onMessage(conn, buf, time, [this](const TcpConnectionPtr&,
-                                            const std::shared_ptr<google::protobuf::Message>& msg) {
+    ProtobufCodec codec([this](const TcpConnectionPtr&,
+                                const std::shared_ptr<google::protobuf::Message>& msg) {
         auto rpcMessage = std::dynamic_pointer_cast<bridge::RpcMessage>(msg);
         if (!rpcMessage) {
             LOG_ERROR << "Invalid RPC message type";
@@ -116,8 +107,8 @@ void RpcChannel::onMessage(const TcpConnectionPtr& conn, Buffer* buf, Timestamp 
         }
 
         if (rpcMessage->type() == bridge::RpcMessage::RESPONSE) {
-            if (!call.response->ParseFromString(rpcMessage->payload())) {
-                LOG_ERROR << "Failed to parse response";
+            if (call.response && !call.response->ParseFromString(rpcMessage->payload())) {
+                LOG_ERROR << "Failed to parse response for id=" << rpcMessage->id();
             }
             LOG_INFO << "Received RPC response for id=" << rpcMessage->id();
         } else if (rpcMessage->type() == bridge::RpcMessage::ERROR) {
@@ -125,7 +116,9 @@ void RpcChannel::onMessage(const TcpConnectionPtr& conn, Buffer* buf, Timestamp 
         }
 
         if (call.done) {
-            call.done->Run();
+            call.done(call.response);
         }
     });
+
+    codec.onMessage(conn, buf, time);
 }

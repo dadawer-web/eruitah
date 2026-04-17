@@ -4,23 +4,51 @@ package bridge;
 
 option java_package = "com.bridge.proto";
 option java_outer_classname = "ChatProto";
-option cc_generic_services = false;
 
 message ChatRequest {
-    string session_id = 1;
-    string user_id = 2;
-    string message = 3;
-    int64 timestamp = 4;
-    map<string, string> metadata = 5;
+    int32 user_id = 1;
+    int32 bot_id = 2;
+    string user_name = 3;
+    string message = 4;
+    string session_id = 5;
+    int64 timestamp = 6;
+    string voice_url = 7;
+    int32 voice_duration = 8;
+    map<string, string> metadata = 9;
 }
 
 message ChatResponse {
-    string session_id = 1;
-    string reply = 2;
-    int32 status = 3;
-    string error_message = 4;
-    int64 timestamp = 5;
-    map<string, string> metadata = 6;
+    int32 user_id = 1;
+    int32 bot_id = 2;
+    string bot_name = 3;
+    string message = 4;
+    string session_id = 5;
+    bool success = 6;
+    string error = 7;
+    int32 msg_type = 8;
+    string voice_url = 9;
+    int32 voice_duration = 10;
+    int64 timestamp = 11;
+    map<string, string> metadata = 12;
+}
+
+message GroupChatRequest {
+    int64 group_id = 1;
+    int32 sender_id = 2;
+    string sender_name = 3;
+    string content = 4;
+    repeated int32 ai_bot_ids = 5;
+    int64 timestamp = 6;
+}
+
+message GroupChatResponse {
+    int64 group_id = 1;
+    int32 bot_id = 2;
+    string bot_name = 3;
+    string content = 4;
+    bool success = 5;
+    string error = 6;
+    int64 timestamp = 7;
 }
 
 message RpcMessage {
@@ -29,7 +57,7 @@ message RpcMessage {
         RESPONSE = 1;
         ERROR = 2;
     }
-    
+
     Type type = 1;
     int64 id = 2;
     string service_name = 3;
@@ -37,8 +65,4 @@ message RpcMessage {
     bytes payload = 5;
     int32 error_code = 6;
     string error_desc = 7;
-}
-
-service ChatService {
-    rpc Chat (ChatRequest) returns (ChatResponse);
 }

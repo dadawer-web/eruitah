@@ -5,26 +5,29 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Protobuf REQUIRED)
-find_package(muduo REQUIRED)
+
+set(MUDUO_INCLUDE_DIR "/usr/local/include")
+set(MUDUO_LIB_DIR "/usr/local/lib")
 
 include_directories(
     ${CMAKE_SOURCE_DIR}/include
     ${Protobuf_INCLUDE_DIRS}
+    ${MUDUO_INCLUDE_DIR}
 )
+
+link_directories(${MUDUO_LIB_DIR})
 
 set(PROTO_SRCS
     ${CMAKE_SOURCE_DIR}/include/chat.pb.cc
 )
 
-set(SERVER_SRCS
+add_executable(chat_server
     src/main.cc
     src/chat_server.cc
     src/protobuf_codec.cc
     src/rpc_channel.cc
     ${PROTO_SRCS}
 )
-
-add_executable(chat_server ${SERVER_SRCS})
 
 target_link_libraries(chat_server
     ${Protobuf_LIBRARIES}
