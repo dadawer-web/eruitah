@@ -199,6 +199,31 @@ public class RedisPubSubService {
     }
 
     /**
+     * 发送流式消息清除标记（清除之前的提示内容）
+     */
+    public void publishStreamClear(Integer userId, int botId, String botName) {
+        String channel = String.valueOf(userId);
+
+        try {
+            Map<String, Object> message = new HashMap<>();
+            message.put("msgid", 6);
+            message.put("from", botId);
+            message.put("to", userId);
+            message.put("msg", "[STREAM_CHUNK]:[STREAM_CLEAR]");
+            message.put("name", botName);
+            message.put("timestamp", Instant.now().toEpochMilli());
+
+            String jsonMessage = objectMapper.writeValueAsString(message);
+            stringRedisTemplate.convertAndSend(channel, jsonMessage);
+
+            log.debug("Published stream clear to user: {}", userId);
+
+        } catch (Exception e) {
+            log.error("Error publishing stream clear to user: {}", userId, e);
+        }
+    }
+
+    /**
      * 发送语音消息给用户
      */
     public void publishVoiceMessage(Integer userId, String voiceUrl, int duration, int botId, String botName) {

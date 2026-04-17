@@ -8,7 +8,10 @@ import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -166,26 +169,23 @@ public class AgentOrchestratorService {
         if (userId != null && examStateManager.isInExamState(userId)) {
             log.info("[ExamSkill] 检测到用户 {} 处于考试状态，路由到判卷工作流", userId);
             String gradingResult = executeGradingWorkflow(userId, userMessage);
-            return new AgentResult("技能:判卷", gradingResult, gradingResult);
+            return new AgentResult("技能:判卷", gradingResult, simulateTyping(gradingResult));
         }
 
         if (userId != null && detectExamIntent(userMessage)) {
             log.info("[ExamSkill] 检测到出题意图，路由到出题工作流, userId: {}", userId);
             String examResult = executeExamSkillWorkflow(userId, userMessage);
-            return new AgentResult("技能:出题", examResult, examResult);
+            return new AgentResult("技能:出题", examResult, simulateTyping(examResult));
         }
 
         String intent = routeIntent(userMessage);
         log.info("[Router] 意图识别结果: {}", intent);
 
-        String draftAnswer = solve(userMessage, intent);
-        log.info("[Solver] 初步解答长度: {} 字符", draftAnswer.length());
-
-        String finalAnswer = reflect(userMessage, draftAnswer);
-        log.info("[Reflection] 最终答案长度: {} 字符", finalAnswer.length());
+        SolveResult solveResult = solveWithStream(userMessage, intent);
+        log.info("[Solver] 初步解答长度: {} 字符", solveResult.draftAnswer().length());
 
         log.info("=== 多智能体工作流处理完成 ===");
-        return new AgentResult(intent, draftAnswer, finalAnswer);
+        return new AgentResult(intent, solveResult.draftAnswer(), solveResult.answerStream());
     }
 
     private boolean detectExamIntent(String userMessage) {
@@ -638,6 +638,80 @@ public class AgentOrchestratorService {
             .content();
     }
 
+    private SolveResult solveWithStream(String userMessage, String intent) {
+        log.debug("[Solver] 开始流式解答生成，意图: {}", intent);
+
+        ChatClient solverClient;
+        String systemPrompt;
+        String draftAnswer = "";
+
+        switch (intent) {
+            case "代码求助":
+                systemPrompt = SOLVER_CODE_SYSTEM_PROMPT;
+                solverClient = chatClientBuilderProvider.getObject()
+                    .defaultFunctions(cppCompilerToolCallback)
+                    .build();
+                log.info("[Solver] 代码求助模式：已挂载 cppCompilerTool");
+                draftAnswer = solverClient.prompt()
+                    .system(systemPrompt)
+                    .user(userMessage)
+                    .call()
+                    .content();
+                return new SolveResult(draftAnswer, Flux.just(draftAnswer));
+
+            case "理论解答":
+                systemPrompt = SOLVER_THEORY_SYSTEM_PROMPT;
+
+                List<String> subQueries = queryRewriteService.rewriteQuery(userMessage);
+                log.info("[RAG] Query改写完成，生成 {} 个子问题", subQueries.size());
+
+                List<Document> candidateDocs = hybridRetrievalService.hybridSearch(subQueries);
+                log.info("[RAG] 混合召回完成，候选文档数: {}", candidateDocs.size());
+
+                List<Document> rerankedDocs = rerankerService.rerank(userMessage, candidateDocs);
+                log.info("[RAG] 重排完成，最终文档数: {}", rerankedDocs.size());
+
+                String knowledgeContext = rerankedDocs.stream()
+                    .map(doc -> {
+                        String source = (String) doc.getMetadata().getOrDefault("source_file", "种子知识");
+                        return "【来源: " + source + "】\n" + doc.getContent();
+                    })
+                    .collect(Collectors.joining("\n\n---\n\n"));
+
+                String ragEnhancedPrompt = SOLVER_THEORY_SYSTEM_PROMPT + "\n\n" +
+                    "【以下是从知识库中检索到的相关内容（经过混合检索+精排重排），请优先参考】：\n" +
+                    knowledgeContext;
+
+                solverClient = chatClientBuilderProvider.getObject()
+                    .defaultFunctions("webSearchTool")
+                    .build();
+                log.info("[Solver] 理论解答模式：工业级混合检索RAG + webSearchTool + 流式输出");
+
+                draftAnswer = "正在基于知识库生成回答...";
+                
+                Flux<String> theoryStream = solverClient.prompt()
+                    .system(ragEnhancedPrompt)
+                    .user(userMessage)
+                    .stream()
+                    .content();
+                
+                return new SolveResult(draftAnswer, theoryStream);
+
+            case "日常闲聊":
+            default:
+                systemPrompt = SOLVER_CHAT_SYSTEM_PROMPT;
+                solverClient = chatClientBuilderProvider.getObject().build();
+                
+                Flux<String> chatStream = solverClient.prompt()
+                    .system(systemPrompt)
+                    .user(userMessage)
+                    .stream()
+                    .content();
+                
+                return new SolveResult("闲聊回复...", chatStream);
+        }
+    }
+
     private String reflect(String userMessage, String draftAnswer) {
         log.debug("[Reflection] 开始审查反思...");
 
@@ -662,7 +736,12 @@ public class AgentOrchestratorService {
     public record AgentResult(
         String intent,
         String draftAnswer,
-        String finalAnswer
+        Flux<String> finalAnswerStream
+    ) {}
+
+    private record SolveResult(
+        String draftAnswer,
+        Flux<String> answerStream
     ) {}
 
     private record ExamQuestion(
@@ -671,4 +750,18 @@ public class AgentOrchestratorService {
         String standardAnswer,
         String source
     ) {}
+
+    private Flux<String> simulateTyping(String text) {
+        if (text == null || text.isEmpty()) {
+            return Flux.empty();
+        }
+
+        List<String> chunks = new ArrayList<>();
+        for (int i = 0; i < text.length(); i += 10) {
+            chunks.add(text.substring(i, Math.min(i + 10, text.length())));
+        }
+
+        return Flux.fromIterable(chunks)
+                   .delayElements(Duration.ofMillis(40));
+    }
 }

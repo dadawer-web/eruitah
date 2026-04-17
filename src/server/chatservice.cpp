@@ -515,10 +515,10 @@ void ChatService::oneChat(const TcpConnectionPtr& conn,json& js,Timestamp time){
         }
 
         string aiRequestStr = aiRequest.dump();
-        if (_redis.publish(9999, aiRequestStr)) {
-            LOG_INFO << "AI chat request published to Redis: userId=" << fromId << ", botId=" << toid;
+        if (_redis.xadd("ai_task_stream", "PRIVATE_CHAT", aiRequestStr)) {
+            LOG_INFO << "AI chat request sent to Stream: userId=" << fromId << ", botId=" << toid;
         } else {
-            LOG_ERROR << "Failed to publish AI chat request to Redis";
+            LOG_ERROR << "Failed to send AI chat request to Stream";
         }
 
         return;

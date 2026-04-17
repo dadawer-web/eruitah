@@ -34,11 +34,17 @@ public class AgentController {
             AgentOrchestratorService.AgentResult result = 
                 agentOrchestratorService.processUserQuery(request.getMessage());
 
+            String finalAnswer = result.finalAnswerStream()
+                .collectList()
+                .block()
+                .stream()
+                .collect(java.util.stream.Collectors.joining());
+
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("intent", result.intent());
             response.put("draftAnswer", result.draftAnswer());
-            response.put("finalAnswer", result.finalAnswer());
+            response.put("finalAnswer", finalAnswer);
 
             return ResponseEntity.ok(response);
 

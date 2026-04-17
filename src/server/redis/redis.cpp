@@ -212,6 +212,28 @@ void Redis::observer_channel_message()
 // 业务逻辑：设置消息处理回调函数，实现Redis消息与业务层的解耦
 void Redis::init_notify_handler(function<void(int,string)> fn)
 {
-    // 设置回调函数，用于处理接收到的Redis消息
     this->_notify_message_handler = fn;
+}
+
+bool Redis::xadd(const string &streamKey, const string &taskType, const string &message)
+{
+    if (nullptr == _publish_context)
+    {
+        LOG_ERROR << "xadd: publish context is null!";
+        return false;
+    }
+    
+    redisReply *reply = (redisReply *)redisCommand(_publish_context,
+        "XADD %s * type %s message %s",
+        streamKey.c_str(), taskType.c_str(), message.c_str());
+    
+    if (nullptr == reply)
+    {
+        LOG_ERROR << "xadd command failed for stream: " << streamKey;
+        return false;
+    }
+    
+    freeReplyObject(reply);
+    LOG_INFO << "xadd success: stream=" << streamKey << ", type=" << taskType;
+    return true;
 }

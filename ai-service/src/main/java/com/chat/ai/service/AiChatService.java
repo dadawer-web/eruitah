@@ -81,10 +81,14 @@ public class AiChatService {
 
                 AgentOrchestratorService.AgentResult agentResult = agentOrchestratorService.processUserQuery(userId, message);
 
-                log.info("[旗舰大师] 意图: {}, 初稿长度: {}, 最终答案长度: {}",
-                    agentResult.intent(), agentResult.draftAnswer().length(), agentResult.finalAnswer().length());
+                log.info("[旗舰大师] 意图: {}, 初稿长度: {}",
+                    agentResult.intent(), agentResult.draftAnswer().length());
 
-                response = agentResult.finalAnswer();
+                response = agentResult.finalAnswerStream()
+                    .collectList()
+                    .block()
+                    .stream()
+                    .collect(java.util.stream.Collectors.joining());
 
                 chatMemory.add(conversationId, List.of(
                     new UserMessage(message),

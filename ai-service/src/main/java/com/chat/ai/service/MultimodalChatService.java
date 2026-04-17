@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MimeTypeUtils;
+import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
 import java.util.Base64;
@@ -135,6 +136,92 @@ public class MultimodalChatService {
             throw new RuntimeException("AI回复失败: " + e.getMessage(), e);
         }
     }
+
+    public ChatStreamResult chatStream(int userId, int botId, String message, List<ChatRequest.ImageData> images) {
+        String sessionId = generateSessionId(userId, botId);
+        log.info("多模态流式聊天: userId={}, botId={}({}), message={}, images={}",
+            userId, botId, AiPersonaRegistry.getBotName(botId), message, 
+            images != null ? images.size() : 0);
+
+        try {
+            SystemMessage systemMessage = AiPersonaRegistry.getPersonaByBotId(botId);
+
+            List<ChatRequest.ImageData> allImages = new ArrayList<>();
+            String processedMessage = message;
+            
+            if (images != null && !images.isEmpty()) {
+                allImages.addAll(images);
+            }
+            
+            List<ChatRequest.ImageData> extractedImages = extractImagesFromMessage(message);
+            if (!extractedImages.isEmpty()) {
+                allImages.addAll(extractedImages);
+                processedMessage = removeImageTagsFromMessage(message);
+                log.info("[解题大王] 流式模式：从消息中提取了 {} 张图片", extractedImages.size());
+            }
+
+            if (!allImages.isEmpty()) {
+                log.info("[解题大王] 流式模式：处理多模态消息，图片数量: {}", allImages.size());
+                
+                List<Media> mediaList = new ArrayList<>();
+                for (ChatRequest.ImageData imageData : allImages) {
+                    String mimeTypeStr = imageData.getMimeType();
+                    if (mimeTypeStr == null || mimeTypeStr.isEmpty()) {
+                        mimeTypeStr = "image/jpeg";
+                    }
+                    
+                    String base64Data = imageData.getBase64();
+                    if (base64Data.contains(",")) {
+                        base64Data = base64Data.split(",")[1];
+                    }
+                    
+                    byte[] imageBytes = Base64.getDecoder().decode(base64Data);
+                    ByteArrayResource resource = new ByteArrayResource(imageBytes);
+                    mediaList.add(new Media(MimeTypeUtils.parseMimeType(mimeTypeStr), resource));
+                }
+                
+                UserMessage userMessage = new UserMessage(processedMessage.isEmpty() ? "请分析这张图片" : processedMessage, mediaList);
+                
+                List<org.springframework.ai.chat.messages.Message> messages = new ArrayList<>();
+                messages.add(systemMessage);
+                messages.add(userMessage);
+                
+                Prompt prompt = new Prompt(messages);
+                
+                Flux<String> stream = multimodalChatClient.prompt(prompt)
+                    .stream()
+                    .content();
+                
+                return new ChatStreamResult(stream, sessionId);
+            } else {
+                List<ChatMessage> history = chatMemoryService.getChatHistory(sessionId);
+                
+                List<org.springframework.ai.chat.messages.Message> messages = new ArrayList<>();
+                messages.add(systemMessage);
+
+                for (ChatMessage msg : history) {
+                    switch (msg.getRole()) {
+                        case USER -> messages.add(new UserMessage(msg.getContent()));
+                        case ASSISTANT -> messages.add(new org.springframework.ai.chat.messages.AssistantMessage(msg.getContent()));
+                        case SYSTEM -> messages.add(new SystemMessage(msg.getContent()));
+                    }
+                }
+                messages.add(new UserMessage(message));
+
+                Prompt prompt = new Prompt(messages);
+                
+                Flux<String> stream = multimodalChatClient.prompt(prompt)
+                    .stream()
+                    .content();
+                
+                return new ChatStreamResult(stream, sessionId);
+            }
+
+        } catch (Exception e) {
+            log.error("多模态流式聊天失败: userId={}, botId={}", userId, botId, e);
+            throw new RuntimeException("AI流式回复失败: " + e.getMessage(), e);
+        }
+    }
     
     private List<ChatRequest.ImageData> extractImagesFromMessage(String message) {
         List<ChatRequest.ImageData> images = new ArrayList<>();
@@ -171,4 +258,6 @@ public class MultimodalChatService {
     }
 
     public record ChatResult(String message, String sessionId) {}
+    
+    public record ChatStreamResult(Flux<String> messageStream, String sessionId) {}
 }

@@ -6,6 +6,7 @@ import org.springframework.ai.model.function.FunctionCallback;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -95,5 +96,28 @@ public class CodeReviewerService {
         log.info("=== 代码审查员处理完成 ===");
 
         return response;
+    }
+
+    public Flux<String> reviewCodeStream(String userMessage) {
+        log.info("=== 代码审查员开始流式处理 ===");
+        log.info("用户输入: {}", userMessage);
+
+        List<FunctionCallback> tools = new ArrayList<>();
+        tools.add(cppCompilerToolCallback);
+        for (FunctionCallback tool : mcpFilesystemTools) {
+            tools.add(tool);
+        }
+
+        ChatClient reviewerClient = chatClientBuilderProvider.getObject()
+            .defaultFunctions(tools.toArray(new FunctionCallback[0]))
+            .build();
+
+        log.info("[代码审查员] 流式模式：已挂载 cppCompilerTool + MCP文件系统工具 (共{}个工具)", tools.size());
+
+        return reviewerClient.prompt()
+            .system(CODE_REVIEWER_SYSTEM_PROMPT)
+            .user(userMessage)
+            .stream()
+            .content();
     }
 }

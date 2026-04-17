@@ -15,16 +15,18 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.stereotype.Service;
-
 import org.springframework.beans.factory.annotation.Qualifier;
 import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
+import reactor.core.publisher.Flux;
+
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import reactor.core.scheduler.Schedulers;
 
 import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_CONVERSATION_ID_KEY;
 import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_RETRIEVE_SIZE_KEY;
@@ -120,6 +122,16 @@ public class AiChatRequestListener {
             String userMessage = request.get("message").asText();
             String userName = request.has("userName") ? request.get("userName").asText() : "用户";
 
+            processPrivateChat(userId, botId, userMessage, userName, request);
+
+        } catch (Exception e) {
+            log.error("Error handling private AI request: {}", messageBody, e);
+            sendErrorAndEnd(userId, botId, "抱歉，AI处理您的请求时出现错误，请稍后重试。");
+        }
+    }
+
+    public void processPrivateChat(Integer userId, int botId, String userMessage, String userName, JsonNode request) {
+        try {
             String conversationId = buildConversationId(userId, botId);
 
             log.info("Processing private AI chat: userId={}, botId={}({}), message={}",
@@ -143,111 +155,101 @@ public class AiChatRequestListener {
             }
 
         } catch (Exception e) {
-            log.error("Error handling private AI request: {}", messageBody, e);
+            log.error("Error in processPrivateChat: userId={}, botId={}", userId, botId, e);
             sendErrorAndEnd(userId, botId, "抱歉，AI处理您的请求时出现错误，请稍后重试。");
         }
     }
 
-    private void handleNormalBotStream(int userId, int botId, String userMessage, String conversationId) {
-        SystemMessage systemMessage = AiPersonaRegistry.getPersonaByBotId(botId);
+    private void processAndPublishFlux(int userId, int botId, String userMessage, String conversationId, Flux<String> tokenStream) {
+        processAndPublishFlux(userId, botId, userMessage, conversationId, tokenStream, false);
+    }
+
+    private void processAndPublishFlux(int userId, int botId, String userMessage, String conversationId, 
+                                        Flux<String> tokenStream, boolean clearBeforeOutput) {
+        String botName = AiPersonaRegistry.getBotName(botId);
         StringBuilder fullAnswer = new StringBuilder();
-        
-        final long startTime = System.currentTimeMillis();
-        final int[] tokenCount = {0};
+        long startTime = System.currentTimeMillis();
+        final boolean[] firstChunk = {true};
 
-        log.info("[{}] 开始真流式调用 LLM: {}", AiPersonaRegistry.getBotName(botId), startTime);
-
-        fastChatClient.prompt()
-            .system(systemMessage.getContent())
-            .user(userMessage)
-            .advisors(spec -> spec
-                .param(CHAT_MEMORY_CONVERSATION_ID_KEY, conversationId)
-                .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10))
-            .stream()
-            .content()
-            .doOnNext(token -> {
-                if (token != null && !token.isEmpty()) {
-                    fullAnswer.append(token);
-                    tokenCount[0]++;
-                    if (tokenCount[0] <= 5 || tokenCount[0] % 20 == 0) {
-                        log.info("[{}] Token#{}: [{}], 耗时: {}ms", 
-                            AiPersonaRegistry.getBotName(botId), tokenCount[0], token, System.currentTimeMillis() - startTime);
+        tokenStream
+            .bufferTimeout(20, Duration.ofMillis(200))
+            .map(list -> String.join("", list))
+            .publishOn(Schedulers.boundedElastic())
+            .doOnNext(chunk -> {
+                if (chunk != null && !chunk.isEmpty()) {
+                    if (firstChunk[0] && clearBeforeOutput) {
+                        redisPubSubService.publishStreamClear(userId, botId, botName);
+                        firstChunk[0] = false;
                     }
-                    redisPubSubService.publishStreamChunk(userId, token, botId, AiPersonaRegistry.getBotName(botId));
+                    fullAnswer.append(chunk);
+                    redisPubSubService.publishStreamChunk(userId, chunk, botId, botName);
                 }
             })
             .doOnError(error -> {
-                log.error("[{}] Stream error: {}", AiPersonaRegistry.getBotName(botId), error.getMessage());
-                sendErrorAndEnd(userId, botId, "AI 流式输出出错: " + error.getMessage());
+                log.error("[{}] 流式处理异常", botName, error);
+                sendErrorAndEnd(userId, botId, "\n[系统提示：" + botName + " 的思路被打断了，请重试]");
             })
             .doOnComplete(() -> {
-                long endTime = System.currentTimeMillis();
-                log.info("[{}] 真流式输出完成，Token数: {}, 总耗时: {}ms, 平均每Token: {}ms", 
-                    AiPersonaRegistry.getBotName(botId), tokenCount[0], endTime - startTime,
-                    tokenCount[0] > 0 ? (endTime - startTime) / tokenCount[0] : 0);
+                long cost = System.currentTimeMillis() - startTime;
+                log.info("[{}] 真流式输出完毕，生成耗时: {}ms", botName, cost);
                 
                 chatMemory.add(conversationId, List.of(
                     new UserMessage(userMessage),
                     new AssistantMessage(fullAnswer.toString())
                 ));
                 
-                redisPubSubService.publishStreamEnd(userId, botId, AiPersonaRegistry.getBotName(botId));
+                redisPubSubService.publishStreamEnd(userId, botId, botName);
             })
             .subscribe();
     }
 
+    private void handleNormalBotStream(int userId, int botId, String userMessage, String conversationId) {
+        SystemMessage systemMessage = AiPersonaRegistry.getPersonaByBotId(botId);
+
+        Flux<String> stream = fastChatClient.prompt()
+            .system(systemMessage.getContent())
+            .user(userMessage)
+            .advisors(spec -> spec
+                .param(CHAT_MEMORY_CONVERSATION_ID_KEY, conversationId)
+                .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 4))
+            .stream()
+            .content();
+
+        processAndPublishFlux(userId, botId, userMessage, conversationId, stream);
+    }
+
     private void handleMasterBotStream(int userId, int botId, String userMessage, String conversationId) {
-        log.info("[旗舰大师] 使用 AgentOrchestratorService 多智能体编排");
+        log.info("[旗舰大师] 开始多智能体编排...");
 
         AgentOrchestratorService.AgentResult agentResult = agentOrchestratorService.processUserQuery(userId, userMessage);
 
-        log.info("[旗舰大师] 意图: {}, 最终答案长度: {}", agentResult.intent(), agentResult.finalAnswer().length());
+        log.info("[旗舰大师] 意图识别完毕: {}", agentResult.intent());
 
-        String response = agentResult.finalAnswer();
-
-        chatMemory.add(conversationId, List.of(
-            new UserMessage(userMessage),
-            new AssistantMessage(response)
-        ));
-
-        sendResponseInChunks(userId, botId, response);
-        redisPubSubService.publishStreamEnd(userId, botId, AiPersonaRegistry.getBotName(botId));
+        processAndPublishFlux(userId, botId, userMessage, conversationId, agentResult.finalAnswerStream());
     }
 
     private void handleProblemSolverStream(int userId, int botId, String userMessage, String conversationId) {
-        log.info("[解题大王] 使用 MultimodalChatService");
+        log.info("[解题大王] 开始多模态流式处理");
         
         List<ChatRequest.ImageData> images = extractImagesFromMessage(userMessage);
         String cleanMessage = removeImageTagsFromMessage(userMessage);
         
-        log.info("[解题大王] 消息中包含 {} 张图片", images.size());
-        
-        MultimodalChatService.ChatResult multimodalResult = multimodalChatService.chat(
+        redisPubSubService.publishStreamChunk(userId, "👀 正在努力看图中...\n", botId, "解题大王");
+
+        MultimodalChatService.ChatStreamResult result = multimodalChatService.chatStream(
             userId, botId, cleanMessage.isEmpty() ? "请分析这张图片" : cleanMessage, images);
-        
-        String response = multimodalResult.message();
 
-        chatMemory.add(conversationId, List.of(
-            new UserMessage(cleanMessage.isEmpty() ? "请分析这张图片" : cleanMessage),
-            new AssistantMessage(response)
-        ));
-
-        sendResponseInChunks(userId, botId, response);
-        redisPubSubService.publishStreamEnd(userId, botId, AiPersonaRegistry.getBotName(botId));
+        processAndPublishFlux(userId, botId, userMessage, conversationId, result.messageStream());
     }
 
     private void handleCodeReviewerStream(int userId, int botId, String userMessage, String conversationId) {
-        log.info("[代码审查员] 使用 CodeReviewerService");
+        log.info("[代码审查员] 开始真流式代码 Review");
+        
+        redisPubSubService.publishStreamChunk(userId, "💻 正在编译并扫描代码坏味道...\n", botId, "代码审查员");
 
-        String response = codeReviewerService.reviewCode(userMessage);
+        Flux<String> stream = codeReviewerService.reviewCodeStream(userMessage);
 
-        chatMemory.add(conversationId, List.of(
-            new UserMessage(userMessage),
-            new AssistantMessage(response)
-        ));
-
-        sendResponseInChunks(userId, botId, response);
-        redisPubSubService.publishStreamEnd(userId, botId, AiPersonaRegistry.getBotName(botId));
+        processAndPublishFlux(userId, botId, userMessage, conversationId, stream);
     }
 
     private void handleVoiceAssistant(Integer userId, int botId, JsonNode request) {
@@ -312,19 +314,6 @@ public class AiChatRequestListener {
                 redisPubSubService.publishAgentGroupMessage(groupId, "抱歉，AI处理群聊请求时出现错误。", 
                     10000, "AI助手", "AI_ERROR");
             }
-        }
-    }
-    
-    private void sendResponseInChunks(Integer userId, int botId, String response) {
-        if (response == null || response.isEmpty()) {
-            return;
-        }
-        
-        int chunkSize = 3;
-        for (int i = 0; i < response.length(); i += chunkSize) {
-            int end = Math.min(i + chunkSize, response.length());
-            String chunk = response.substring(i, end);
-            redisPubSubService.publishStreamChunk(userId, chunk, botId, AiPersonaRegistry.getBotName(botId));
         }
     }
 
