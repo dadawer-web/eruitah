@@ -1,5 +1,6 @@
 package com.chat.ai.service;
 
+import com.chat.ai.repository.ConceptRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.neo4j.core.Neo4jClient;
@@ -19,6 +20,7 @@ public class GraphExamService {
     private final KnowledgeExtractorService knowledgeExtractorService;
     private final KnowledgeTreeService knowledgeTreeService;
     private final StringRedisTemplate redisTemplate;
+    private final ConceptRepository conceptRepository;
 
     private static final String RECENT_QUESTIONS_PREFIX = "exam:recent:";
     private static final int RECENT_QUESTIONS_TTL_HOURS = 24;
@@ -517,5 +519,43 @@ public class GraphExamService {
         }
 
         return dashboard;
+    }
+
+    public Map<String, Double> calculateUserSubjectMastery(String userId) {
+        ensureUserNodeExists(userId);
+
+        Map<String, Double> result = new LinkedHashMap<>();
+        result.put("数据结构", 0.0);
+        result.put("计算机操作系统", 0.0);
+        result.put("计算机组成原理", 0.0);
+        result.put("计算机网络", 0.0);
+
+        String cypher = """
+            MATCH (root:Concept)
+            WHERE root.name IN ['数据结构', '计算机操作系统', '计算机组成原理', '计算机网络']
+            OPTIONAL MATCH (root)<-[:BELONGS_TO*1..10]-(leaf:Concept)
+            OPTIONAL MATCH (leaf)<-[r:COGNITION]-(u:User {userId: $userId})
+            WITH root.name AS subject, avg(r.score) AS avgScore
+            RETURN subject, coalesce(avgScore, 0.0) AS mastery
+            """;
+
+        neo4jClient.query(cypher)
+            .bind(userId).to("userId")
+            .fetch()
+            .all()
+            .forEach(record -> {
+                String subject = (String) record.get("subject");
+                Object masteryObj = record.get("mastery");
+                Double mastery = 0.0;
+                if (masteryObj instanceof Number) {
+                    mastery = ((Number) masteryObj).doubleValue();
+                }
+                if (subject != null && result.containsKey(subject)) {
+                    result.put(subject, mastery);
+                }
+            });
+
+        log.info("📊【科目掌握度】用户 {} 的科目掌握度: {}", userId, result);
+        return result;
     }
 }

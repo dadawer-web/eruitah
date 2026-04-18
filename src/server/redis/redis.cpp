@@ -33,7 +33,11 @@ bool Redis::connect()
 {
     // 建立发布消息上下文连接
     // 关键业务：独立的发布连接确保消息发送不受订阅阻塞影响
-    _publish_context = redisConnect("127.0.0.1", 6379);
+    const char* redis_host = getenv("REDIS_HOST") ? getenv("REDIS_HOST") : "127.0.0.1";
+    int redis_port = getenv("REDIS_PORT") ? atoi(getenv("REDIS_PORT")) : 6379;
+    const char* redis_password = getenv("REDIS_PASSWORD") ? getenv("REDIS_PASSWORD") : "123456";
+
+    _publish_context = redisConnect(redis_host, redis_port);
     if (nullptr == _publish_context)
     {
         cerr << "connect redis failed!" << endl;
@@ -41,7 +45,7 @@ bool Redis::connect()
     }
 
     // 发布连接密码认证
-    redisReply *reply = (redisReply *)redisCommand(_publish_context, "AUTH %s", "123456");
+    redisReply *reply = (redisReply *)redisCommand(_publish_context, "AUTH %s", redis_password);
     if (nullptr == reply || reply->type == REDIS_REPLY_ERROR)
     {
         cerr << "redis auth failed!" << endl;
@@ -57,7 +61,7 @@ bool Redis::connect()
 
     // 建立订阅消息上下文连接
     // 关键业务：独立的订阅连接支持异步消息接收
-    _subcribe_context = redisConnect("127.0.0.1", 6379);
+    _subcribe_context = redisConnect(redis_host, redis_port);
     if (nullptr == _subcribe_context)
     {
         cerr << "connect redis failed!" << endl;
@@ -68,7 +72,7 @@ bool Redis::connect()
     }
 
     // 订阅连接密码认证
-    reply = (redisReply *)redisCommand(_subcribe_context, "AUTH %s", "123456");
+    reply = (redisReply *)redisCommand(_subcribe_context, "AUTH %s", redis_password);
     if (nullptr == reply || reply->type == REDIS_REPLY_ERROR)
     {
         cerr << "redis auth failed!" << endl;

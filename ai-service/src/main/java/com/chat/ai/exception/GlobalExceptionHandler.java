@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.Map;
 
@@ -32,6 +33,11 @@ public class GlobalExceptionHandler {
                 "code", e.getCode(),
                 "message", e.getMessage()
             ));
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public void handleNoResourceFoundException(NoResourceFoundException e) {
+        log.debug("静态资源未找到: {}", e.getResourcePath());
     }
 
     @ExceptionHandler(Exception.class)

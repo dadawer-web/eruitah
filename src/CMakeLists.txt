@@ -24,6 +24,12 @@ set(CLIENT_SOURCES
     farmplotitem.h
     farmdialog.cpp
     farmdialog.h
+    dashboarddialog.cpp
+    dashboarddialog.h
+    knowledgegraphdialog.cpp
+    knowledgegraphdialog.h
+    realtimevoicedialog.cpp
+    realtimevoicedialog.h
     qtchat.qrc
 )
 

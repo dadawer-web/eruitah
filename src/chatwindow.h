@@ -56,6 +56,7 @@ class QtMaterialAvatar;
 class FarmDialog;
 class KnowledgeGraphDialog;
 class RealtimeVoiceDialog;
+class DashboardDialog;
 
 // 未处理消息结构体
 struct PendingMessage {
@@ -290,6 +291,7 @@ public slots:
 
     void onOpenFarm();
     void onOpenKnowledgeGraph();
+    void onOpenDashboard();
     void onFarmPlantResponse(bool success, int plotId, const QString &message);
     void onFarmAnswerResponse(bool success, int plotId, const QString &feedback, int score, bool canHarvest);
     void onFarmQueryResponse(const QJsonArray &plots, int coins, int exp);

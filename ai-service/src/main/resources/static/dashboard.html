@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>408 考情分析大屏</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #0b0f1a;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        
+        .header {
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            background: linear-gradient(180deg, rgba(0, 242, 254, 0.1) 0%, transparent 100%);
+            border-bottom: 1px solid rgba(0, 242, 254, 0.2);
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            background: linear-gradient(90deg, #00f2fe, #7edad2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 4px;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #00f2fe 0%, #7edad2 100%);
+            color: #0b0f1a;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 242, 254, 0.4);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-secondary {
+            background: rgba(0, 242, 254, 0.1);
+            color: #00f2fe;
+            border: 1px solid rgba(0, 242, 254, 0.3);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(0, 242, 254, 0.2);
+        }
+        
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            height: calc(100% - 60px);
+            padding: 20px;
+            gap: 20px;
+        }
+        
+        .stats-row {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .stat-card {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            border: 1px solid rgba(0, 242, 254, 0.1);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .stat-icon.blue { background: rgba(0, 242, 254, 0.15); color: #00f2fe; }
+        .stat-icon.green { background: rgba(126, 218, 210, 0.15); color: #7edad2; }
+        .stat-icon.orange { background: rgba(255, 183, 77, 0.15); color: #ffb74d; }
+        .stat-icon.purple { background: rgba(186, 104, 200, 0.15); color: #ba68c8; }
+        
+        .stat-info h3 {
+            color: #8392A5;
+            font-size: 13px;
+            font-weight: 400;
+            margin-bottom: 5px;
+        }
+        
+        .stat-info .value {
+            color: #fff;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        
+        .stat-info .sub {
+            color: #8392A5;
+            font-size: 12px;
+            margin-top: 3px;
+        }
+        
+        .charts-row {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+        }
+        
+        .chart-wrapper {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            border: 1px solid rgba(0, 242, 254, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        #radar-chart, #line-chart {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(11, 15, 26, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(0, 242, 254, 0.2);
+            border-top-color: #00f2fe;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        .modal {
+            background: #131a28;
+            border-radius: 16px;
+            border: 1px solid rgba(0, 242, 254, 0.2);
+            width: 90%;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid rgba(0, 242, 254, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h2 {
+            color: #00f2fe;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: #8392A5;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px;
+            line-height: 1;
+        }
+        
+        .modal-close:hover {
+            color: #fff;
+        }
+        
+        .modal-body {
+            padding: 25px;
+            max-height: calc(80vh - 140px);
+            overflow-y: auto;
+        }
+        
+        .modal-body::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .modal-body::-webkit-scrollbar-track {
+            background: rgba(0, 242, 254, 0.05);
+        }
+        
+        .modal-body::-webkit-scrollbar-thumb {
+            background: rgba(0, 242, 254, 0.3);
+            border-radius: 3px;
+        }
+        
+        .report-content {
+            color: #e0e6ed;
+            line-height: 1.8;
+            font-size: 14px;
+        }
+        
+        .report-content h1, .report-content h2, .report-content h3 {
+            color: #00f2fe;
+            margin: 20px 0 10px 0;
+        }
+        
+        .report-content h1 { font-size: 20px; }
+        .report-content h2 { font-size: 16px; }
+        .report-content h3 { font-size: 14px; }
+        
+        .report-content ul, .report-content ol {
+            padding-left: 20px;
+            margin: 10px 0;
+        }
+        
+        .report-content li {
+            margin: 8px 0;
+        }
+        
+        .report-content strong {
+            color: #7edad2;
+        }
+        
+        .report-content code {
+            background: rgba(0, 242, 254, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+        }
+        
+        .report-loading {
+            text-align: center;
+            padding: 40px;
+            color: #8392A5;
+        }
+        
+        .report-error {
+            text-align: center;
+            padding: 40px;
+            color: #ff6b6b;
+        }
+        
+        .modal-footer {
+            padding: 15px 25px;
+            border-top: 1px solid rgba(0, 242, 254, 0.1);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .update-time {
+            color: #8392A5;
+            font-size: 12px;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(0, 242, 254, 0.15);
+            border: 1px solid rgba(0, 242, 254, 0.3);
+            color: #00f2fe;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 2000;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>408 AI 学习诊断大屏</h1>
+        <div class="header-actions">
+            <span class="update-time" id="update-time"></span>
+            <button class="btn btn-secondary" onclick="refreshData()">
+                <span>🔄</span> 刷新
+            </button>
+            <button class="btn btn-primary" id="weekly-report-btn" onclick="generateWeeklyReport()">
+                <span>📊</span> 生成周报
+            </button>
+        </div>
+    </div>
+    
+    <div class="main-content">
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-icon blue">📚</div>
+                <div class="stat-info">
+                    <h3>平均掌握度</h3>
+                    <div class="value" id="avg-mastery">--</div>
+                    <div class="sub" id="mastery-trend">--</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green">✅</div>
+                <div class="stat-info">
+                    <h3>本周做题数</h3>
+                    <div class="value" id="weekly-count">--</div>
+                    <div class="sub">近7天累计</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon orange">💪</div>
+                <div class="stat-info">
+                    <h3>优势科目</h3>
+                    <div class="value" id="best-subject">--</div>
+                    <div class="sub" id="best-score">--</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon purple">⚠️</div>
+                <div class="stat-info">
+                    <h3>薄弱科目</h3>
+                    <div class="value" id="weak-subject">--</div>
+                    <div class="sub" id="weak-score">--</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="charts-row">
+            <div class="chart-wrapper">
+                <div class="loading-overlay" id="radar-loading">
+                    <div class="loading-spinner"></div>
+                </div>
+                <div id="radar-chart"></div>
+            </div>
+            <div class="chart-wrapper">
+                <div class="loading-overlay" id="line-loading">
+                    <div class="loading-spinner"></div>
+                </div>
+                <div id="line-chart"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="report-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>📅 408 AI 学习诊断周报</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="report-loading" id="report-loading">
+                    <div class="loading-spinner"></div>
+                    <p style="margin-top: 15px;">AI 正在生成周报...</p>
+                </div>
+                <div class="report-content" id="report-content" style="display: none;"></div>
+                <div class="report-error" id="report-error" style="display: none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">关闭</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const radarChart = echarts.init(document.getElementById('radar-chart'), 'dark');
+        const lineChart = echarts.init(document.getElementById('line-chart'), 'dark');
+        
+        let currentUserId = null;
+        let dashboardData = null;
+
+        const radarOption = {
+            backgroundColor: 'transparent',
+            title: { 
+                text: '408 学科掌握度', 
+                left: 'center', 
+                top: '5%', 
+                textStyle: { 
+                    color: '#00f2fe',
+                    fontSize: 18,
+                    fontWeight: 600
+                } 
+            },
+            tooltip: {
+                trigger: 'item',
+                formatter: function(params) {
+                    const indicators = ['数据结构', '计算机组成原理', '操作系统', '计算机网络'];
+                    let result = '<div style="padding: 8px;">';
+                    params.value.forEach((v, i) => {
+                        result += `<div style="margin: 4px 0;"><span style="color:#8392A5">${indicators[i]}:</span> <span style="color:#00f2fe;font-weight:bold">${v.toFixed(1)}%</span></div>`;
+                    });
+                    result += '</div>';
+                    return result;
+                }
+            },
+            radar: {
+                indicator: [
+                    { name: '数据结构', max: 100 },
+                    { name: '计算机组成原理', max: 100 },
+                    { name: '操作系统', max: 100 },
+                    { name: '计算机网络', max: 100 }
+                ],
+                shape: 'polygon',
+                splitNumber: 5,
+                center: ['50%', '55%'],
+                radius: '60%',
+                axisName: { 
+                    color: '#8392A5',
+                    fontSize: 14,
+                    fontWeight: 500
+                },
+                splitLine: { 
+                    lineStyle: { 
+                        color: ['rgba(0, 242, 254, 0.1)', 'rgba(0, 242, 254, 0.2)', 
+                                'rgba(0, 242, 254, 0.3)', 'rgba(0, 242, 254, 0.4)', 
+                                'rgba(0, 242, 254, 0.5)'] 
+                    } 
+                },
+                splitArea: { 
+                    show: true,
+                    areaStyle: {
+                        color: ['rgba(0, 242, 254, 0.02)', 'rgba(0, 242, 254, 0.04)']
+                    }
+                },
+                axisLine: {
+                    lineStyle: { color: 'rgba(0, 242, 254, 0.3)' }
+                }
+            },
+            series: [{
+                type: 'radar',
+                data: [{
+                    value: [0, 0, 0, 0],
+                    name: '当前掌握度',
+                    areaStyle: { 
+                        color: new echarts.graphic.RadialGradient(0.5, 0.5, 1, [
+                            { offset: 0, color: 'rgba(0, 242, 254, 0.6)' },
+                            { offset: 1, color: 'rgba(0, 242, 254, 0.1)' }
+                        ])
+                    },
+                    lineStyle: { color: '#00f2fe', width: 3 },
+                    itemStyle: { 
+                        color: '#00f2fe',
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    },
+                    symbol: 'circle',
+                    symbolSize: 8
+                }]
+            }]
+        };
+
+        const lineOption = {
+            backgroundColor: 'transparent',
+            title: { 
+                text: '近七日做题活跃度', 
+                left: 'center', 
+                top: '5%', 
+                textStyle: { 
+                    color: '#7edad2',
+                    fontSize: 18,
+                    fontWeight: 600
+                } 
+            },
+            tooltip: { 
+                trigger: 'axis',
+                backgroundColor: 'rgba(11, 15, 26, 0.9)',
+                borderColor: 'rgba(126, 218, 210, 0.3)',
+                textStyle: { color: '#fff' },
+                formatter: function(params) {
+                    const data = params[0];
+                    return `<div style="padding: 8px;">
+                        <div style="color: #8392A5; margin-bottom: 4px;">${data.name}</div>
+                        <div><span style="color:#7edad2;font-weight:bold">${data.value}</span> 题</div>
+                    </div>`;
+                }
+            },
+            grid: {
+                left: '10%',
+                right: '10%',
+                top: '25%',
+                bottom: '15%'
+            },
+            xAxis: { 
+                type: 'category', 
+                data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+                axisLine: { lineStyle: { color: 'rgba(126, 218, 210, 0.3)' } },
+                axisLabel: { color: '#8392A5', fontSize: 12 },
+                axisTick: { show: false }
+            },
+            yAxis: { 
+                type: 'value', 
+                splitLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.05)' } },
+                axisLine: { show: false },
+                axisLabel: { color: '#8392A5', fontSize: 12 }
+            },
+            series: [{
+                data: [0, 0, 0, 0, 0, 0, 0],
+                type: 'line',
+                smooth: true,
+                symbol: 'circle',
+                symbolSize: 10,
+                lineStyle: { 
+                    color: '#7edad2', 
+                    width: 4,
+                    shadowColor: 'rgba(126, 218, 210, 0.5)',
+                    shadowBlur: 10
+                },
+                itemStyle: { 
+                    color: '#7edad2',
+                    borderColor: '#fff',
+                    borderWidth: 2
+                },
+                areaStyle: { 
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: 'rgba(126, 218, 210, 0.4)' },
+                        { offset: 1, color: 'rgba(126, 218, 210, 0)' }
+                    ])
+                }
+            }]
+        };
+
+        radarChart.setOption(radarOption);
+        lineChart.setOption(lineOption);
+
+        window.addEventListener('resize', function() {
+            radarChart.resize();
+            lineChart.resize();
+        });
+
+        function getUrlParam(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        function showLoading(show) {
+            document.getElementById('radar-loading').style.display = show ? 'flex' : 'none';
+            document.getElementById('line-loading').style.display = show ? 'flex' : 'none';
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function updateStats(data) {
+            const radar = data.radar || [0, 0, 0, 0];
+            const line = data.line || [0, 0, 0, 0, 0, 0, 0];
+            const subjects = ['数据结构', '计算机组成原理', '操作系统', '计算机网络'];
+            
+            const avgMastery = radar.reduce((a, b) => a + b, 0) / radar.length;
+            document.getElementById('avg-mastery').textContent = (avgMastery * 100).toFixed(1) + '%';
+            document.getElementById('mastery-trend').textContent = avgMastery >= 0.6 ? '掌握良好' : '需要加强';
+            
+            const weeklyCount = line.reduce((a, b) => a + b, 0);
+            document.getElementById('weekly-count').textContent = weeklyCount;
+            
+            let maxIdx = 0, minIdx = 0;
+            radar.forEach((v, i) => {
+                if (v > radar[maxIdx]) maxIdx = i;
+                if (v < radar[minIdx]) minIdx = i;
+            });
+            
+            document.getElementById('best-subject').textContent = subjects[maxIdx];
+            document.getElementById('best-score').textContent = (radar[maxIdx] * 100).toFixed(1) + '% 掌握度';
+            
+            document.getElementById('weak-subject').textContent = subjects[minIdx];
+            document.getElementById('weak-score').textContent = (radar[minIdx] * 100).toFixed(1) + '% 掌握度';
+            
+            if (data.updateTime) {
+                document.getElementById('update-time').textContent = '更新时间: ' + data.updateTime;
+            }
+        }
+
+        window.updateDashboardData = function(radarData, lineData) {
+            if (radarData && Array.isArray(radarData)) {
+                const values = radarData.map(v => Math.round(v * 100));
+                radarChart.setOption({
+                    series: [{
+                        data: [{
+                            value: values,
+                            name: '当前掌握度',
+                            areaStyle: { 
+                                color: new echarts.graphic.RadialGradient(0.5, 0.5, 1, [
+                                    { offset: 0, color: 'rgba(0, 242, 254, 0.6)' },
+                                    { offset: 1, color: 'rgba(0, 242, 254, 0.1)' }
+                                ])
+                            },
+                            lineStyle: { color: '#00f2fe', width: 3 },
+                            itemStyle: { 
+                                color: '#00f2fe',
+                                borderColor: '#fff',
+                                borderWidth: 2
+                            },
+                            symbol: 'circle',
+                            symbolSize: 8
+                        }]
+                    }]
+                });
+            }
+
+            if (lineData && Array.isArray(lineData)) {
+                lineChart.setOption({
+                    series: [{
+                        data: lineData
+                    }]
+                });
+            }
+        };
+
+        async function fetchDataFromApi() {
+            currentUserId = getUrlParam('userId');
+            if (!currentUserId) {
+                console.warn('No userId provided in URL');
+                showLoading(false);
+                return;
+            }
+
+            showLoading(true);
+
+            try {
+                const response = await fetch(`/api/analysis/dashboard/${currentUserId}`);
+                const data = await response.json();
+                
+                dashboardData = data;
+                
+                if (data.radar && data.line) {
+                    window.updateDashboardData(data.radar, data.line);
+                    updateStats(data);
+                }
+                
+                showLoading(false);
+                showToast('数据加载成功');
+                
+            } catch (error) {
+                console.error('Failed to fetch dashboard data:', error);
+                showLoading(false);
+                showToast('数据加载失败: ' + error.message);
+            }
+        }
+
+        function refreshData() {
+            fetchDataFromApi();
+        }
+
+        async function generateWeeklyReport() {
+            if (!currentUserId) {
+                showToast('请先提供用户ID');
+                return;
+            }
+            
+            const btn = document.getElementById('weekly-report-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span>⏳</span> 生成中...';
+            
+            document.getElementById('report-modal').classList.add('active');
+            document.getElementById('report-loading').style.display = 'block';
+            document.getElementById('report-content').style.display = 'none';
+            document.getElementById('report-error').style.display = 'none';
+            
+            try {
+                const response = await fetch(`/api/analysis/dashboard/${currentUserId}/report`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('请求失败: ' + response.status);
+                }
+                
+                const data = await response.json();
+                
+                document.getElementById('report-loading').style.display = 'none';
+                document.getElementById('report-content').style.display = 'block';
+                document.getElementById('report-content').innerHTML = formatMarkdown(data.report || '周报生成失败');
+                
+            } catch (error) {
+                console.error('Failed to generate report:', error);
+                document.getElementById('report-loading').style.display = 'none';
+                document.getElementById('report-error').style.display = 'block';
+                document.getElementById('report-error').textContent = '周报生成失败: ' + error.message;
+            }
+            
+            btn.disabled = false;
+            btn.innerHTML = '<span>📊</span> 生成周报';
+        }
+
+        function formatMarkdown(text) {
+            return text
+                .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+                .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/`([^`]+)`/g, '<code>$1</code>')
+                .replace(/^\- (.*$)/gim, '<li>$1</li>')
+                .replace(/^\d+\. (.*$)/gim, '<li>$1</li>')
+                .replace(/\n/g, '<br>');
+        }
+
+        function closeModal() {
+            document.getElementById('report-modal').classList.remove('active');
+        }
+
+        document.getElementById('report-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchDataFromApi();
+        });
+    </script>
+</body>
+</html>

@@ -73,7 +73,7 @@ AiServiceClient& AiServiceClient::instance() {
 }
 
 AiServiceClient::AiServiceClient()
-    : _serviceUrl("http://localhost:8081/api/ai/chat"), _available(false) {
+    : _serviceUrl(getenv("AI_SERVICE_URL") ? getenv("AI_SERVICE_URL") : "http://localhost:8081/api/ai/chat"), _available(false) {
     LOG_INFO << "AiServiceClient initialized with URL: " << _serviceUrl;
 }
 
@@ -240,7 +240,8 @@ void AiServiceClient::streamChatWithSession(const std::string& message, int user
         std::string encodedMessageStr(encodedMessage);
         curl_free(encodedMessage);
 
-        std::string streamUrl = "http://localhost:8081/api/ai/stream-chat?message=" + encodedMessageStr;
+        std::string aiServiceBase = getenv("AI_SERVICE_BASE_URL") ? getenv("AI_SERVICE_BASE_URL") : "http://localhost:8081";
+        std::string streamUrl = aiServiceBase + "/api/ai/stream-chat?message=" + encodedMessageStr;
         if (!sessionId.empty()) {
             char* encodedSessionId = curl_easy_escape(curl, sessionId.c_str(), sessionId.length());
             if (encodedSessionId) {

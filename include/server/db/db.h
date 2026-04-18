@@ -2,14 +2,14 @@
 #define DB_H
 
 #include<mysql/mysql.h>
+#include<cstdlib>
 
 #include<string>
 using namespace std;
-// 数据库配置信息
-static string server = "127.0.0.1";
-static string user = "root";
-static string password = "xieming562";
-static string dbname = "chat";
+static string server = getenv("MYSQL_HOST") ? getenv("MYSQL_HOST") : "127.0.0.1";
+static string user = getenv("MYSQL_USER") ? getenv("MYSQL_USER") : "root";
+static string password = getenv("MYSQL_PASSWORD") ? getenv("MYSQL_PASSWORD") : "xieming562";
+static string dbname = getenv("MYSQL_DBNAME") ? getenv("MYSQL_DBNAME") : "chat";
 // 数据库操作类
 class MySQL
 {

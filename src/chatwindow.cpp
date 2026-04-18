@@ -3,6 +3,7 @@
 #include "farmdialog.h"
 #include "knowledgegraphdialog.h"
 #include "realtimevoicedialog.h"
+#include "dashboarddialog.h"
 #include <QDebug>
 #include <QDateTime>
 #include <QInputDialog>
@@ -690,12 +691,14 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     QPushButton *interviewBtn = new QPushButton("🔥 开启模拟面试", toolBarWidget);
     QPushButton *farmBtn = new QPushButton("🌱 408农场", toolBarWidget);
     QPushButton *knowledgeGraphBtn = new QPushButton("🧠 知识图谱", toolBarWidget);
+    QPushButton *dashboardBtn = new QPushButton("📊 考情大屏", toolBarWidget);
     QPushButton *logoutBtn = new QPushButton("注销", toolBarWidget);
     
     QString btnStyle = "QPushButton { background-color: transparent; border: none; color: #9ca3af; font-size: 13px; padding: 6px 12px; border-radius: 4px; } QPushButton:hover { background-color: #3a3a3a; color: #ececec; } QPushButton:pressed { background-color: #404040; }";
     QString interviewBtnStyle = "QPushButton { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #ef4444, stop:1 #f97316); border: none; color: white; font-size: 13px; padding: 6px 12px; border-radius: 4px; font-weight: bold; } QPushButton:hover { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #dc2626, stop:1 #ea580c); } QPushButton:pressed { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #b91c1c, stop:1 #c2410c); }";
     QString farmBtnStyle = "QPushButton { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #22c55e, stop:1 #16a34a); border: none; color: white; font-size: 13px; padding: 6px 12px; border-radius: 4px; font-weight: bold; } QPushButton:hover { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #16a34a, stop:1 #15803d); } QPushButton:pressed { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #15803d, stop:1 #166534); }";
     QString knowledgeGraphBtnStyle = "QPushButton { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #8b5cf6, stop:1 #6366f1); border: none; color: white; font-size: 13px; padding: 6px 12px; border-radius: 4px; font-weight: bold; } QPushButton:hover { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #7c3aed, stop:1 #4f46e5); } QPushButton:pressed { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #6d28d9, stop:1 #4338ca); }";
+    QString dashboardBtnStyle = "QPushButton { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #00f2fe, stop:1 #7edad2); border: none; color: #0b0f1a; font-size: 13px; padding: 6px 12px; border-radius: 4px; font-weight: bold; } QPushButton:hover { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #00d4e0, stop:1 #6bc4b8); } QPushButton:pressed { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #00b6c2, stop:1 #59b0a0); }";
     addFriendBtn->setStyleSheet(btnStyle);
     createGroupBtn->setStyleSheet(btnStyle);
     joinGroupBtn->setStyleSheet(btnStyle);
@@ -703,6 +706,7 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     interviewBtn->setStyleSheet(interviewBtnStyle);
     farmBtn->setStyleSheet(farmBtnStyle);
     knowledgeGraphBtn->setStyleSheet(knowledgeGraphBtnStyle);
+    dashboardBtn->setStyleSheet(dashboardBtnStyle);
     logoutBtn->setStyleSheet(btnStyle);
     
     addFriendBtn->setFont(toolbarFont);
@@ -712,6 +716,7 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     interviewBtn->setFont(toolbarFont);
     farmBtn->setFont(toolbarFont);
     knowledgeGraphBtn->setFont(toolbarFont);
+    dashboardBtn->setFont(toolbarFont);
     logoutBtn->setFont(toolbarFont);
     
     toolbarLayout->addWidget(addFriendBtn);
@@ -721,6 +726,7 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     toolbarLayout->addWidget(interviewBtn);
     toolbarLayout->addWidget(farmBtn);
     toolbarLayout->addWidget(knowledgeGraphBtn);
+    toolbarLayout->addWidget(dashboardBtn);
     toolbarLayout->addSpacing(8);
     toolbarLayout->addWidget(new QLabel("|", toolBarWidget));
     toolbarLayout->addSpacing(8);
@@ -734,6 +740,7 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     connect(interviewBtn, &QPushButton::clicked, this, &ChatWindow::onCreateInterviewGroup);
     connect(farmBtn, &QPushButton::clicked, this, &ChatWindow::onOpenFarm);
     connect(knowledgeGraphBtn, &QPushButton::clicked, this, &ChatWindow::onOpenKnowledgeGraph);
+    connect(dashboardBtn, &QPushButton::clicked, this, &ChatWindow::onOpenDashboard);
     connect(logoutBtn, &QPushButton::clicked, this, &ChatWindow::onLogout);
     connect(changeAvatarButton, &QPushButton::clicked, this, [this, userId]() {
         // 打开文件选择对话框
@@ -2880,6 +2887,13 @@ void ChatWindow::onOpenFarm()
 void ChatWindow::onOpenKnowledgeGraph()
 {
     KnowledgeGraphDialog *dialog = new KnowledgeGraphDialog(userId, this);
+    dialog->setAttribute(Qt::WA_DeleteOnClose);
+    dialog->exec();
+}
+
+void ChatWindow::onOpenDashboard()
+{
+    DashboardDialog *dialog = new DashboardDialog(userId, this);
     dialog->setAttribute(Qt::WA_DeleteOnClose);
     dialog->exec();
 }
