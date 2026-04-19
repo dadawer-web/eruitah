@@ -130,7 +130,7 @@ public class AiChatService {
     }
 
     /**
-     * 流式聊天（保留兼容）
+     * 流式聊天（修复版：接入多智能体编排）
      */
     public Flux<String> streamChat(String userMessage, Integer userId, String userName, String sessionId) {
         String conversationId;
@@ -141,39 +141,32 @@ public class AiChatService {
         }
 
         final String finalConversationId = conversationId;
-
         log.info("流式聊天: userId={}, conversationId={}", userId, finalConversationId);
-
-        SystemMessage systemMessage = AiPersonaRegistry.getPersonaByBotId(AiPersonaRegistry.MASTER_408_ID);
-
-        final StringBuilder fullResponse = new StringBuilder();
 
         return Flux.using(
             () -> {
                 log.info("Starting stream for conversation: {}", finalConversationId);
                 return true;
             },
-            resource -> Flux.concat(
-                Flux.just(SESSION_ID_PREFIX + finalConversationId + SESSION_ID_SUFFIX + "\n\n"),
-                fastChatClient.prompt()
-                    .system(systemMessage.getContent())
-                    .user(userMessage)
-                    .advisors(spec -> spec
-                        .param(CHAT_MEMORY_CONVERSATION_ID_KEY, finalConversationId)
-                        .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10))
-                    .stream()
-                    .content()
-                    .doOnNext(content -> {
-                        if (content != null && !content.isEmpty()) {
-                            fullResponse.append(content);
-                        }
-                    })
-                    .filter(content -> content != null && !content.isEmpty())
-                    .map(content -> content + "\n\n")
-            ),
             resource -> {
-                log.info("Stream ended for conversation: {}, response length: {}", 
-                    finalConversationId, fullResponse.length());
+                try {
+                    AgentOrchestratorService.AgentResult agentResult = 
+                            agentOrchestratorService.processUserQuery(userId, userMessage);
+                    
+                    log.info("[流式大师] 意图识别完成: {}", agentResult.intent());
+
+                    return Flux.concat(
+                        Flux.just(SESSION_ID_PREFIX + finalConversationId + SESSION_ID_SUFFIX + "\n\n"),
+                        agentResult.finalAnswerStream()
+                    );
+                } catch (Exception e) {
+                    log.error("流式多智能体编排失败: userId={}", userId, e);
+                    return Flux.just(SESSION_ID_PREFIX + finalConversationId + SESSION_ID_SUFFIX + "\n\n",
+                                     "抱歉，系统思考时遇到问题，请稍后再试。");
+                }
+            },
+            resource -> {
+                log.info("Stream ended for conversation: {}", finalConversationId);
             }
         ).timeout(Duration.ofSeconds(120));
     }

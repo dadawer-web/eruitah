@@ -1,11 +1,10 @@
 package com.chat.ai.service;
 
+import com.chat.ai.config.WebSearchToolConfig.SearchRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.document.Document;
-import org.springframework.ai.model.function.FunctionCallback;
 import org.springframework.ai.vectorstore.VectorStore;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -14,24 +13,31 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 public class AgentOrchestratorService {
 
-    private final ObjectProvider<ChatClient.Builder> chatClientBuilderProvider;
+    private final ChatClient smartChatClient;
+    private final ChatClient fastChatClient;
     private final VectorStore vectorStore;
-    private final FunctionCallback cppCompilerToolCallback;
     private final ExamStateManager examStateManager;
     private final QueryRewriteService queryRewriteService;
     private final HybridRetrievalService hybridRetrievalService;
     private final RerankerService rerankerService;
     private final GraphExamService graphExamService;
+    private final Function<SearchRequest, String> webSearchTool;
 
     private static final Set<String> EXAM_KEYWORDS = Set.of(
         "刷题", "抽卡", "考考我", "测试", "出题", "做题", "测验", "考试", "练习",
         "出一道", "来一道", "给我出", "出个题", "题目", "考我"
+    );
+
+    private static final Set<String> WEB_SEARCH_KEYWORDS = Set.of(
+        "分数线", "录取", "招生", "最新", "今年", "2024", "2025", "2026",
+        "新闻", "资讯", "政策", "变化", "调整", "公布", "发布"
     );
 
     private static final String ROUTER_SYSTEM_PROMPT = """
@@ -105,10 +111,8 @@ public class AgentOrchestratorService {
         4. 题目要有一定难度，能考察对概念的深入理解
         
         【JSON格式要求 - 极其重要】：
-        - 只输出JSON，不要有任何其他文字
-        - JSON字符串中不能包含双引号，请用单引号代替或省略
-        - JSON字符串中不能包含换行符，请用空格代替
-        - 确保JSON格式完全正确，可以被解析器解析
+        - 请仅输出合法的 JSON 字符串，不要包含任何 Markdown 标记（如 ```json）或其他说明文字。
+        - 必须使用双引号（"）来包裹 JSON 的键和值。
         
         输出格式示例：
         {"question":"TCP建立连接需要几次握手","optionA":"1次","optionB":"2次","optionC":"3次","optionD":"4次","answer":"C","analysis":"TCP采用三次握手建立连接，确保双方收发能力正常。"}
@@ -140,22 +144,24 @@ public class AgentOrchestratorService {
         """;
 
     public AgentOrchestratorService(
-            ObjectProvider<ChatClient.Builder> chatClientBuilderProvider,
+            @Qualifier("smartChatClient") ChatClient smartChatClient,
+            @Qualifier("fastChatClient") ChatClient fastChatClient,
             VectorStore vectorStore,
-            @Qualifier("cppCompilerToolCallback") FunctionCallback cppCompilerToolCallback,
             ExamStateManager examStateManager,
             QueryRewriteService queryRewriteService,
             HybridRetrievalService hybridRetrievalService,
             RerankerService rerankerService,
-            GraphExamService graphExamService) {
-        this.chatClientBuilderProvider = chatClientBuilderProvider;
+            GraphExamService graphExamService,
+            @Qualifier("webSearchTool") Function<SearchRequest, String> webSearchTool) {
+        this.smartChatClient = smartChatClient;
+        this.fastChatClient = fastChatClient;
         this.vectorStore = vectorStore;
-        this.cppCompilerToolCallback = cppCompilerToolCallback;
         this.examStateManager = examStateManager;
         this.queryRewriteService = queryRewriteService;
         this.hybridRetrievalService = hybridRetrievalService;
         this.rerankerService = rerankerService;
         this.graphExamService = graphExamService;
+        this.webSearchTool = webSearchTool;
     }
 
     public AgentResult processUserQuery(String userMessage) {
@@ -166,13 +172,20 @@ public class AgentOrchestratorService {
         log.info("=== 开始多智能体工作流处理 ===");
         log.info("用户输入: {}, userId: {}", userMessage, userId);
 
+        boolean isExamCommand = detectExamIntent(userMessage);
+
         if (userId != null && examStateManager.isInExamState(userId)) {
-            log.info("[ExamSkill] 检测到用户 {} 处于考试状态，路由到判卷工作流", userId);
-            String gradingResult = executeGradingWorkflow(userId, userMessage);
-            return new AgentResult("技能:判卷", gradingResult, simulateTyping(gradingResult));
+            if (isExamCommand) {
+                log.info("[ExamSkill] 用户在考试状态下强制请求新题目，丢弃旧状态");
+                examStateManager.exitExamState(userId);
+            } else {
+                log.info("[ExamSkill] 检测到用户 {} 处于考试状态，路由到判卷工作流", userId);
+                String gradingResult = executeGradingWorkflow(userId, userMessage);
+                return new AgentResult("技能:判卷", gradingResult, simulateTyping(gradingResult));
+            }
         }
 
-        if (userId != null && detectExamIntent(userMessage)) {
+        if (userId != null && isExamCommand) {
             log.info("[ExamSkill] 检测到出题意图，路由到出题工作流, userId: {}", userId);
             String examResult = executeExamSkillWorkflow(userId, userMessage);
             return new AgentResult("技能:出题", examResult, simulateTyping(examResult));
@@ -301,6 +314,7 @@ public class AgentOrchestratorService {
 
         try {
             List<String> subQueries = queryRewriteService.rewriteQuery(effectiveQuery);
+            log.info("[ExamSkill:知识召回] Query改写完成，生成 {} 个子问题", subQueries.size());
             List<Document> candidateDocs = hybridRetrievalService.hybridSearch(subQueries);
             
             String rerankQuery = targetConcept != null ? targetConcept : 
@@ -326,7 +340,6 @@ public class AgentOrchestratorService {
                 for (int attempt = 1; attempt <= 2; attempt++) {
                     log.info("[ExamSkill:出题] 第{}次尝试生成题目...", attempt);
                     
-                    ChatClient extractorClient = chatClientBuilderProvider.getObject().build();
                     String prompt = "用户请求：" + userMessage + "\n\n";
                     if (targetSubject != null) {
                         prompt += "【科目限定】必须出" + targetSubject + "相关的题目，绝对不能跨学科！\n\n";
@@ -336,7 +349,7 @@ public class AgentOrchestratorService {
                     }
                     prompt += "请基于以下综合材料出一道408选择题：\n\n" + combinedContext;
                     
-                    String extractionResult = extractorClient.prompt()
+                    String extractionResult = fastChatClient.prompt()
                         .system(EXAM_QUESTION_EXTRACTOR_PROMPT)
                         .user(prompt)
                         .call()
@@ -398,6 +411,8 @@ public class AgentOrchestratorService {
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
             mapper.configure(com.fasterxml.jackson.core.JsonParser.Feature.ALLOW_UNQUOTED_CONTROL_CHARS, true);
             mapper.configure(com.fasterxml.jackson.core.JsonParser.Feature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER, true);
+            mapper.configure(com.fasterxml.jackson.core.JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
+            mapper.configure(com.fasterxml.jackson.core.JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
             
             var node = mapper.readTree(cleaned);
 
@@ -488,24 +503,27 @@ public class AgentOrchestratorService {
         String gradingResult = performGrading(context.questionStem(), context.standardAnswer(), userAnswer);
 
         int score = extractScoreFromGrading(gradingResult);
-        graphExamService.processExamAnswer(
-            String.valueOf(userId), 
-            context.questionStem(), 
-            userAnswer, 
-            context.standardAnswer(), 
-            score
-        );
-        log.info("[ExamSkill:图谱联动] 已更新用户 {} 的知识图谱掌握度, 得分: {}", userId, score);
+        
+        final ExamStateManager.ExamContext finalContext = context;
+        new Thread(() -> {
+            try {
+                graphExamService.processExamAnswer(
+                    String.valueOf(userId), 
+                    finalContext.questionStem(), 
+                    userAnswer, 
+                    finalContext.standardAnswer(), 
+                    score
+                );
+                log.info("[ExamSkill:异步图谱联动] 已更新用户 {} 的知识图谱掌握度, 得分: {}", userId, score);
+            } catch (Exception e) {
+                log.error("[ExamSkill:异步图谱联动] 异步更新图谱失败", e);
+            }
+        }).start();
 
         examStateManager.exitExamState(userId);
         log.info("[ExamSkill:判卷] 判卷完成，已清除用户 {} 的考试状态", userId);
 
-        String weakPointHint = graphExamService.findCriticalWeakPoint(String.valueOf(userId))
-            .map(wp -> String.format("\n\n🎯 图谱分析：建议重点复习「%s」（影响 %d 个后续考点）", 
-                wp.conceptName(), wp.impactCount()))
-            .orElse("");
-
-        return gradingResult + weakPointHint;
+        return gradingResult;
     }
 
     private int extractScoreFromGrading(String gradingResult) {
@@ -525,8 +543,6 @@ public class AgentOrchestratorService {
     }
 
     private String performGrading(String questionStem, String standardAnswer, String userAnswer) {
-        ChatClient gradingClient = chatClientBuilderProvider.getObject().build();
-
         String gradingPrompt = String.format("""
             原始题目：
             %s
@@ -540,7 +556,7 @@ public class AgentOrchestratorService {
             请严格按照评分规则，对比用户回答和标准答案，给出评分和解析。
             """, questionStem, standardAnswer, userAnswer);
 
-        String result = gradingClient.prompt()
+        String result = fastChatClient.prompt()
             .system(GRADING_SYSTEM_PROMPT)
             .user(gradingPrompt)
             .call()
@@ -552,9 +568,7 @@ public class AgentOrchestratorService {
     private String routeIntent(String userMessage) {
         log.debug("[Router] 开始意图识别...");
 
-        ChatClient routerClient = chatClientBuilderProvider.getObject().build();
-
-        String response = routerClient.prompt()
+        String response = fastChatClient.prompt()
             .system(ROUTER_SYSTEM_PROMPT)
             .user(userMessage)
             .call()
@@ -575,93 +589,20 @@ public class AgentOrchestratorService {
         return intent;
     }
 
-    private String solve(String userMessage, String intent) {
-        log.debug("[Solver] 开始解答生成，意图: {}", intent);
-
-        ChatClient solverClient;
-        String systemPrompt;
-
-        switch (intent) {
-            case "代码求助":
-                systemPrompt = SOLVER_CODE_SYSTEM_PROMPT;
-                solverClient = chatClientBuilderProvider.getObject()
-                    .defaultFunctions(cppCompilerToolCallback)
-                    .build();
-                log.info("[Solver] 代码求助模式：已挂载 cppCompilerTool");
-                break;
-
-            case "理论解答":
-                systemPrompt = SOLVER_THEORY_SYSTEM_PROMPT;
-
-                List<String> subQueries = queryRewriteService.rewriteQuery(userMessage);
-                log.info("[RAG] Query改写完成，生成 {} 个子问题", subQueries.size());
-
-                List<Document> candidateDocs = hybridRetrievalService.hybridSearch(subQueries);
-                log.info("[RAG] 混合召回完成，候选文档数: {}", candidateDocs.size());
-
-                List<Document> rerankedDocs = rerankerService.rerank(userMessage, candidateDocs);
-                log.info("[RAG] 重排完成，最终文档数: {}", rerankedDocs.size());
-
-                String knowledgeContext = rerankedDocs.stream()
-                    .map(doc -> {
-                        String source = (String) doc.getMetadata().getOrDefault("source_file", "种子知识");
-                        return "【来源: " + source + "】\n" + doc.getContent();
-                    })
-                    .collect(Collectors.joining("\n\n---\n\n"));
-
-                String ragEnhancedPrompt = SOLVER_THEORY_SYSTEM_PROMPT + "\n\n" +
-                    "【以下是从知识库中检索到的相关内容（经过混合检索+精排重排），请优先参考】：\n" +
-                    knowledgeContext;
-
-                solverClient = chatClientBuilderProvider.getObject()
-                    .defaultFunctions("webSearchTool")
-                    .build();
-                log.info("[Solver] 理论解答模式：工业级混合检索RAG + webSearchTool");
-
-                return solverClient.prompt()
-                    .system(ragEnhancedPrompt)
-                    .user(userMessage)
-                    .call()
-                    .content();
-
-            case "日常闲聊":
-            default:
-                systemPrompt = SOLVER_CHAT_SYSTEM_PROMPT;
-                solverClient = chatClientBuilderProvider.getObject().build();
-                break;
-        }
-
-        return solverClient.prompt()
-            .system(systemPrompt)
-            .user(userMessage)
-            .call()
-            .content();
-    }
-
     private SolveResult solveWithStream(String userMessage, String intent) {
         log.debug("[Solver] 开始流式解答生成，意图: {}", intent);
 
-        ChatClient solverClient;
-        String systemPrompt;
-        String draftAnswer = "";
-
         switch (intent) {
             case "代码求助":
-                systemPrompt = SOLVER_CODE_SYSTEM_PROMPT;
-                solverClient = chatClientBuilderProvider.getObject()
-                    .defaultFunctions(cppCompilerToolCallback)
-                    .build();
-                log.info("[Solver] 代码求助模式：已挂载 cppCompilerTool");
-                draftAnswer = solverClient.prompt()
-                    .system(systemPrompt)
+                log.info("[Solver] 代码求助模式：使用 smartChatClient (已挂载沙盒)");
+                Flux<String> codeStream = smartChatClient.prompt()
+                    .system(SOLVER_CODE_SYSTEM_PROMPT)
                     .user(userMessage)
-                    .call()
+                    .stream()
                     .content();
-                return new SolveResult(draftAnswer, Flux.just(draftAnswer));
+                return new SolveResult("正在分析代码...", codeStream);
 
             case "理论解答":
-                systemPrompt = SOLVER_THEORY_SYSTEM_PROMPT;
-
                 List<String> subQueries = queryRewriteService.rewriteQuery(userMessage);
                 log.info("[RAG] Query改写完成，生成 {} 个子问题", subQueries.size());
 
@@ -678,59 +619,50 @@ public class AgentOrchestratorService {
                     })
                     .collect(Collectors.joining("\n\n---\n\n"));
 
+                String webSearchContext = "";
+                boolean needsWebSearch = WEB_SEARCH_KEYWORDS.stream()
+                    .anyMatch(keyword -> userMessage.contains(keyword));
+                
+                if (needsWebSearch) {
+                    log.info("[WebSearch] 检测到需要联网搜索的关键词，开始搜索...");
+                    try {
+                        String searchResult = webSearchTool.apply(new SearchRequest(userMessage));
+                        log.info("[WebSearch] 搜索完成，结果长度: {}", searchResult.length());
+                        webSearchContext = "\n\n【以下是从互联网搜索到的最新信息】：\n" + searchResult;
+                    } catch (Exception e) {
+                        log.warn("[WebSearch] 搜索失败: {}", e.getMessage());
+                        webSearchContext = "\n\n【联网搜索失败，请告知用户无法获取最新信息】";
+                    }
+                }
+
                 String ragEnhancedPrompt = SOLVER_THEORY_SYSTEM_PROMPT + "\n\n" +
                     "【以下是从知识库中检索到的相关内容（经过混合检索+精排重排），请优先参考】：\n" +
-                    knowledgeContext;
+                    knowledgeContext + webSearchContext;
 
-                solverClient = chatClientBuilderProvider.getObject()
-                    .defaultFunctions("webSearchTool")
-                    .build();
-                log.info("[Solver] 理论解答模式：工业级混合检索RAG + webSearchTool + 流式输出");
-
-                draftAnswer = "正在基于知识库生成回答...";
+                log.info("[Solver] 理论解答模式：使用 fastChatClient (工业级混合检索RAG + 手动联网搜索)");
                 
-                Flux<String> theoryStream = solverClient.prompt()
+                Flux<String> theoryStream = fastChatClient.prompt()
                     .system(ragEnhancedPrompt)
                     .user(userMessage)
                     .stream()
-                    .content();
+                    .content()
+                    .doOnSubscribe(s -> log.info("[Solver] 流式订阅开始"))
+                    .doOnNext(chunk -> log.debug("[Solver] 收到chunk: {}", chunk != null ? chunk.length() : 0))
+                    .doOnError(e -> log.error("[Solver] 流式处理错误: {}", e.getMessage()))
+                    .doOnComplete(() -> log.info("[Solver] 流式处理完成"));
                 
-                return new SolveResult(draftAnswer, theoryStream);
+                return new SolveResult("正在基于知识库和互联网生成回答...", theoryStream);
 
             case "日常闲聊":
             default:
-                systemPrompt = SOLVER_CHAT_SYSTEM_PROMPT;
-                solverClient = chatClientBuilderProvider.getObject().build();
-                
-                Flux<String> chatStream = solverClient.prompt()
-                    .system(systemPrompt)
+                log.info("[Solver] 日常闲聊模式：使用 fastChatClient");
+                Flux<String> chatStream = fastChatClient.prompt()
+                    .system(SOLVER_CHAT_SYSTEM_PROMPT)
                     .user(userMessage)
                     .stream()
                     .content();
-                
                 return new SolveResult("闲聊回复...", chatStream);
         }
-    }
-
-    private String reflect(String userMessage, String draftAnswer) {
-        log.debug("[Reflection] 开始审查反思...");
-
-        ChatClient reviewerClient = chatClientBuilderProvider.getObject().build();
-
-        String reviewPrompt = String.format("""
-            原始问题：%s
-            
-            待审核的答案：
-            %s
-            
-            请审核以上答案。
-            """, userMessage, draftAnswer);
-
-        return reviewerClient.prompt()
-            .system(REVIEWER_SYSTEM_PROMPT)
-            .user(reviewPrompt)
-            .call()
-            .content();
     }
 
     public record AgentResult(

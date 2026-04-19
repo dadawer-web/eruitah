@@ -34,10 +34,22 @@ public class AgentController {
             AgentOrchestratorService.AgentResult result = 
                 agentOrchestratorService.processUserQuery(request.getMessage());
 
-            String finalAnswer = result.finalAnswerStream()
+            java.util.List<String> chunks = result.finalAnswerStream()
                 .collectList()
-                .block()
-                .stream()
+                .block();
+            
+            if (chunks == null || chunks.isEmpty()) {
+                log.warn("流式响应为空，返回默认消息");
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", true);
+                response.put("intent", result.intent());
+                response.put("draftAnswer", result.draftAnswer());
+                response.put("finalAnswer", "抱歉，AI响应为空，请稍后重试。");
+                return ResponseEntity.ok(response);
+            }
+
+            String finalAnswer = chunks.stream()
+                .filter(java.util.Objects::nonNull)
                 .collect(java.util.stream.Collectors.joining());
 
             Map<String, Object> response = new HashMap<>();
@@ -50,6 +62,11 @@ public class AgentController {
 
         } catch (Exception e) {
             log.error("多智能体工作流处理失败", e);
+            Throwable cause = e.getCause();
+            if (cause != null) {
+                log.error("根本原因: {}", cause.getMessage());
+                cause.printStackTrace();
+            }
             return ResponseEntity.internalServerError()
                 .body(createErrorMap("处理失败: " + e.getMessage()));
         }

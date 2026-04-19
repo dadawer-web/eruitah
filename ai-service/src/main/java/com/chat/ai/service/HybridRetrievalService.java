@@ -94,30 +94,31 @@ public class HybridRetrievalService {
 
                 Map<String, Object> metadata = new HashMap<>();
                 String id = redisDoc.getId();
-                if (id.startsWith(KEY_PREFIX)) {
+                if (id != null && id.startsWith(KEY_PREFIX)) {
                     metadata.put("redis_doc_id", id);
                 }
 
                 for (Map.Entry<String, Object> entry : redisDoc.getProperties()) {
                     String key = entry.getKey();
-                    if (key.equals("content") || key.equals("embedding")) continue;
+                    if (key == null || key.equals("content") || key.equals("embedding")) continue;
                     Object value = entry.getValue();
-                    if (value != null) {
-                        try {
-                            String strValue = value.toString();
+                    if (value == null) continue;
+                    try {
+                        String strValue = value.toString();
+                        if (strValue != null && !strValue.isEmpty()) {
                             if (key.startsWith("metadata_")) {
                                 metadata.put(key.substring("metadata_".length()), strValue);
                             } else {
                                 metadata.put(key, strValue);
                             }
-                        } catch (Exception e) {
-                            log.debug("[HybridRetrieval] 跳过无法转换的字段: {}", key);
                         }
+                    } catch (Exception e) {
+                        log.debug("[HybridRetrieval] 跳过无法转换的字段: {}", key);
                     }
                 }
 
                 metadata.put("retrieval_source", "bm25");
-                documents.add(new Document(id, content, metadata));
+                documents.add(new Document(id != null ? id : "unknown", content, metadata));
             }
 
             return documents;

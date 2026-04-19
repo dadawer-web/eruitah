@@ -43,7 +43,8 @@ public class GraphExamService {
         double normalizedScore = aiScore / 100.0;
 
         String cypher = """
-            MATCH (u:User {userId: $userId}), (c:Concept {name: $tagName})
+            MATCH (u:User {userId: $userId})
+            MATCH (c:Concept {name: $tagName})
             
             WITH u, c, coalesce(c.size, 5.0) AS conceptSize
             
