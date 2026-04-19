@@ -54,3 +54,10 @@ target/
 
 # 环境变量文件（包含敏感信息）
 .env
+
+# Cubism SDK 和 Live2D 模型资源（不提交到仓库）
+CubismSdkForWeb-5-r.5/
+hiyori_pro_en/
+*.cmo3
+*.can3
+*.moc3

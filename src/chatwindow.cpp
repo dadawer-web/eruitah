@@ -4,6 +4,7 @@
 #include "knowledgegraphdialog.h"
 #include "realtimevoicedialog.h"
 #include "dashboarddialog.h"
+#include "companionreadingdialog.h"
 #include <QDebug>
 #include <QDateTime>
 #include <QInputDialog>
@@ -65,7 +66,7 @@ struct EmojiLoadResult {
     QByteArray rawData;    // 原始图片数据（用于发送）
 };
 
-ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, QWidget *parent) : QMainWindow(parent), userId(userId), userName(userName), m_titleBar(nullptr), chatClient(client), loginHandled(false), friendListLoaded(false), offlineMessagesProcessed(false), isLoggingOut(false) {
+ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, QWidget *parent) : QMainWindow(parent), userId(userId), userName(userName), m_titleBar(nullptr), chatClient(client), loginHandled(false), friendListLoaded(false), offlineMessagesProcessed(false), isLoggingOut(false), m_farmDialog(nullptr), m_realtimeVoiceDialog(nullptr), m_companionReadingDialog(nullptr) {
     setWindowFlags(Qt::FramelessWindowHint);
     setAttribute(Qt::WA_TranslucentBackground, false);
     
@@ -692,6 +693,7 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     QPushButton *farmBtn = new QPushButton("🌱 408农场", toolBarWidget);
     QPushButton *knowledgeGraphBtn = new QPushButton("🧠 知识图谱", toolBarWidget);
     QPushButton *dashboardBtn = new QPushButton("📊 考情大屏", toolBarWidget);
+    QPushButton *companionReadBtn = new QPushButton("📖 AI伴学", toolBarWidget);
     QPushButton *logoutBtn = new QPushButton("注销", toolBarWidget);
     
     QString btnStyle = "QPushButton { background-color: transparent; border: none; color: #9ca3af; font-size: 13px; padding: 6px 12px; border-radius: 4px; } QPushButton:hover { background-color: #3a3a3a; color: #ececec; } QPushButton:pressed { background-color: #404040; }";
@@ -699,6 +701,7 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     QString farmBtnStyle = "QPushButton { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #22c55e, stop:1 #16a34a); border: none; color: white; font-size: 13px; padding: 6px 12px; border-radius: 4px; font-weight: bold; } QPushButton:hover { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #16a34a, stop:1 #15803d); } QPushButton:pressed { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #15803d, stop:1 #166534); }";
     QString knowledgeGraphBtnStyle = "QPushButton { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #8b5cf6, stop:1 #6366f1); border: none; color: white; font-size: 13px; padding: 6px 12px; border-radius: 4px; font-weight: bold; } QPushButton:hover { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #7c3aed, stop:1 #4f46e5); } QPushButton:pressed { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #6d28d9, stop:1 #4338ca); }";
     QString dashboardBtnStyle = "QPushButton { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #00f2fe, stop:1 #7edad2); border: none; color: #0b0f1a; font-size: 13px; padding: 6px 12px; border-radius: 4px; font-weight: bold; } QPushButton:hover { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #00d4e0, stop:1 #6bc4b8); } QPushButton:pressed { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #00b6c2, stop:1 #59b0a0); }";
+    QString companionReadBtnStyle = "QPushButton { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #7c3aed, stop:1 #a855f7); border: none; color: white; font-size: 13px; padding: 6px 12px; border-radius: 4px; font-weight: bold; } QPushButton:hover { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #6d28d9, stop:1 #9333ea); } QPushButton:pressed { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #5b21b6, stop:1 #7e22ce); }";
     addFriendBtn->setStyleSheet(btnStyle);
     createGroupBtn->setStyleSheet(btnStyle);
     joinGroupBtn->setStyleSheet(btnStyle);
@@ -707,6 +710,7 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     farmBtn->setStyleSheet(farmBtnStyle);
     knowledgeGraphBtn->setStyleSheet(knowledgeGraphBtnStyle);
     dashboardBtn->setStyleSheet(dashboardBtnStyle);
+    companionReadBtn->setStyleSheet(companionReadBtnStyle);
     logoutBtn->setStyleSheet(btnStyle);
     
     addFriendBtn->setFont(toolbarFont);
@@ -717,6 +721,7 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     farmBtn->setFont(toolbarFont);
     knowledgeGraphBtn->setFont(toolbarFont);
     dashboardBtn->setFont(toolbarFont);
+    companionReadBtn->setFont(toolbarFont);
     logoutBtn->setFont(toolbarFont);
     
     toolbarLayout->addWidget(addFriendBtn);
@@ -727,6 +732,7 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     toolbarLayout->addWidget(farmBtn);
     toolbarLayout->addWidget(knowledgeGraphBtn);
     toolbarLayout->addWidget(dashboardBtn);
+    toolbarLayout->addWidget(companionReadBtn);
     toolbarLayout->addSpacing(8);
     toolbarLayout->addWidget(new QLabel("|", toolBarWidget));
     toolbarLayout->addSpacing(8);
@@ -741,6 +747,7 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     connect(farmBtn, &QPushButton::clicked, this, &ChatWindow::onOpenFarm);
     connect(knowledgeGraphBtn, &QPushButton::clicked, this, &ChatWindow::onOpenKnowledgeGraph);
     connect(dashboardBtn, &QPushButton::clicked, this, &ChatWindow::onOpenDashboard);
+    connect(companionReadBtn, &QPushButton::clicked, this, &ChatWindow::onOpenCompanionReading);
     connect(logoutBtn, &QPushButton::clicked, this, &ChatWindow::onLogout);
     connect(changeAvatarButton, &QPushButton::clicked, this, [this, userId]() {
         // 打开文件选择对话框
@@ -2896,6 +2903,14 @@ void ChatWindow::onOpenDashboard()
     DashboardDialog *dialog = new DashboardDialog(userId, this);
     dialog->setAttribute(Qt::WA_DeleteOnClose);
     dialog->exec();
+}
+
+void ChatWindow::onOpenCompanionReading()
+{
+    if (!m_companionReadingDialog) {
+        m_companionReadingDialog = new CompanionReadingDialog(userId, this);
+    }
+    m_companionReadingDialog->exec();
 }
 
 void ChatWindow::onFarmPlantResponse(bool success, int plotId, const QString &message)

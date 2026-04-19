@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI伴读数字人 - Hiyori</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+    overflow: hidden;
+}
+
+#live2d-canvas {
+    width: 380px;
+    height: 480px;
+    background: transparent;
+    display: block;
+}
+
+.avatar-glow {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(124, 58, 237, 0.12) 0%, transparent 70%);
+    animation: pulse-glow 3s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 0;
+}
+
+@keyframes pulse-glow {
+    0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.6; }
+    50% { transform: translateX(-50%) scale(1.1); opacity: 1; }
+}
+
+.speaking .avatar-glow {
+    background: radial-gradient(circle, rgba(0, 242, 254, 0.2) 0%, transparent 70%);
+    animation: speaking-glow 0.8s ease-in-out infinite;
+}
+
+@keyframes speaking-glow {
+    0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.8; }
+    50% { transform: translateX(-50%) scale(1.15); opacity: 1; }
+}
+
+.text-container {
+    margin-top: 8px;
+    padding: 14px 18px;
+    max-width: 340px;
+    min-height: 50px;
+    background: rgba(19, 26, 40, 0.92);
+    border: 1px solid rgba(0, 242, 254, 0.2);
+    border-radius: 12px;
+    color: #e0e6ed;
+    font-size: 13px;
+    line-height: 1.8;
+    text-align: left;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.text-container.visible {
+    opacity: 1;
+}
+
+.text-container .cursor {
+    display: inline-block;
+    width: 2px;
+    height: 14px;
+    background: #00f2fe;
+    margin-left: 2px;
+    vertical-align: text-bottom;
+    animation: blink-cursor 0.8s step-end infinite;
+}
+
+@keyframes blink-cursor {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+.status-badge {
+    margin-top: 8px;
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-size: 10px;
+    color: #8392A5;
+    background: rgba(19, 26, 40, 0.6);
+    border: 1px solid rgba(0, 242, 254, 0.1);
+    transition: all 0.3s ease;
+}
+
+.status-badge.active {
+    color: #00f2fe;
+    border-color: rgba(0, 242, 254, 0.3);
+    background: rgba(0, 242, 254, 0.1);
+}
+
+.status-badge.error {
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.3);
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.loading-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(11, 15, 26, 0.8);
+    z-index: 10;
+    transition: opacity 0.5s ease;
+}
+
+.loading-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(0, 242, 254, 0.2);
+    border-top: 3px solid #00f2fe;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+    margin-top: 12px;
+    color: #8392A5;
+    font-size: 12px;
+}
+
+.debug-log {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    max-height: 150px;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.9);
+    color: #0f0;
+    font-family: monospace;
+    font-size: 10px;
+    padding: 8px;
+    border-radius: 4px;
+    display: none;
+    z-index: 100;
+}
+
+.debug-log.visible {
+    display: block;
+}
+</style>
+</head>
+<body>
+
+<div id="canvas-container" style="position: relative;">
+    <div class="avatar-glow"></div>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text" id="loadingText">初始化中...</div>
+    </div>
+    <canvas id="live2d-canvas" width="380" height="480"></canvas>
+</div>
+
+<div class="text-container" id="textContainer">
+    <span id="displayText"></span><span class="cursor" id="cursor"></span>
+</div>
+
+<div class="status-badge" id="statusBadge">初始化中...</div>
+
+<div class="debug-log" id="debugLog"></div>
+
+<script>
+var live2dModel = null;
+var app = null;
+var audioContext = null;
+var globalAnalyser = null;
+var globalDataArray = null;
+var currentSourceNode = null;
+var typewriterTimer = null;
+var breathAnimId = null;
+var modelReady = false;
+var pendingModelPath = null;
+var currentAudioId = 0;
+
+window.currentMouthValue = 0;
+window.isPlayingVoice = false;
+
+function log(msg, type) {
+    type = type || 'info';
+    console.log('[Live2D] ' + msg);
+    
+    var debugLog = document.getElementById('debugLog');
+    var line = document.createElement('div');
+    line.style.color = type === 'error' ? '#f44' : type === 'warn' ? '#fa0' : '#0f0';
+    line.textContent = new Date().toLocaleTimeString() + ' ' + msg;
+    debugLog.appendChild(line);
+    debugLog.classList.add('visible');
+    debugLog.scrollTop = debugLog.scrollHeight;
+}
+
+function updateStatus(text, type) {
+    var statusBadge = document.getElementById('statusBadge');
+    statusBadge.textContent = text;
+    statusBadge.classList.remove('active', 'error');
+    if (type) statusBadge.classList.add(type);
+}
+
+function hideLoading() {
+    document.getElementById('loadingOverlay').classList.add('hidden');
+}
+
+function showLoading(text) {
+    document.getElementById('loadingText').textContent = text;
+    document.getElementById('loadingOverlay').classList.remove('hidden');
+}
+
+function loadScript(src, callback) {
+    var script = document.createElement('script');
+    script.src = src;
+    script.onload = function() {
+        log('脚本加载完成: ' + src);
+        if (callback) callback();
+    };
+    script.onerror = function() {
+        log('脚本加载失败: ' + src, 'error');
+        updateStatus('脚本加载失败', 'error');
+    };
+    document.head.appendChild(script);
+}
+
+function loadScriptsSequentially(scripts, index, finalCallback) {
+    if (index >= scripts.length) {
+        if (finalCallback) finalCallback();
+        return;
+    }
+    
+    loadScript(scripts[index], function() {
+        loadScriptsSequentially(scripts, index + 1, finalCallback);
+    });
+}
+
+function startMouthRenderLoop() {
+    if (!globalAnalyser || !globalDataArray) return;
+    
+    var debugCounter = 0;
+    
+    function renderMouth() {
+        if (!window.isPlayingVoice || !globalAnalyser) return;
+        
+        globalAnalyser.getByteFrequencyData(globalDataArray);
+        
+        var sum = 0;
+        for (var i = 0; i < globalDataArray.length; i++) {
+            sum += globalDataArray[i];
+        }
+        var volume = sum / globalDataArray.length;
+        
+        window.currentMouthValue = Math.min(volume / 20.0, 1.0);
+        window.currentMouthValue = Math.max(0, window.currentMouthValue);
+        
+        debugCounter++;
+        if (debugCounter % 30 === 0) {
+            log('音量: ' + volume.toFixed(2) + ' 嘴巴: ' + window.currentMouthValue.toFixed(2));
+        }
+        
+        requestAnimationFrame(renderMouth);
+    }
+    
+    renderMouth();
+}
+
+function initAfterScriptsLoaded() {
+    log('初始化...');
+    log('Live2DCubismCore: ' + (typeof Live2DCubismCore !== 'undefined' ? '已加载' : '未加载'));
+    log('PIXI: ' + (typeof PIXI !== 'undefined' ? '已加载' : '未加载'));
+    log('PIXI.live2d: ' + (typeof PIXI !== 'undefined' && PIXI.live2d ? '已加载' : '未加载'));
+    
+    if (typeof PIXI === 'undefined') {
+        log('PIXI 未加载', 'error');
+        updateStatus('PIXI 加载失败', 'error');
+        return;
+    }
+    
+    if (!PIXI.live2d || !PIXI.live2d.Live2DModel) {
+        log('PIXI.live2d 未正确注册', 'error');
+        updateStatus('Live2D 插件加载失败', 'error');
+        return;
+    }
+    
+    updateStatus('准备就绪');
+    
+    if (pendingModelPath) {
+        log('处理待加载模型: ' + pendingModelPath);
+        doLoadModel(pendingModelPath);
+        pendingModelPath = null;
+    }
+}
+
+function initPixi(callback) {
+    log('初始化 PIXI.js...');
+    
+    var canvas = document.getElementById('live2d-canvas');
+    
+    try {
+        app = new PIXI.Application({
+            view: canvas,
+            width: 380,
+            height: 480,
+            backgroundAlpha: 0,
+            antialias: true
+        });
+        
+        log('PIXI.js 初始化完成');
+        log('渲染器类型: ' + app.renderer.type + ' (1=WebGL, 2=Canvas)');
+        
+        if (app.renderer.type === 2) {
+            log('警告: 使用 Canvas 渲染器，Live2D 可能无法正常工作', 'warn');
+        }
+        
+        if (callback) callback();
+        
+    } catch(e) {
+        log('PIXI.js 初始化失败: ' + e.message, 'error');
+        updateStatus('渲染器初始化失败', 'error');
+    }
+}
+
+function doLoadModel(modelPath) {
+    log('开始加载模型: ' + modelPath);
+    showLoading('正在加载学姐...');
+    updateStatus('加载模型中...');
+
+    if (!app) {
+        initPixi(function() {
+            doLoadModel(modelPath);
+        });
+        return;
+    }
+
+    if (!PIXI.live2d || !PIXI.live2d.Live2DModel) {
+        log('PIXI.live2d.Live2DModel 不可用', 'error');
+        updateStatus('Live2D 插件未加载', 'error');
+        return;
+    }
+
+    PIXI.live2d.Live2DModel.from(modelPath).then(function(model) {
+        log('模型加载成功!', 'info');
+        live2dModel = model;
+
+        var scale = Math.min(380 / model.width, 480 / model.height) * 0.85;
+        model.scale.set(scale);
+        model.x = (380 - model.width * scale) / 2;
+        model.y = (480 - model.height * scale) / 2 + 20;
+
+        app.stage.addChild(model);
+
+        log('劫持 Live2D 底层更新钩子...');
+        model.internalModel.on('beforeModelUpdate', function() {
+            if (window.isPlayingVoice) {
+                try {
+                    this.coreModel.setParameterValueById('ParamMouthOpenY', window.currentMouthValue);
+                } catch(e) {}
+            }
+        });
+
+        modelReady = true;
+        hideLoading();
+        updateStatus('学姐就绪', 'active');
+        
+        setTimeout(function() {
+            updateStatus('等待中...');
+        }, 2000);
+
+        startBreathAnimation();
+        startEyeTracking();
+        tryIdleMotion();
+
+    }).catch(function(error) {
+        log('模型加载失败: ' + error.message, 'error');
+        console.error('Live2D load error:', error);
+        showLoading('模型加载失败: ' + error.message);
+        updateStatus('加载失败', 'error');
+    });
+}
+
+window.loadModel = function(modelPath) {
+    log('loadModel() 被调用: ' + modelPath);
+    
+    if (typeof PIXI === 'undefined' || !PIXI.live2d) {
+        log('PIXI 或 live2d 尚未加载，保存路径等待...', 'warn');
+        pendingModelPath = modelPath;
+        return;
+    }
+    
+    doLoadModel(modelPath);
+};
+
+function tryIdleMotion() {
+    if (!live2dModel || !live2dModel.internalModel) return;
+    try {
+        var motionManager = live2dModel.internalModel.motionManager;
+        if (motionManager && live2dModel.internalModel.settings) {
+            var idleMotions = live2dModel.internalModel.settings.motions && live2dModel.internalModel.settings.motions.Idle;
+            if (idleMotions && idleMotions.length > 0) {
+                var idx = Math.floor(Math.random() * idleMotions.length);
+                live2dModel.motion('Idle', idx, 3);
+                log('播放待机动作: Idle[' + idx + ']');
+            }
+        }
+    } catch(e) {
+        log('待机动作失败: ' + e.message, 'warn');
+    }
+}
+
+function startBreathAnimation() {
+    if (breathAnimId) cancelAnimationFrame(breathAnimId);
+    function breathLoop() {
+        if (live2dModel && !window.isPlayingVoice) {
+            var breathVal = (Math.sin(Date.now() / 1000) + 1) / 2 * 0.5 + 0.2;
+            try {
+                live2dModel.internalModel.coreModel.setParameterValueById('ParamBreath', breathVal);
+            } catch(e) {}
+        }
+        breathAnimId = requestAnimationFrame(breathLoop);
+    }
+    breathLoop();
+}
+
+function startEyeTracking() {
+    var canvasContainer = document.getElementById('canvas-container');
+    document.addEventListener('mousemove', function(e) {
+        if (!live2dModel || window.isPlayingVoice) return;
+        try {
+            var rect = canvasContainer.getBoundingClientRect();
+            var cx = rect.left + rect.width / 2;
+            var cy = rect.top + rect.height / 2;
+            var dx = (e.clientX - cx) / (window.innerWidth / 2);
+            var dy = (e.clientY - cy) / (window.innerHeight / 2);
+            dx = Math.max(-1, Math.min(1, dx));
+            dy = Math.max(-1, Math.min(1, dy));
+            live2dModel.internalModel.coreModel.setParameterValueById('ParamEyeBallX', dx);
+            live2dModel.internalModel.coreModel.setParameterValueById('ParamEyeBallY', -dy);
+            live2dModel.internalModel.coreModel.setParameterValueById('ParamAngleX', dx * 15);
+            live2dModel.internalModel.coreModel.setParameterValueById('ParamAngleY', -dy * 10);
+        } catch(e) {}
+    });
+}
+
+function stopAudioLipSync() {
+    window.isPlayingVoice = false;
+    window.currentMouthValue = 0;
+    document.getElementById('canvas-container').classList.remove('speaking');
+    updateStatus('讲解完毕');
+
+    if (currentSourceNode) {
+        try { currentSourceNode.stop(); } catch(e) {}
+        try { currentSourceNode.disconnect(); } catch(e) {}
+        currentSourceNode = null;
+    }
+    if (globalAnalyser) {
+        try { globalAnalyser.disconnect(); } catch(e) {}
+        globalAnalyser = null;
+    }
+    globalDataArray = null;
+
+    if (live2dModel) {
+        try {
+            live2dModel.internalModel.coreModel.setParameterValueById('ParamMouthOpenY', 0);
+        } catch(e) {}
+    }
+
+    tryIdleMotion();
+
+    setTimeout(function() {
+        updateStatus('等待中...');
+    }, 2000);
+}
+
+function typewriterEffect(text) {
+    var displayText = document.getElementById('displayText');
+    var textContainer = document.getElementById('textContainer');
+    var cursor = document.getElementById('cursor');
+    
+    if (typewriterTimer) {
+        clearInterval(typewriterTimer);
+    }
+
+    displayText.textContent = '';
+    textContainer.classList.add('visible');
+    cursor.style.display = 'inline-block';
+
+    var index = 0;
+    typewriterTimer = setInterval(function() {
+        if (index < text.length) {
+            displayText.textContent += text[index];
+            index++;
+        } else {
+            clearInterval(typewriterTimer);
+            typewriterTimer = null;
+            setTimeout(function() {
+                cursor.style.display = 'none';
+            }, 1500);
+        }
+    }, 60);
+}
+
+window.playAvatarAudio = function(audioUrl, text) {
+    log('收到驱动指令');
+    
+    currentAudioId++;
+    var myAudioId = currentAudioId;
+    
+    if (window.isPlayingVoice) {
+        log('停止当前播放...');
+        if (currentSourceNode) {
+            try { currentSourceNode.stop(); } catch(e) {}
+            try { currentSourceNode.disconnect(); } catch(e) {}
+            currentSourceNode = null;
+        }
+        window.isPlayingVoice = false;
+        window.currentMouthValue = 0;
+    }
+    
+    if (globalAnalyser) {
+        try { globalAnalyser.disconnect(); } catch(e) {}
+        globalAnalyser = null;
+    }
+    globalDataArray = null;
+
+    if (text && text.trim()) {
+        typewriterEffect(text);
+    }
+
+    if (!audioUrl || audioUrl.trim() === '' || audioUrl === 'null' || audioUrl === 'undefined') {
+        updateStatus('仅文字讲解', 'active');
+        setTimeout(function() {
+            updateStatus('等待中...');
+        }, 5000);
+        return;
+    }
+
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    
+    if (audioContext.state === 'suspended') {
+        audioContext.resume();
+    }
+
+    log('开始解码 Base64 音频...');
+    
+    var base64Data = audioUrl.split(',')[1];
+    var binaryString = atob(base64Data);
+    var bytes = new Uint8Array(binaryString.length);
+    for (var i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+    }
+    
+    log('音频数据大小: ' + bytes.length + ' bytes');
+    
+    audioContext.decodeAudioData(bytes.buffer, function(audioBuffer) {
+        if (myAudioId !== currentAudioId) {
+            log('音频已过期，跳过播放');
+            return;
+        }
+        
+        log('音频解码成功! 时长: ' + audioBuffer.duration.toFixed(2) + 's');
+        
+        globalAnalyser = audioContext.createAnalyser();
+        globalAnalyser.fftSize = 256;
+        globalAnalyser.smoothingTimeConstant = 0.6;
+        
+        globalDataArray = new Uint8Array(globalAnalyser.frequencyBinCount);
+        
+        currentSourceNode = audioContext.createBufferSource();
+        currentSourceNode.buffer = audioBuffer;
+        currentSourceNode.connect(globalAnalyser);
+        globalAnalyser.connect(audioContext.destination);
+        
+        log('音频节点连接成功');
+        
+        window.isPlayingVoice = true;
+        window.currentMouthValue = 0;
+        document.getElementById('canvas-container').classList.add('speaking');
+        updateStatus('学姐讲解中...', 'active');
+
+        if (live2dModel) {
+            try {
+                live2dModel.internalModel.coreModel.setParameterValueById('ParamAngleX', 0);
+                live2dModel.internalModel.coreModel.setParameterValueById('ParamAngleY', 0);
+            } catch(e) {}
+        }
+        
+        currentSourceNode.onended = function() {
+            if (myAudioId !== currentAudioId) return;
+            log('音频播放结束');
+            stopAudioLipSync();
+        };
+        
+        currentSourceNode.start(0);
+        log('音频开始播放');
+        
+        startMouthRenderLoop();
+        
+    }, function(error) {
+        if (myAudioId !== currentAudioId) {
+            log('音频已过期，忽略解码失败');
+            return;
+        }
+        log('音频解码失败: ' + error, 'error');
+        updateStatus('音频解码失败', 'error');
+    });
+};
+
+log('avatar.html 脚本已解析');
+log('开始加载依赖脚本...');
+
+var scripts = [
+    'https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js',
+    'https://cdn.jsdelivr.net/npm/pixi.js@6.5.10/dist/browser/pixi.min.js',
+    'https://cdn.jsdelivr.net/npm/pixi-live2d-display@0.4.0/dist/cubism4.min.js'
+];
+
+loadScriptsSequentially(scripts, 0, function() {
+    log('所有脚本加载完成');
+    window.PIXI = PIXI;
+    initAfterScriptsLoaded();
+});
+</script>
+
+</body>
+</html>

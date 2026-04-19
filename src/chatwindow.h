@@ -57,6 +57,7 @@ class FarmDialog;
 class KnowledgeGraphDialog;
 class RealtimeVoiceDialog;
 class DashboardDialog;
+class CompanionReadingDialog;
 
 // 未处理消息结构体
 struct PendingMessage {
@@ -196,6 +197,7 @@ private:
     FarmDialog *m_farmDialog;
     RealtimeVoiceDialog *m_realtimeVoiceDialog;
     QPushButton *m_realtimeVoiceBtn;
+    CompanionReadingDialog *m_companionReadingDialog;
 
     // 查找联系人方法
     QString getUserNameById(int userId);
@@ -301,6 +303,8 @@ public slots:
     
     void onRealtimeVoiceCall();
     void onRealtimeVoiceCallEnded();
+
+    void onOpenCompanionReading();
 
 protected:
     void closeEvent(QCloseEvent *event) override;

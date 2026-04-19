@@ -11,6 +11,8 @@
 #include <QApplication>
 #include <QCoreApplication>
 #include <QFontDatabase>
+#include <QWebEngineProfile>
+#include <QWebEngineSettings>
 // 文本编码相关的头文件 - Qt 5.14+ 已弃用 QTextCodec::setCodecForLocale
 // #include <QTextCodec>
 // 包含定时器相关的头文件
@@ -36,10 +38,20 @@ int main(int argc, char *argv[]) {
     }
     #endif
     
-    // 【新增】这一行非常关键！解决Windows/虚拟机下界面空白、文字不显示的问题
-    // 强制 Qt 使用 CPU 进行界面绘制，绕过可能有问题的显卡驱动
-    QCoreApplication::setAttribute(Qt::AA_UseSoftwareOpenGL);
-
+    // 【注意】AA_UseSoftwareOpenGL 会导致 Qt WebEngine 无法使用 WebGL
+    // Live2D 模型需要 WebGL 支持，因此注释掉此设置
+    // 如果遇到显示问题，可以通过环境变量 QT_OPENGL=software 来启用软件渲染
+    // QCoreApplication::setAttribute(Qt::AA_UseSoftwareOpenGL);
+    
+    // 启用 Qt WebEngine 的 WebGL 支持（必须在 QApplication 创建之前设置）
+    // --ignore-gpu-blocklist: 忽略 GPU 黑名单，强制启用 WebGL
+    // --enable-webgl: 显式启用 WebGL
+    // --enable-gpu-rasterization: 启用 GPU 光栅化
+    // --disable-gpu-sandbox: 禁用 GPU 沙箱（某些系统需要）
+    qputenv("QTWEBENGINE_CHROMIUM_FLAGS", 
+            "--ignore-gpu-blocklist --enable-webgl --enable-gpu-rasterization --disable-gpu-sandbox");
+    // 2. 🚨 新加的：开启远程调试大门
+    qputenv("QTWEBENGINE_REMOTE_DEBUGGING", "9222");
     // 设置Qt属性，必须在QApplication创建之前调用
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
@@ -47,6 +59,17 @@ int main(int argc, char *argv[]) {
     // 创建Qt应用程序实例
     // QApplication是Qt GUI应用程序的核心类，管理应用程序的资源、设置和事件循环
     QApplication a(argc, argv);
+    
+    // 【关键】允许 WebEngine 自动播放音频和视频，忽略用户交互检查
+    // 解决 "play() failed because the user didn't interact with the document first" 错误
+    QWebEngineProfile::defaultProfile()->settings()->setAttribute(
+        QWebEngineSettings::PlaybackRequiresUserGesture, false
+    );
+    
+    // 允许 WebEngine 自动播放音频（解决 AudioContext 限制）
+    QWebEngineProfile::defaultProfile()->settings()->setAttribute(
+        QWebEngineSettings::JavascriptCanOpenWindows, true
+    );
     
     // [重要] 解决高分屏(High DPI)下字体可能极其微小或不显示的问题
     // Qt 5.6+ 建议开启，Qt 6 默认已开启

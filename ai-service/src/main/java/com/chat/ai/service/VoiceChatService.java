@@ -293,6 +293,10 @@ public class VoiceChatService {
         int charCount = text.length();
         return Math.max(1, charCount / 4);
     }
+
+    public String synthesizeSpeechPublic(String text) {
+        return synthesizeSpeech(text);
+    }
     
     private byte[] addWavHeader(byte[] pcmData, int sampleRate, int bitsPerSample, int channels) {
         int byteRate = sampleRate * channels * bitsPerSample / 8;

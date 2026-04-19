@@ -93,6 +93,8 @@ set(CLIENT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/../realtimevoicedialog.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../dashboarddialog.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../dashboarddialog.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../companionreadingdialog.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../companionreadingdialog.h
     # 服务器相关的核心文件（为了支持MainWindow中的服务器功能）
     ${CMAKE_CURRENT_SOURCE_DIR}/../server/db/db.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../server/model/usermodel.cpp
@@ -130,6 +132,8 @@ set(QT_CHAT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/../realtimevoicedialog.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../dashboarddialog.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../dashboarddialog.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../companionreadingdialog.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../companionreadingdialog.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../qtchat.qrc
     # 服务器相关的核心文件
     ${CMAKE_CURRENT_SOURCE_DIR}/../server/db/db.cpp
@@ -160,4 +164,29 @@ set_target_properties(QtChat PROPERTIES
     AUTOMOC ON
     AUTORCC ON
     AUTOUIC ON
+)
+
+set(LIVE2D_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../live2d")
+set(LIVE2D_DEST_DIR "${CMAKE_CURRENT_BINARY_DIR}/live2d")
+set(HTML_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../html")
+set(HTML_DEST_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+
+add_custom_command(TARGET QtChat POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${LIVE2D_DEST_DIR}/hiyori"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${LIVE2D_DEST_DIR}/hiyori/hiyori_pro_t11.2048"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${LIVE2D_DEST_DIR}/hiyori/motion"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${LIVE2D_DEST_DIR}/core"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${LIVE2D_SOURCE_DIR}/hiyori/hiyori_pro_t11.model3.json" "${LIVE2D_DEST_DIR}/hiyori/"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${LIVE2D_SOURCE_DIR}/hiyori/hiyori_pro_t11.moc3" "${LIVE2D_DEST_DIR}/hiyori/"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${LIVE2D_SOURCE_DIR}/hiyori/hiyori_pro_t11.physics3.json" "${LIVE2D_DEST_DIR}/hiyori/"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${LIVE2D_SOURCE_DIR}/hiyori/hiyori_pro_t11.pose3.json" "${LIVE2D_DEST_DIR}/hiyori/"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${LIVE2D_SOURCE_DIR}/hiyori/hiyori_pro_t11.cdi3.json" "${LIVE2D_DEST_DIR}/hiyori/"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${LIVE2D_SOURCE_DIR}/hiyori/hiyori_pro_t11.2048/texture_00.png" "${LIVE2D_DEST_DIR}/hiyori/hiyori_pro_t11.2048/"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${LIVE2D_SOURCE_DIR}/hiyori/hiyori_pro_t11.2048/texture_01.png" "${LIVE2D_DEST_DIR}/hiyori/hiyori_pro_t11.2048/"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${LIVE2D_SOURCE_DIR}/hiyori/motion" "${LIVE2D_DEST_DIR}/hiyori/motion"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${LIVE2D_SOURCE_DIR}/core/live2dcubismcore.js" "${LIVE2D_DEST_DIR}/core/"
+    COMMAND ${CMAKE_COMMAND} -E copy "${HTML_SOURCE_DIR}/avatar.html" "${HTML_DEST_DIR}/"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${LIVE2D_SOURCE_DIR}/core" "${HTML_DEST_DIR}/live2d/core"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${LIVE2D_SOURCE_DIR}/hiyori" "${HTML_DEST_DIR}/live2d/hiyori"
+    COMMENT "Copying Live2D assets and avatar.html to build directory..."
 )

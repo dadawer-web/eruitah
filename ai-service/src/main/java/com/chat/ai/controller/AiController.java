@@ -3,11 +3,17 @@ package com.chat.ai.controller;
 import com.chat.ai.config.annotation.RateLimit;
 import com.chat.ai.service.AiChatService;
 import com.chat.ai.service.AiPersonaRegistry;
+import com.chat.ai.service.CompanionReadingService;
 import com.chat.ai.service.MultimodalChatService;
+import com.chat.ai.service.PdfParseService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -17,6 +23,8 @@ public class AiController {
 
     private final AiChatService aiChatService;
     private final MultimodalChatService multimodalChatService;
+    private final CompanionReadingService companionReadingService;
+    private final PdfParseService pdfParseService;
 
     @PostMapping("/chat")
     @RateLimit(dimension = RateLimit.Dimension.USER, count = 30, interval = 1, timeUnit = RateLimit.TimeUnit.MINUTES)
@@ -121,6 +129,77 @@ public class AiController {
             log.error("Error processing mindmap request", e);
             return ResponseEntity.internalServerError()
                 .body(ChatResponse.error("处理请求时发生错误: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/companion-read")
+    @RateLimit(dimension = RateLimit.Dimension.USER, count = 20, interval = 1, timeUnit = RateLimit.TimeUnit.MINUTES)
+    @RateLimit(dimension = RateLimit.Dimension.IP, count = 40, interval = 1, timeUnit = RateLimit.TimeUnit.MINUTES)
+    public ResponseEntity<CompanionReadResponse> companionRead(@RequestBody CompanionReadRequest request) {
+        log.info("Received companion-read request: userId={}, action={}, textLength={}",
+            request.getUserId(), request.getAction(),
+            request.getText() != null ? request.getText().length() : 0);
+
+        if (request.getText() == null || request.getText().trim().isEmpty()) {
+            return ResponseEntity.badRequest()
+                .body(CompanionReadResponse.error("划选文本不能为空"));
+        }
+
+        if (request.getUserId() == null) {
+            return ResponseEntity.badRequest()
+                .body(CompanionReadResponse.error("用户ID不能为空"));
+        }
+
+        try {
+            CompanionReadingService.CompanionReadResult result =
+                companionReadingService.companionRead(request.getUserId(), request.getText());
+
+            if (result.success()) {
+                return ResponseEntity.ok(
+                    CompanionReadResponse.success(result.audioUrl(), result.explanationText()));
+            } else {
+                return ResponseEntity.internalServerError()
+                    .body(CompanionReadResponse.error(result.error()));
+            }
+
+        } catch (Exception e) {
+            log.error("Error processing companion-read request", e);
+            return ResponseEntity.internalServerError()
+                .body(CompanionReadResponse.error("处理请求时发生错误: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/parse-pdf")
+    public ResponseEntity<Map<String, String>> parsePdf(@RequestParam("file") MultipartFile file) {
+        log.info("Received PDF parse request: filename={}, size={}KB",
+            file.getOriginalFilename(), file.getSize() / 1024);
+
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest()
+                .body(Map.of("error", "文件不能为空"));
+        }
+
+        String filename = file.getOriginalFilename();
+        if (filename == null || !filename.toLowerCase().endsWith(".pdf")) {
+            return ResponseEntity.badRequest()
+                .body(Map.of("error", "仅支持 PDF 文件"));
+        }
+
+        try {
+            String text = pdfParseService.parsePdf(file);
+
+            if (text == null || text.trim().isEmpty()) {
+                return ResponseEntity.ok()
+                    .body(Map.of("text", "", "warning", "PDF 内容为空或无法提取文本"));
+            }
+
+            return ResponseEntity.ok()
+                .body(Map.of("text", text, "filename", filename));
+
+        } catch (IOException e) {
+            log.error("PDF parse failed", e);
+            return ResponseEntity.internalServerError()
+                .body(Map.of("error", "PDF 解析失败: " + e.getMessage()));
         }
     }
 }
