@@ -61,3 +61,19 @@ hiyori_pro_en/
 *.cmo3
 *.can3
 *.moc3
+
+# === Python 虚拟环境和缓存 ===
+venv/
+.venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+pip-log.txt
+Pipfile.lock
+*.egg-info/
+dist/
+*.egg

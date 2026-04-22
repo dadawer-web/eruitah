@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eruitah Coding Lab</title>
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { height: 100%; background: #1e1e1e; color: #d4d4d4; font-family: 'Consolas', 'Courier New', monospace; overflow: hidden; }
+
+        #container { display: flex; flex-direction: column; height: 100%; }
+
+        #header {
+            padding: 8px 16px;
+            background: #2d2d2d;
+            border-bottom: 1px solid #444;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+        #header .title { font-weight: bold; color: #4ec9b0; }
+        #header .status { color: #ce9178; }
+        #header .turn-info { color: #569cd6; font-size: 12px; }
+
+        #main-content { display: flex; flex: 1; min-height: 0; }
+
+        /* 侧边栏样式 */
+        #sidebar {
+            width: 220px;
+            background: #252526;
+            border-right: 1px solid #444;
+            display: flex;
+            flex-direction: column;
+            min-width: 150px;
+            max-width: 400px;
+            resize: horizontal;
+            overflow: hidden;
+        }
+        #sidebar-header {
+            padding: 8px 12px;
+            background: #2d2d2d;
+            border-bottom: 1px solid #444;
+            font-size: 12px;
+            font-weight: bold;
+            color: #bbbbbb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        #sidebar-header .refresh-btn {
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        #sidebar-header .refresh-btn:hover { background: #444; color: #fff; }
+        #file-tree {
+            flex: 1;
+            overflow-y: auto;
+            padding: 4px 0;
+        }
+        #file-tree::-webkit-scrollbar { width: 8px; }
+        #file-tree::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+        
+        .tree-item {
+            padding: 4px 8px 4px 16px;
+            cursor: pointer;
+            font-size: 13px;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .tree-item:hover { background: #2a2d2e; }
+        .tree-item.selected { background: #094771; }
+        .tree-item .icon { width: 16px; text-align: center; flex-shrink: 0; }
+        .tree-item .name { overflow: hidden; text-overflow: ellipsis; }
+        
+        .tree-folder > .tree-item { font-weight: 500; }
+        .tree-folder > .tree-children { padding-left: 12px; }
+        .tree-folder.collapsed > .tree-children { display: none; }
+        .tree-folder > .tree-item .folder-icon::before { content: '📁'; }
+        .tree-folder.collapsed > .tree-item .folder-icon::before { content: '📁'; }
+        
+        .tree-file .tree-item .file-icon::before { 
+            content: '📄';
+        }
+        .tree-file .tree-item .file-icon.py::before { content: '🐍'; }
+        .tree-file .tree-item .file-icon.cpp::before, 
+        .tree-file .tree-item .file-icon.h::before { content: '⚙️'; }
+        .tree-file .tree-item .file-icon.js::before { content: '📜'; }
+        .tree-file .tree-item .file-icon.html::before { content: '🌐'; }
+        .tree-file .tree-item .file-icon.css::before { content: '🎨'; }
+        .tree-file .tree-item .file-icon.json::before { content: '📋'; }
+        .tree-file .tree-item .file-icon.md::before { content: '📝'; }
+
+        #editor-area { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+        #file-tabs {
+            display: flex;
+            background: #252526;
+            border-bottom: 1px solid #444;
+            overflow-x: auto;
+            min-height: 32px;
+        }
+        #file-tabs::-webkit-scrollbar { height: 4px; }
+        #file-tabs::-webkit-scrollbar-thumb { background: #444; border-radius: 2px; }
+        .file-tab {
+            padding: 6px 16px;
+            background: #2d2d2d;
+            color: #969696;
+            font-size: 12px;
+            cursor: pointer;
+            border-right: 1px solid #444;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .file-tab:hover { background: #3d3d3d; }
+        .file-tab.active {
+            background: #1e1e1e;
+            color: #ffffff;
+            border-bottom: 2px solid #007acc;
+        }
+
+        #editor { flex: 1; min-height: 0; }
+
+        #terminal-area {
+            height: 200px;
+            display: flex;
+            flex-direction: column;
+            border-top: 2px solid #007acc;
+        }
+        #terminal-header {
+            padding: 4px 12px;
+            background: #2d2d2d;
+            color: #4ec9b0;
+            font-size: 12px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        #terminal-header .dot { width: 8px; height: 8px; border-radius: 50%; }
+        #terminal-header .dot.green { background: #4ec9b0; }
+        #terminal-header .dot.yellow { background: #dcdcaa; }
+        #terminal-header .dot.red { background: #f44747; }
+
+        #terminal {
+            flex: 1;
+            background: #0c0c0c;
+            padding: 8px 12px;
+            overflow-y: auto;
+            font-size: 13px;
+            color: #00ff00;
+            line-height: 1.5;
+        }
+        #terminal .log-line { white-space: pre-wrap; word-break: break-all; }
+        #terminal .log-error { color: #f44747; }
+        #terminal .log-success { color: #4ec9b0; }
+        #terminal .log-info { color: #569cd6; }
+        #terminal .log-warning { color: #dcdcaa; }
+        #terminal .log-tool { color: #ce9178; }
+
+        #input-area {
+            display: flex;
+            padding: 8px 12px;
+            background: #1a1a1a;
+            border-top: 1px solid #333;
+        }
+        #task-input {
+            flex: 1;
+            background: #0c0c0c;
+            border: 1px solid #444;
+            color: #d4d4d4;
+            padding: 8px 12px;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            border-radius: 4px;
+            outline: none;
+        }
+        #task-input:focus { border-color: #007acc; }
+        #task-input::placeholder { color: #666; }
+        #send-btn {
+            margin-left: 8px;
+            padding: 8px 20px;
+            background: #007acc;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+        }
+        #send-btn:hover { background: #0098ff; }
+        #send-btn:disabled { background: #444; cursor: not-allowed; }
+
+        .typing-indicator {
+            display: inline-block;
+            color: #4ec9b0;
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs/loader.min.js"></script>
+</head>
+<body>
+    <div id="container">
+        <div id="header">
+            <span class="title">Eruitah Coding Agent</span>
+            <span class="status" id="status">[等待唤醒]</span>
+            <span class="turn-info" id="turn-info"></span>
+        </div>
+
+        <div id="main-content">
+            <!-- 文件目录侧边栏 -->
+            <div id="sidebar">
+                <div id="sidebar-header">
+                    <span>📁 文件资源管理器</span>
+                    <button class="refresh-btn" onclick="refreshFileTree()" title="刷新">🔄</button>
+                </div>
+                <div id="file-tree"></div>
+            </div>
+
+            <div id="editor-area">
+                <div id="file-tabs"></div>
+                <div id="editor"></div>
+            </div>
+        </div>
+
+        <div id="terminal-area">
+            <div id="terminal-header">
+                <span class="dot green"></span>
+                <span class="dot yellow"></span>
+                <span class="dot red"></span>
+                <span>TERMINAL</span>
+            </div>
+            <div id="terminal">
+                <div class="log-line log-info">Eruitah Terminal v1.0</div>
+                <div class="log-line">$ <span class="typing-indicator">_</span></div>
+            </div>
+        </div>
+
+        <div id="input-area">
+            <input type="text" id="task-input" placeholder="输入任务，如：写一个快速排序..." />
+            <button id="send-btn" onclick="sendTask()">发送</button>
+        </div>
+    </div>
+
+    <script>
+        let editor;
+        let ws = null;
+        let isAgentRunning = false;
+        let openFiles = {};
+        let currentFileName = '';
+        let maxTabs = 10;
+        let sandboxDir = '/tmp/eruitah-sandbox';
+
+        // ============================================================
+        // 打字机引擎 - 编辑器
+        // ============================================================
+        let typeQueue = [];
+        let isTyping = false;
+        const TYPE_SPEED = 8;
+
+        function streamCode(newCodeChunk) {
+            typeQueue.push(...newCodeChunk.split(''));
+            if (!isTyping) {
+                processTypeQueue();
+            }
+        }
+
+        function processTypeQueue() {
+            if (typeQueue.length === 0) {
+                isTyping = false;
+                return;
+            }
+
+            isTyping = true;
+            let char = typeQueue.shift();
+
+            let position = editor.getPosition();
+            editor.executeEdits("ai-ghost", [{
+                range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
+                text: char,
+                forceMoveMarkers: true
+            }]);
+
+            editor.revealPosition(editor.getPosition());
+            setTimeout(processTypeQueue, TYPE_SPEED);
+        }
+
+        function clearEditorAndStartTyping() {
+            if (editor) {
+                editor.setValue('');
+                typeQueue = [];
+            }
+        }
+
+        // ============================================================
+        // 文件树
+        // ============================================================
+        async function refreshFileTree() {
+            try {
+                const response = await fetch('/api/v1/files?path=' + encodeURIComponent(sandboxDir));
+                const data = await response.json();
+                renderFileTree(data.files || []);
+            } catch (e) {
+                console.error('获取文件树失败:', e);
+            }
+        }
+
+        function renderFileTree(files) {
+            const container = document.getElementById('file-tree');
+            container.innerHTML = '';
+            
+            // 按目录结构组织
+            const tree = buildTree(files);
+            renderTreeNode(container, tree, '');
+        }
+
+        function buildTree(files) {
+            const root = {};
+            for (const file of files) {
+                const parts = file.split('/');
+                let current = root;
+                for (let i = 0; i < parts.length; i++) {
+                    const part = parts[i];
+                    if (!part) continue;
+                    if (i === parts.length - 1) {
+                        // 文件
+                        current[part] = { __file: true, __path: file };
+                    } else {
+                        // 目录
+                        if (!current[part]) {
+                            current[part] = {};
+                        }
+                        current = current[part];
+                    }
+                }
+            }
+            return root;
+        }
+
+        function renderTreeNode(container, node, basePath) {
+            const entries = Object.entries(node).sort((a, b) => {
+                const aIsFile = a[1].__file;
+                const bIsFile = b[1].__file;
+                if (aIsFile !== bIsFile) return aIsFile ? 1 : -1;
+                return a[0].localeCompare(b[0]);
+            });
+
+            for (const [name, value] of entries) {
+                if (value.__file) {
+                    // 文件
+                    const fileDiv = document.createElement('div');
+                    fileDiv.className = 'tree-file';
+                    
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'tree-item';
+                    const ext = name.split('.').pop().toLowerCase();
+                    itemDiv.innerHTML = `<span class="icon file-icon ${ext}"></span><span class="name">${name}</span>`;
+                    itemDiv.onclick = () => openFile(value.__path);
+                    
+                    fileDiv.appendChild(itemDiv);
+                    container.appendChild(fileDiv);
+                } else {
+                    // 目录
+                    const folderDiv = document.createElement('div');
+                    folderDiv.className = 'tree-folder';
+                    
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'tree-item';
+                    itemDiv.innerHTML = `<span class="icon folder-icon"></span><span class="name">${name}</span>`;
+                    itemDiv.onclick = (e) => {
+                        e.stopPropagation();
+                        folderDiv.classList.toggle('collapsed');
+                    };
+                    
+                    const childrenDiv = document.createElement('div');
+                    childrenDiv.className = 'tree-children';
+                    renderTreeNode(childrenDiv, value, basePath + '/' + name);
+                    
+                    folderDiv.appendChild(itemDiv);
+                    folderDiv.appendChild(childrenDiv);
+                    container.appendChild(folderDiv);
+                }
+            }
+        }
+
+        async function openFile(filePath) {
+            try {
+                // 构建完整路径
+                const fullPath = filePath.startsWith('/') ? filePath : sandboxDir + '/' + filePath;
+                const response = await fetch('/api/v1/file?path=' + encodeURIComponent(fullPath));
+                const data = await response.json();
+                if (data.content) {
+                    const fileName = filePath.split('/').pop();
+                    const ext = fileName.split('.').pop().toLowerCase();
+                    const lang = getLanguageFromExt(ext);
+                    addFileTab(fileName, data.content, lang);
+                    updateCode(data.content, lang);
+                } else if (data.error) {
+                    appendTerminal('[错误] ' + data.error, 'error');
+                }
+            } catch (e) {
+                console.error('打开文件失败:', e);
+                appendTerminal('[错误] 打开文件失败: ' + e.message, 'error');
+            }
+        }
+
+        // ============================================================
+        // Monaco Editor 初始化
+        // ============================================================
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs' } });
+        require(['vs/editor/editor.main'], function() {
+            editor = monaco.editor.create(document.getElementById('editor'), {
+                value: '// AI Agent 待命中...\n// 在下方输入框中输入任务，按回车或点击发送\n',
+                language: 'cpp',
+                theme: 'vs-dark',
+                readOnly: false,
+                minimap: { enabled: false },
+                fontSize: 14,
+                lineNumbers: 'on',
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+            });
+            
+            // 初始化后刷新文件树
+            refreshFileTree();
+        });
+
+        function updateStatus(text) {
+            document.getElementById('status').innerText = text;
+        }
+
+        function updateTurnInfo(turn, maxTurns) {
+            document.getElementById('turn-info').innerText = turn ? `Turn ${turn}/${maxTurns}` : '';
+        }
+
+        function getLanguageFromExt(ext) {
+            var langMap = {
+                'cpp': 'cpp', 'c': 'c', 'h': 'cpp', 'hpp': 'cpp',
+                'py': 'python', 'python': 'python',
+                'js': 'javascript', 'ts': 'typescript',
+                'java': 'java', 'rs': 'rust', 'go': 'go',
+                'html': 'html', 'css': 'css', 'json': 'json',
+                'md': 'markdown', 'sql': 'sql', 'sh': 'shell',
+                'txt': 'plaintext', 'xml': 'xml', 'yaml': 'yaml', 'yml': 'yaml',
+            };
+            return langMap[ext.toLowerCase()] || 'plaintext';
+        }
+
+        function updateCode(newCode, language) {
+            if (!editor) return;
+            if (language) {
+                var model = editor.getModel();
+                monaco.editor.setModelLanguage(model, language);
+            }
+            editor.setValue(newCode);
+            editor.revealLine(editor.getModel().getLineCount());
+        }
+
+        function addFileTab(fileName, code, language) {
+            openFiles[fileName] = { code: code, language: language };
+            var fileNames = Object.keys(openFiles);
+            if (fileNames.length > maxTabs) {
+                var oldest = fileNames[0];
+                delete openFiles[oldest];
+            }
+            renderTabs();
+            switchToFile(fileName);
+        }
+
+        function renderTabs() {
+            var tabsContainer = document.getElementById('file-tabs');
+            tabsContainer.innerHTML = '';
+            
+            for (var fileName in openFiles) {
+                var tab = document.createElement('div');
+                tab.className = 'file-tab' + (fileName === currentFileName ? ' active' : '');
+                tab.textContent = fileName;
+                tab.onclick = (function(fn) {
+                    return function() { switchToFile(fn); };
+                })(fileName);
+                tabsContainer.appendChild(tab);
+            }
+        }
+
+        function switchToFile(fileName) {
+            if (!openFiles[fileName]) return;
+            currentFileName = fileName;
+            var file = openFiles[fileName];
+            updateCode(file.code, file.language);
+            renderTabs();
+        }
+
+        function appendTerminal(logText, logType) {
+            var term = document.getElementById('terminal');
+            var line = document.createElement('div');
+            line.className = 'log-line' + (logType ? ' log-' + logType : '');
+            line.textContent = logText;
+            term.appendChild(line);
+            term.scrollTop = term.scrollHeight;
+        }
+
+        function streamCommand(cmd) {
+            var term = document.getElementById('terminal');
+            var line = document.createElement('div');
+            line.className = 'log-line log-info';
+            line.textContent = '$ ' + cmd;
+            term.appendChild(line);
+            term.scrollTop = term.scrollHeight;
+        }
+
+        function setAgentRunning(running) {
+            isAgentRunning = running;
+            var btn = document.getElementById('send-btn');
+            var input = document.getElementById('task-input');
+            if (running) {
+                btn.disabled = true;
+                btn.innerText = '运行中...';
+                input.disabled = true;
+            } else {
+                btn.disabled = false;
+                btn.innerText = '发送';
+                input.disabled = false;
+            }
+        }
+
+        function connectWebSocket(url) {
+            if (ws) {
+                ws.close();
+            }
+            ws = new WebSocket(url);
+
+            ws.onopen = function() {
+                updateStatus('[已连接]');
+                appendTerminal('WebSocket 已连接到 ' + url, 'success');
+            };
+
+            ws.onclose = function() {
+                updateStatus('[已断开]');
+                appendTerminal('WebSocket 连接已关闭', 'warning');
+                setAgentRunning(false);
+            };
+
+            ws.onerror = function(err) {
+                updateStatus('[连接错误]');
+                appendTerminal('WebSocket 连接错误', 'error');
+            };
+
+            ws.onmessage = function(event) {
+                handleAgentEvent(JSON.parse(event.data));
+            };
+        }
+
+        function sendTask() {
+            var input = document.getElementById('task-input');
+            var task = input.value.trim();
+            if (!task) return;
+
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                connectWebSocket('ws://127.0.0.1:8001/ws/coding');
+                setTimeout(function() {
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify({ task: task }));
+                    }
+                }, 1000);
+            } else {
+                ws.send(JSON.stringify({ task: task }));
+            }
+
+            input.value = '';
+            setAgentRunning(true);
+            appendTerminal('用户任务: ' + task, 'info');
+            updateStatus('[Agent 工作中]');
+        }
+
+        document.getElementById('task-input').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !isAgentRunning) {
+                sendTask();
+            }
+        });
+
+        function handleAgentEvent(event) {
+            var type = event.type;
+
+            if (type === 'status') {
+                updateStatus(event.data || '');
+                var turnMatch = (event.data || '').match(/第 (\d+)\/(\d+) 轮/);
+                if (turnMatch) {
+                    updateTurnInfo(turnMatch[1], turnMatch[2]);
+                }
+            }
+            else if (type === 'message') {
+                appendTerminal('[Agent] ' + (event.content || ''), 'info');
+            }
+            else if (type === 'code_stream') {
+                streamCode(event.content || '');
+            }
+            else if (type === 'tool_start') {
+                var toolName = event.tool_name || 'unknown';
+                var args = event.args || {};
+                updateStatus('正在执行: ' + toolName);
+
+                if (toolName === 'bash') {
+                    streamCommand(args.command || '');
+                } else if (toolName === 'file_edit') {
+                    var filePath = args.file_path || '';
+                    appendTerminal('[文件编辑] ' + filePath, 'tool');
+                    clearEditorAndStartTyping();
+                } else if (toolName === 'file_read') {
+                    var filePath = args.file_path || '';
+                    appendTerminal('[文件读取] ' + filePath, 'tool');
+                } else if (toolName === 'glob') {
+                    appendTerminal('[文件搜索] ' + (args.pattern || ''), 'tool');
+                } else if (toolName === 'grep') {
+                    appendTerminal('[代码搜索] ' + (args.pattern || ''), 'tool');
+                } else {
+                    appendTerminal('[工具] ' + toolName, 'tool');
+                }
+            }
+            else if (type === 'tool_end') {
+                var toolName = event.tool_name || '';
+                var result = event.result || '';
+                var isError = event.is_error || false;
+
+                if (toolName === 'bash') {
+                    if (isError) {
+                        appendTerminal(result, 'error');
+                    } else {
+                        appendTerminal(result, 'success');
+                    }
+                } else {
+                    if (isError) {
+                        appendTerminal('[错误] ' + result.substring(0, 200), 'error');
+                    } else {
+                        appendTerminal('[完成] ' + result.substring(0, 100), 'success');
+                    }
+                }
+                
+                // 刷新文件树
+                refreshFileTree();
+            }
+            else if (type === 'file_updated') {
+                var newCode = event.new_code || '';
+                var fileName = event.file_name || '';
+                var language = event.language || '';
+                
+                if (fileName) {
+                    var lang = getLanguageFromExt(language);
+                    openFiles[fileName] = { code: newCode, language: lang };
+                    currentFileName = fileName;
+                    renderTabs();
+                    appendTerminal('[文件已更新] ' + fileName + ' (' + newCode.split('\n').length + ' 行)', 'success');
+                }
+            }
+            else if (type === 'finish') {
+                updateStatus('[任务完成]');
+                updateTurnInfo('', '');
+                setAgentRunning(false);
+                appendTerminal('--- 任务完成 ---', 'success');
+                if (event.data) {
+                    appendTerminal(event.data.substring(0, 500), 'info');
+                }
+                refreshFileTree();
+            }
+            else if (type === 'error') {
+                updateStatus('[错误]');
+                setAgentRunning(false);
+                appendTerminal('[ERROR] ' + (event.data || ''), 'error');
+            }
+        }
+
+        connectWebSocket('ws://127.0.0.1:8001/ws/coding');
+    </script>
+</body>
+</html>

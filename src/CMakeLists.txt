@@ -30,6 +30,8 @@ set(CLIENT_SOURCES
     knowledgegraphdialog.h
     realtimevoicedialog.cpp
     realtimevoicedialog.h
+    codingagentdialog.cpp
+    codingagentdialog.h
     qtchat.qrc
 )
 

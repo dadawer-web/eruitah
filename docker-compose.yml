@@ -38,7 +38,7 @@ services:
       retries: 5
 
   neo4j:
-    image: neo4j:5.15-alpine
+    image: neo4j:latest
     container_name: chat-neo4j
     restart: unless-stopped
     ports:

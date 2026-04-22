@@ -58,6 +58,7 @@ class KnowledgeGraphDialog;
 class RealtimeVoiceDialog;
 class DashboardDialog;
 class CompanionReadingDialog;
+class CodingAgentDialog;
 
 // 未处理消息结构体
 struct PendingMessage {
@@ -305,6 +306,7 @@ public slots:
     void onRealtimeVoiceCallEnded();
 
     void onOpenCompanionReading();
+    void onOpenCodingAgent();
 
 protected:
     void closeEvent(QCloseEvent *event) override;
