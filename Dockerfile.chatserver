@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y \
     libcurl4-openssl-dev \
     protobuf-compiler libprotobuf-dev \
     zlib1g-dev \
+    libboost-all-dev \
     && rm -rf /var/lib/apt/lists/*
 
 RUN git clone https://github.com/chenshuo/muduo.git /tmp/muduo && \
@@ -19,9 +20,9 @@ RUN git clone https://github.com/chenshuo/muduo.git /tmp/muduo && \
     mkdir build && cd build && \
     cmake .. -DCMAKE_BUILD_TYPE=Release && \
     make -j$(nproc) && \
-    mkdir -p /usr/local/include/muduo_headers && \
-    cp -r /tmp/muduo/include/* /usr/local/include/muduo_headers/ && \
-    cp /tmp/muduo/build/lib-release/*.a /usr/local/lib/ 2>/dev/null || true
+    make install && \
+    ls /usr/local/lib/libmuduo* || true && \
+    ls /usr/local/include/muduo/ || true
 
 WORKDIR /app
 
@@ -31,11 +32,13 @@ COPY src/ src/
 COPY thirdparty/ thirdparty/
 
 RUN sed -i 's|set(MUDUO_ROOT_DIR "/home/xmy/muduo")|set(MUDUO_ROOT_DIR "/usr/local")|g' src/server/CMakeLists.txt && \
-    sed -i 's|include_directories(\${MUDUO_ROOT_DIR}/include)|include_directories(\${MUDUO_ROOT_DIR}/include/muduo_headers)|g' src/server/CMakeLists.txt && \
-    sed -i 's|link_directories(\${MUDUO_ROOT_DIR}/build/lib)|link_directories(\${MUDUO_ROOT_DIR}/lib)|g' src/server/CMakeLists.txt && \
+    sed -i 's|include_directories(\${MUDUO_ROOT_DIR}/include)|include_directories(/usr/local/include)|g' src/server/CMakeLists.txt && \
+    sed -i 's|link_directories(\${MUDUO_ROOT_DIR}/build/lib)|link_directories(/usr/local/lib)|g' src/server/CMakeLists.txt && \
+    sed -i 's|add_subdirectory(server)|add_subdirectory(server)|g; s|add_subdirectory(client)|# add_subdirectory(client) - skipped for Docker|g' src/CMakeLists.txt && \
     mkdir build && cd build && \
     cmake .. && \
-    make ChatServer -j$(nproc)
+    make ChatServer -j$(nproc) && \
+    find /app -name "ChatServer" -type f
 
 FROM ubuntu:22.04
 
@@ -54,7 +57,7 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-COPY --from=build /app/build/bin/ChatServer .
+COPY --from=build /app/bin/ChatServer .
 
 EXPOSE 6000
 

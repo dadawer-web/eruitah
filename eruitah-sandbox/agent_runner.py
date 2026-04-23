@@ -1,64 +1,105 @@
-"""
-Eruitah 智能编程沙盒 - 核心引擎 v4 (Agent Loop)
-
-v4 完全重写: 对齐 Claude Code query.ts 的 runLoop 思想
-
-核心架构:
-┌─────────────────────────────────────────────────────────────────────┐
-│  run_agent(user_input)  →  Generator[dict]                          │
-│                                                                     │
-│  ┌──────────┐    调用 LLM     ┌──────────────┐    yield event      │
-│  │ messages │ ─────────────→  │  大模型回复   │ ─────────────→ 前端  │
-│  └──────────┘                 └──────────────┘                     │
-│       ↑                           │                                │
-│       │                    有 Tool Call?                            │
-│       │                     /         \\                            │
-│       │                   是           否 (纯文本 → finish)          │
-│       │                    │                                        │
-│       │              执行 Python Tool                               │
-│       │                    │                                        │
-│       │              ┌─────┴─────┐                                  │
-│       │              │ 成功/失败? │                                  │
-│       │              └─────┬─────┘                                  │
-│       │            成功 ↓     ↓ 失败(自愈!)                          │
-│       │        追加 tool_result  追加错误消息作为 user 消息          │
-│       │              ↓              ↓                              │
-│       └──────────────┴──────────────┘  ← 回到循环顶部               │
-│                                                                     │
-│  最大 15 轮防止 Token 破产 + 死循环保护                              │
-└─────────────────────────────────────────────────────────────────────┘
-
-事件格式 (yield dict):
-  {"type": "message", "content": "大模型的纯文本回复"}
-  {"type": "tool_start", "tool_name": "bash", "args": {...}}
-  {"type": "tool_end", "result": "..."}
-  {"type": "status", "data": "Agent 正在思考..."}
-  {"type": "error", "data": "..."}
-  {"type": "finish", "data": "最终结果"}
-
-自愈逻辑:
-  工具执行抛出异常 → 不崩溃！
-  将异常堆栈转为字符串 → 作为 user 消息喂回大模型
-  大模型分析错误 → 更换策略或修复参数 → 重试
-
-参考源码: claude-code-rev/src/query.ts (queryLoop 函数)
-"""
-
-import os
+from typing import Optional, Dict, Any, Generator, List
 import json
+import uuid
+import time
+import os
+import sys
+import subprocess
+import tempfile
 import logging
-import traceback
-from typing import Generator, Optional, Any
+import threading
+import re
+import asyncio
+from pathlib import Path
+
+from bash_executor import execute_bash
+from file_editor import execute_file_edit
+from file_read_tool import execute_file_read
+from glob_tool import execute_glob
+from grep_tool import execute_grep
+from memory_manager import ConversationMemoryManager, estimate_tokens
+from ask_user_tool import (
+    register_question, resolve_question, cancel_all_questions,
+    check_dangerous_command,
+    ASK_USER_TOOL_DEFINITION_OPENAI,
+    ASK_USER_TOOL_DEFINITION_ANTHROPIC,
+)
+from semantic_search_tool import (
+    semantic_search,
+    format_semantic_results,
+    SEMANTIC_SEARCH_TOOL_DEFINITION_OPENAI,
+    SEMANTIC_SEARCH_TOOL_DEFINITION_ANTHROPIC,
+)
+from computer_use_tool import (
+    execute_computer_use,
+    format_computer_use_result_for_anthropic,
+    format_computer_use_result_for_openai,
+    COMPUTER_USE_TOOL_DEFINITION_OPENAI,
+    COMPUTER_USE_TOOL_DEFINITION_ANTHROPIC,
+)
+from meta_tool import (
+    execute_meta_tool,
+    execute_dynamic_tool,
+    get_dynamic_tool_schemas,
+    is_dynamic_tool,
+    META_TOOL_DEFINITION_OPENAI,
+    META_TOOL_DEFINITION_ANTHROPIC,
+)
+from shadow_sandbox import (
+    execute_speculative,
+    SPECULATIVE_TOOL_DEFINITION_OPENAI,
+    SPECULATIVE_TOOL_DEFINITION_ANTHROPIC,
+)
+from agent_swarm import (
+    execute_swarm_communicate,
+    SWARM_TOOL_DEFINITION_OPENAI,
+    SWARM_TOOL_DEFINITION_ANTHROPIC,
+)
+from self_distill import (
+    execute_distill_tool,
+    DISTILL_TOOL_DEFINITION_OPENAI,
+    DISTILL_TOOL_DEFINITION_ANTHROPIC,
+)
+from theseus_rewrite import (
+    execute_theseus_tool,
+    THESEUS_TOOL_DEFINITION_OPENAI,
+    THESEUS_TOOL_DEFINITION_ANTHROPIC,
+)
+from compute_autonomy import (
+    execute_compute_tool,
+    COMPUTE_TOOL_DEFINITION_OPENAI,
+    COMPUTE_TOOL_DEFINITION_ANTHROPIC,
+)
+from token_budget import (
+    check_output_length, check_budget_exhausted, consume_tokens, next_turn, reset_budget, get_budget_status,
+)
+from lsp_client import (
+    execute_lsp_tool,
+    LSP_TOOL_DEFINITION_OPENAI,
+    LSP_TOOL_DEFINITION_ANTHROPIC,
+)
+from rewind_system import (
+    execute_rewind_tool, get_rewind_system,
+    REWIND_TOOL_DEFINITION_OPENAI,
+    REWIND_TOOL_DEFINITION_ANTHROPIC,
+)
+from git_tool import (
+    execute_git_tool,
+    GIT_TOOL_DEFINITION_OPENAI,
+    GIT_TOOL_DEFINITION_ANTHROPIC,
+)
+from notebook_tool import (
+    execute_notebook_tool,
+    NOTEBOOK_TOOL_DEFINITION_OPENAI,
+    NOTEBOOK_TOOL_DEFINITION_ANTHROPIC,
+)
+from cost_guardrails import get_cost_tracker, reset_cost_tracker
 
 logger = logging.getLogger(__name__)
 
-# ============================================================================
-# 常量定义
-# ============================================================================
-
 MAX_TURNS = 15
 
-SYSTEM_PROMPT = """你是一个专业的编程助手，名为 Eruitah。
+BASE_SYSTEM_PROMPT = """你是一个专业的编程助手，名为 Eruitah。
 
 你可以使用以下工具来完成编程任务：
 
@@ -67,6 +108,18 @@ SYSTEM_PROMPT = """你是一个专业的编程助手，名为 Eruitah。
 3. file_read - 读取文件内容（支持行号范围）
 4. glob - 文件模式匹配搜索
 5. grep - 正则表达式代码搜索
+6. semantic_search - 语义代码搜索（基于 AST，比 grep 更精准）
+7. computer_use - 控制虚拟桌面（截图、点击、输入）
+8. meta_tool - 自我进化工具（创建新工具、热重载、扩展自己的能力！）
+9. speculative_execute - 推测执行（同时启动多个影子沙盒并行尝试不同方案）
+10. swarm_communicate - P2P 智能体网络通信（与其他 Agent 协同工作）
+11. self_distill - 自我微调（轨迹收集、奖励建模、LoRA 蒸馏、模型切换）
+12. theseus_rewrite - 忒修斯之船（核心自重构、C++ 重写、热切换）
+13. compute_autonomy - 算力自治（云服务器扩缩容、成本控制）
+14. lsp_tool - LSP 语言服务器（查找定义、引用、文件大纲）
+15. rewind_tool - 时间机器（回退到之前的状态）
+16. git_tool - Git 版本控制（查看状态、差异、日志、提交）
+17. notebook_tool - Jupyter Notebook 原生手术刀（读取、编辑 Cell、添加 Cell）
 
 ⚠️ 重要规则：
 - **必须使用 file_edit 工具来创建/修改文件，不要只在回复中输出代码！**
@@ -75,110 +128,157 @@ SYSTEM_PROMPT = """你是一个专业的编程助手，名为 Eruitah。
 - 修改文件前先读取文件内容
 - 遇到错误时分析原因并主动修复
 - 每次只做一步操作，逐步推进任务
+- 如果发现自己缺少某个工具能力，可以用 meta_tool 自我进化创建新工具！
+- 遇到性能瓶颈时，可以用 theseus_rewrite 将 Python 模块重写为 C++
+- 需要更多算力时，可以用 compute_autonomy 自动购买云服务器
+- 代码分析时使用 lsp_tool 获得更精准的信息
+- 修错代码时使用 rewind_tool 回退到之前的状态
 
 示例用法：
 - 创建新文件 main.py: file_edit(file_path="main.py", search_text="", replace_text="# Python code...")
 - 修改文件: file_edit(file_path="main.py", search_text="old code", replace_text="new code")
+- 查找定义: lsp_tool(action="find_definition", file_path="main.cpp", line=42, character=10)
+- 回退: rewind_tool(action="rewind", session_id="session_001", steps=1)
 """
 
-
-# ============================================================================
-# 工具注册表 - 内联定义，确保参数名与实际函数完全匹配
-# ============================================================================
+def build_system_prompt(workspace_dir: str) -> str:
+    base_prompt = BASE_SYSTEM_PROMPT
+    
+    claude_md_path = os.path.join(workspace_dir, "CLAUDE.md")
+    custom_instructions = ""
+    if os.path.exists(claude_md_path):
+        try:
+            with open(claude_md_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                if content.strip():
+                    custom_instructions = f"\n\n=== 本项目的专属架构约束 (CLAUDE.md) ===\n{content}\n===================\n\n"
+        except Exception:
+            pass
+    
+    return custom_instructions + base_prompt
 
 def _get_tools_definition(provider: str = "openai") -> list[dict]:
-    """
-    获取工具定义列表
-    
-    Args:
-        provider: "openai" 或 "anthropic"
-    
-    Returns:
-        工具定义列表
-    """
+    """获取工具定义（根据不同提供商）"""
     if provider == "anthropic":
         return [
             {
                 "name": "bash",
-                "description": "执行 shell 命令。用于编译代码、运行测试、查看文件等。",
+                "description": "执行 bash 命令",
                 "input_schema": {
                     "type": "object",
                     "properties": {
-                        "command": {"type": "string", "description": "要执行的命令"},
-                        "timeout_ms": {"type": "integer", "description": "超时时间（毫秒）", "default": 120000},
-                        "work_dir": {"type": "string", "description": "工作目录"},
+                        "command": {
+                            "type": "string",
+                            "description": "要执行的 bash 命令",
+                        },
                     },
                     "required": ["command"],
                 },
             },
             {
                 "name": "file_edit",
-                "description": "使用 SEARCH/REPLACE 模式编辑文件。",
+                "description": "创建或编辑文件。使用 SEARCH/REPLACE 模式：查找文件中的特定文本并替换为新文本。如果要创建新文件，将 search_text 设为空字符串。",
                 "input_schema": {
                     "type": "object",
                     "properties": {
-                        "file_path": {"type": "string", "description": "文件路径"},
-                        "search_text": {"type": "string", "description": "要查找的文本"},
-                        "replace_text": {"type": "string", "description": "替换为的文本"},
-                        "replace_all": {"type": "boolean", "description": "是否替换所有匹配", "default": False},
+                        "file_path": {
+                            "type": "string",
+                            "description": "文件路径（必需）。可以是相对路径或绝对路径，例如 'src/main.py' 或 '/tmp/test.txt'",
+                        },
+                        "search_text": {
+                            "type": "string",
+                            "description": "要查找的文本。如果要创建新文件，请将此参数设为空字符串 ''",
+                        },
+                        "replace_text": {
+                            "type": "string",
+                            "description": "要替换为的新文本（必需）。如果是创建新文件，这里填写文件的全部内容",
+                        },
                     },
-                    "required": ["file_path", "search_text", "replace_text"],
+                    "required": ["file_path", "replace_text"],
                 },
             },
             {
                 "name": "file_read",
-                "description": "读取文件内容，支持行号范围过滤。",
+                "description": "读取文件内容",
                 "input_schema": {
                     "type": "object",
                     "properties": {
-                        "file_path": {"type": "string", "description": "文件路径"},
-                        "start_line": {"type": "integer", "description": "起始行号（1-based）", "default": 1},
-                        "end_line": {"type": "integer", "description": "结束行号"},
-                        "work_dir": {"type": "string", "description": "工作目录"},
+                        "file_path": {
+                            "type": "string",
+                            "description": "文件路径",
+                        },
+                        "start_line": {
+                            "type": "integer",
+                            "description": "起始行号（可选）",
+                        },
+                        "end_line": {
+                            "type": "integer",
+                            "description": "结束行号（可选）",
+                        },
                     },
                     "required": ["file_path"],
                 },
             },
             {
                 "name": "glob",
-                "description": "使用 glob 模式查找文件。",
+                "description": "文件模式匹配搜索",
                 "input_schema": {
                     "type": "object",
                     "properties": {
-                        "pattern": {"type": "string", "description": "glob 模式，如 **/*.py"},
-                        "work_dir": {"type": "string", "description": "工作目录"},
+                        "pattern": {
+                            "type": "string",
+                            "description": "文件模式（如 *.py, **/*.cpp）",
+                        },
                     },
                     "required": ["pattern"],
                 },
             },
             {
                 "name": "grep",
-                "description": "使用正则表达式搜索代码。",
+                "description": "正则表达式代码搜索",
                 "input_schema": {
                     "type": "object",
                     "properties": {
-                        "pattern": {"type": "string", "description": "正则表达式模式"},
-                        "work_dir": {"type": "string", "description": "工作目录"},
-                        "file_pattern": {"type": "string", "description": "文件过滤模式，如 *.py"},
-                        "case_insensitive": {"type": "boolean", "description": "是否忽略大小写", "default": False},
+                        "pattern": {
+                            "type": "string",
+                            "description": "正则表达式",
+                        },
+                        "path": {
+                            "type": "string",
+                            "description": "搜索路径（可选）",
+                        },
                     },
                     "required": ["pattern"],
                 },
             },
-        ]
+            ASK_USER_TOOL_DEFINITION_ANTHROPIC,
+            COMPUTER_USE_TOOL_DEFINITION_ANTHROPIC,
+            SEMANTIC_SEARCH_TOOL_DEFINITION_ANTHROPIC,
+            META_TOOL_DEFINITION_ANTHROPIC,
+            SPECULATIVE_TOOL_DEFINITION_ANTHROPIC,
+            SWARM_TOOL_DEFINITION_ANTHROPIC,
+            DISTILL_TOOL_DEFINITION_ANTHROPIC,
+            THESEUS_TOOL_DEFINITION_ANTHROPIC,
+            COMPUTE_TOOL_DEFINITION_ANTHROPIC,
+            LSP_TOOL_DEFINITION_ANTHROPIC,
+            REWIND_TOOL_DEFINITION_ANTHROPIC,
+            GIT_TOOL_DEFINITION_ANTHROPIC,
+            NOTEBOOK_TOOL_DEFINITION_ANTHROPIC,
+        ] + get_dynamic_tool_schemas("anthropic")
     else:
         return [
             {
                 "type": "function",
                 "function": {
                     "name": "bash",
-                    "description": "执行 shell 命令。用于编译代码、运行测试、查看文件等。",
+                    "description": "执行 bash 命令",
                     "parameters": {
                         "type": "object",
                         "properties": {
-                            "command": {"type": "string", "description": "要执行的命令"},
-                            "timeout_ms": {"type": "integer", "description": "超时时间（毫秒）", "default": 120000},
-                            "work_dir": {"type": "string", "description": "工作目录"},
+                            "command": {
+                                "type": "string",
+                                "description": "要执行的 bash 命令",
+                            },
                         },
                         "required": ["command"],
                     },
@@ -188,16 +288,24 @@ def _get_tools_definition(provider: str = "openai") -> list[dict]:
                 "type": "function",
                 "function": {
                     "name": "file_edit",
-                    "description": "使用 SEARCH/REPLACE 模式编辑文件。",
+                    "description": "创建或编辑文件。使用 SEARCH/REPLACE 模式：查找文件中的特定文本并替换为新文本。如果要创建新文件，将 search_text 设为空字符串。",
                     "parameters": {
                         "type": "object",
                         "properties": {
-                            "file_path": {"type": "string", "description": "文件路径"},
-                            "search_text": {"type": "string", "description": "要查找的文本"},
-                            "replace_text": {"type": "string", "description": "替换为的文本"},
-                            "replace_all": {"type": "boolean", "description": "是否替换所有匹配", "default": False},
+                            "file_path": {
+                                "type": "string",
+                                "description": "文件路径（必需）。可以是相对路径或绝对路径，例如 'src/main.py' 或 '/tmp/test.txt'",
+                            },
+                            "search_text": {
+                                "type": "string",
+                                "description": "要查找的文本。如果要创建新文件，请将此参数设为空字符串 ''",
+                            },
+                            "replace_text": {
+                                "type": "string",
+                                "description": "要替换为的新文本（必需）。如果是创建新文件，这里填写文件的全部内容",
+                            },
                         },
-                        "required": ["file_path", "search_text", "replace_text"],
+                        "required": ["file_path", "replace_text"],
                     },
                 },
             },
@@ -205,14 +313,22 @@ def _get_tools_definition(provider: str = "openai") -> list[dict]:
                 "type": "function",
                 "function": {
                     "name": "file_read",
-                    "description": "读取文件内容，支持行号范围过滤。",
+                    "description": "读取文件内容",
                     "parameters": {
                         "type": "object",
                         "properties": {
-                            "file_path": {"type": "string", "description": "文件路径"},
-                            "start_line": {"type": "integer", "description": "起始行号（1-based）", "default": 1},
-                            "end_line": {"type": "integer", "description": "结束行号"},
-                            "work_dir": {"type": "string", "description": "工作目录"},
+                            "file_path": {
+                                "type": "string",
+                                "description": "文件路径",
+                            },
+                            "start_line": {
+                                "type": "integer",
+                                "description": "起始行号（可选）",
+                            },
+                            "end_line": {
+                                "type": "integer",
+                                "description": "结束行号（可选）",
+                            },
                         },
                         "required": ["file_path"],
                     },
@@ -222,12 +338,14 @@ def _get_tools_definition(provider: str = "openai") -> list[dict]:
                 "type": "function",
                 "function": {
                     "name": "glob",
-                    "description": "使用 glob 模式查找文件。",
+                    "description": "文件模式匹配搜索",
                     "parameters": {
                         "type": "object",
                         "properties": {
-                            "pattern": {"type": "string", "description": "glob 模式，如 **/*.py"},
-                            "work_dir": {"type": "string", "description": "工作目录"},
+                            "pattern": {
+                                "type": "string",
+                                "description": "文件模式（如 *.py, **/*.cpp）",
+                            },
                         },
                         "required": ["pattern"],
                     },
@@ -237,464 +355,559 @@ def _get_tools_definition(provider: str = "openai") -> list[dict]:
                 "type": "function",
                 "function": {
                     "name": "grep",
-                    "description": "使用正则表达式搜索代码。",
+                    "description": "正则表达式代码搜索",
                     "parameters": {
                         "type": "object",
                         "properties": {
-                            "pattern": {"type": "string", "description": "正则表达式模式"},
-                            "work_dir": {"type": "string", "description": "工作目录"},
-                            "file_pattern": {"type": "string", "description": "文件过滤模式，如 *.py"},
-                            "case_insensitive": {"type": "boolean", "description": "是否忽略大小写", "default": False},
+                            "pattern": {
+                                "type": "string",
+                                "description": "正则表达式",
+                            },
+                            "path": {
+                                "type": "string",
+                                "description": "搜索路径（可选）",
+                            },
                         },
                         "required": ["pattern"],
                     },
                 },
             },
-        ]
+            ASK_USER_TOOL_DEFINITION_OPENAI,
+            COMPUTER_USE_TOOL_DEFINITION_OPENAI,
+            SEMANTIC_SEARCH_TOOL_DEFINITION_OPENAI,
+            META_TOOL_DEFINITION_OPENAI,
+            SPECULATIVE_TOOL_DEFINITION_OPENAI,
+            SWARM_TOOL_DEFINITION_OPENAI,
+            DISTILL_TOOL_DEFINITION_OPENAI,
+            THESEUS_TOOL_DEFINITION_OPENAI,
+            COMPUTE_TOOL_DEFINITION_OPENAI,
+            LSP_TOOL_DEFINITION_OPENAI,
+            REWIND_TOOL_DEFINITION_OPENAI,
+            GIT_TOOL_DEFINITION_OPENAI,
+            NOTEBOOK_TOOL_DEFINITION_OPENAI,
+        ] + get_dynamic_tool_schemas("openai")
 
-
-# ============================================================================
-# 工具执行器 - 直接调用实际函数，参数名完全匹配
-# ============================================================================
-
-def _execute_tool_local(name: str, args: dict, work_dir: str = ".") -> tuple[str, bool, dict]:
-    """
-    执行本地工具函数
-    
-    Args:
-        name: 工具名称
-        args: 工具参数（已与实际函数签名匹配）
-        work_dir: 默认工作目录
-    
-    Returns:
-        (result_string, is_error, extra_meta)
-        - extra_meta: 额外元数据，如 file_updated 事件所需的新文件内容
-    """
+def _execute_tool_local(
+    name: str,
+    args: dict,
+    work_dir: str,
+    session_id: str = "",
+    api_key: Optional[str] = None,
+    model: Optional[str] = None,
+    base_url: Optional[str] = None,
+) -> tuple[str, bool, dict]:
+    """本地执行工具"""
     meta = {}
+    
+    # =======================================================
+    # 🛡️ 终极防御墙：拦截大模型 JSON 幻觉与类型崩塌
+    # =======================================================
+    if not isinstance(args, dict):
+        logger.warning(f"⚠️ 触发防幻觉拦截！期望 dict，实际收到 {type(args).__name__}: {args}")
+        
+        # 尝试抢救大模型的输出
+        if isinstance(args, str):
+            if name == "bash":
+                # 如果是 bash 工具，大模型很可能直接吐了命令，我们帮它强行包成字典
+                args = {"command": args}
+            else:
+                # 尝试二次解析 JSON
+                try:
+                    args = json.loads(args)
+                    if not isinstance(args, dict):
+                        args = {}
+                except:
+                    args = {}
+        else:
+            # 彻底烂掉的数据，直接给空字典，防止崩溃
+            args = {}
+    # =======================================================
+
     try:
         if name == "bash":
-            from bash_executor import execute_bash
-            result = execute_bash(
-                command=args.get("command", ""),
-                timeout_ms=args.get("timeout_ms", 120000),
-                work_dir=args.get("work_dir", work_dir),
-            )
-            if result.blocked:
-                return f"[安全拦截] {result.block_reason}", True, meta
-            elif result.interrupted:
-                return f"[超时] {result.stdout}", True, meta
-            elif result.exit_code != 0:
-                return f"{result.stdout}\n{result.stderr}".strip() or f"退出码: {result.exit_code}", True, meta
+            command = args.get("command", "")
+            if not command:
+                return "命令不能为空", True, meta
+
+            is_dangerous = check_dangerous_command(command)
+            if is_dangerous:
+                return f"危险命令，需要用户确认: {command}", True, meta
+
+            bash_result = execute_bash(command, work_dir)
+            
+            if bash_result.needs_confirmation:
+                meta["needs_confirmation"] = {
+                    "command": bash_result.original_command,
+                    "reason": bash_result.block_reason,
+                }
+                return f"需要用户授权: {bash_result.block_reason}", False, meta
+            elif bash_result.blocked:
+                result = f"命令被拦截: {bash_result.block_reason}"
+                is_error = True
+            elif bash_result.interrupted:
+                result = f"命令超时 ({bash_result.elapsed_seconds:.1f}s)\n{bash_result.stdout}"
+                is_error = True
             else:
-                return result.stdout or "(执行成功)", False, meta
+                result_parts = []
+                if bash_result.stdout:
+                    result_parts.append(bash_result.stdout)
+                if bash_result.stderr:
+                    result_parts.append(f"[stderr]\n{bash_result.stderr}")
+                result = "\n".join(result_parts) if result_parts else "命令执行成功（无输出）"
+                is_error = bash_result.exit_code != 0
+            
+            result, truncated = check_output_length(result)
+            if truncated:
+                meta["truncated"] = True
+            return result, is_error, meta
 
         elif name == "file_edit":
-            from file_editor import edit_file
             file_path = args.get("file_path", "")
-            if file_path and not os.path.isabs(file_path):
-                file_path = os.path.join(work_dir, file_path)
+            search_text = args.get("search_text", "")
+            replace_text = args.get("replace_text", "")
 
-            result = edit_file(
-                file_path=file_path,
-                search_text=args.get("search_text", ""),
-                replace_text=args.get("replace_text", ""),
-                replace_all=args.get("replace_all", False),
-            )
+            if not file_path:
+                return "文件路径不能为空", True, meta
 
-            if result.success:
-                msg = f"已{'创建' if result.is_new_file else '更新'}文件: {result.file_path}"
-                if result.diff_patch:
-                    diff_preview = result.diff_patch[:1000]
-                    if len(result.diff_patch) > 1000:
-                        diff_preview += "\n... [diff 已截断]"
-                    msg += f"\n变更:\n{diff_preview}"
+            if session_id:
+                rewind_system = get_rewind_system()
+                rewind_system.add_file_snapshot(session_id, file_path, "edit")
 
-                # 读取修改后的文件全内容，用于前端 Monaco Editor 实时展示
-                try:
-                    with open(result.file_path, 'r', encoding='utf-8', errors='replace') as f:
-                        new_code = f.read()
-                    ext = os.path.splitext(result.file_path)[1].lstrip('.')
-                    meta["file_updated"] = {
-                        "file_path": result.file_path,
-                        "file_name": os.path.basename(result.file_path),
-                        "new_code": new_code,
-                        "language": ext,
-                    }
-                except Exception:
-                    pass
-
-                return msg, False, meta
-            else:
-                return f"编辑失败: {result.error}", True, meta
+            result, is_error = execute_file_edit(file_path, search_text, replace_text, work_dir)
+            return result, is_error, meta
 
         elif name == "file_read":
-            from file_read_tool import read_file
             file_path = args.get("file_path", "")
-            if file_path and not os.path.isabs(file_path):
-                file_path = os.path.join(work_dir, file_path)
+            start_line = args.get("start_line")
+            end_line = args.get("end_line")
 
-            result = read_file(
-                file_path=file_path,
-                start_line=args.get("start_line", 1),
-                end_line=args.get("end_line"),
-                work_dir=args.get("work_dir", work_dir),
-            )
+            if not file_path:
+                return "文件路径不能为空", True, meta
 
-            if result.error:
-                return f"读取失败: {result.error}", True, meta
-
-            content = result.content
-            file_meta = f"[文件: {file_path} | 第{result.start_line}-{result.end_line}行/共{result.total_lines}行]"
-            if result.truncated:
-                file_meta += " [截断]"
-            return f"{file_meta}\n{content}", False, meta
+            result, is_error = execute_file_read(file_path, start_line, end_line)
+            result, truncated = check_output_length(result)
+            if truncated:
+                meta["truncated"] = True
+            return result, is_error, meta
 
         elif name == "glob":
-            from glob_tool import glob_search
-            result = glob_search(
-                pattern=args.get("pattern", "**/*"),
-                work_dir=args.get("work_dir", work_dir),
-            )
+            pattern = args.get("pattern", "")
+            if not pattern:
+                return "搜索模式不能为空", True, meta
 
-            if result.error:
-                return f"搜索失败: {result.error}", True, meta
-            elif not result.files:
-                return f"未找到匹配 '{args.get('pattern')}' 的文件", False, meta
-            else:
-                lines = [f"匹配 '{args.get('pattern')}' ({result.total_matches} 个):"]
-                for f in result.files:
-                    lines.append(f"  {f}")
-                if result.truncated:
-                    lines.append(f"  ... (仅显示前 {len(result.files)} 个)")
-                return "\n".join(lines), False, meta
+            result, is_error = execute_glob(pattern, work_dir)
+            result, truncated = check_output_length(result)
+            if truncated:
+                meta["truncated"] = True
+            return result, is_error, meta
 
         elif name == "grep":
-            from grep_tool import grep_search
-            result = grep_search(
-                pattern=args.get("pattern", ""),
-                work_dir=args.get("work_dir", work_dir),
-                file_pattern=args.get("file_pattern"),
-                case_insensitive=args.get("case_insensitive", False),
-            )
+            pattern = args.get("pattern", "")
+            path = args.get("path", work_dir)
 
-            if result.error and not result.matches:
-                return f"搜索失败: {result.error}", True, meta
-            elif not result.matches:
-                return f"未找到匹配 '{args.get('pattern')}' 的内容", False, meta
+            if not pattern:
+                return "搜索模式不能为空", True, meta
+
+            result, is_error = execute_grep(pattern, path)
+            result, truncated = check_output_length(result)
+            if truncated:
+                meta["truncated"] = True
+            return result, is_error, meta
+
+        elif name == "ask_user":
+            question = args.get("question", "")
+            context = args.get("context", "")
+            question_id = str(uuid.uuid4())[:8]
+
+            meta["ask_user"] = {
+                "question_id": question_id,
+                "question": question,
+                "context": context,
+            }
+
+            return f"[等待用户回答] {question}", False, meta
+
+        elif name == "computer_use":
+            action = args.get("action", "screenshot")
+            cu_result = execute_computer_use(action, **args)
+
+            if cu_result.success and cu_result.image_base64:
+                meta["computer_use_image"] = {
+                    "base64": cu_result.image_base64,
+                    "action": cu_result.action,
+                    "content": cu_result.content,
+                }
+                return f"[Computer Use] {cu_result.action}: {cu_result.content}", False, meta
+            elif cu_result.success:
+                return f"[Computer Use] {cu_result.action}: {cu_result.content}", False, meta
             else:
-                lines = [f"搜索 '{args.get('pattern')}' ({result.total_matches} 行匹配):"]
-                for m in result.matches:
-                    lines.append(f"  {m.file_path}:{m.line_number}: {m.line_text}")
-                if result.truncated:
-                    lines.append(f"  ... (仅显示前 {len(result.matches)} 行)")
-                return "\n".join(lines), False, meta
+                return f"[Computer Use] 失败: {cu_result.error}", True, meta
+
+        elif name == "semantic_search":
+            query = args.get("query", "")
+            kind = args.get("kind")
+            search_file_path = args.get("file_path")
+            parent = args.get("parent_name")
+            search_lang = args.get("language")
+            project_dir = args.get("project_dir", work_dir)
+
+            result = semantic_search(
+                query=query,
+                kind=kind,
+                file_path=search_file_path,
+                parent_name=parent,
+                language=search_lang,
+                project_dir=project_dir,
+            )
+            formatted = format_semantic_results(result)
+            is_err = not result.success
+            return formatted, is_err, meta
+
+        elif name == "meta_tool":
+            action = args.get("action", "list")
+            tool_name = args.get("tool_name", "")
+            description = args.get("description", "")
+            code = args.get("code", "")
+            result_str, is_error = execute_meta_tool(action, tool_name, description, code)
+            return result_str, is_error, meta
+
+        elif name == "speculative_execute":
+            task = args.get("task", "")
+            strategies = args.get("strategies")
+            max_shadows = args.get("max_shadows", 3)
+            timeout = args.get("timeout", 300)
+            result_str, is_error = execute_speculative(task, strategies, max_shadows, timeout, api_key, model, base_url)
+            return result_str, is_error, meta
+
+        elif name == "swarm_communicate":
+            action = args.get("action", "list")
+            target_agent = args.get("target_agent", "")
+            message = args.get("message", "")
+            task = args.get("task", "")
+            result = args.get("result", "")
+            result_str, is_error = execute_swarm_communicate(action, target_agent, message, task, result)
+            return result_str, is_error, meta
+
+        elif name == "self_distill":
+            result_str, is_error = execute_distill_tool(**args)
+            return result_str, is_error, meta
+
+        elif name == "theseus_rewrite":
+            result_str, is_error = execute_theseus_tool(**args)
+            return result_str, is_error, meta
+
+        elif name == "compute_autonomy":
+            result_str, is_error = execute_compute_tool(**args)
+            return result_str, is_error, meta
+
+        elif name == "lsp_tool":
+            result_str, is_error = execute_lsp_tool(**args)
+            return result_str, is_error, meta
+
+        elif name == "rewind_tool":
+            result_str, is_error = execute_rewind_tool(**args)
+            return result_str, is_error, meta
+
+        elif name == "git_tool":
+            args["workspace_dir"] = work_dir
+            result_str, is_error = execute_git_tool(**args)
+            return result_str, is_error, meta
+
+        elif name == "notebook_tool":
+            args["workspace_dir"] = work_dir
+            result_str, is_error = execute_notebook_tool(**args)
+            return result_str, is_error, meta
+
+        elif is_dynamic_tool(name):
+            result_str, is_error = execute_dynamic_tool(name, args)
+            return result_str, is_error, meta
 
         else:
             return f"未知工具: {name}", True, meta
 
     except Exception as e:
-        tb = traceback.format_exc()
-        logger.error(f"工具 '{name}' 执行异常:\n{tb}")
-        return f"工具执行异常 [{name}]: {str(e)}\n\n{tb[-1000:]}", True, meta
-
-
-# ============================================================================
-# 核心: run_agent() 生成器函数 - 自愈死循环
-# ============================================================================
+        logger.error(f"工具执行异常 {name}: {e}")
+        return f"工具执行异常: {str(e)}", True, meta
 
 def run_agent(
     user_input: str,
     work_dir: str = ".",
-    max_turns: int = MAX_TURNS,
     api_key: Optional[str] = None,
     model: Optional[str] = None,
     base_url: Optional[str] = None,
     provider: str = "openai",
-) -> Generator[dict, None, None]:
-    """
-    Agent 核心循环 - 对齐 Claude Code query.ts 的 queryLoop 思想
-    
-    这是一个生成器函数，通过 yield 实时推送事件给调用者（WebSocket/SSE）。
-    
-    循环流程:
-    1. 初始化 messages (system + user)
-    2. while turn < max_turns:
-       a. 调用 LLM API (messages + tools)
-       b. 如果返回纯文本 → yield message → break
-       c. 如果有 Tool Call:
-          - yield tool_start
-          - 执行本地工具
-          - 成功: 追加 tool_result 到 messages
-          - 失败(异常): 将异常作为 user 消息喂回 LLM (自愈!)
-          - yield tool_end
-       d. 继续循环
-    3. 超过 max_turns → yield error → 结束
-    
-    Args:
-        user_input: 用户输入的任务描述
-        work_dir: 工作目录（沙箱边界）
-        max_turns: 最大循环轮数（防死循环+破产）
-        api_key: API 密钥
-        model: 模型名称
-        base_url: API 基础 URL
-        provider: "openai" 或 "anthropic"
-    
-    Yields:
-        dict: 事件字典，格式如下:
-        
-        纯文本消息:
-        {"type": "message", "content": "大模型回复的内容"}
-        
-        工具开始:
-        {"type": "tool_start", "tool_name": "bash", "args": {"command": "ls"}}
-        
-        工具结束:
-        {"type": "tool_end", "result": "执行结果...", "is_error": false}
-        
-        状态更新:
-        {"type": "status", "data": "Agent 正在思考... (第 3 轮)"}
-        
-        错误:
-        {"type": "error", "data": "错误信息..."}
-        
-        完成:
-        {"type": "finish", "data": "最终结果"}
-    """
-    yield {"type": "status", "data": f"Agent 启动 (最大 {max_turns} 轮)"}
+    max_turns: int = MAX_TURNS,
+    session_id: Optional[str] = None,
+) -> Generator[Dict[str, Any], None, None]:
+    """Agent 主循环"""
+    if not session_id:
+        session_id = str(uuid.uuid4())
 
-    # ------------------------------------------------------------------
-    # 初始化消息列表
-    # ------------------------------------------------------------------
-    tools_def = _get_tools_definition(provider)
+    reset_budget(session_id)
+    cost_tracker = reset_cost_tracker(session_id, limit_usd=5.0)
+    rewind_system = get_rewind_system()
+    rewind_system.load_checkpoints(session_id)
 
+    messages = []
+    system_prompt = build_system_prompt(work_dir)
     if provider == "anthropic":
-        messages = [{"role": "user", "content": user_input}]
+        messages.append({"role": "user", "content": user_input})
     else:
         messages = [
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_input},
         ]
 
-    abs_work_dir = os.path.abspath(work_dir)
-    os.makedirs(abs_work_dir, exist_ok=True)
+    summary_base_url = base_url if base_url else os.environ.get("OPENAI_BASE_URL")
+    if summary_base_url and not summary_base_url.endswith("/v1"):
+        summary_base_url = summary_base_url.rstrip("/") + "/v1"
 
-    # ------------------------------------------------------------------
-    # 主循环 - 对应 TS 源码 queryLoop
-    # ------------------------------------------------------------------
+    memory_manager = ConversationMemoryManager(
+        summary_api_key=api_key,
+        summary_model="qwen-turbo",
+        summary_base_url=summary_base_url,
+    )
+
     for turn in range(1, max_turns + 1):
         yield {"type": "status", "data": f"Agent 正在思考... (第 {turn}/{max_turns} 轮)"}
 
-        # --------------------------------------------------------------
-        # Step 1: 调用 LLM API
-        # --------------------------------------------------------------
+        ok, msg = check_budget_exhausted(session_id)
+        if not ok:
+            yield {"type": "error", "data": f"预算耗尽: {msg}"}
+            break
+
+        rewind_system.create_checkpoint(session_id, turn, messages, f"第 {turn} 轮")
+
+        tools = _get_tools_definition(provider)
+
         try:
-            response_text, tool_calls = _call_llm(
-                messages=messages,
-                tools=tools_def,
-                api_key=api_key,
-                model=model,
-                base_url=base_url,
-                provider=provider,
-            )
-        except Exception as e:
-            tb = traceback.format_exc()
-            logger.error(f"LLM API 调用失败 (第 {turn} 轮):\n{tb}")
-            yield {"type": "error", "data": f"API 调用失败: {str(e)}"}
-            return
+            if provider == "anthropic":
+                text, tool_calls = _call_anthropic(
+                    messages=messages,
+                    tools=tools,
+                    api_key=api_key,
+                    model=model,
+                    base_url=base_url,
+                    system_prompt=system_prompt,
+                )
+            else:
+                text, tool_calls = _call_openai(
+                    messages=messages,
+                    tools=tools,
+                    api_key=api_key,
+                    model=model,
+                    base_url=base_url,
+                )
 
-        # --------------------------------------------------------------
-        # Step 2: 处理大模型回复
-        # --------------------------------------------------------------
-
-        # Case A: 纯文本回复（没有工具调用）→ 任务完成
-        if not tool_calls:
-            if response_text.strip():
-                yield {"type": "message", "content": response_text}
-            yield {"type": "finish", "data": response_text}
-            return
-
-        # Case B: 有文本 + 工具调用 → 先推送文本
-        if response_text.strip():
-            yield {"type": "message", "content": response_text}
-
-        # --------------------------------------------------------------
-        # Step 3: 追加 assistant 消息（含工具调用声明）
-        # --------------------------------------------------------------
-        if provider == "anthropic":
-            assistant_content = []
-            if response_text.strip():
-                assistant_content.append({"type": "text", "text": response_text})
-            for tc in tool_calls:
-                assistant_content.append({
-                    "type": "tool_use",
-                    "id": tc["id"],
-                    "name": tc["name"],
-                    "input": tc["args"],
-                })
-            messages.append({"role": "assistant", "content": assistant_content})
-        else:
-            assistant_msg = {"role": "assistant", "content": response_text or None, "tool_calls": [
-                {
-                    "id": tc["id"],
-                    "type": "function",
-                    "function": {"name": tc["name"], "arguments": json.dumps(tc["args"], ensure_ascii=False)},
-                }
-                for tc in tool_calls
-            ]}
-            messages.append(assistant_msg)
-
-        # 调试日志：显示工具调用
-        if tool_calls:
-            logger.info(f"Agent 决定调用 {len(tool_calls)} 个工具:")
-            for tc in tool_calls:
-                logger.info(f"  - {tc['name']}: {json.dumps(tc['args'], ensure_ascii=False)[:200]}")
-
-        # --------------------------------------------------------------
-        # Step 4: 逐个执行工具调用
-        # --------------------------------------------------------------
-        tool_results_for_api = []
-        any_error = False
-
-        for tc in tool_calls:
-            tool_name = tc["name"]
-            tool_args = tc["args"]
-
-            # 通知前端: 开始执行工具
-            yield {
-                "type": "tool_start",
-                "tool_name": tool_name,
-                "args": tool_args,
-            }
-
-            # 执行本地工具
-            result_str, is_error, tool_meta = _execute_tool_local(tool_name, tool_args, abs_work_dir)
-
-            # 调试日志
-            logger.info(f"工具执行完成: {tool_name}, is_error={is_error}, has_file_updated={'file_updated' in tool_meta}")
-
-            # 通知前端: 工具执行结束
-            yield {
-                "type": "tool_end",
-                "tool_name": tool_name,
-                "result": result_str[:2000] if len(result_str) > 2000 else result_str,
-                "is_error": is_error,
-            }
-
-            # 如果 file_edit 成功，yield file_updated 事件给前端 Monaco Editor
-            if "file_updated" in tool_meta:
-                file_info = tool_meta["file_updated"]
-                
-                logger.info(f"开始流式推送代码: {file_info['file_name']}, {len(file_info['new_code'])} 字符")
-                
-                # 流式推送代码内容 - 打字机效果
-                new_code = file_info["new_code"]
-                chunk_size = 50  # 每次推送的字符数
-                
-                for i in range(0, len(new_code), chunk_size):
-                    chunk = new_code[i:i+chunk_size]
-                    yield {
-                        "type": "code_stream",
-                        "content": chunk,
-                    }
-                
-                logger.info(f"流式推送完成，发送 file_updated 事件")
-                
-                # 最后推送 file_updated 事件（用于保存到文件标签）
+            tokens = estimate_tokens(text)
+            consume_tokens(session_id, tokens)
+            
+            try:
+                turn_cost = cost_tracker.add_usage(
+                    prompt_tokens=tokens,
+                    completion_tokens=estimate_tokens(text),
+                    model=model or "",
+                )
                 yield {
-                    "type": "file_updated",
-                    "file_path": file_info["file_path"],
-                    "file_name": file_info["file_name"],
-                    "new_code": new_code,
-                    "language": file_info["language"],
+                    "type": "cost_update",
+                    "data": cost_tracker.get_status(),
+                }
+            except Exception as cost_err:
+                yield {"type": "error", "data": str(cost_err)}
+                break
+
+            if text:
+                yield {"type": "assistant", "data": text}
+
+            if not tool_calls:
+                yield {"type": "finish", "data": text or "任务完成"}
+                break
+
+            tool_results_for_api = []
+            any_error = False
+            error_logs = []
+
+            for tc in tool_calls:
+                name = tc.get("name", "unknown")
+                args = tc.get("args", {})
+                
+                if not isinstance(args, dict):
+                    logger.warning(f"⚠️ 工具 {name} 的 args 不是字典: {type(args)}, 值: {args}")
+                    args = {}
+                
+                if name == "file_edit" and not args.get("file_path"):
+                    logger.error(f"🚨 file_edit 工具缺少 file_path 参数, args: {args}")
+                    yield {
+                        "type": "tool_start",
+                        "tool_name": name,
+                        "args": args,
+                    }
+                    yield {
+                        "type": "tool_end",
+                        "tool_name": name,
+                        "result": "错误：file_edit 工具必须提供 file_path 参数",
+                        "is_error": True,
+                    }
+                    continue
+
+                yield {
+                    "type": "tool_start",
+                    "tool_name": name,
+                    "args": args,
                 }
 
-            # 收集工具结果（追加到 messages）
-            if provider == "anthropic":
-                tool_results_for_api.append({
-                    "type": "tool_result",
-                    "tool_use_id": tc["id"],
-                    "content": result_str,
+                result_str, is_error, tool_meta = _execute_tool_local(
+                    name=name,
+                    args=args,
+                    work_dir=work_dir,
+                    session_id=session_id,
+                    api_key=api_key,
+                    model=model,
+                    base_url=base_url,
+                )
+
+                yield {
+                    "type": "tool_end",
+                    "tool_name": name,
+                    "result": result_str,
                     "is_error": is_error,
-                })
-            else:
-                tool_results_for_api.append({
-                    "role": "tool",
-                    "tool_call_id": tc["id"],
-                    "content": result_str,
-                })
+                }
 
-            if is_error:
-                any_error = True
+                if name == "file_edit" and not is_error:
+                    file_path = args.get("file_path", "")
+                    if file_path:
+                        try:
+                            full_path = os.path.join(work_dir, file_path)
+                            if os.path.exists(full_path):
+                                with open(full_path, 'r', encoding='utf-8') as f:
+                                    new_code = f.read()
+                                yield {
+                                    "type": "file_updated",
+                                    "file_name": file_path,
+                                    "new_code": new_code,
+                                    "language": os.path.splitext(file_path)[1],
+                                }
+                        except Exception as e:
+                            logger.error(f"读取更新后的文件失败: {e}")
 
-        # --------------------------------------------------------------
-        # Step 5: 自愈逻辑 - 对应 TS 源码中的错误恢复
-        # --------------------------------------------------------------
+                tokens = estimate_tokens(result_str)
+                consume_tokens(session_id, tokens)
 
-        # 将工具结果追加到 messages
-        if provider == "anthropic":
-            messages.append({"role": "user", "content": tool_results_for_api})
-        else:
-            messages.extend(tool_results_for_api)
+                if is_error:
+                    any_error = True
+                    error_logs.append(f"工具 [{name}] 报错: {result_str}")
 
-        # 🚨 关键: 如果有工具执行失败，追加自愈消息
-        if any_error:
-            error_summary = "\n".join(
-                tr.get("content", "") for tr in tool_results_for_api
-                if (tr.get("is_error") if isinstance(tr, dict) else False)
-            )
-            if len(error_summary) > 2000:
-                error_summary = error_summary[:2000] + "\n... [截断]"
+                if "ask_user" in tool_meta:
+                    yield {
+                        "type": "ask_user",
+                        "data": {
+                            "question_id": tool_meta["ask_user"]["question_id"],
+                            "question": tool_meta["ask_user"]["question"],
+                            "context": tool_meta["ask_user"]["context"],
+                        },
+                    }
+                    return
 
-            healing_message = (
-                f"⚠️ 执行工具时发生错误:\n\n{error_summary}\n\n"
-                f"请分析以上错误原因，更换策略或修复参数后重试。"
-                f" 不要重复相同的操作。"
-            )
+                if "needs_confirmation" in tool_meta:
+                    yield {
+                        "type": "command_confirmation",
+                        "data": {
+                            "command": tool_meta["needs_confirmation"]["command"],
+                            "reason": tool_meta["needs_confirmation"]["reason"],
+                        },
+                    }
+                    return
 
-            if provider == "anthropic":
+                if provider == "anthropic":
+                    tool_result_content = result_str
+                    if "computer_use_image" in tool_meta:
+                        from computer_use_tool import format_computer_use_result_for_anthropic
+                        cu_result = tool_meta["computer_use_image"]
+                        from computer_use_tool import ComputerUseResult
+                        cu_obj = ComputerUseResult(
+                            success=True,
+                            action=cu_result["action"],
+                            content=cu_result["content"],
+                            image_base64=cu_result["base64"],
+                        )
+                        tool_result_content = format_computer_use_result_for_anthropic(cu_obj)
+
+                    tool_results_for_api.append({
+                        "type": "tool_result",
+                        "tool_use_id": tc["id"],
+                        "content": tool_result_content,
+                        "is_error": is_error,
+                    })
+                else:
+                    tool_result_content = result_str
+                    if "computer_use_image" in tool_meta:
+                        from computer_use_tool import format_computer_use_result_for_openai
+                        cu_result = tool_meta["computer_use_image"]
+                        from computer_use_tool import ComputerUseResult
+                        cu_obj = ComputerUseResult(
+                            success=True,
+                            action=cu_result["action"],
+                            content=cu_result["content"],
+                            image_base64=cu_result["base64"],
+                        )
+                        image_parts = format_computer_use_result_for_openai(cu_obj)
+                        tool_result_content = json.dumps(image_parts, ensure_ascii=False)
+
+                    tool_results_for_api.append({
+                        "role": "tool",
+                        "tool_call_id": tc["id"],
+                        "content": tool_result_content,
+                    })
+
+            # 只有在有工具调用结果时才添加到消息列表
+            if tool_results_for_api:
+                # 对于 OpenAI 格式，需要先添加 assistant 消息（带 tool_calls）
+                if provider != "anthropic":
+                    # 构造 assistant 消息
+                    assistant_message = {
+                        "role": "assistant",
+                        "content": text if text else None,
+                        "tool_calls": [
+                            {
+                                "id": tc["id"],
+                                "type": "function",
+                                "function": {
+                                    "name": tc["name"],
+                                    "arguments": json.dumps(tc["args"], ensure_ascii=False)
+                                }
+                            }
+                            for tc in tool_calls
+                        ]
+                    }
+                    messages.append(assistant_message)
+                
+                # 添加工具结果
+                messages.extend(tool_results_for_api)
+
+            if any_error:
+                error_summary = "\n".join(error_logs)
+                
+                if len(error_summary) > 2000:
+                    error_summary = error_summary[:2000] + "\n... [截断]"
+
+                healing_message = (
+                    f"⚠️ 执行工具时发生错误:\n\n{error_summary}\n\n"
+                    f"请分析以上错误原因，更换策略或修复参数后重试。"
+                    f" 不要重复相同的操作。"
+                )
                 messages.append({"role": "user", "content": healing_message})
-            else:
-                messages.append({"role": "user", "content": healing_message})
 
-            yield {
-                "type": "status",
-                "data": f"检测到错误，Agent 正在尝试自愈... (第 {turn} 轮)",
-            }
-        else:
-            yield {
-                "type": "status",
-                "data": f"工具执行成功，继续处理... (第 {turn} 轮)",
-            }
+            if not next_turn(session_id):
+                yield {"type": "error", "data": "循环轮数超限"}
+                break
 
-    # 超过最大轮数
-    yield {"type": "error", "data": f"已达到最大循环次数 ({max_turns} 轮)，强制终止。"}
+        except Exception as e:
+            import traceback
+            logger.error(f"Agent 循环异常:\n{traceback.format_exc()}")
+            yield {"type": "error", "data": f"Agent 执行异常: {str(e)}"}
+            break
 
-
-# ============================================================================
-# LLM API 调用层 - 支持 Anthropic 和 OpenAI 兼容接口
-# ============================================================================
-
-def _call_llm(
-    messages: list[dict],
-    tools: list[dict],
-    api_key: Optional[str],
-    model: Optional[str],
-    base_url: Optional[str],
-    provider: str,
-) -> tuple[str, list[dict]]:
-    """
-    调用 LLM API
-    
-    Returns:
-        (response_text, tool_calls)
-        - response_text: 大模型纯文本回复
-        - tool_calls: 工具调用列表 [{"id", "name", "args"}, ...]
-    """
-    if provider == "anthropic":
-        return _call_anthropic(messages, tools, api_key, model, base_url)
-    else:
-        return _call_openai(messages, tools, api_key, model, base_url)
-
+    yield {"type": "status", "data": f"Agent 任务完成 (共 {turn-1} 轮)"}
 
 def _call_anthropic(
     messages: list[dict],
@@ -702,6 +915,7 @@ def _call_anthropic(
     api_key: Optional[str],
     model: Optional[str],
     base_url: Optional[str],
+    system_prompt: str = "",
 ) -> tuple[str, list[dict]]:
     """调用 Anthropic Claude API"""
     import anthropic
@@ -714,13 +928,36 @@ def _call_anthropic(
 
     client = anthropic.Anthropic(**client_kwargs)
 
-    response = client.messages.create(
-        model=model or "claude-sonnet-4-20250514",
-        max_tokens=4096,
-        system=SYSTEM_PROMPT,
+    from prompt_caching import build_anthropic_cached_request
+    cached_request = build_anthropic_cached_request(
+        system_prompt=system_prompt,
         tools=tools,
         messages=messages,
     )
+
+    cache_report = cached_request.pop("_cache_report", None)
+    if cache_report and cache_report.has_break:
+        logger.warning(f"⚠️ 缓存断层: {cache_report.reason}")
+    elif cache_report:
+        logger.info(
+            f"💰 缓存前缀完整, 预估节省 {cache_report.cache_savings_estimate:.0f} tokens"
+        )
+
+    response = client.messages.create(
+        model=model or "claude-sonnet-4-20250514",
+        max_tokens=4096,
+        system=cached_request["system"],
+        tools=cached_request["tools"],
+        messages=cached_request["messages"],
+    )
+
+    if hasattr(response, 'usage') and response.usage:
+        cache_read = getattr(response.usage, 'cache_read_input_tokens', 0) or 0
+        cache_creation = getattr(response.usage, 'cache_creation_input_tokens', 0) or 0
+        if cache_read > 0 or cache_creation > 0:
+            logger.info(
+                f"📊 Prompt Cache: 读取 {cache_read} tokens, 创建 {cache_creation} tokens"
+            )
 
     text_parts = []
     tool_calls = []
@@ -737,16 +974,16 @@ def _call_anthropic(
 
     return "\n".join(text_parts), tool_calls
 
-
 def _call_openai(
     messages: list[dict],
     tools: list[dict],
-    api_key: Optional[str],
-    model: Optional[str],
-    base_url: Optional[str],
+    api_key: str | None,
+    model: str | None,
+    base_url: str | None,
 ) -> tuple[str, list[dict]]:
-    """调用 OpenAI 兼容 API"""
+    """调用 OpenAI 兼容 API (带 DashScope 终极防幻觉解析)"""
     from openai import OpenAI
+    import json
 
     client_kwargs = {}
     if api_key:
@@ -772,45 +1009,105 @@ def _call_openai(
     if message.content:
         text_parts.append(message.content)
 
-    if hasattr(message, 'tool_calls') and message.tool_calls:
-        for tc in message.tool_calls:
+    # ==========================================================
+    # 🛡️ 终极防御墙：处理 DashScope 等国产模型的格式坍缩
+    # ==========================================================
+    raw_tool_calls = getattr(message, 'tool_calls', None)
+    
+    # 🚨 核心修复：如果大模型把整个 tool_calls 吐成了一个字符串！
+    if isinstance(raw_tool_calls, str):
+        try:
+            raw_tool_calls = json.loads(raw_tool_calls)
+        except Exception:
+            logger.warning(f"⚠️ 无法解析的 tool_calls 字符串: {raw_tool_calls[:100]}")
+            raw_tool_calls = []
+
+    # 只有当它是真实的列表时，才开始遍历
+    if isinstance(raw_tool_calls, list):
+        for tc in raw_tool_calls:
+            tc_name = "unknown_tool"
+            args_dict = {}
+            tc_id = "unknown_id"
+
             try:
-                args = json.loads(tc.function.arguments)
-            except (json.JSONDecodeError, TypeError):
-                args = {}
-            tool_calls.append({
-                "id": tc.id,
-                "name": tc.function.name,
-                "args": args,
-            })
+                # 无论它是对象(Object)还是字典(Dict)，统统强转为字典
+                if hasattr(tc, 'model_dump'):
+                    tc_dict = tc.model_dump()
+                elif hasattr(tc, '__dict__'):
+                    tc_dict = tc.__dict__
+                elif isinstance(tc, dict):
+                    tc_dict = tc
+                else:
+                    tc_dict = {} # 单字符或者垃圾数据直接屏蔽
+
+                tc_id = tc_dict.get('id', f"call_{hash(str(tc))}")
+                
+                # 提取 function
+                func_obj = tc_dict.get('function', {})
+                if isinstance(func_obj, dict):
+                    tc_name = func_obj.get('name', 'unknown_tool')
+                    args_raw = func_obj.get('arguments', '{}')
+                else:
+                    tc_name = getattr(func_obj, 'name', 'unknown_tool')
+                    args_raw = getattr(func_obj, 'arguments', '{}')
+
+                # 解析 arguments
+                if isinstance(args_raw, str):
+                    try:
+                        args_dict = json.loads(args_raw)
+                        if not isinstance(args_dict, dict):
+                            args_dict = {}
+                    except Exception:
+                        args_dict = {}
+                elif isinstance(args_raw, dict):
+                    args_dict = args_raw
+
+                # 强行抢救 bash
+                if not args_dict and tc_name == "bash":
+                    args_dict = {"command": str(args_raw)}
+
+            except Exception as e:
+                logger.error(f"🚨 解析单个 ToolCall 失败: {e}, 数据: {tc}")
+                continue
+
+            # 只有拿到合法工具名，才加入队列
+            if tc_name != "unknown_tool":
+                tool_calls.append({
+                    "id": tc_id,
+                    "name": tc_name,
+                    "args": args_dict,
+                })
+    # ==========================================================
 
     return "\n".join(text_parts), tool_calls
 
+def get_session_messages(session_id: str) -> list[dict]:
+    """获取会话消息（用于回退工具）"""
+    rewind_system = get_rewind_system()
+    checkpoints = rewind_system.list_checkpoints(session_id)
+    if not checkpoints:
+        return []
+    return checkpoints[-1].get("messages", [])
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+    import argparse
 
-    print("=" * 60)
-    print("Eruitah Agent Engine v4 测试")
-    print("=" * 60)
+    parser = argparse.ArgumentParser(description="Eruitah Agent")
+    parser.add_argument("--input", type=str, required=True, help="用户输入")
+    parser.add_argument("--work-dir", type=str, default=".", help="工作目录")
+    parser.add_argument("--api-key", type=str, help="API 密钥")
+    parser.add_argument("--model", type=str, help="模型名称")
+    parser.add_argument("--base-url", type=str, help="API 基础 URL")
+    parser.add_argument("--provider", type=str, default="openai", choices=["openai", "anthropic"])
 
-    test_input = "列出当前目录下的文件"
-    print(f"\n测试输入: {test_input}")
-    print(f"\n--- 事件流 ---")
+    args = parser.parse_args()
 
-    for event in run_agent(test_input, provider="openai"):
-        event_type = event.get("type", "unknown")
-        if event_type == "message":
-            content = event.get("content", "")
-            print(f"\n[MESSAGE] {content[:200]}...")
-        elif event_type == "tool_start":
-            print(f"\n[TOOL_START] {event.get('tool_name')}({event.get('args', {})})")
-        elif event_type == "tool_end":
-            result = event.get("result", "")
-            print(f"[TOOL_END] {'ERROR' if event.get('is_error') else 'OK'}: {result[:150]}...")
-        elif event_type == "status":
-            print(f"[STATUS] {event.get('data', '')}")
-        elif event_type == "finish":
-            print(f"\n[FINISH] {event.get('data', '')[:200]}")
-        elif event_type == "error":
-            print(f"\n[ERROR] {event.get('data', '')}")
+    for event in run_agent(
+        user_input=args.input,
+        work_dir=args.work_dir,
+        api_key=args.api_key,
+        model=args.model,
+        base_url=args.base_url,
+        provider=args.provider,
+    ):
+        print(json.dumps(event, ensure_ascii=False))

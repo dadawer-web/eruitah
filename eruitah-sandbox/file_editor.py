@@ -203,6 +203,8 @@ def edit_file(
     search_text: str,
     replace_text: str,
     replace_all: bool = False,
+    session_id: str = None,
+    turn: int = 0,
 ) -> EditResult:
     """
     文件编辑核心函数 - SEARCH/REPLACE 模式
@@ -269,6 +271,15 @@ def edit_file(
                 error=f"文件不存在: {abs_file_path}。如果需要创建新文件，请将 search_text 设为空字符串。",
             )
     else:
+        # 文件存在 - 修改前自动备份
+        if session_id:
+            try:
+                from session_storage import get_storage
+                storage = get_storage()
+                storage.save_file_snapshot(session_id, turn, abs_file_path, "edit")
+            except Exception as e:
+                logger.warning(f"文件快照保存失败: {e}")
+        
         # 文件存在 - 检查大小
         file_size = os.path.getsize(abs_file_path)
         if file_size > MAX_EDIT_FILE_SIZE:
@@ -404,3 +415,25 @@ def edit_file(
         diff_patch=diff_patch,
         is_new_file=is_new_file,
     )
+
+
+def execute_file_edit(file_path: str, search_text: str, replace_text: str, work_dir: str = ".") -> tuple[str, bool]:
+    """执行文件编辑（供 agent_runner 调用）"""
+    try:
+        # 切换到工作目录
+        original_dir = os.getcwd()
+        os.chdir(work_dir)
+        
+        result = edit_file(file_path, search_text, replace_text)
+        
+        os.chdir(original_dir)
+        
+        if result.success:
+            if result.is_new_file:
+                return f"文件创建成功: {result.file_path}", False
+            else:
+                return f"文件编辑成功: {result.file_path}\n\n{result.diff_patch}", False
+        else:
+            return result.error, True
+    except Exception as e:
+        return f"文件编辑失败: {str(e)}", True

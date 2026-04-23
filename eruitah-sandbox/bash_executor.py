@@ -120,6 +120,10 @@ class BashResult:
     blocked: bool = False
     # 拦截/警告原因
     block_reason: str = ""
+    # 是否需要用户确认（警告级命令）
+    needs_confirmation: bool = False
+    # 原始命令（用于重新执行）
+    original_command: str = ""
     # 输出是否被截断
     truncated: bool = False
     # 实际执行耗时（秒）
@@ -321,16 +325,24 @@ def execute_bash(
         )
 
     if security_result.behavior == 'ask' and not allow_warnings:
-        logger.warning(f"命令需要确认但未获授权: {command} -> {security_result.message}")
+        logger.warning(f"命令需要确认: {command} -> {security_result.message}")
         return BashResult(
             blocked=True,
             block_reason=security_result.message,
+            needs_confirmation=True,
+            original_command=command,
             exit_code=-1,
         )
 
     # ------------------------------------------------------------------
     # 第二步: 超时参数校验 - 对应 TS 源码中的 timeout 校验
     # ------------------------------------------------------------------
+    # 确保 timeout_ms 是整数
+    try:
+        timeout_ms = int(timeout_ms)
+    except (ValueError, TypeError):
+        timeout_ms = DEFAULT_TIMEOUT_MS
+    
     timeout_ms = min(timeout_ms, MAX_TIMEOUT_MS)
     timeout_seconds = timeout_ms / 1000.0
 

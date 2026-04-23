@@ -241,3 +241,20 @@ def read_file(
         end_line=end_line,
         truncated=truncated,
     )
+
+
+def execute_file_read(file_path: str, start_line: Optional[int] = None, end_line: Optional[int] = None) -> tuple[str, bool]:
+    """执行文件读取（供 agent_runner 调用）"""
+    try:
+        result = read_file(file_path, start_line or 1, end_line)
+        
+        if result.error:
+            return result.error, True
+        else:
+            output = f"文件 {file_path} 读取成功\n总行数: {result.total_lines}, 读取行数: {result.lines_read}\n\n"
+            output += result.content
+            if result.truncated:
+                output += f"\n\n[文件被截断] 仅显示前 {MAX_READ_LINES} 行"
+            return output, False
+    except Exception as e:
+        return f"文件读取失败: {str(e)}", True

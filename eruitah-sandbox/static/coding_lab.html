@@ -166,6 +166,54 @@
         #terminal .log-warning { color: #dcdcaa; }
         #terminal .log-tool { color: #ce9178; }
 
+        /* ask_user 弹窗 */
+        #ask-user-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        #ask-user-modal.show { display: flex; }
+        #ask-user-box {
+            background: #2d2d2d;
+            border: 2px solid #007acc;
+            border-radius: 8px;
+            padding: 24px;
+            max-width: 500px;
+            width: 90%;
+        }
+        #ask-user-box h3 { color: #4ec9b0; margin-bottom: 12px; font-size: 16px; }
+        #ask-user-box .context { color: #969696; font-size: 13px; margin-bottom: 12px; }
+        #ask-user-box .question { color: #d4d4d4; font-size: 14px; margin-bottom: 16px; line-height: 1.5; }
+        #ask-user-box input {
+            width: 100%;
+            background: #0c0c0c;
+            border: 1px solid #444;
+            color: #d4d4d4;
+            padding: 10px 12px;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            border-radius: 4px;
+            outline: none;
+            margin-bottom: 12px;
+        }
+        #ask-user-box input:focus { border-color: #007acc; }
+        #ask-user-box .btn-row { display: flex; gap: 8px; justify-content: flex-end; }
+        #ask-user-box button {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        #ask-user-box .btn-submit { background: #007acc; color: white; }
+        #ask-user-box .btn-submit:hover { background: #0098ff; }
+        #ask-user-box .btn-skip { background: #444; color: #d4d4d4; }
+        #ask-user-box .btn-skip:hover { background: #555; }
+
         #input-area {
             display: flex;
             padding: 8px 12px;
@@ -205,6 +253,123 @@
             animation: blink 1s step-end infinite;
         }
         @keyframes blink { 50% { opacity: 0; } }
+
+        /* 文件夹浏览器模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+        .modal-content {
+            background-color: #2d2d2d;
+            margin: 5% auto;
+            padding: 0;
+            border: 1px solid #444;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 800px;
+            max-height: 80%;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        .modal-header {
+            padding: 12px 16px;
+            background: #333;
+            border-bottom: 1px solid #444;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h3 {
+            margin: 0;
+            font-size: 14px;
+            color: #4ec9b0;
+        }
+        .modal-close {
+            color: #aaa;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .modal-close:hover { color: #fff; }
+        .modal-body {
+            padding: 16px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .folder-browser {
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+        }
+        .folder-browser-header {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            background: #1e1e1e;
+            border: 1px solid #444;
+            border-radius: 4px;
+            margin-bottom: 12px;
+        }
+        .folder-browser-header input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #d4d4d4;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            outline: none;
+        }
+        .folder-browser-header button {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+        .folder-browser-header button:hover { background: #0098ff; }
+        .folder-item {
+            padding: 6px 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin: 2px 0;
+            display: flex;
+            align-items: center;
+        }
+        .folder-item:hover { background: #37373d; }
+        .folder-item.selected { background: #094771; }
+        .folder-item-icon { margin-right: 8px; font-size: 16px; }
+        .folder-item-name { flex: 1; }
+        .folder-item-type { color: #858585; font-size: 11px; }
+        .modal-footer {
+            padding: 12px 16px;
+            background: #333;
+            border-top: 1px solid #444;
+            border-radius: 0 0 8px 8px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+        .modal-footer button {
+            padding: 6px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .btn-primary { background: #007acc; color: white; }
+        .btn-primary:hover { background: #0098ff; }
+        .btn-secondary { background: #444; color: #d4d4d4; }
+        .btn-secondary:hover { background: #555; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs/loader.min.js"></script>
 </head>
@@ -221,7 +386,13 @@
             <div id="sidebar">
                 <div id="sidebar-header">
                     <span>📁 文件资源管理器</span>
-                    <button class="refresh-btn" onclick="refreshFileTree()" title="刷新">🔄</button>
+                    <div>
+                        <button class="refresh-btn" onclick="openFolderBrowser()" title="打开文件夹">📂</button>
+                        <button class="refresh-btn" onclick="refreshFileTree()" title="刷新">🔄</button>
+                    </div>
+                </div>
+                <div id="current-folder" style="padding: 4px 12px; font-size: 11px; color: #858585; border-bottom: 1px solid #444; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="当前工作目录">
+                    /tmp/eruitah-sandbox
                 </div>
                 <div id="file-tree"></div>
             </div>
@@ -251,6 +422,20 @@
         </div>
     </div>
 
+    <!-- ask_user 弹窗 -->
+    <div id="ask-user-modal">
+        <div id="ask-user-box">
+            <h3>🤖 Agent 遇到困难，需要你的帮助</h3>
+            <div class="context" id="ask-user-context"></div>
+            <div class="question" id="ask-user-question"></div>
+            <input type="text" id="ask-user-input" placeholder="请输入你的回答..." />
+            <div class="btn-row">
+                <button class="btn-skip" onclick="skipAskUser()">跳过</button>
+                <button class="btn-submit" onclick="submitAskUser()">提交回答</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let editor;
         let ws = null;
@@ -259,6 +444,7 @@
         let currentFileName = '';
         let maxTabs = 10;
         let sandboxDir = '/tmp/eruitah-sandbox';
+        let currentQuestionId = null;
 
         // ============================================================
         // 打字机引擎 - 编辑器
@@ -311,6 +497,97 @@
                 renderFileTree(data.files || []);
             } catch (e) {
                 console.error('获取文件树失败:', e);
+            }
+        }
+
+        // 文件夹浏览器功能
+        let selectedFolderPath = '/';
+
+        function openFolderBrowser() {
+            document.getElementById('folder-browser-modal').style.display = 'block';
+            document.getElementById('folder-path-input').value = '/';
+            browseFolder('/');
+        }
+
+        function closeFolderBrowser() {
+            document.getElementById('folder-browser-modal').style.display = 'none';
+        }
+
+        async function browseFolder(path) {
+            const inputPath = path || document.getElementById('folder-path-input').value;
+            selectedFolderPath = inputPath;
+            
+            try {
+                const response = await fetch('/api/v1/browse?path=' + encodeURIComponent(inputPath));
+                const data = await response.json();
+                renderFolderList(data.folders || [], inputPath);
+            } catch (e) {
+                console.error('浏览文件夹失败:', e);
+                document.getElementById('folder-list').innerHTML = '<div style="padding: 20px; text-align: center; color: #f48771;">加载失败: ' + e.message + '</div>';
+            }
+        }
+
+        function renderFolderList(folders, currentPath) {
+            const container = document.getElementById('folder-list');
+            container.innerHTML = '';
+
+            // 添加返回上级目录
+            if (currentPath !== '/') {
+                const parentPath = currentPath.split('/').slice(0, -1).join('/') || '/';
+                const parentItem = document.createElement('div');
+                parentItem.className = 'folder-item';
+                parentItem.innerHTML = '<span class="folder-item-icon">📁</span><span class="folder-item-name">..</span><span class="folder-item-type">上级目录</span>';
+                parentItem.onclick = () => {
+                    document.getElementById('folder-path-input').value = parentPath;
+                    browseFolder(parentPath);
+                };
+                container.appendChild(parentItem);
+            }
+
+            // 渲染文件夹列表
+            folders.forEach(folder => {
+                const item = document.createElement('div');
+                item.className = 'folder-item';
+                if (folder.path === selectedFolderPath) {
+                    item.classList.add('selected');
+                }
+                item.innerHTML = '<span class="folder-item-icon">📁</span><span class="folder-item-name">' + folder.name + '</span><span class="folder-item-type">文件夹</span>';
+                item.onclick = () => {
+                    document.getElementById('folder-path-input').value = folder.path;
+                    selectedFolderPath = folder.path;
+                    browseFolder(folder.path);
+                };
+                item.ondblclick = () => {
+                    selectFolder();
+                };
+                container.appendChild(item);
+            });
+
+            if (folders.length === 0) {
+                container.innerHTML = '<div style="padding: 20px; text-align: center; color: #858585;">此文件夹为空</div>';
+            }
+        }
+
+        async function selectFolder() {
+            const selectedPath = document.getElementById('folder-path-input').value;
+            
+            try {
+                // 更新工作目录
+                sandboxDir = selectedPath;
+                document.getElementById('current-folder').textContent = selectedPath;
+                document.getElementById('current-folder').title = selectedPath;
+                
+                // 刷新文件树
+                await refreshFileTree();
+                
+                // 关闭模态框
+                closeFolderBrowser();
+                
+                // 显示成功消息
+                appendTerminal('[系统] 工作目录已切换到: ' + selectedPath, 'info');
+            } catch (e) {
+                console.error('选择文件夹失败:', e);
+                alert('选择文件夹失败: ' + e.message);
             }
         }
 
@@ -600,6 +877,11 @@
             else if (type === 'message') {
                 appendTerminal('[Agent] ' + (event.content || ''), 'info');
             }
+            else if (type === 'assistant') {
+                if (event.data) {
+                    appendTerminal('[Agent] ' + event.data, 'info');
+                }
+            }
             else if (type === 'code_stream') {
                 streamCode(event.content || '');
             }
@@ -675,9 +957,89 @@
                 setAgentRunning(false);
                 appendTerminal('[ERROR] ' + (event.data || ''), 'error');
             }
+            else if (type === 'ask_user') {
+                // Agent 请求用户帮助
+                var question = event.question || '';
+                var context = event.context || '';
+                currentQuestionId = event.question_id || '';
+                
+                document.getElementById('ask-user-question').textContent = question;
+                document.getElementById('ask-user-context').textContent = context ? '背景: ' + context : '';
+                document.getElementById('ask-user-input').value = '';
+                document.getElementById('ask-user-modal').classList.add('show');
+                
+                appendTerminal('[Agent 提问] ' + question, 'warning');
+                
+                setTimeout(function() {
+                    document.getElementById('ask-user-input').focus();
+                }, 100);
+            }
         }
+
+        function submitAskUser() {
+            var answer = document.getElementById('ask-user-input').value.trim();
+            if (!answer) return;
+            
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: "user_answer",
+                    question_id: currentQuestionId,
+                    answer: answer,
+                }));
+            }
+            
+            document.getElementById('ask-user-modal').classList.remove('show');
+            appendTerminal('[用户回答] ' + answer, 'success');
+            currentQuestionId = null;
+        }
+
+        function skipAskUser() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: "user_answer",
+                    question_id: currentQuestionId,
+                    answer: "[跳过]",
+                }));
+            }
+            
+            document.getElementById('ask-user-modal').classList.remove('show');
+            appendTerminal('[用户跳过]', 'warning');
+            currentQuestionId = null;
+        }
+
+        document.getElementById('ask-user-input').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                submitAskUser();
+            }
+        });
 
         connectWebSocket('ws://127.0.0.1:8001/ws/coding');
     </script>
+
+    <!-- 文件夹浏览器模态框 -->
+    <div id="folder-browser-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📂 选择工作目录</h3>
+                <span class="modal-close" onclick="closeFolderBrowser()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="folder-browser">
+                    <div class="folder-browser-header">
+                        <span style="margin-right: 8px;">📁</span>
+                        <input type="text" id="folder-path-input" placeholder="输入路径或点击下方文件夹..." value="/" />
+                        <button onclick="browseFolder()">浏览</button>
+                    </div>
+                    <div id="folder-list" style="min-height: 200px; max-height: 400px; overflow-y: auto;">
+                        <div style="padding: 20px; text-align: center; color: #858585;">加载中...</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeFolderBrowser()">取消</button>
+                <button class="btn-primary" onclick="selectFolder()">选择此文件夹</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

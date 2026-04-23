@@ -135,6 +135,20 @@ def estimate_tokens(messages: list[dict]) -> int:
     Returns:
         int: 估算的 Token 数
     """
+    # =========================================================
+    # 🚨 终极防御：包容各种奇葩传参（字符串、单字典、列表）
+    # =========================================================
+    if isinstance(messages, str):
+        # 如果外面传进来的是纯字符串，我们把它包成标准的 message 格式
+        messages = [{"role": "user", "content": messages}]
+    elif isinstance(messages, dict):
+        # 如果传进来的是单个字典，包成列表
+        messages = [messages]
+    elif not isinstance(messages, list):
+        # 如果是烂数据（比如 None），直接返回 0
+        return 0
+    # =========================================================
+
     # 尝试使用 tiktoken
     try:
         import tiktoken

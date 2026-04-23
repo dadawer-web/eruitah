@@ -507,3 +507,24 @@ def grep_search(
         )
 
     return result
+
+
+def execute_grep(pattern: str, path: str = ".") -> tuple[str, bool]:
+    """执行 grep 搜索（供 agent_runner 调用）"""
+    try:
+        result = grep_search(pattern, work_dir=path)
+        
+        if result.error:
+            return result.error, True
+        else:
+            output = f"Grep 搜索 '{pattern}' 完成\n使用引擎: {result.engine_used}\n找到 {result.total_matches} 个匹配"
+            if result.truncated:
+                output += f"，仅显示前 {MAX_MATCH_LINES} 个"
+            output += "\n\n"
+            
+            for match in result.matches:
+                output += f"{match.file_path}:{match.line_number}: {match.line_text}\n"
+            
+            return output, False
+    except Exception as e:
+        return f"Grep 搜索失败: {str(e)}", True

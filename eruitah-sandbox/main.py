@@ -26,6 +26,7 @@ import os
 import json
 import asyncio
 import logging
+import uuid
 from typing import Optional
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -222,22 +223,34 @@ async def websocket_coding(websocket: WebSocket):
         }
     """
     await websocket.accept()
-    try:
-        # 接收客户端发来的任务
-        raw = await websocket.receive_text()
-
+    
+    # 用于接收客户端消息的任务
+    client_message_queue = asyncio.Queue()
+    
+    async def receive_client_messages():
+        """持续接收客户端消息"""
         try:
-            data = json.loads(raw)
-        except json.JSONDecodeError:
-            await websocket.send_json({"type": "error", "data": "无效的 JSON 格式"})
-            await websocket.close()
-            return
-
+            while True:
+                raw = await websocket.receive_text()
+                try:
+                    data = json.loads(raw)
+                    await client_message_queue.put(data)
+                except json.JSONDecodeError:
+                    pass
+        except Exception:
+            pass
+    
+    # 启动接收任务
+    receive_task = asyncio.create_task(receive_client_messages())
+    
+    try:
+        # 等待第一条消息（任务）
+        data = await client_message_queue.get()
+        
         # 解析任务
         user_input = data.get("task") or data.get("prompt") or ""
         if not user_input:
             await websocket.send_json({"type": "error", "data": "task/prompt 不能为空"})
-            await websocket.close()
             return
 
         # 解析参数
@@ -268,6 +281,66 @@ async def websocket_coding(websocket: WebSocket):
             provider=provider,
         ):
             await websocket.send_json(event)
+            
+            if event.get("type") == "ask_user":
+                question_id = event.get("data", {}).get("question_id", "")
+                
+                while True:
+                    try:
+                        msg = await asyncio.wait_for(client_message_queue.get(), timeout=300)
+                        if msg.get("type") == "user_answer" and msg.get("question_id") == question_id:
+                            from ask_user_tool import resolve_question
+                            resolve_question(question_id, msg.get("answer", ""))
+                            break
+                    except asyncio.TimeoutError:
+                        await websocket.send_json({"type": "error", "data": "等待用户回答超时"})
+                        break
+            
+            if event.get("type") == "command_confirmation":
+                confirmation_id = str(uuid.uuid4())[:8]
+                event["data"]["confirmation_id"] = confirmation_id
+                await websocket.send_json(event)
+                
+                while True:
+                    try:
+                        msg = await asyncio.wait_for(client_message_queue.get(), timeout=300)
+                        if msg.get("type") == "command_confirm" and msg.get("confirmation_id") == confirmation_id:
+                            if msg.get("approved"):
+                                from bash_executor import execute_bash
+                                result = execute_bash(
+                                    event["data"]["command"],
+                                    work_dir=work_dir,
+                                    allow_warnings=True
+                                )
+                                if result.blocked:
+                                    await websocket.send_json({
+                                        "type": "tool_end",
+                                        "tool_name": "bash",
+                                        "result": f"命令被拦截: {result.block_reason}",
+                                        "is_error": True
+                                    })
+                                else:
+                                    output = result.stdout
+                                    if result.stderr:
+                                        output += f"\n[stderr]\n{result.stderr}"
+                                    await websocket.send_json({
+                                        "type": "tool_end",
+                                        "tool_name": "bash",
+                                        "result": output or "命令执行成功",
+                                        "is_error": result.exit_code != 0
+                                    })
+                            else:
+                                await websocket.send_json({
+                                    "type": "tool_end",
+                                    "tool_name": "bash",
+                                    "result": "用户拒绝执行此命令",
+                                    "is_error": True
+                                })
+                            break
+                    except asyncio.TimeoutError:
+                        await websocket.send_json({"type": "error", "data": "等待用户确认超时"})
+                        break
+            
             await asyncio.sleep(0.01)
 
     except WebSocketDisconnect:
@@ -279,6 +352,9 @@ async def websocket_coding(websocket: WebSocket):
         except Exception:
             pass
     finally:
+        receive_task.cancel()
+        from ask_user_tool import cancel_all_questions
+        cancel_all_questions()
         try:
             await websocket.close()
         except Exception:
@@ -447,6 +523,40 @@ async def list_files(path: str = SANDBOX_DIR):
         return {"files": [], "error": str(e)}
 
 
+@app.get("/api/v1/browse")
+async def browse_directory(path: str = "/"):
+    """浏览文件系统，返回指定目录下的所有文件夹"""
+    import os
+    from pathlib import Path
+    
+    try:
+        base_path = Path(path)
+        if not base_path.exists():
+            return {"folders": [], "error": f"路径不存在: {path}"}
+        
+        if not base_path.is_dir():
+            return {"folders": [], "error": f"不是目录: {path}"}
+        
+        folders = []
+        try:
+            for item in base_path.iterdir():
+                if item.is_dir():
+                    try:
+                        folders.append({
+                            "name": item.name,
+                            "path": str(item.absolute()),
+                        })
+                    except PermissionError:
+                        continue
+        except PermissionError:
+            return {"folders": [], "error": f"无权限访问: {path}"}
+        
+        folders.sort(key=lambda x: x["name"].lower())
+        return {"folders": folders, "current_path": str(base_path.absolute())}
+    except Exception as e:
+        return {"folders": [], "error": str(e)}
+
+
 @app.get("/api/v1/file")
 async def read_file_content(path: str):
     """读取文件内容"""
@@ -496,6 +606,99 @@ async def ide_page():
     if os.path.isfile(html_path):
         return FileResponse(html_path, media_type="text/html")
     return {"error": "coding_lab.html not found", "hint": "请确保 static/coding_lab.html 存在"}
+
+
+@app.websocket("/ws/terminal")
+async def websocket_terminal(websocket: WebSocket):
+    """
+    交互式终端 WebSocket - 真正的 shell 体验
+    
+    协议:
+      客户端发送: {"type": "input", "data": "ls\n"}
+                 {"type": "resize", "cols": 120, "rows": 40}
+      服务端推送: {"type": "output", "data": "file1\nfile2\n"}
+    """
+    from interactive_terminal import InteractiveTerminal
+    
+    await websocket.accept()
+    
+    pty_session = None
+    output_task = None
+    
+    async def read_output():
+        """持续读取 PTY 输出并发送给前端"""
+        while pty_session and pty_session.running:
+            try:
+                output = pty_session.read(timeout=0.05)
+                if output:
+                    await websocket.send_json({"type": "output", "data": output})
+                await asyncio.sleep(0.01)
+            except Exception as e:
+                logger.error(f"读取 PTY 输出失败: {e}")
+                break
+    
+    try:
+        data = await websocket.receive_json()
+        
+        if data.get("type") == "start":
+            work_dir = data.get("work_dir", SANDBOX_DIR)
+            cols = data.get("cols", 80)
+            rows = data.get("rows", 24)
+            shell = data.get("shell")
+            
+            pty_session = InteractiveTerminal(
+                work_dir=work_dir,
+                shell=shell,
+                cols=cols,
+                rows=rows
+            )
+            
+            if pty_session.start():
+                await websocket.send_json({
+                    "type": "started",
+                    "data": {
+                        "pid": pty_session.pid,
+                        "shell": pty_session.shell,
+                        "cwd": pty_session.work_dir
+                    }
+                })
+                output_task = asyncio.create_task(read_output())
+            else:
+                await websocket.send_json({"type": "error", "data": "启动终端失败"})
+                return
+        
+        while True:
+            try:
+                data = await websocket.receive_json()
+                
+                if data.get("type") == "input":
+                    input_data = data.get("data", "")
+                    if pty_session and input_data:
+                        pty_session.write(input_data)
+                
+                elif data.get("type") == "resize":
+                    cols = data.get("cols", 80)
+                    rows = data.get("rows", 24)
+                    if pty_session:
+                        pty_session.resize(cols, rows)
+                
+            except Exception as e:
+                logger.error(f"处理终端消息失败: {e}")
+                break
+                
+    except WebSocketDisconnect:
+        logger.info("交互式终端 WebSocket 断开")
+    except Exception as e:
+        logger.error(f"交互式终端异常: {e}")
+    finally:
+        if output_task:
+            output_task.cancel()
+        if pty_session:
+            pty_session.stop()
+        try:
+            await websocket.close()
+        except Exception:
+            pass
 
 
 # ============================================================================

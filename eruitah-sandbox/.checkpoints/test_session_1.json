@@ -1,0 +1,13 @@
+{
+  "session_id": "test_session",
+  "turn": 1,
+  "timestamp": 1776867043.3279119,
+  "messages": [
+    {
+      "role": "user",
+      "content": "test"
+    }
+  ],
+  "file_snapshots": [],
+  "description": "测试"
+}

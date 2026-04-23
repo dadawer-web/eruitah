@@ -1,4 +1,6 @@
 #include "codingagentdialog.h"
+#include <QSettings>
+#include <QCoreApplication>
 
 CodingAgentDialog::CodingAgentDialog(QWidget *parent) : QDialog(parent) {
     setupUI();
@@ -31,5 +33,25 @@ void CodingAgentDialog::setupUI() {
     m_webView->setStyleSheet("background-color: #1e1e1e;");
     mainLayout->addWidget(m_webView, 1);
     
-    m_webView->load(QUrl("http://127.0.0.1:8001/ide"));
+    QSettings settings;
+    QString sandboxUrl = settings.value("sandbox/url", "").toString();
+    
+    if (sandboxUrl.isEmpty()) {
+        QString hostEnv = qEnvironmentVariable("ERUITAH_SANDBOX_HOST", "");
+        if (!hostEnv.isEmpty()) {
+            sandboxUrl = QString("http://%1/ide").arg(hostEnv);
+        } else {
+            sandboxUrl = "http://127.0.0.1:8001/ide";
+        }
+    }
+    
+    if (!sandboxUrl.contains("/ide")) {
+        if (sandboxUrl.endsWith("/")) {
+            sandboxUrl.chop(1);
+        }
+        sandboxUrl += "/ide";
+    }
+    
+    qDebug() << "Loading Eruitah sandbox from:" << sandboxUrl;
+    m_webView->load(QUrl(sandboxUrl));
 }

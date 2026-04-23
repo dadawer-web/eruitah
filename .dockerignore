@@ -54,6 +54,9 @@ venv/
 __pycache__/
 *.pyc
 .pytest_cache/
+.checkpoints/
+*.py[cod]
+*$py.class
 
 node_modules/
 npm-debug.log

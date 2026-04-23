@@ -77,3 +77,32 @@ Pipfile.lock
 *.egg-info/
 dist/
 *.egg
+
+# === 前端构建产物 (coding-agent-ui) ===
+node_modules/
+.npm
+.pnpm-store/
+.yarn/
+dist/
+.cache/
+.parcel-cache/
+.vite/
+.output/
+.nuxt/
+.next/
+.svelte-kit/
+*.local
+
+# 前端日志
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# 前端锁文件（可选，根据团队约定）
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Claude Code 开发工具目录
+claude-code-dev/

@@ -184,3 +184,21 @@ def glob_search(
         truncated=truncated,
         total_matches=total_matches,
     )
+
+
+def execute_glob(pattern: str, work_dir: str = ".") -> tuple[str, bool]:
+    """执行 glob 搜索（供 agent_runner 调用）"""
+    try:
+        result = glob_search(pattern, work_dir)
+        
+        if result.error:
+            return result.error, True
+        else:
+            output = f"Glob 搜索 '{pattern}' 完成\n找到 {result.total_matches} 个文件"
+            if result.truncated:
+                output += f"，仅显示前 {MAX_RESULTS} 个"
+            output += "\n\n"
+            output += "\n".join(result.files)
+            return output, False
+    except Exception as e:
+        return f"Glob 搜索失败: {str(e)}", True
