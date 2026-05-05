@@ -1,0 +1,409 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+大富翁游戏 - Monopoly Game
+支持单机多人游戏，包含AI玩家，可保存/读取进度
+"""
+
+import random
+import json
+import os
+from enum import Enum
+from dataclasses import dataclass, asdict
+from typing import List, Dict, Optional, Any
+
+
+class CellType(Enum):
+    """地图格子类型"""
+    EMPTY = "empty"           # 空地 - 可购买
+    PROPERTY = "property"     # 房产
+    LUCKY = "lucky"          # 幸运事件
+    UNLUCKY = "unlucky"      # 不幸事件
+    START = "start"          # 起点
+    JAIL = "jail"            # 监狱
+    HOSPITAL = "hospital"    # 医院
+    TAX_OFFICE = "tax_office"  # 税务局
+
+
+class EventType(Enum):
+    """事件类型"""
+    REWARD = "reward"        # 奖励
+    PENALTY = "penalty"      # 惩罚
+    EXTRA_TURN = "extra_turn"  # 额外回合
+    GO_TO_JAIL = "go_to_jail"  # 进监狱
+    GO_TO_HOSPITAL = "go_to_hospital"  # 进医院
+    TAX = "tax"              # 纳税
+
+
+@dataclass
+class GameCell:
+    """游戏地图格子"""
+    id: int
+    name: str
+    cell_type: CellType
+    price: int = 0           # 购买价格
+    base_rent: int = 0       # 基础租金
+    upgrade_cost: int = 0    # 升级费用
+    upgraded_rent: int = 0   # 升级后租金
+    event_data: Optional[Dict] = None  # 事件数据（幸运/不幸格子）
+
+
+@dataclass
+class Player:
+    """玩家类"""
+    id: int
+    name: str
+    is_ai: bool
+    money: int
+    position: int = 0
+    properties: List[int] = None  # 拥有的房产ID列表
+    in_jail: bool = False
+    jail_turns: int = 0
+    in_hospital: bool = False
+    hospital_turns: int = 0
+    extra_turn: bool = False
+    
+    def __post_init__(self):
+        if self.properties is None:
+            self.properties = []
+
+
+@dataclass
+class GameState:
+    """游戏状态"""
+    players: List[Player]
+    board: List[GameCell]
+    current_player_index: int = 0
+    game_over: bool = False
+    winner: Optional[int] = None
+
+
+class MonopolyGame:
+    """大富翁游戏主类"""
+    
+    def __init__(self):
+        self.state = None
+        self.initial_money = 1500  # 初始资金
+        
+    def create_new_game(self, player_configs: List[Dict[str, Any]]) -> GameState:
+        """创建新游戏"""
+        # 加载地图
+        board = self.load_board_from_file()
+        
+        # 创建玩家
+        players = []
+        for i, config in enumerate(player_configs):
+            player = Player(
+                id=i,
+                name=config['name'],
+                is_ai=config.get('is_ai', False),
+                money=self.initial_money
+            )
+            players.append(player)
+            
+        self.state = GameState(players=players, board=board)
+        return self.state
+    
+    def load_board_from_file(self) -> List[GameCell]:
+        """从文件加载游戏地图"""
+        board_file = "game_board.json"
+        if os.path.exists(board_file):
+            with open(board_file, 'r', encoding='utf-8') as f:
+                board_data = json.load(f)
+            cells = []
+            for cell_data in board_data:
+                # 将字符串类型的 cell_type 转换为 CellType 枚举
+                cell_type_str = cell_data.get('cell_type', 'empty')
+                cell_data['cell_type'] = CellType(cell_type_str)
+                cells.append(GameCell(**cell_data))
+            return cells
+        else:
+            # 创建默认地图
+            return self.create_default_board()
+    
+    def create_default_board(self) -> List[GameCell]:
+        """创建默认游戏地图"""
+        board = [
+            GameCell(0, "起点", CellType.START),
+            GameCell(1, "北京路", CellType.EMPTY, price=200, base_rent=20, upgrade_cost=100, upgraded_rent=50),
+            GameCell(2, "幸运转盘", CellType.LUCKY, event_data={"type": EventType.REWARD.value, "amount": 100}),
+            GameCell(3, "上海路", CellType.EMPTY, price=250, base_rent=25, upgrade_cost=120, upgraded_rent=60),
+            GameCell(4, "税务局", CellType.TAX_OFFICE),
+            GameCell(5, "广州路", CellType.EMPTY, price=180, base_rent=18, upgrade_cost=90, upgraded_rent=45),
+            GameCell(6, "不幸事件", CellType.UNLUCKY, event_data={"type": EventType.PENALTY.value, "amount": 50}),
+            GameCell(7, "深圳路", CellType.EMPTY, price=300, base_rent=30, upgrade_cost=150, upgraded_rent=75),
+            GameCell(8, "医院", CellType.HOSPITAL),
+            GameCell(9, "杭州路", CellType.EMPTY, price=220, base_rent=22, upgrade_cost=110, upgraded_rent=55),
+            GameCell(10, "监狱", CellType.JAIL),
+            GameCell(11, "南京路", CellType.EMPTY, price=280, base_rent=28, upgrade_cost=140, upgraded_rent=70),
+            GameCell(12, "幸运抽奖", CellType.LUCKY, event_data={"type": EventType.EXTRA_TURN.value}),
+            GameCell(13, "成都路", CellType.EMPTY, price=240, base_rent=24, upgrade_cost=120, upgraded_rent=60),
+            GameCell(14, "不幸罚款", CellType.UNLUCKY, event_data={"type": EventType.GO_TO_JAIL.value}),
+        ]
+        return board
+    
+    def save_board_to_file(self, board: List[GameCell]):
+        """保存地图到文件"""
+        board_data = [asdict(cell) for cell in board]
+        with open("game_board.json", 'w', encoding='utf-8') as f:
+            json.dump(board_data, f, ensure_ascii=False, indent=2)
+    
+    def roll_dice(self) -> int:
+        """掷骰子，返回步数"""
+        return random.randint(1, 6) + random.randint(1, 6)
+    
+    def move_player(self, player_id: int, steps: int) -> int:
+        """移动玩家"""
+        player = self.get_player(player_id)
+        old_position = player.position
+        new_position = (old_position + steps) % len(self.state.board)
+        player.position = new_position
+        return new_position
+    
+    def get_player(self, player_id: int) -> Player:
+        """获取玩家"""
+        for player in self.state.players:
+            if player.id == player_id:
+                return player
+        raise ValueError(f"Player {player_id} not found")
+    
+    def get_current_player(self) -> Player:
+        """获取当前玩家"""
+        return self.state.players[self.state.current_player_index]
+    
+    def process_cell_landing(self, player_id: int, cell_id: int):
+        """处理玩家落在格子上的逻辑"""
+        player = self.get_player(player_id)
+        cell = self.state.board[cell_id]
+        
+        if cell.cell_type == CellType.EMPTY:
+            # 空地 - 可以购买
+            pass
+        elif cell.cell_type == CellType.PROPERTY:
+            # 房产格子
+            self.process_property_landing(player, cell)
+        elif cell.cell_type == CellType.LUCKY:
+            # 幸运事件
+            self.process_lucky_event(player, cell)
+        elif cell.cell_type == CellType.UNLUCKY:
+            # 不幸事件
+            self.process_unlucky_event(player, cell)
+        elif cell.cell_type == CellType.JAIL:
+            # 监狱
+            player.in_jail = True
+            player.jail_turns = 2  # 轮空两回合
+        elif cell.cell_type == CellType.HOSPITAL:
+            # 医院
+            player.in_hospital = True
+            player.hospital_turns = 2
+            player.money -= 100  # 医疗费
+        elif cell.cell_type == CellType.TAX_OFFICE:
+            # 税务局 - 按财产交税
+            tax_amount = max(player.money // 10, 50)  # 至少50
+            player.money -= tax_amount
+    
+    def process_property_landing(self, player: Player, cell: GameCell):
+        """处理房产格子"""
+        # 查找房产所有者
+        owner = None
+        for p in self.state.players:
+            if cell.id in p.properties:
+                owner = p
+                break
+        
+        if owner is None:
+            # 无人拥有 - 可购买
+            pass
+        elif owner.id == player.id:
+            # 自己的房产 - 可升级
+            pass
+        else:
+            # 别人的房产 - 付租金
+            rent = cell.upgraded_rent if hasattr(cell, 'upgraded_rent') and cell.upgraded_rent > 0 else cell.base_rent
+            player.money -= rent
+            owner.money += rent
+    
+    def process_lucky_event(self, player: Player, cell: GameCell):
+        """处理幸运事件"""
+        if cell.event_data:
+            event_type = cell.event_data.get('type')
+            if event_type == EventType.REWARD.value:
+                amount = cell.event_data.get('amount', 100)
+                player.money += amount
+            elif event_type == EventType.EXTRA_TURN.value:
+                player.extra_turn = True
+    
+    def process_unlucky_event(self, player: Player, cell: GameCell):
+        """处理不幸事件"""
+        if cell.event_data:
+            event_type = cell.event_data.get('type')
+            if event_type == EventType.PENALTY.value:
+                amount = cell.event_data.get('amount', 50)
+                player.money -= amount
+            elif event_type == EventType.GO_TO_JAIL.value:
+                player.in_jail = True
+                player.jail_turns = 2
+                player.position = self.find_cell_by_type(CellType.JAIL).id
+            elif event_type == EventType.GO_TO_HOSPITAL.value:
+                player.in_hospital = True
+                player.hospital_turns = 2
+                player.position = self.find_cell_by_type(CellType.HOSPITAL).id
+                player.money -= 100
+    
+    def find_cell_by_type(self, cell_type: CellType) -> GameCell:
+        """根据类型查找格子"""
+        for cell in self.state.board:
+            if cell.cell_type == cell_type:
+                return cell
+        raise ValueError(f"Cell type {cell_type} not found")
+    
+    def buy_property(self, player_id: int, cell_id: int) -> bool:
+        """购买房产"""
+        player = self.get_player(player_id)
+        cell = self.state.board[cell_id]
+        
+        if cell.cell_type not in [CellType.EMPTY, CellType.PROPERTY]:
+            return False
+        
+        if cell_id in player.properties:
+            return False  # 已经拥有
+        
+        # 检查是否有人拥有
+        for p in self.state.players:
+            if cell_id in p.properties:
+                return False  # 别人拥有
+        
+        if player.money < cell.price:
+            return False  # 钱不够
+        
+        player.money -= cell.price
+        player.properties.append(cell_id)
+        cell.cell_type = CellType.PROPERTY
+        return True
+    
+    def upgrade_property(self, player_id: int, cell_id: int) -> bool:
+        """升级房产"""
+        player = self.get_player(player_id)
+        
+        # 检查 cell_id 是否有效
+        if cell_id < 0 or cell_id >= len(self.state.board):
+            return False  # 无效的格子ID
+        
+        cell = self.state.board[cell_id]
+        
+        if cell_id not in player.properties:
+            return False  # 不是自己的房产
+        
+        if player.money < cell.upgrade_cost:
+            return False  # 钱不够
+        
+        player.money -= cell.upgrade_cost
+        # 升级后租金自动生效（在process_property_landing中处理）
+        return True
+    
+    def next_turn(self):
+        """下一个回合"""
+        current_player = self.get_current_player()
+        
+        # 处理监狱/医院状态
+        if current_player.in_jail:
+            current_player.jail_turns -= 1
+            if current_player.jail_turns <= 0:
+                current_player.in_jail = False
+        
+        if current_player.in_hospital:
+            current_player.hospital_turns -= 1
+            if current_player.hospital_turns <= 0:
+                current_player.in_hospital = False
+        
+        # 检查额外回合
+        if current_player.extra_turn:
+            current_player.extra_turn = False
+        else:
+            # 正常切换到下一个存活玩家
+            self.state.current_player_index = self.get_next_alive_player_index()
+        
+        # 检查游戏结束
+        self.check_game_over()
+    
+    def get_next_alive_player_index(self) -> int:
+        """获取下一个存活玩家的索引"""
+        current = self.state.current_player_index
+        n = len(self.state.players)
+        
+        for i in range(1, n):
+            next_index = (current + i) % n
+            if self.state.players[next_index].money >= 0:
+                return next_index
+        
+        return current  # 如果只有自己存活
+    
+    def check_game_over(self):
+        """检查游戏是否结束"""
+        alive_players = [p for p in self.state.players if p.money >= 0]
+        if len(alive_players) <= 1:
+            self.state.game_over = True
+            if alive_players:
+                self.state.winner = alive_players[0].id
+            else:
+                self.state.winner = None
+    
+    def save_game(self, filename: str = "saved_game.json"):
+        """保存游戏进度"""
+        game_data = {
+            'players': [asdict(player) for player in self.state.players],
+            'current_player_index': self.state.current_player_index,
+            'game_over': self.state.game_over,
+            'winner': self.state.winner
+        }
+        
+        with open(filename, 'w', encoding='utf-8') as f:
+            json.dump(game_data, f, ensure_ascii=False, indent=2)
+    
+    def load_game(self, filename: str = "saved_game.json") -> GameState:
+        """读取游戏进度"""
+        if not os.path.exists(filename):
+            raise FileNotFoundError(f"Save file {filename} not found")
+        
+        with open(filename, 'r', encoding='utf-8') as f:
+            game_data = json.load(f)
+        
+        # 重新加载地图
+        board = self.load_board_from_file()
+        
+        # 重建玩家
+        players = []
+        for player_data in game_data['players']:
+            player = Player(**player_data)
+            players.append(player)
+        
+        self.state = GameState(
+            players=players,
+            board=board,
+            current_player_index=game_data['current_player_index'],
+            game_over=game_data['game_over'],
+            winner=game_data['winner']
+        )
+        
+        return self.state
+
+
+# 测试代码
+if __name__ == "__main__":
+    game = MonopolyGame()
+    
+    # 创建测试玩家
+    players_config = [
+        {"name": "玩家1", "is_ai": False},
+        {"name": "玩家2", "is_ai": True},
+        {"name": "玩家3", "is_ai": False},
+        {"name": "玩家4", "is_ai": True},
+    ]
+    
+    state = game.create_new_game(players_config)
+    print(f"游戏创建成功，共有 {len(state.players)} 个玩家")
+    print(f"地图有 {len(state.board)} 个格子")
+    
+    # 保存默认地图
+    game.save_board_to_file(state.board)
+    print("默认地图已保存到 game_board.json")

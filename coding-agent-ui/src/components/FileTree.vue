@@ -1,10 +1,11 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, reactive } from 'vue'
 import { useAgentStore } from '../stores/agent'
 import DirPicker from './DirPicker.vue'
 
 const store = useAgentStore()
 const showDirPicker = ref(false)
+const expandedMap = reactive({})
 
 const tree = computed(() => {
   const root = { name: '/', children: [], isDir: true }
@@ -17,12 +18,18 @@ const tree = computed(() => {
       const isFile = i === parts.length - 1
       let child = node.children.find(c => c.name === part)
       if (!child) {
+        const nodePath = parts.slice(0, i + 1).join('/')
         child = {
           name: part,
-          path: file,
+          path: nodePath,
           isDir: !isFile,
           children: [],
-          expanded: false,
+          get expanded() {
+            return !!expandedMap[nodePath]
+          },
+          set expanded(val) {
+            expandedMap[nodePath] = val
+          }
         }
         node.children.push(child)
       }
@@ -37,9 +44,8 @@ function toggle(node) {
 }
 
 function openFile(node) {
-  if (!node.isDir) {
-    store.fetchFileContent(node.path)
-  } else {
+  store.setCurrentItem(node.path, node.isDir)
+  if (node.isDir) {
     toggle(node)
   }
 }

@@ -19,18 +19,17 @@ public class ProtobufEncoder extends MessageToByteEncoder<Message> {
         int nameLen = nameBytes.length + 1;
         int totalLen = 2 * HEADER_LEN + nameLen + payload.length;
 
-        out.writeInt(totalLen);
-        out.writeInt(nameLen);
+        out.writeIntLE(totalLen);
+        out.writeIntLE(nameLen);
         out.writeBytes(nameBytes);
         out.writeByte(0);
         out.writeBytes(payload);
 
         Adler32 adler32 = new Adler32();
-        int checkStartIdx = out.writerIndex() - totalLen - HEADER_LEN;
-        int checkLen = totalLen + HEADER_LEN;
+        int checkLen = out.readableBytes();
         byte[] dataToChecksum = new byte[checkLen];
-        out.getBytes(checkStartIdx, dataToChecksum);
+        out.getBytes(out.readerIndex(), dataToChecksum);
         adler32.update(dataToChecksum);
-        out.writeInt((int) adler32.getValue());
+        out.writeIntLE((int) adler32.getValue());
     }
 }

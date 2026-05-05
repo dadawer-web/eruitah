@@ -31,10 +31,19 @@ Eruitah 智能编程沙盒 - 记忆管理器 (Memory Manager)
 
 import json
 import logging
+import os
+import re
+import time
 from dataclasses import dataclass, field
 from typing import Optional
+from collections import OrderedDict
 
 logger = logging.getLogger(__name__)
+
+SUMMARY_STORE_DIR = os.environ.get(
+    "ERUITAH_SUMMARY_DIR",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), ".summaries")
+)
 
 # ============================================================================
 # 常量定义 - 对齐 TS 源码 compact.ts 和 autoCompact.ts
@@ -42,7 +51,7 @@ logger = logging.getLogger(__name__)
 
 # 折叠触发: 对话轮数阈值
 # 超过此轮数触发折叠，对应用户需求"超过 15 轮触发折叠"
-COMPACT_TURN_THRESHOLD = 15
+COMPACT_TURN_THRESHOLD = 30
 
 # 折叠触发: Token 总量阈值
 # 对应 TS 源码 autoCompactThreshold = effectiveContextWindow - AUTOCOMPACT_BUFFER_TOKENS
@@ -50,7 +59,7 @@ COMPACT_TOKEN_THRESHOLD = 30_000
 
 # 折叠后摘要最大长度（字符数）
 # 对应用户需求"压缩成 500 字以内的摘要"
-MAX_SUMMARY_LENGTH = 500
+MAX_SUMMARY_LENGTH = 3000
 
 # 折叠时保留的最近对话轮数
 # 保留最近几轮的完整上下文，只折叠更早的历史
@@ -58,19 +67,73 @@ MAX_SUMMARY_LENGTH = 500
 KEEP_RECENT_TURNS = 5
 
 # 摘要生成提示词 - 对齐 TS 源码 prompt.ts 中的 BASE_COMPACT_PROMPT
-COMPACT_PROMPT = """你是一个对话摘要专家。请将以下对话历史压缩成一段简洁的摘要。
+COMPACT_PROMPT = """你的任务是创建对话的详细摘要，重点关注用户的明确请求和你之前的操作。
+摘要应详尽地捕获技术细节、代码模式和架构决策，这些对于在不丢失上下文的情况下继续开发工作至关重要。
 
-要求:
-1. 摘要不超过 500 字
-2. 必须包含: 用户的核心需求、已完成的操作、当前的错误状态、未完成的任务
-3. 保留关键文件路径和函数名
-4. 保留编译/运行错误的关键信息
-5. 省略冗余的中间过程，只保留对后续工作有参考价值的信息
+在提供最终摘要之前，请将你的分析过程放在 <analysis> 标签中，按时间顺序分析每条消息：
+1. 用户的明确请求和意图
+2. 你处理用户请求的方法
+3. 关键决策、技术概念和代码模式
+4. 具体细节：文件名、代码片段、函数签名、文件编辑
+5. 遇到的错误及修复方法
+6. 特别注意用户的反馈，尤其是用户要求改变做法时
 
-对话历史:
+你的摘要应包含以下 9 个部分：
+
+1. 核心需求与意图：详细描述用户的所有明确请求和意图
+2. 关键技术概念：列出所有重要的技术概念、技术和框架
+3. 文件与代码：列出具体文件和代码段，包括文件名、修改原因和关键代码片段
+4. 错误与修复：列出所有遇到的错误及修复方法，注意用户反馈
+5. 问题解决：记录已解决的问题和正在进行的排查工作
+6. 所有用户消息：列出所有非工具结果的用户消息
+7. 待办任务：列出所有明确的待办任务
+8. 当前工作：精确描述摘要请求前正在进行的工作，包括文件名和代码片段
+9. 下一步建议：列出与最近工作直接相关的下一步操作，引用最近的对话内容
+
+请按以下格式输出：
+
+<analysis>
+[你的分析过程，确保所有要点都被彻底准确地覆盖]
+</analysis>
+
+<summary>
+1. 核心需求与意图：
+   [详细描述]
+
+2. 关键技术概念：
+   - [概念1]
+   - [概念2]
+
+3. 文件与代码：
+   - [文件名1]
+      - [该文件的重要性]
+      - [修改内容摘要]
+      - [关键代码片段]
+
+4. 错误与修复：
+   - [错误描述]：
+     - [修复方法]
+
+5. 问题解决：
+   [已解决问题和进行中的排查]
+
+6. 所有用户消息：
+   - [用户消息内容]
+
+7. 待办任务：
+   - [任务1]
+
+8. 当前工作：
+   [精确描述当前工作]
+
+9. 下一步建议：
+   [下一步操作]
+</summary>
+
+以下是对话历史：
 {conversation}
 
-请生成摘要:"""
+请根据以上对话生成摘要："""
 
 
 # ============================================================================
@@ -321,10 +384,35 @@ def _format_messages_for_summary(messages: list[dict]) -> str:
 # 摘要生成 - 对应 TS 源码 streamCompactSummary()
 # ============================================================================
 
+def _format_compact_summary(summary: str) -> str:
+    """
+    格式化折叠摘要 - 对标 claude-code prompt.ts 的 formatCompactSummary()
+
+    1. 剥离 <analysis> 草稿区（仅用于提升摘要质量，无信息价值）
+    2. 将 <summary> XML 标签替换为可读的节标题
+    3. 清理多余空行
+    """
+    formatted = summary
+
+    formatted = re.sub(r'<analysis>[\s\S]*?</analysis>', '', formatted)
+
+    summary_match = re.search(r'<summary>([\s\S]*?)</summary>', formatted)
+    if summary_match:
+        content = summary_match.group(1) or ''
+        formatted = formatted.replace(
+            summary_match.group(0),
+            f"摘要:\n{content.strip()}",
+        )
+
+    formatted = re.sub(r'\n\n+', '\n\n', formatted)
+
+    return formatted.strip()
+
+
 def generate_summary(
     messages: list[dict],
     api_key: Optional[str] = None,
-    model: str = "qwen-turbo",
+    model: str = "mimo-v2.5-pro",
     base_url: Optional[str] = None,
 ) -> str:
     """
@@ -336,8 +424,8 @@ def generate_summary(
     3. 调用 LLM 生成摘要
     4. 截断到最大长度
 
-    使用小模型（如 qwen-turbo）而非主模型生成摘要，
-    因为摘要生成不需要强推理能力，小模型更快更便宜。
+    使用子模型（如 mimo-v2.5-pro）而非主模型生成摘要，
+    因为摘要生成不需要强推理能力，子模型更快更便宜。
 
     对应 TS 源码中的设计:
         - 使用独立的小模型调用（不占用主对话的上下文）
@@ -375,14 +463,15 @@ def generate_summary(
         response = client.chat.completions.create(
             model=model,
             messages=[
-                {"role": "system", "content": "你是一个对话摘要专家，擅长将长对话压缩为简洁的摘要。"},
+                {"role": "system", "content": "你是一个对话摘要专家，擅长将长对话压缩为结构化的技术摘要。只输出文本，不要调用任何工具。"},
                 {"role": "user", "content": prompt},
             ],
-            max_tokens=800,
+            max_tokens=4000,
             temperature=0.3,
         )
 
-        summary = response.choices[0].message.content or ""
+        raw_summary = response.choices[0].message.content or ""
+        summary = _format_compact_summary(raw_summary)
 
     except ImportError:
         # OpenAI 库不可用，使用简单的截断策略
@@ -432,7 +521,7 @@ def compact_messages(
     messages: list[dict],
     keep_recent: int = KEEP_RECENT_TURNS,
     summary_api_key: Optional[str] = None,
-    summary_model: str = "qwen-turbo",
+    summary_model: str = "mimo-v2.5-pro",
     summary_base_url: Optional[str] = None,
 ) -> list[dict]:
     """
@@ -574,7 +663,7 @@ class ConversationMemoryManager:
         turn_threshold: int = COMPACT_TURN_THRESHOLD,
         keep_recent: int = KEEP_RECENT_TURNS,
         summary_api_key: Optional[str] = None,
-        summary_model: str = "qwen-turbo",
+        summary_model: str = "mimo-v2.5-pro",
         summary_base_url: Optional[str] = None,
     ):
         self.token_threshold = token_threshold
@@ -637,3 +726,532 @@ class ConversationMemoryManager:
         self.stats.estimated_tokens = estimate_tokens(compacted)
 
         return compacted, True
+
+
+# ============================================================================
+# LRU 上下文缓存 - 模拟操作系统的 LRU 页面置换算法
+# ============================================================================
+
+class LRUContextCache:
+    """
+    LRU 上下文缓存 - 模拟操作系统的 LRU 页面置换算法
+
+    核心思想（来自 408 操作系统知识）:
+    ┌─────────────────────────────────────────────────────────────────────┐
+    │  物理内存有限，不能把所有页面都加载进来。                             │
+    │  LRU 算法: 最近最少使用的页面，优先被换出。                          │
+    │                                                                     │
+    │  映射到 Agent 上下文:                                               │
+    │  - 物理内存 = Token 预算                                           │
+    │  - 页面 = 对话轮次                                                  │
+    │  - 换出 = 折叠/摘要                                                │
+    │  - 访问 = Agent 引用该轮对话                                        │
+    │                                                                     │
+    │  实现:                                                              │
+    │  ┌──────┬──────┬──────┬──────┬──────┬──────┐                       │
+    │  │ Turn1│ Turn5│ Turn8│ Turn9│Turn12│Turn15│ ← 最近访问的轮次      │
+    │  │ LRU  │      │      │      │      │ MRU  │                       │
+    │  └──────┴──────┴──────┴──────┴──────┴──────┘                       │
+    │    ↑                                                                │
+    │    └── 最久未访问，优先折叠                                          │
+    └─────────────────────────────────────────────────────────────────────┘
+    """
+
+    MAX_CACHE_ENTRIES = 32
+
+    def __init__(self, max_entries: int = MAX_CACHE_ENTRIES):
+        self._cache: OrderedDict[str, dict] = OrderedDict()
+        self.max_entries = max_entries
+        self._access_log: list[tuple[str, float]] = []
+
+    def put(self, key: str, context: dict):
+        """缓存一个上下文条目"""
+        if key in self._cache:
+            self._cache.move_to_end(key)
+        self._cache[key] = {
+            **context,
+            "cached_at": time.time(),
+            "access_count": context.get("access_count", 0) + 1,
+        }
+        self._cache.move_to_end(key)
+        while len(self._cache) > self.max_entries:
+            evicted_key, evicted_value = self._cache.popitem(last=False)
+            logger.info(f"LRU 淘汰上下文: {evicted_key} (访问 {evicted_value.get('access_count', 0)} 次)")
+
+    def get(self, key: str) -> Optional[dict]:
+        """获取缓存条目（同时更新 LRU 顺序）"""
+        if key in self._cache:
+            self._cache.move_to_end(key)
+            entry = self._cache[key]
+            entry["access_count"] = entry.get("access_count", 0) + 1
+            entry["last_accessed"] = time.time()
+            return entry
+        return None
+
+    def touch(self, key: str):
+        """标记访问（不返回数据，只更新 LRU 顺序）"""
+        if key in self._cache:
+            self._cache.move_to_end(key)
+            self._cache[key]["access_count"] = self._cache[key].get("access_count", 0) + 1
+            self._cache[key]["last_accessed"] = time.time()
+
+    def evict(self, key: str) -> Optional[dict]:
+        """手动淘汰一个条目"""
+        return self._cache.pop(key, None)
+
+    def get_lru_entries(self, count: int = 5) -> list[tuple[str, dict]]:
+        """获取最久未访问的 N 个条目（用于折叠决策）"""
+        entries = list(self._cache.items())
+        return entries[:count]
+
+    def get_stats(self) -> dict:
+        """获取缓存统计"""
+        total_access = sum(e.get("access_count", 0) for e in self._cache.values())
+        return {
+            "entries": len(self._cache),
+            "max_entries": self.max_entries,
+            "total_accesses": total_access,
+            "hit_rate": 0.0,
+        }
+
+
+# ============================================================================
+# 摘要持久化 - 将折叠后的摘要保存到磁盘
+# ============================================================================
+
+class SummaryStore:
+    """
+    摘要持久化存储
+
+    当对话超过一定长度，调用大模型对前 10 轮对话进行"语义压缩"，
+    将其转化为持久化的摘要节点，主上下文仅保留摘要。
+
+    存储:
+    ┌─────────────────────────────────────────────────────────────────────┐
+    │  .summaries/                                                        │
+    │    session_abc123/                                                   │
+    │      compact_001.json  ← 第1次折叠的摘要                             │
+    │      compact_002.json  ← 第2次折叠的摘要                             │
+    │      index.json        ← 摘要索引                                   │
+    └─────────────────────────────────────────────────────────────────────┘
+    """
+
+    def __init__(self, store_dir: str = SUMMARY_STORE_DIR):
+        self.store_dir = store_dir
+
+    def _session_dir(self, session_id: str) -> str:
+        d = os.path.join(self.store_dir, session_id)
+        os.makedirs(d, exist_ok=True)
+        return d
+
+    def save_summary(
+        self,
+        session_id: str,
+        compact_index: int,
+        summary: str,
+        original_turn_range: tuple[int, int],
+        token_saved: int = 0,
+    ):
+        """保存一个摘要节点"""
+        sdir = self._session_dir(session_id)
+
+        entry = {
+            "compact_index": compact_index,
+            "summary": summary,
+            "original_turn_range": list(original_turn_range),
+            "token_saved": token_saved,
+            "created_at": time.time(),
+        }
+
+        filename = f"compact_{compact_index:03d}.json"
+        filepath = os.path.join(sdir, filename)
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(entry, f, ensure_ascii=False, indent=2)
+
+        self._update_index(session_id, compact_index, entry)
+
+        logger.info(
+            f"摘要已持久化: session={session_id}, compact={compact_index}, "
+            f"turns={original_turn_range}, saved={token_saved} tokens"
+        )
+
+    def load_summaries(self, session_id: str) -> list[dict]:
+        """加载一个会话的所有摘要"""
+        sdir = self._session_dir(session_id)
+        summaries = []
+
+        index_path = os.path.join(sdir, "index.json")
+        if os.path.exists(index_path):
+            try:
+                with open(index_path, "r", encoding="utf-8") as f:
+                    index = json.load(f)
+                for entry in index.get("entries", []):
+                    filename = f"compact_{entry['compact_index']:03d}.json"
+                    filepath = os.path.join(sdir, filename)
+                    if os.path.exists(filepath):
+                        with open(filepath, "r", encoding="utf-8") as f:
+                            summaries.append(json.load(f))
+            except Exception as e:
+                logger.error(f"加载摘要索引失败: {e}")
+
+        return summaries
+
+    def build_context_from_summaries(self, session_id: str) -> str:
+        """从所有持久化摘要构建上下文"""
+        summaries = self.load_summaries(session_id)
+        if not summaries:
+            return ""
+
+        parts = ["[系统: 以下是之前对话的持久化摘要]\n"]
+        for s in summaries:
+            turn_range = s.get("original_turn_range", [0, 0])
+            parts.append(
+                f"--- 摘要 #{s['compact_index']} (第 {turn_range[0]}-{turn_range[1]} 轮) ---\n"
+                f"{s['summary']}\n"
+            )
+        parts.append("[系统: 以上为历史摘要，请基于此继续工作。]")
+
+        return "\n".join(parts)
+
+    def _update_index(self, session_id: str, compact_index: int, entry: dict):
+        """更新摘要索引"""
+        sdir = self._session_dir(session_id)
+        index_path = os.path.join(sdir, "index.json")
+
+        index = {"entries": []}
+        if os.path.exists(index_path):
+            try:
+                with open(index_path, "r", encoding="utf-8") as f:
+                    index = json.load(f)
+            except Exception:
+                pass
+
+        index_entry = {
+            "compact_index": compact_index,
+            "turn_range": entry.get("original_turn_range", []),
+            "token_saved": entry.get("token_saved", 0),
+            "created_at": entry.get("created_at", 0),
+        }
+
+        index["entries"].append(index_entry)
+        index["total_compacts"] = len(index["entries"])
+        index["total_tokens_saved"] = sum(e.get("token_saved", 0) for e in index["entries"])
+
+        with open(index_path, "w", encoding="utf-8") as f:
+            json.dump(index, f, ensure_ascii=False, indent=2)
+
+    def cleanup_session(self, session_id: str):
+        """清理一个会话的所有摘要"""
+        import shutil
+        sdir = self._session_dir(session_id)
+        if os.path.exists(sdir):
+            shutil.rmtree(sdir)
+
+
+_local_lru_cache: Optional[LRUContextCache] = None
+_local_summary_store: Optional[SummaryStore] = None
+
+
+def get_lru_cache() -> LRUContextCache:
+    global _local_lru_cache
+    if _local_lru_cache is None:
+        _local_lru_cache = LRUContextCache()
+    return _local_lru_cache
+
+
+def get_summary_store() -> SummaryStore:
+    global _local_summary_store
+    if _local_summary_store is None:
+        _local_summary_store = SummaryStore()
+    return _local_summary_store
+
+
+# ============================================================================
+# 语义压缩引擎 - LRU 滑动窗口 + 小模型蒸馏
+# ============================================================================
+
+SUMMARY_COMPACT_THRESHOLD = 0.8
+SUMMARY_COMPACT_TURNS = 10
+SUMMARY_MAX_TARGET_TOKENS = 200
+
+
+@dataclass
+class LRUCompactDecision:
+    should_compact: bool = False
+    reason: str = ""
+    turns_to_compact: int = 0
+    current_usage_ratio: float = 0.0
+
+
+def should_compact_context(
+    messages: list[dict],
+    token_budget: int = 100000,
+    threshold: float = SUMMARY_COMPACT_THRESHOLD,
+) -> LRUCompactDecision:
+    """
+    判断是否需要压缩上下文
+
+    对应 408 操作系统的页面置换决策:
+    - 当内存使用率达到阈值时，触发页面换出
+    - 这里: 当 Token 使用率达到 80% 时，触发对话压缩
+
+    Args:
+        messages: 当前对话消息列表
+        token_budget: Token 预算上限
+        threshold: 触发压缩的使用率阈值
+
+    Returns:
+        CompactDecision: 压缩决策
+    """
+    total_chars = 0
+    for msg in messages:
+        content = msg.get("content", "")
+        if isinstance(content, str):
+            total_chars += len(content)
+        elif isinstance(content, list):
+            for block in content:
+                if isinstance(block, dict):
+                    total_chars += len(str(block.get("text", "")))
+
+    estimated_tokens = total_chars // 3
+    usage_ratio = estimated_tokens / token_budget if token_budget > 0 else 0.0
+
+    if usage_ratio >= threshold:
+        turns_to_compact = min(SUMMARY_COMPACT_TURNS, len(messages) // 2)
+        return LRUCompactDecision(
+            should_compact=True,
+            reason=f"Token 使用率 {usage_ratio:.0%} 超过阈值 {threshold:.0%}",
+            turns_to_compact=turns_to_compact,
+            current_usage_ratio=usage_ratio,
+        )
+
+    return LRUCompactDecision(
+        should_compact=False,
+        current_usage_ratio=usage_ratio,
+    )
+
+
+def compact_messages_with_lru(
+    messages: list[dict],
+    turns_to_compact: int = SUMMARY_COMPACT_TURNS,
+    session_id: str = "",
+) -> tuple[list[dict], str]:
+    """
+    基于 LRU 的滑动窗口压缩
+
+    对应操作系统的 LRU 页面置换:
+    ┌─────────────────────────────────────────────────────────────────────┐
+    │  内存页:  [P1] [P2] [P3] [P4] [P5] [P6] [P7] [P8]               │
+    │  访问时间:  1    3    5    7    9   11   13   15                   │
+    │            ↑ LRU                                                 │
+    │            └── 最久未访问，优先换出                                │
+    │                                                                     │
+    │  映射到对话:                                                        │
+    │  对话轮:  [T1] [T2] [T3] [T4] [T5] [T6] [T7] [T8]               │
+    │  时间戳:   1    2    3    4    5    6    7    8                    │
+    │            ↑ LRU                                                   │
+    │            └── 最早的对话，优先折叠                                  │
+    │                                                                     │
+    │  压缩后:                                                            │
+    │  [摘要: T1-T5 的核心内容] [T6] [T7] [T8]                          │
+    │   ↑ 持久化到磁盘                                      ↑ 保留原始  │
+    └─────────────────────────────────────────────────────────────────────┘
+
+    Args:
+        messages: 当前对话消息列表
+        turns_to_compact: 要压缩的轮数
+        session_id: 会话 ID（用于持久化）
+
+    Returns:
+        (压缩后的消息列表, 摘要文本)
+    """
+    if len(messages) <= turns_to_compact + 2:
+        return messages, ""
+
+    system_messages = []
+    compactable = []
+    recent = []
+
+    for msg in messages:
+        role = msg.get("role", "")
+        if role == "system":
+            system_messages.append(msg)
+        else:
+            compactable.append(msg)
+
+    if len(compactable) <= turns_to_compact:
+        return messages, ""
+
+    to_compact = compactable[:turns_to_compact]
+    recent = compactable[turns_to_compact:]
+
+    summary_text = _generate_summary_from_messages(to_compact)
+
+    if session_id:
+        store = get_summary_store()
+        compact_index = len(store.load_summaries(session_id)) + 1
+        start_turn = 1
+        end_turn = turns_to_compact
+        estimated_tokens = sum(
+            len(str(m.get("content", ""))) // 3 for m in to_compact
+        )
+        store.save_summary(
+            session_id=session_id,
+            compact_index=compact_index,
+            summary=summary_text,
+            original_turn_range=(start_turn, end_turn),
+            token_saved=estimated_tokens,
+        )
+
+    summary_message = {
+        "role": "user",
+        "content": f"[系统: 以下是对话历史的摘要]\n{summary_text}\n[系统: 以上为历史摘要，请基于此继续工作。]",
+    }
+
+    lru_cache = get_lru_cache()
+    for msg in recent:
+        content = msg.get("content", "")
+        key = hashlib.md5(str(content).encode()).hexdigest()[:8]
+        lru_cache.put(key, msg)
+
+    result = system_messages + [summary_message] + recent
+    return result, summary_text
+
+
+def _generate_summary_from_messages(messages: list[dict]) -> str:
+    """
+    从消息列表生成摘要
+
+    策略:
+    1. 如果有 LLM 客户端可用，调用小模型进行语义蒸馏
+    2. 否则，使用提取式摘要（提取关键信息）
+
+    对应 408 知识点:
+    - 生成式摘要 = 小模型蒸馏（Qwen-Turbo）
+    - 提取式摘要 = 关键信息提取（正则匹配）
+    """
+    try:
+        summary = _try_llm_summary(messages)
+        if summary:
+            return summary
+    except Exception:
+        pass
+
+    return _extractive_summary(messages)
+
+
+def _try_llm_summary(messages: list[dict]) -> Optional[str]:
+    """尝试使用 LLM 生成摘要（子模型蒸馏）"""
+    try:
+        from openai import OpenAI
+
+        api_key = os.environ.get("OPENAI_API_KEY")
+        base_url = os.environ.get("OPENAI_BASE_URL")
+        model = os.environ.get("ERUITAH_SUMMARY_MODEL", "mimo-v2.5-pro")
+
+        if not api_key:
+            return None
+
+        if base_url and not base_url.endswith("/v1"):
+            base_url = base_url.rstrip("/") + "/v1"
+
+        client = OpenAI(api_key=api_key, base_url=base_url)
+
+        conversation_text = _format_messages_for_summary(messages)
+
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "你是一个对话摘要助手。请将以下对话历史压缩为一段简洁的摘要，"
+                        f"不超过 {SUMMARY_MAX_TARGET_TOKENS} 字。"
+                        "保留关键决策、代码修改、文件路径和错误信息。"
+                    ),
+                },
+                {"role": "user", "content": conversation_text},
+            ],
+            max_tokens=300,
+            temperature=0.3,
+        )
+
+        summary = response.choices[0].message.content.strip()
+        if summary:
+            logger.info(f"LLM 语义蒸馏成功: {len(conversation_text)} → {len(summary)} 字符")
+            return summary
+
+    except Exception as e:
+        logger.debug(f"LLM 摘要生成失败: {e}")
+
+    return None
+
+
+def _extractive_summary(messages: list[dict]) -> str:
+    """提取式摘要：从消息中提取关键信息"""
+    import hashlib as _hashlib
+
+    key_points = []
+    file_operations = []
+    errors = []
+    decisions = []
+
+    for msg in messages:
+        content = str(msg.get("content", ""))
+        role = msg.get("role", "")
+
+        if not content or len(content) < 10:
+            continue
+
+        for line in content.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+
+            if any(kw in line.lower() for kw in ["文件创建成功", "文件编辑成功", "file created", "file edited"]):
+                file_operations.append(line[:150])
+            elif any(kw in line.lower() for kw in ["error", "错误", "失败", "failed", "exception"]):
+                errors.append(line[:150])
+            elif any(kw in line.lower() for kw in ["决定", "选择", "方案", "approach", "decision"]):
+                decisions.append(line[:150])
+
+        if role == "user" and len(content) > 5:
+            key_points.append(f"用户: {content[:100]}")
+        elif role == "assistant" and len(content) > 20:
+            first_line = content.splitlines()[0][:100]
+            key_points.append(f"助手: {first_line}")
+
+    parts = []
+    if key_points:
+        parts.append("关键对话:\n" + "\n".join(f"  - {p}" for p in key_points[:8]))
+    if file_operations:
+        parts.append("文件操作:\n" + "\n".join(f"  - {p}" for p in file_operations[:5]))
+    if errors:
+        parts.append("错误记录:\n" + "\n".join(f"  - {p}" for p in errors[:3]))
+    if decisions:
+        parts.append("决策记录:\n" + "\n".join(f"  - {p}" for p in decisions[:3]))
+
+    if not parts:
+        first_user_msg = ""
+        for msg in messages:
+            if msg.get("role") == "user":
+                first_user_msg = str(msg.get("content", ""))[:200]
+                break
+        return f"对话摘要: 用户请求了 {first_user_msg[:100]}"
+
+    return "\n".join(parts)
+
+
+def _format_messages_for_summary(messages: list[dict]) -> str:
+    """格式化消息列表用于摘要"""
+    parts = []
+    for msg in messages:
+        role = msg.get("role", "unknown")
+        content = str(msg.get("content", ""))
+
+        if len(content) > 500:
+            content = content[:500] + "..."
+
+        parts.append(f"[{role}]: {content}")
+
+    return "\n".join(parts)

@@ -548,6 +548,535 @@ SWARM_TOOL_DEFINITION_OPENAI = {
 }
 
 
+# ============================================================================
+# Subagent 编排系统 - 异步父子进程并发调度
+# ============================================================================
+
+DISPATCH_SUBTASKS_TOOL_DEFINITION_ANTHROPIC = {
+    "name": "dispatch_subtasks",
+    "description": (
+        "子任务并发派发工具 - 将复杂任务拆分为多个子任务并发执行，大幅提升效率。\n"
+        "适用场景：\n"
+        "- 同时搜索多个文档/网页\n"
+        "- 编译代码的同时搜索依赖文档\n"
+        "- 并行测试多个文件\n"
+        "- 同时读取多个大文件\n"
+        "- 让子智能体分析代码/生成方案（llm 类型）\n\n"
+        "子任务类型：\n"
+        "- search: 网络搜索（纯网络请求，不需要沙盒）\n"
+        "- compile: 编译/构建代码（在独立沙盒中执行，不干扰主干）\n"
+        "- test: 运行测试（在独立沙盒中执行）\n"
+        "- read: 读取文件（在当前工作目录中执行）\n"
+        "- bash: 执行任意 bash 命令（在独立沙盒中执行）\n"
+        "- llm: 调用子智能体（mimo-v2.5-pro）分析问题、生成方案、审查代码\n\n"
+        "系统会自动为需要沙盒的子任务分配独立工作区（WarmPool 预热池），"
+        "并发执行并汇总结果。每个子任务有 30 秒超时保护。"
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "subtasks": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "id": {
+                            "type": "string",
+                            "description": "子任务标识（如 'search_docs', 'compile_cpp'），用于区分结果",
+                        },
+                        "type": {
+                            "type": "string",
+                            "enum": ["search", "compile", "test", "read", "bash", "llm"],
+                            "description": "子任务类型",
+                        },
+                        "command": {
+                            "type": "string",
+                            "description": "要执行的命令（compile/test/bash 类型必填）",
+                        },
+                        "query": {
+                            "type": "string",
+                            "description": "搜索查询（search 类型必填）",
+                        },
+                        "file_path": {
+                            "type": "string",
+                            "description": "文件路径（read 类型必填）",
+                        },
+                        "prompt": {
+                            "type": "string",
+                            "description": "子智能体提示词（llm 类型必填，描述需要子智能体完成的分析/生成任务）",
+                        },
+                    },
+                    "required": ["id", "type"],
+                },
+                "description": "子任务列表（最多 5 个并发子任务）",
+            },
+        },
+        "required": ["subtasks"],
+    },
+}
+
+DISPATCH_SUBTASKS_TOOL_DEFINITION_OPENAI = {
+    "type": "function",
+    "function": {
+        "name": "dispatch_subtasks",
+        "description": (
+            "子任务并发派发工具 - 将复杂任务拆分为多个子任务并发执行。"
+            "例如：同时搜索文档 + 编译代码 + 运行测试 + 让子智能体分析代码。"
+            "系统自动分配独立沙盒工作区，30秒超时保护。"
+            "llm 类型会调用 mimo-v2.5-pro 子智能体进行代码分析、方案生成等。"
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "subtasks": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "description": "子任务标识",
+                            },
+                            "type": {
+                                "type": "string",
+                                "enum": ["search", "compile", "test", "read", "bash", "llm"],
+                                "description": "子任务类型",
+                            },
+                            "command": {
+                                "type": "string",
+                                "description": "要执行的命令",
+                            },
+                            "query": {
+                                "type": "string",
+                                "description": "搜索查询",
+                            },
+                            "file_path": {
+                                "type": "string",
+                                "description": "文件路径",
+                            },
+                            "prompt": {
+                                "type": "string",
+                                "description": "子智能体提示词（llm 类型必填）",
+                            },
+                        },
+                        "required": ["id", "type"],
+                    },
+                    "description": "子任务列表（最多5个）",
+                },
+            },
+            "required": ["subtasks"],
+        },
+    },
+}
+
+
+@dataclass
+class SubtaskResult:
+    subtask_id: str
+    subtask_type: str
+    status: str = "pending"
+    output: str = ""
+    error: str = ""
+    elapsed_seconds: float = 0.0
+    worktree_path: str = ""
+    sandbox_recycled: bool = False
+
+
+async def run_single_subagent(
+    task: dict,
+    work_dir: str,
+    main_repo_dir: str = "",
+) -> SubtaskResult:
+    task_id = task.get("id", "unknown")
+    task_type = task.get("type", "bash")
+    result = SubtaskResult(subtask_id=task_id, subtask_type=task_type)
+    start_time = time.time()
+
+    sandbox = None
+    borrowed_cwd = ""
+
+    try:
+        if task_type == "search":
+            query = task.get("query", "")
+            if not query:
+                result.status = "failed"
+                result.error = "search 类型必须提供 query 参数"
+                return result
+
+            logger.info(f"🔍 Subagent-{task_id} 启动搜索: query=\"{query[:60]}\"")
+            try:
+                from semantic_search_tool import semantic_search, format_semantic_results
+                loop = asyncio.get_event_loop()
+                sr = await loop.run_in_executor(
+                    None, lambda: semantic_search(query=query, project_dir=work_dir)
+                )
+                result.output = format_semantic_results(sr) if sr.results else "未找到相关结果"
+            except ImportError:
+                try:
+                    from grep_tool import execute_grep
+                    loop = asyncio.get_event_loop()
+                    output, is_error = await loop.run_in_executor(
+                        None, lambda: execute_grep(query, work_dir)
+                    )
+                    result.output = output[:3000]
+                except Exception:
+                    result.output = f"搜索完成（无专业搜索引擎）: query={query}"
+
+            result.status = "success"
+            result.elapsed_seconds = time.time() - start_time
+            logger.info(
+                f"🔍 Subagent-{task_id} 搜索完成 "
+                f"({result.elapsed_seconds:.1f}s)"
+            )
+            return result
+
+        elif task_type in ("compile", "test", "bash"):
+            cmd = task.get("command", task.get("cmd", ""))
+            if not cmd:
+                result.status = "failed"
+                result.error = f"{task_type} 类型必须提供 command/cmd 参数"
+                return result
+
+            repo_dir = main_repo_dir or work_dir
+            try:
+                from sandbox_manager import get_sandbox
+                if os.path.exists(os.path.join(repo_dir, ".git")):
+                    sandbox = get_sandbox(repo_dir)
+                    borrowed_cwd = sandbox.get_warm_workspace()
+                    if borrowed_cwd:
+                        logger.info(
+                            f"📦 Subagent-{task_id} 借出预热沙盒: "
+                            f"{os.path.basename(borrowed_cwd)}"
+                        )
+                    else:
+                        borrowed_cwd = work_dir
+                        logger.info(
+                            f"🐌 Subagent-{task_id} 预热池为空，使用主工作区"
+                        )
+                else:
+                    borrowed_cwd = work_dir
+                    logger.info(
+                        f"📂 Subagent-{task_id} 非 Git 仓库，使用主工作区"
+                    )
+            except Exception as e:
+                logger.warning(f"📦 Subagent-{task_id} 沙盒获取异常: {e}")
+                borrowed_cwd = work_dir
+
+            result.worktree_path = borrowed_cwd
+            logger.info(
+                f"⚙️ Subagent-{task_id} 启动子进程: "
+                f"cmd=\"{cmd[:80]}\" cwd={borrowed_cwd}"
+            )
+
+            proc = await asyncio.create_subprocess_shell(
+                cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                cwd=borrowed_cwd,
+            )
+
+            try:
+                stdout_bytes, stderr_bytes = await asyncio.wait_for(
+                    proc.communicate(),
+                    timeout=30.0,
+                )
+            except asyncio.TimeoutError:
+                proc.kill()
+                await proc.wait()
+                result.status = "timeout"
+                result.error = f"子进程超时被斩断 (30s)"
+                result.elapsed_seconds = time.time() - start_time
+                logger.warning(
+                    f"🚨 Subagent-{task_id} 子进程超时被斩断!"
+                )
+                return result
+
+            stdout = stdout_bytes.decode("utf-8", errors="replace")
+            stderr = stderr_bytes.decode("utf-8", errors="replace")
+            result.elapsed_seconds = time.time() - start_time
+
+            if proc.returncode != 0:
+                result.status = "failed"
+                result.output = stdout[:3000]
+                result.error = stderr[:500] if stderr else f"Exit code {proc.returncode}"
+                logger.info(
+                    f"❌ Subagent-{task_id} 执行失败 "
+                    f"(exit={proc.returncode}, {result.elapsed_seconds:.1f}s)"
+                )
+            else:
+                result.status = "success"
+                result.output = stdout[:3000]
+                logger.info(
+                    f"✅ Subagent-{task_id} 执行成功 "
+                    f"({result.elapsed_seconds:.1f}s)"
+                )
+            return result
+
+        elif task_type == "read":
+            file_path = task.get("file_path", "")
+            if not file_path:
+                result.status = "failed"
+                result.error = "read 类型必须提供 file_path 参数"
+                return result
+
+            if not os.path.isabs(file_path):
+                file_path = os.path.join(work_dir, file_path)
+
+            from file_read_tool import execute_file_read
+            loop = asyncio.get_event_loop()
+            output, is_error = await loop.run_in_executor(
+                None,
+                lambda: execute_file_read(file_path, None, None, work_dir)
+            )
+            result.output = output[:3000]
+            result.status = "success" if not is_error else "failed"
+            if is_error:
+                result.error = output[:500]
+            result.elapsed_seconds = time.time() - start_time
+            return result
+
+        elif task_type == "llm":
+            prompt = task.get("prompt", "")
+            if not prompt:
+                result.status = "failed"
+                result.error = "llm 类型必须提供 prompt 参数"
+                return result
+
+            logger.info(f"🧠 Subagent-{task_id} 启动 LLM 子智能体: prompt=\"{prompt[:60]}\"")
+
+            try:
+                from openai import OpenAI
+
+                sub_api_key = os.environ.get("OPENAI_API_KEY", "")
+                sub_base_url = os.environ.get("OPENAI_BASE_URL", "")
+                if sub_base_url and not sub_base_url.endswith("/v1"):
+                    sub_base_url = sub_base_url.rstrip("/") + "/v1"
+                sub_model = os.environ.get("ERUITAH_SUBAGENT_MODEL", "mimo-v2.5-pro")
+
+                client = OpenAI(api_key=sub_api_key, base_url=sub_base_url)
+
+                context_files = task.get("context_files", [])
+                context_content = ""
+                if context_files:
+                    for cf in context_files:
+                        cf_path = cf if os.path.isabs(cf) else os.path.join(work_dir, cf)
+                        if os.path.exists(cf_path):
+                            try:
+                                with open(cf_path, "r", encoding="utf-8", errors="replace") as f:
+                                    content = f.read()
+                                    context_content += f"\n--- 文件: {cf} ---\n{content[:2000]}\n"
+                            except Exception:
+                                pass
+
+                system_prompt = (
+                    "你是一个专业的编程助手子智能体。你的任务是：根据主智能体的请求，"
+                    "进行代码分析、方案生成、代码审查或问题诊断。"
+                    "请给出简洁、专业、可操作的回答。"
+                )
+                if context_content:
+                    system_prompt += f"\n\n以下是相关的代码文件内容：{context_content[:6000]}"
+
+                loop = asyncio.get_event_loop()
+                response = await loop.run_in_executor(
+                    None,
+                    lambda: client.chat.completions.create(
+                        model=sub_model,
+                        messages=[
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": prompt},
+                        ],
+                        max_tokens=2000,
+                        temperature=0.3,
+                    )
+                )
+
+                llm_output = response.choices[0].message.content.strip()
+                result.output = llm_output
+                result.status = "success"
+                result.elapsed_seconds = time.time() - start_time
+                logger.info(
+                    f"🧠 Subagent-{task_id} LLM 完成 "
+                    f"({result.elapsed_seconds:.1f}s, {len(llm_output)} 字符)"
+                )
+                return result
+
+            except Exception as e:
+                result.status = "failed"
+                result.error = f"LLM 子智能体调用失败: {str(e)[:300]}"
+                result.elapsed_seconds = time.time() - start_time
+                logger.error(f"🧠 Subagent-{task_id} LLM 调用异常: {e}")
+                return result
+
+        else:
+            result.status = "failed"
+            result.error = f"未知子任务类型: {task_type}"
+            return result
+
+    except Exception as e:
+        result.status = "failed"
+        result.error = str(e)[:500]
+        result.elapsed_seconds = time.time() - start_time
+        logger.error(f"🚨 Subagent-{task_id} 异常: {e}")
+        return result
+
+    finally:
+        if sandbox and borrowed_cwd and borrowed_cwd != work_dir:
+            try:
+                sandbox.recycle_workspace(borrowed_cwd)
+                result.sandbox_recycled = True
+            except Exception as e:
+                logger.error(
+                    f"♻️ Subagent-{task_id} 沙盒回收失败: {e}"
+                )
+
+
+async def dispatch_and_gather(
+    tasks: list,
+    work_dir: str,
+    main_repo_dir: str = "",
+    global_timeout: float = 30.0,
+) -> list:
+    logger.info(f"🚀 并发派发了 {len(tasks)} 个子任务...")
+
+    coroutines = [
+        run_single_subagent(t, work_dir, main_repo_dir)
+        for t in tasks
+    ]
+
+    pending_results: dict[int, SubtaskResult] = {}
+    task_futures = {}
+
+    for i, coro in enumerate(coroutines):
+        task_futures[i] = asyncio.ensure_future(coro)
+
+    done, pending = await asyncio.wait(
+        task_futures.values(),
+        timeout=global_timeout,
+        return_when=asyncio.ALL_COMPLETED,
+    )
+
+    timed_out = len(pending) > 0
+    if timed_out:
+        logger.error(
+            f"🚨 全局超时熔断触发！{global_timeout}s 内未完成所有子任务"
+            f"（完成: {len(done)}, 超时: {len(pending)}）"
+        )
+        for fut in pending:
+            fut.cancel()
+        try:
+            await asyncio.gather(*pending, return_exceptions=True)
+        except Exception:
+            pass
+
+    index_map = {id(fut): idx for idx, fut in task_futures.items()}
+
+    for fut in done:
+        idx = index_map[id(fut)]
+        try:
+            r = fut.result()
+            if isinstance(r, SubtaskResult):
+                pending_results[idx] = r
+            else:
+                pending_results[idx] = SubtaskResult(
+                    subtask_id=tasks[idx].get("id", f"task_{idx}"),
+                    subtask_type=tasks[idx].get("type", "unknown"),
+                    status="failed",
+                    error="未知返回类型",
+                )
+        except Exception as e:
+            idx = index_map[id(fut)]
+            pending_results[idx] = SubtaskResult(
+                subtask_id=tasks[idx].get("id", f"task_{idx}"),
+                subtask_type=tasks[idx].get("type", "unknown"),
+                status="failed",
+                error=f"[EXCEPTION] {str(e)[:500]}",
+            )
+
+    for fut in pending:
+        idx = index_map[id(fut)]
+        pending_results[idx] = SubtaskResult(
+            subtask_id=tasks[idx].get("id", f"task_{idx}"),
+            subtask_type=tasks[idx].get("type", "unknown"),
+            status="timeout",
+            error="[TIMEOUT_ERROR] 全局超时，子任务被强行终止",
+        )
+
+    return [pending_results[i] for i in range(len(tasks))]
+
+
+def execute_dispatch_subtasks(
+    subtasks: list,
+    work_dir: str = ".",
+    main_repo_dir: str = "",
+    timeout_per_task: float = 30.0,
+) -> tuple[str, bool]:
+    if not subtasks:
+        return "❌ 子任务列表不能为空", True
+
+    if len(subtasks) > 5:
+        return "❌ 最多支持 5 个并发子任务", True
+
+    for i, st in enumerate(subtasks):
+        if not isinstance(st, dict):
+            return f"❌ 子任务 {i} 格式错误，必须是字典", True
+        if not st.get("id"):
+            return f"❌ 子任务 {i} 缺少 id 字段", True
+        if not st.get("type"):
+            return f"❌ 子任务 {st.get('id', i)} 缺少 type 字段", True
+
+    try:
+        results = asyncio.run(
+            dispatch_and_gather(subtasks, work_dir, main_repo_dir, timeout_per_task)
+        )
+    except RuntimeError:
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(
+                asyncio.run,
+                dispatch_and_gather(subtasks, work_dir, main_repo_dir, timeout_per_task)
+            )
+            results = future.result(timeout=timeout_per_task + 10)
+    except Exception as e:
+        logger.error(f"🚨 Subagent 调度异常: {e}")
+        return f"❌ 子任务调度失败: {str(e)}", True
+
+    success_count = sum(1 for r in results if r.status == "success")
+    failed_count = sum(1 for r in results if r.status != "success")
+    timeout_count = sum(1 for r in results if r.status == "timeout")
+
+    lines = [
+        f"🚀 Subagent 编排结果: {success_count} 成功 / {failed_count} 失败"
+        f" (超时: {timeout_count}) / 共 {len(results)} 个子任务",
+        "=" * 60,
+    ]
+
+    for r in results:
+        if r.status == "success":
+            status_icon = "✅"
+        elif r.status == "timeout":
+            status_icon = "🚨"
+        else:
+            status_icon = "❌"
+
+        lines.append(f"\n{status_icon} [{r.subtask_id}] ({r.subtask_type}) - {r.status}")
+        if r.elapsed_seconds > 0:
+            lines.append(f"   ⏱️ 耗时: {r.elapsed_seconds:.1f}s")
+        if r.worktree_path:
+            lines.append(f"   📦 沙盒: {os.path.basename(r.worktree_path)}")
+        if r.sandbox_recycled:
+            lines.append(f"   ♻️ 沙盒已安全归还预热池")
+        if r.output:
+            output_preview = r.output[:1500]
+            if len(r.output) > 1500:
+                output_preview += f"\n   ... [截断，共 {len(r.output)} 字符]"
+            lines.append(f"   📄 输出:\n   {output_preview}")
+        if r.error:
+            lines.append(f"   ⚠️ 错误: {r.error[:300]}")
+
+    is_error = failed_count > 0 and success_count == 0
+    return "\n".join(lines), is_error
+
+
 _local_client: Optional[SwarmClient] = None
 _local_hub: Optional[SwarmHub] = None
 

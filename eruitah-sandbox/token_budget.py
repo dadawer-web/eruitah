@@ -14,7 +14,7 @@ Eruitah 智能编程沙盒 - Token 预算管理 (Token Budgeting)
 │  配置:                                                              │
 │    - MAX_OUTPUT_LENGTH: 单次工具输出最大长度（默认 30,000 字符）       │
 │    - MAX_TOKEN_BUDGET: 单次任务最大 Token 预算（默认 100,000）         │
-│    - MAX_TURNS: 最大循环轮数（默认 15）                               │
+│    - MAX_TURNS: 最大循环轮数（默认 30）                               │
 │    - SAFETY_MARGIN: 安全边际（默认 0.9）                              │
 └─────────────────────────────────────────────────────────────────────┘
 
@@ -36,6 +36,7 @@ logger = logging.getLogger(__name__)
 MAX_OUTPUT_LENGTH = int(os.environ.get("ERUITAH_MAX_OUTPUT_LENGTH", "30000"))
 MAX_TOKEN_BUDGET = int(os.environ.get("ERUITAH_MAX_TOKEN_BUDGET", "100000"))
 SAFETY_MARGIN = float(os.environ.get("ERUITAH_SAFETY_MARGIN", "0.9"))
+DEFAULT_MAX_TURNS = int(os.environ.get("ERUITAH_MAX_TURNS", "30"))
 
 
 @dataclass
@@ -45,7 +46,7 @@ class TokenBudget:
     safety_margin: float = SAFETY_MARGIN
     used: int = 0
     turns: int = 0
-    max_turns: int = 15
+    max_turns: int = DEFAULT_MAX_TURNS
     last_reset: float = 0.0
 
     @property

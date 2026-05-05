@@ -5,6 +5,8 @@ package bridge;
 option java_package = "com.bridge.proto";
 option java_outer_classname = "ChatProto";
 
+// ==================== 聊天核心 ====================
+
 message ChatRequest {
     int32 user_id = 1;
     int32 bot_id = 2;
@@ -32,6 +34,8 @@ message ChatResponse {
     map<string, string> metadata = 12;
 }
 
+// ==================== 群聊 ====================
+
 message GroupChatRequest {
     int64 group_id = 1;
     int32 sender_id = 2;
@@ -50,6 +54,188 @@ message GroupChatResponse {
     string error = 6;
     int64 timestamp = 7;
 }
+
+// ==================== 伴读服务 ====================
+
+message CompanionReadRequest {
+    int32 user_id = 1;
+    string action = 2;
+    string text = 3;
+}
+
+message CompanionReadResponse {
+    string audio_url = 1;
+    string explanation_text = 2;
+    bool success = 3;
+    string error = 4;
+}
+
+// ==================== 考情大屏 ====================
+
+message DashboardRequest {
+    string user_id = 1;
+}
+
+message DashboardResponse {
+    repeated double radar = 1;
+    repeated int32 line = 2;
+    string user_id = 3;
+    string update_time = 4;
+    string error = 5;
+}
+
+message DashboardSummaryRequest {
+    string user_id = 1;
+}
+
+message DashboardSummaryResponse {
+    double avg_mastery = 1;
+    string strongest_subject = 2;
+    string weakest_subject = 3;
+    int32 total_questions_this_week = 4;
+    map<string, double> subject_details = 5;
+}
+
+message WeeklyReportRequest {
+    string user_id = 1;
+}
+
+message WeeklyReportResponse {
+    string report = 1;
+    string user_id = 2;
+    string generated_at = 3;
+    string error = 4;
+}
+
+// ==================== PDF 解析 ====================
+
+message PdfParseRequest {
+    bytes pdf_data = 1;
+    string filename = 2;
+}
+
+message PdfParseResponse {
+    string content = 1;
+    int32 page_count = 2;
+    bool success = 3;
+    string error = 4;
+}
+
+// ==================== Sandbox 编程沙盒 (eruitah-sandbox) ====================
+
+message SandboxExecuteRequest {
+    string prompt = 1;
+    string work_dir = 2;
+    int32 max_turns = 3;
+    string model = 4;
+    string api_key = 5;
+    string base_url = 6;
+    string provider = 7;
+    string session_id = 8;
+}
+
+message SandboxExecuteResponse {
+    string session_id = 1;
+    bool success = 2;
+    string error = 3;
+    string final_result = 4;
+    int32 turns_used = 5;
+    int64 timestamp = 6;
+}
+
+message SandboxTaskRequest {
+    string action = 1;
+    string task_id = 2;
+    string work_dir = 3;
+    string target_task_id = 4;
+}
+
+message SandboxTaskResponse {
+    bool success = 1;
+    string action = 2;
+    string error = 3;
+    string data = 4;
+    string task_id = 5;
+}
+
+message SandboxToolEvent {
+    string session_id = 1;
+    string event_type = 2;
+    string tool_name = 3;
+    string args_json = 4;
+    string result = 5;
+    bool is_error = 6;
+    string content = 7;
+    string status_data = 8;
+    int64 timestamp = 9;
+}
+
+// ==================== Agent Swarm P2P 网络 ====================
+
+message SwarmMessage {
+    enum Type {
+        REGISTER = 0;
+        REGISTER_ACK = 1;
+        HEARTBEAT = 2;
+        BROADCAST = 3;
+        DIRECT = 4;
+        HELP_REQUEST = 5;
+        HELP_RESPONSE = 6;
+        NODE_LIST = 7;
+    }
+
+    Type type = 1;
+    string from_id = 2;
+    string to_id = 3;
+    string content = 4;
+    string task = 5;
+    string result = 6;
+    string msg_id = 7;
+    repeated string capabilities = 8;
+    repeated string specialties = 9;
+    int64 timestamp = 10;
+}
+
+message SwarmAgentNode {
+    string agent_id = 1;
+    repeated string capabilities = 2;
+    repeated string specialties = 3;
+    string status = 4;
+    int64 registered_at = 5;
+    int64 last_heartbeat = 6;
+}
+
+message SwarmRegisterRequest {
+    string agent_id = 1;
+    repeated string capabilities = 2;
+    repeated string specialties = 3;
+}
+
+message SwarmRegisterResponse {
+    bool success = 1;
+    string message = 2;
+    int32 node_count = 3;
+}
+
+message SwarmHelpRequest {
+    string from_id = 1;
+    string task = 2;
+    double timeout_seconds = 3;
+}
+
+message SwarmHelpResponse {
+    string from_id = 1;
+    string to_id = 2;
+    string task = 3;
+    string result = 4;
+    bool found = 5;
+}
+
+message SwarmNodeListResponse {
+    repeated SwarmAgentNode nodes = 1;
+}
+
+// ==================== RPC 消息封装 ====================
 
 message RpcMessage {
     enum Type {

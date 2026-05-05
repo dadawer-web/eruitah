@@ -5764,6 +5764,22093 @@ java.lang.String defaultValue) {
 
   }
 
+  public interface CompanionReadRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:bridge.CompanionReadRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>int32 user_id = 1;</code>
+     * @return The userId.
+     */
+    int getUserId();
+
+    /**
+     * <code>string action = 2;</code>
+     * @return The action.
+     */
+    java.lang.String getAction();
+    /**
+     * <code>string action = 2;</code>
+     * @return The bytes for action.
+     */
+    com.google.protobuf.ByteString
+        getActionBytes();
+
+    /**
+     * <code>string text = 3;</code>
+     * @return The text.
+     */
+    java.lang.String getText();
+    /**
+     * <code>string text = 3;</code>
+     * @return The bytes for text.
+     */
+    com.google.protobuf.ByteString
+        getTextBytes();
+  }
+  /**
+   * Protobuf type {@code bridge.CompanionReadRequest}
+   */
+  public static final class CompanionReadRequest extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:bridge.CompanionReadRequest)
+      CompanionReadRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use CompanionReadRequest.newBuilder() to construct.
+    private CompanionReadRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private CompanionReadRequest() {
+      action_ = "";
+      text_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new CompanionReadRequest();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_CompanionReadRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_CompanionReadRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.bridge.proto.ChatProto.CompanionReadRequest.class, com.bridge.proto.ChatProto.CompanionReadRequest.Builder.class);
+    }
+
+    public static final int USER_ID_FIELD_NUMBER = 1;
+    private int userId_ = 0;
+    /**
+     * <code>int32 user_id = 1;</code>
+     * @return The userId.
+     */
+    @java.lang.Override
+    public int getUserId() {
+      return userId_;
+    }
+
+    public static final int ACTION_FIELD_NUMBER = 2;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object action_ = "";
+    /**
+     * <code>string action = 2;</code>
+     * @return The action.
+     */
+    @java.lang.Override
+    public java.lang.String getAction() {
+      java.lang.Object ref = action_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        action_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string action = 2;</code>
+     * @return The bytes for action.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getActionBytes() {
+      java.lang.Object ref = action_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        action_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int TEXT_FIELD_NUMBER = 3;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object text_ = "";
+    /**
+     * <code>string text = 3;</code>
+     * @return The text.
+     */
+    @java.lang.Override
+    public java.lang.String getText() {
+      java.lang.Object ref = text_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        text_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string text = 3;</code>
+     * @return The bytes for text.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getTextBytes() {
+      java.lang.Object ref = text_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        text_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (userId_ != 0) {
+        output.writeInt32(1, userId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(action_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, action_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(text_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, text_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (userId_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(1, userId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(action_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, action_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(text_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, text_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.bridge.proto.ChatProto.CompanionReadRequest)) {
+        return super.equals(obj);
+      }
+      com.bridge.proto.ChatProto.CompanionReadRequest other = (com.bridge.proto.ChatProto.CompanionReadRequest) obj;
+
+      if (getUserId()
+          != other.getUserId()) return false;
+      if (!getAction()
+          .equals(other.getAction())) return false;
+      if (!getText()
+          .equals(other.getText())) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + USER_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getUserId();
+      hash = (37 * hash) + ACTION_FIELD_NUMBER;
+      hash = (53 * hash) + getAction().hashCode();
+      hash = (37 * hash) + TEXT_FIELD_NUMBER;
+      hash = (53 * hash) + getText().hashCode();
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.bridge.proto.ChatProto.CompanionReadRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.CompanionReadRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.CompanionReadRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.CompanionReadRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.CompanionReadRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.CompanionReadRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.CompanionReadRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.CompanionReadRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.CompanionReadRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.CompanionReadRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.CompanionReadRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.CompanionReadRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.bridge.proto.ChatProto.CompanionReadRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code bridge.CompanionReadRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:bridge.CompanionReadRequest)
+        com.bridge.proto.ChatProto.CompanionReadRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_CompanionReadRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_CompanionReadRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.bridge.proto.ChatProto.CompanionReadRequest.class, com.bridge.proto.ChatProto.CompanionReadRequest.Builder.class);
+      }
+
+      // Construct using com.bridge.proto.ChatProto.CompanionReadRequest.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        userId_ = 0;
+        action_ = "";
+        text_ = "";
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_CompanionReadRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.CompanionReadRequest getDefaultInstanceForType() {
+        return com.bridge.proto.ChatProto.CompanionReadRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.CompanionReadRequest build() {
+        com.bridge.proto.ChatProto.CompanionReadRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.CompanionReadRequest buildPartial() {
+        com.bridge.proto.ChatProto.CompanionReadRequest result = new com.bridge.proto.ChatProto.CompanionReadRequest(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(com.bridge.proto.ChatProto.CompanionReadRequest result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.userId_ = userId_;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.action_ = action_;
+        }
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.text_ = text_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.bridge.proto.ChatProto.CompanionReadRequest) {
+          return mergeFrom((com.bridge.proto.ChatProto.CompanionReadRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.bridge.proto.ChatProto.CompanionReadRequest other) {
+        if (other == com.bridge.proto.ChatProto.CompanionReadRequest.getDefaultInstance()) return this;
+        if (other.getUserId() != 0) {
+          setUserId(other.getUserId());
+        }
+        if (!other.getAction().isEmpty()) {
+          action_ = other.action_;
+          bitField0_ |= 0x00000002;
+          onChanged();
+        }
+        if (!other.getText().isEmpty()) {
+          text_ = other.text_;
+          bitField0_ |= 0x00000004;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 8: {
+                userId_ = input.readInt32();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 8
+              case 18: {
+                action_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 18
+              case 26: {
+                text_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 26
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private int userId_ ;
+      /**
+       * <code>int32 user_id = 1;</code>
+       * @return The userId.
+       */
+      @java.lang.Override
+      public int getUserId() {
+        return userId_;
+      }
+      /**
+       * <code>int32 user_id = 1;</code>
+       * @param value The userId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setUserId(int value) {
+        
+        userId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int32 user_id = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearUserId() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        userId_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object action_ = "";
+      /**
+       * <code>string action = 2;</code>
+       * @return The action.
+       */
+      public java.lang.String getAction() {
+        java.lang.Object ref = action_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          action_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string action = 2;</code>
+       * @return The bytes for action.
+       */
+      public com.google.protobuf.ByteString
+          getActionBytes() {
+        java.lang.Object ref = action_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          action_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string action = 2;</code>
+       * @param value The action to set.
+       * @return This builder for chaining.
+       */
+      public Builder setAction(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        action_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string action = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearAction() {
+        action_ = getDefaultInstance().getAction();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string action = 2;</code>
+       * @param value The bytes for action to set.
+       * @return This builder for chaining.
+       */
+      public Builder setActionBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        action_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object text_ = "";
+      /**
+       * <code>string text = 3;</code>
+       * @return The text.
+       */
+      public java.lang.String getText() {
+        java.lang.Object ref = text_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          text_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string text = 3;</code>
+       * @return The bytes for text.
+       */
+      public com.google.protobuf.ByteString
+          getTextBytes() {
+        java.lang.Object ref = text_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          text_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string text = 3;</code>
+       * @param value The text to set.
+       * @return This builder for chaining.
+       */
+      public Builder setText(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        text_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string text = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearText() {
+        text_ = getDefaultInstance().getText();
+        bitField0_ = (bitField0_ & ~0x00000004);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string text = 3;</code>
+       * @param value The bytes for text to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTextBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        text_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:bridge.CompanionReadRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:bridge.CompanionReadRequest)
+    private static final com.bridge.proto.ChatProto.CompanionReadRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.bridge.proto.ChatProto.CompanionReadRequest();
+    }
+
+    public static com.bridge.proto.ChatProto.CompanionReadRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<CompanionReadRequest>
+        PARSER = new com.google.protobuf.AbstractParser<CompanionReadRequest>() {
+      @java.lang.Override
+      public CompanionReadRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<CompanionReadRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<CompanionReadRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.bridge.proto.ChatProto.CompanionReadRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface CompanionReadResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:bridge.CompanionReadResponse)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string audio_url = 1;</code>
+     * @return The audioUrl.
+     */
+    java.lang.String getAudioUrl();
+    /**
+     * <code>string audio_url = 1;</code>
+     * @return The bytes for audioUrl.
+     */
+    com.google.protobuf.ByteString
+        getAudioUrlBytes();
+
+    /**
+     * <code>string explanation_text = 2;</code>
+     * @return The explanationText.
+     */
+    java.lang.String getExplanationText();
+    /**
+     * <code>string explanation_text = 2;</code>
+     * @return The bytes for explanationText.
+     */
+    com.google.protobuf.ByteString
+        getExplanationTextBytes();
+
+    /**
+     * <code>bool success = 3;</code>
+     * @return The success.
+     */
+    boolean getSuccess();
+
+    /**
+     * <code>string error = 4;</code>
+     * @return The error.
+     */
+    java.lang.String getError();
+    /**
+     * <code>string error = 4;</code>
+     * @return The bytes for error.
+     */
+    com.google.protobuf.ByteString
+        getErrorBytes();
+  }
+  /**
+   * Protobuf type {@code bridge.CompanionReadResponse}
+   */
+  public static final class CompanionReadResponse extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:bridge.CompanionReadResponse)
+      CompanionReadResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use CompanionReadResponse.newBuilder() to construct.
+    private CompanionReadResponse(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private CompanionReadResponse() {
+      audioUrl_ = "";
+      explanationText_ = "";
+      error_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new CompanionReadResponse();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_CompanionReadResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_CompanionReadResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.bridge.proto.ChatProto.CompanionReadResponse.class, com.bridge.proto.ChatProto.CompanionReadResponse.Builder.class);
+    }
+
+    public static final int AUDIO_URL_FIELD_NUMBER = 1;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object audioUrl_ = "";
+    /**
+     * <code>string audio_url = 1;</code>
+     * @return The audioUrl.
+     */
+    @java.lang.Override
+    public java.lang.String getAudioUrl() {
+      java.lang.Object ref = audioUrl_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        audioUrl_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string audio_url = 1;</code>
+     * @return The bytes for audioUrl.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getAudioUrlBytes() {
+      java.lang.Object ref = audioUrl_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        audioUrl_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int EXPLANATION_TEXT_FIELD_NUMBER = 2;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object explanationText_ = "";
+    /**
+     * <code>string explanation_text = 2;</code>
+     * @return The explanationText.
+     */
+    @java.lang.Override
+    public java.lang.String getExplanationText() {
+      java.lang.Object ref = explanationText_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        explanationText_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string explanation_text = 2;</code>
+     * @return The bytes for explanationText.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getExplanationTextBytes() {
+      java.lang.Object ref = explanationText_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        explanationText_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int SUCCESS_FIELD_NUMBER = 3;
+    private boolean success_ = false;
+    /**
+     * <code>bool success = 3;</code>
+     * @return The success.
+     */
+    @java.lang.Override
+    public boolean getSuccess() {
+      return success_;
+    }
+
+    public static final int ERROR_FIELD_NUMBER = 4;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object error_ = "";
+    /**
+     * <code>string error = 4;</code>
+     * @return The error.
+     */
+    @java.lang.Override
+    public java.lang.String getError() {
+      java.lang.Object ref = error_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        error_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string error = 4;</code>
+     * @return The bytes for error.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getErrorBytes() {
+      java.lang.Object ref = error_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        error_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(audioUrl_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, audioUrl_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(explanationText_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, explanationText_);
+      }
+      if (success_ != false) {
+        output.writeBool(3, success_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(error_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 4, error_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(audioUrl_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, audioUrl_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(explanationText_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, explanationText_);
+      }
+      if (success_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(3, success_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(error_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, error_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.bridge.proto.ChatProto.CompanionReadResponse)) {
+        return super.equals(obj);
+      }
+      com.bridge.proto.ChatProto.CompanionReadResponse other = (com.bridge.proto.ChatProto.CompanionReadResponse) obj;
+
+      if (!getAudioUrl()
+          .equals(other.getAudioUrl())) return false;
+      if (!getExplanationText()
+          .equals(other.getExplanationText())) return false;
+      if (getSuccess()
+          != other.getSuccess()) return false;
+      if (!getError()
+          .equals(other.getError())) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + AUDIO_URL_FIELD_NUMBER;
+      hash = (53 * hash) + getAudioUrl().hashCode();
+      hash = (37 * hash) + EXPLANATION_TEXT_FIELD_NUMBER;
+      hash = (53 * hash) + getExplanationText().hashCode();
+      hash = (37 * hash) + SUCCESS_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getSuccess());
+      hash = (37 * hash) + ERROR_FIELD_NUMBER;
+      hash = (53 * hash) + getError().hashCode();
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.bridge.proto.ChatProto.CompanionReadResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.CompanionReadResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.CompanionReadResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.CompanionReadResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.CompanionReadResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.CompanionReadResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.CompanionReadResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.CompanionReadResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.CompanionReadResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.CompanionReadResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.CompanionReadResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.CompanionReadResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.bridge.proto.ChatProto.CompanionReadResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code bridge.CompanionReadResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:bridge.CompanionReadResponse)
+        com.bridge.proto.ChatProto.CompanionReadResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_CompanionReadResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_CompanionReadResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.bridge.proto.ChatProto.CompanionReadResponse.class, com.bridge.proto.ChatProto.CompanionReadResponse.Builder.class);
+      }
+
+      // Construct using com.bridge.proto.ChatProto.CompanionReadResponse.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        audioUrl_ = "";
+        explanationText_ = "";
+        success_ = false;
+        error_ = "";
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_CompanionReadResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.CompanionReadResponse getDefaultInstanceForType() {
+        return com.bridge.proto.ChatProto.CompanionReadResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.CompanionReadResponse build() {
+        com.bridge.proto.ChatProto.CompanionReadResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.CompanionReadResponse buildPartial() {
+        com.bridge.proto.ChatProto.CompanionReadResponse result = new com.bridge.proto.ChatProto.CompanionReadResponse(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(com.bridge.proto.ChatProto.CompanionReadResponse result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.audioUrl_ = audioUrl_;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.explanationText_ = explanationText_;
+        }
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.success_ = success_;
+        }
+        if (((from_bitField0_ & 0x00000008) != 0)) {
+          result.error_ = error_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.bridge.proto.ChatProto.CompanionReadResponse) {
+          return mergeFrom((com.bridge.proto.ChatProto.CompanionReadResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.bridge.proto.ChatProto.CompanionReadResponse other) {
+        if (other == com.bridge.proto.ChatProto.CompanionReadResponse.getDefaultInstance()) return this;
+        if (!other.getAudioUrl().isEmpty()) {
+          audioUrl_ = other.audioUrl_;
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        if (!other.getExplanationText().isEmpty()) {
+          explanationText_ = other.explanationText_;
+          bitField0_ |= 0x00000002;
+          onChanged();
+        }
+        if (other.getSuccess() != false) {
+          setSuccess(other.getSuccess());
+        }
+        if (!other.getError().isEmpty()) {
+          error_ = other.error_;
+          bitField0_ |= 0x00000008;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                audioUrl_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              case 18: {
+                explanationText_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 18
+              case 24: {
+                success_ = input.readBool();
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 24
+              case 34: {
+                error_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000008;
+                break;
+              } // case 34
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private java.lang.Object audioUrl_ = "";
+      /**
+       * <code>string audio_url = 1;</code>
+       * @return The audioUrl.
+       */
+      public java.lang.String getAudioUrl() {
+        java.lang.Object ref = audioUrl_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          audioUrl_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string audio_url = 1;</code>
+       * @return The bytes for audioUrl.
+       */
+      public com.google.protobuf.ByteString
+          getAudioUrlBytes() {
+        java.lang.Object ref = audioUrl_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          audioUrl_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string audio_url = 1;</code>
+       * @param value The audioUrl to set.
+       * @return This builder for chaining.
+       */
+      public Builder setAudioUrl(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        audioUrl_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string audio_url = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearAudioUrl() {
+        audioUrl_ = getDefaultInstance().getAudioUrl();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string audio_url = 1;</code>
+       * @param value The bytes for audioUrl to set.
+       * @return This builder for chaining.
+       */
+      public Builder setAudioUrlBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        audioUrl_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object explanationText_ = "";
+      /**
+       * <code>string explanation_text = 2;</code>
+       * @return The explanationText.
+       */
+      public java.lang.String getExplanationText() {
+        java.lang.Object ref = explanationText_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          explanationText_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string explanation_text = 2;</code>
+       * @return The bytes for explanationText.
+       */
+      public com.google.protobuf.ByteString
+          getExplanationTextBytes() {
+        java.lang.Object ref = explanationText_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          explanationText_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string explanation_text = 2;</code>
+       * @param value The explanationText to set.
+       * @return This builder for chaining.
+       */
+      public Builder setExplanationText(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        explanationText_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string explanation_text = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearExplanationText() {
+        explanationText_ = getDefaultInstance().getExplanationText();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string explanation_text = 2;</code>
+       * @param value The bytes for explanationText to set.
+       * @return This builder for chaining.
+       */
+      public Builder setExplanationTextBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        explanationText_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+
+      private boolean success_ ;
+      /**
+       * <code>bool success = 3;</code>
+       * @return The success.
+       */
+      @java.lang.Override
+      public boolean getSuccess() {
+        return success_;
+      }
+      /**
+       * <code>bool success = 3;</code>
+       * @param value The success to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSuccess(boolean value) {
+        
+        success_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool success = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSuccess() {
+        bitField0_ = (bitField0_ & ~0x00000004);
+        success_ = false;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object error_ = "";
+      /**
+       * <code>string error = 4;</code>
+       * @return The error.
+       */
+      public java.lang.String getError() {
+        java.lang.Object ref = error_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          error_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string error = 4;</code>
+       * @return The bytes for error.
+       */
+      public com.google.protobuf.ByteString
+          getErrorBytes() {
+        java.lang.Object ref = error_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          error_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string error = 4;</code>
+       * @param value The error to set.
+       * @return This builder for chaining.
+       */
+      public Builder setError(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        error_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string error = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearError() {
+        error_ = getDefaultInstance().getError();
+        bitField0_ = (bitField0_ & ~0x00000008);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string error = 4;</code>
+       * @param value The bytes for error to set.
+       * @return This builder for chaining.
+       */
+      public Builder setErrorBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        error_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:bridge.CompanionReadResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:bridge.CompanionReadResponse)
+    private static final com.bridge.proto.ChatProto.CompanionReadResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.bridge.proto.ChatProto.CompanionReadResponse();
+    }
+
+    public static com.bridge.proto.ChatProto.CompanionReadResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<CompanionReadResponse>
+        PARSER = new com.google.protobuf.AbstractParser<CompanionReadResponse>() {
+      @java.lang.Override
+      public CompanionReadResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<CompanionReadResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<CompanionReadResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.bridge.proto.ChatProto.CompanionReadResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface DashboardRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:bridge.DashboardRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string user_id = 1;</code>
+     * @return The userId.
+     */
+    java.lang.String getUserId();
+    /**
+     * <code>string user_id = 1;</code>
+     * @return The bytes for userId.
+     */
+    com.google.protobuf.ByteString
+        getUserIdBytes();
+  }
+  /**
+   * Protobuf type {@code bridge.DashboardRequest}
+   */
+  public static final class DashboardRequest extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:bridge.DashboardRequest)
+      DashboardRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use DashboardRequest.newBuilder() to construct.
+    private DashboardRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private DashboardRequest() {
+      userId_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new DashboardRequest();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_DashboardRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_DashboardRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.bridge.proto.ChatProto.DashboardRequest.class, com.bridge.proto.ChatProto.DashboardRequest.Builder.class);
+    }
+
+    public static final int USER_ID_FIELD_NUMBER = 1;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object userId_ = "";
+    /**
+     * <code>string user_id = 1;</code>
+     * @return The userId.
+     */
+    @java.lang.Override
+    public java.lang.String getUserId() {
+      java.lang.Object ref = userId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        userId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string user_id = 1;</code>
+     * @return The bytes for userId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getUserIdBytes() {
+      java.lang.Object ref = userId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        userId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(userId_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, userId_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(userId_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, userId_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.bridge.proto.ChatProto.DashboardRequest)) {
+        return super.equals(obj);
+      }
+      com.bridge.proto.ChatProto.DashboardRequest other = (com.bridge.proto.ChatProto.DashboardRequest) obj;
+
+      if (!getUserId()
+          .equals(other.getUserId())) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + USER_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getUserId().hashCode();
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.bridge.proto.ChatProto.DashboardRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.DashboardRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.DashboardRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.DashboardRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.DashboardRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.DashboardRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.DashboardRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.DashboardRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.DashboardRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.DashboardRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.DashboardRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.DashboardRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.bridge.proto.ChatProto.DashboardRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code bridge.DashboardRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:bridge.DashboardRequest)
+        com.bridge.proto.ChatProto.DashboardRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_DashboardRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_DashboardRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.bridge.proto.ChatProto.DashboardRequest.class, com.bridge.proto.ChatProto.DashboardRequest.Builder.class);
+      }
+
+      // Construct using com.bridge.proto.ChatProto.DashboardRequest.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        userId_ = "";
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_DashboardRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.DashboardRequest getDefaultInstanceForType() {
+        return com.bridge.proto.ChatProto.DashboardRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.DashboardRequest build() {
+        com.bridge.proto.ChatProto.DashboardRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.DashboardRequest buildPartial() {
+        com.bridge.proto.ChatProto.DashboardRequest result = new com.bridge.proto.ChatProto.DashboardRequest(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(com.bridge.proto.ChatProto.DashboardRequest result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.userId_ = userId_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.bridge.proto.ChatProto.DashboardRequest) {
+          return mergeFrom((com.bridge.proto.ChatProto.DashboardRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.bridge.proto.ChatProto.DashboardRequest other) {
+        if (other == com.bridge.proto.ChatProto.DashboardRequest.getDefaultInstance()) return this;
+        if (!other.getUserId().isEmpty()) {
+          userId_ = other.userId_;
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                userId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private java.lang.Object userId_ = "";
+      /**
+       * <code>string user_id = 1;</code>
+       * @return The userId.
+       */
+      public java.lang.String getUserId() {
+        java.lang.Object ref = userId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          userId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string user_id = 1;</code>
+       * @return The bytes for userId.
+       */
+      public com.google.protobuf.ByteString
+          getUserIdBytes() {
+        java.lang.Object ref = userId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          userId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string user_id = 1;</code>
+       * @param value The userId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setUserId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        userId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string user_id = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearUserId() {
+        userId_ = getDefaultInstance().getUserId();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string user_id = 1;</code>
+       * @param value The bytes for userId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setUserIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        userId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:bridge.DashboardRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:bridge.DashboardRequest)
+    private static final com.bridge.proto.ChatProto.DashboardRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.bridge.proto.ChatProto.DashboardRequest();
+    }
+
+    public static com.bridge.proto.ChatProto.DashboardRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<DashboardRequest>
+        PARSER = new com.google.protobuf.AbstractParser<DashboardRequest>() {
+      @java.lang.Override
+      public DashboardRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<DashboardRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<DashboardRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.bridge.proto.ChatProto.DashboardRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface DashboardResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:bridge.DashboardResponse)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>repeated double radar = 1;</code>
+     * @return A list containing the radar.
+     */
+    java.util.List<java.lang.Double> getRadarList();
+    /**
+     * <code>repeated double radar = 1;</code>
+     * @return The count of radar.
+     */
+    int getRadarCount();
+    /**
+     * <code>repeated double radar = 1;</code>
+     * @param index The index of the element to return.
+     * @return The radar at the given index.
+     */
+    double getRadar(int index);
+
+    /**
+     * <code>repeated int32 line = 2;</code>
+     * @return A list containing the line.
+     */
+    java.util.List<java.lang.Integer> getLineList();
+    /**
+     * <code>repeated int32 line = 2;</code>
+     * @return The count of line.
+     */
+    int getLineCount();
+    /**
+     * <code>repeated int32 line = 2;</code>
+     * @param index The index of the element to return.
+     * @return The line at the given index.
+     */
+    int getLine(int index);
+
+    /**
+     * <code>string user_id = 3;</code>
+     * @return The userId.
+     */
+    java.lang.String getUserId();
+    /**
+     * <code>string user_id = 3;</code>
+     * @return The bytes for userId.
+     */
+    com.google.protobuf.ByteString
+        getUserIdBytes();
+
+    /**
+     * <code>string update_time = 4;</code>
+     * @return The updateTime.
+     */
+    java.lang.String getUpdateTime();
+    /**
+     * <code>string update_time = 4;</code>
+     * @return The bytes for updateTime.
+     */
+    com.google.protobuf.ByteString
+        getUpdateTimeBytes();
+
+    /**
+     * <code>string error = 5;</code>
+     * @return The error.
+     */
+    java.lang.String getError();
+    /**
+     * <code>string error = 5;</code>
+     * @return The bytes for error.
+     */
+    com.google.protobuf.ByteString
+        getErrorBytes();
+  }
+  /**
+   * Protobuf type {@code bridge.DashboardResponse}
+   */
+  public static final class DashboardResponse extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:bridge.DashboardResponse)
+      DashboardResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use DashboardResponse.newBuilder() to construct.
+    private DashboardResponse(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private DashboardResponse() {
+      radar_ = emptyDoubleList();
+      line_ = emptyIntList();
+      userId_ = "";
+      updateTime_ = "";
+      error_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new DashboardResponse();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_DashboardResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_DashboardResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.bridge.proto.ChatProto.DashboardResponse.class, com.bridge.proto.ChatProto.DashboardResponse.Builder.class);
+    }
+
+    public static final int RADAR_FIELD_NUMBER = 1;
+    @SuppressWarnings("serial")
+    private com.google.protobuf.Internal.DoubleList radar_;
+    /**
+     * <code>repeated double radar = 1;</code>
+     * @return A list containing the radar.
+     */
+    @java.lang.Override
+    public java.util.List<java.lang.Double>
+        getRadarList() {
+      return radar_;
+    }
+    /**
+     * <code>repeated double radar = 1;</code>
+     * @return The count of radar.
+     */
+    public int getRadarCount() {
+      return radar_.size();
+    }
+    /**
+     * <code>repeated double radar = 1;</code>
+     * @param index The index of the element to return.
+     * @return The radar at the given index.
+     */
+    public double getRadar(int index) {
+      return radar_.getDouble(index);
+    }
+    private int radarMemoizedSerializedSize = -1;
+
+    public static final int LINE_FIELD_NUMBER = 2;
+    @SuppressWarnings("serial")
+    private com.google.protobuf.Internal.IntList line_;
+    /**
+     * <code>repeated int32 line = 2;</code>
+     * @return A list containing the line.
+     */
+    @java.lang.Override
+    public java.util.List<java.lang.Integer>
+        getLineList() {
+      return line_;
+    }
+    /**
+     * <code>repeated int32 line = 2;</code>
+     * @return The count of line.
+     */
+    public int getLineCount() {
+      return line_.size();
+    }
+    /**
+     * <code>repeated int32 line = 2;</code>
+     * @param index The index of the element to return.
+     * @return The line at the given index.
+     */
+    public int getLine(int index) {
+      return line_.getInt(index);
+    }
+    private int lineMemoizedSerializedSize = -1;
+
+    public static final int USER_ID_FIELD_NUMBER = 3;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object userId_ = "";
+    /**
+     * <code>string user_id = 3;</code>
+     * @return The userId.
+     */
+    @java.lang.Override
+    public java.lang.String getUserId() {
+      java.lang.Object ref = userId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        userId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string user_id = 3;</code>
+     * @return The bytes for userId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getUserIdBytes() {
+      java.lang.Object ref = userId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        userId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int UPDATE_TIME_FIELD_NUMBER = 4;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object updateTime_ = "";
+    /**
+     * <code>string update_time = 4;</code>
+     * @return The updateTime.
+     */
+    @java.lang.Override
+    public java.lang.String getUpdateTime() {
+      java.lang.Object ref = updateTime_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        updateTime_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string update_time = 4;</code>
+     * @return The bytes for updateTime.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getUpdateTimeBytes() {
+      java.lang.Object ref = updateTime_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        updateTime_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int ERROR_FIELD_NUMBER = 5;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object error_ = "";
+    /**
+     * <code>string error = 5;</code>
+     * @return The error.
+     */
+    @java.lang.Override
+    public java.lang.String getError() {
+      java.lang.Object ref = error_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        error_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string error = 5;</code>
+     * @return The bytes for error.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getErrorBytes() {
+      java.lang.Object ref = error_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        error_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      if (getRadarList().size() > 0) {
+        output.writeUInt32NoTag(10);
+        output.writeUInt32NoTag(radarMemoizedSerializedSize);
+      }
+      for (int i = 0; i < radar_.size(); i++) {
+        output.writeDoubleNoTag(radar_.getDouble(i));
+      }
+      if (getLineList().size() > 0) {
+        output.writeUInt32NoTag(18);
+        output.writeUInt32NoTag(lineMemoizedSerializedSize);
+      }
+      for (int i = 0; i < line_.size(); i++) {
+        output.writeInt32NoTag(line_.getInt(i));
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(userId_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, userId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(updateTime_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 4, updateTime_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(error_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 5, error_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      {
+        int dataSize = 0;
+        dataSize = 8 * getRadarList().size();
+        size += dataSize;
+        if (!getRadarList().isEmpty()) {
+          size += 1;
+          size += com.google.protobuf.CodedOutputStream
+              .computeInt32SizeNoTag(dataSize);
+        }
+        radarMemoizedSerializedSize = dataSize;
+      }
+      {
+        int dataSize = 0;
+        for (int i = 0; i < line_.size(); i++) {
+          dataSize += com.google.protobuf.CodedOutputStream
+            .computeInt32SizeNoTag(line_.getInt(i));
+        }
+        size += dataSize;
+        if (!getLineList().isEmpty()) {
+          size += 1;
+          size += com.google.protobuf.CodedOutputStream
+              .computeInt32SizeNoTag(dataSize);
+        }
+        lineMemoizedSerializedSize = dataSize;
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(userId_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, userId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(updateTime_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, updateTime_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(error_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, error_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.bridge.proto.ChatProto.DashboardResponse)) {
+        return super.equals(obj);
+      }
+      com.bridge.proto.ChatProto.DashboardResponse other = (com.bridge.proto.ChatProto.DashboardResponse) obj;
+
+      if (!getRadarList()
+          .equals(other.getRadarList())) return false;
+      if (!getLineList()
+          .equals(other.getLineList())) return false;
+      if (!getUserId()
+          .equals(other.getUserId())) return false;
+      if (!getUpdateTime()
+          .equals(other.getUpdateTime())) return false;
+      if (!getError()
+          .equals(other.getError())) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      if (getRadarCount() > 0) {
+        hash = (37 * hash) + RADAR_FIELD_NUMBER;
+        hash = (53 * hash) + getRadarList().hashCode();
+      }
+      if (getLineCount() > 0) {
+        hash = (37 * hash) + LINE_FIELD_NUMBER;
+        hash = (53 * hash) + getLineList().hashCode();
+      }
+      hash = (37 * hash) + USER_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getUserId().hashCode();
+      hash = (37 * hash) + UPDATE_TIME_FIELD_NUMBER;
+      hash = (53 * hash) + getUpdateTime().hashCode();
+      hash = (37 * hash) + ERROR_FIELD_NUMBER;
+      hash = (53 * hash) + getError().hashCode();
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.bridge.proto.ChatProto.DashboardResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.DashboardResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.DashboardResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.DashboardResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.DashboardResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.DashboardResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.DashboardResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.DashboardResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.DashboardResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.DashboardResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.DashboardResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.DashboardResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.bridge.proto.ChatProto.DashboardResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code bridge.DashboardResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:bridge.DashboardResponse)
+        com.bridge.proto.ChatProto.DashboardResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_DashboardResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_DashboardResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.bridge.proto.ChatProto.DashboardResponse.class, com.bridge.proto.ChatProto.DashboardResponse.Builder.class);
+      }
+
+      // Construct using com.bridge.proto.ChatProto.DashboardResponse.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        radar_ = emptyDoubleList();
+        line_ = emptyIntList();
+        userId_ = "";
+        updateTime_ = "";
+        error_ = "";
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_DashboardResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.DashboardResponse getDefaultInstanceForType() {
+        return com.bridge.proto.ChatProto.DashboardResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.DashboardResponse build() {
+        com.bridge.proto.ChatProto.DashboardResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.DashboardResponse buildPartial() {
+        com.bridge.proto.ChatProto.DashboardResponse result = new com.bridge.proto.ChatProto.DashboardResponse(this);
+        buildPartialRepeatedFields(result);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartialRepeatedFields(com.bridge.proto.ChatProto.DashboardResponse result) {
+        if (((bitField0_ & 0x00000001) != 0)) {
+          radar_.makeImmutable();
+          bitField0_ = (bitField0_ & ~0x00000001);
+        }
+        result.radar_ = radar_;
+        if (((bitField0_ & 0x00000002) != 0)) {
+          line_.makeImmutable();
+          bitField0_ = (bitField0_ & ~0x00000002);
+        }
+        result.line_ = line_;
+      }
+
+      private void buildPartial0(com.bridge.proto.ChatProto.DashboardResponse result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.userId_ = userId_;
+        }
+        if (((from_bitField0_ & 0x00000008) != 0)) {
+          result.updateTime_ = updateTime_;
+        }
+        if (((from_bitField0_ & 0x00000010) != 0)) {
+          result.error_ = error_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.bridge.proto.ChatProto.DashboardResponse) {
+          return mergeFrom((com.bridge.proto.ChatProto.DashboardResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.bridge.proto.ChatProto.DashboardResponse other) {
+        if (other == com.bridge.proto.ChatProto.DashboardResponse.getDefaultInstance()) return this;
+        if (!other.radar_.isEmpty()) {
+          if (radar_.isEmpty()) {
+            radar_ = other.radar_;
+            bitField0_ = (bitField0_ & ~0x00000001);
+          } else {
+            ensureRadarIsMutable();
+            radar_.addAll(other.radar_);
+          }
+          onChanged();
+        }
+        if (!other.line_.isEmpty()) {
+          if (line_.isEmpty()) {
+            line_ = other.line_;
+            bitField0_ = (bitField0_ & ~0x00000002);
+          } else {
+            ensureLineIsMutable();
+            line_.addAll(other.line_);
+          }
+          onChanged();
+        }
+        if (!other.getUserId().isEmpty()) {
+          userId_ = other.userId_;
+          bitField0_ |= 0x00000004;
+          onChanged();
+        }
+        if (!other.getUpdateTime().isEmpty()) {
+          updateTime_ = other.updateTime_;
+          bitField0_ |= 0x00000008;
+          onChanged();
+        }
+        if (!other.getError().isEmpty()) {
+          error_ = other.error_;
+          bitField0_ |= 0x00000010;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 9: {
+                double v = input.readDouble();
+                ensureRadarIsMutable();
+                radar_.addDouble(v);
+                break;
+              } // case 9
+              case 10: {
+                int length = input.readRawVarint32();
+                int limit = input.pushLimit(length);
+                ensureRadarIsMutable();
+                while (input.getBytesUntilLimit() > 0) {
+                  radar_.addDouble(input.readDouble());
+                }
+                input.popLimit(limit);
+                break;
+              } // case 10
+              case 16: {
+                int v = input.readInt32();
+                ensureLineIsMutable();
+                line_.addInt(v);
+                break;
+              } // case 16
+              case 18: {
+                int length = input.readRawVarint32();
+                int limit = input.pushLimit(length);
+                ensureLineIsMutable();
+                while (input.getBytesUntilLimit() > 0) {
+                  line_.addInt(input.readInt32());
+                }
+                input.popLimit(limit);
+                break;
+              } // case 18
+              case 26: {
+                userId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 26
+              case 34: {
+                updateTime_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000008;
+                break;
+              } // case 34
+              case 42: {
+                error_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000010;
+                break;
+              } // case 42
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private com.google.protobuf.Internal.DoubleList radar_ = emptyDoubleList();
+      private void ensureRadarIsMutable() {
+        if (!((bitField0_ & 0x00000001) != 0)) {
+          radar_ = mutableCopy(radar_);
+          bitField0_ |= 0x00000001;
+        }
+      }
+      /**
+       * <code>repeated double radar = 1;</code>
+       * @return A list containing the radar.
+       */
+      public java.util.List<java.lang.Double>
+          getRadarList() {
+        return ((bitField0_ & 0x00000001) != 0) ?
+                 java.util.Collections.unmodifiableList(radar_) : radar_;
+      }
+      /**
+       * <code>repeated double radar = 1;</code>
+       * @return The count of radar.
+       */
+      public int getRadarCount() {
+        return radar_.size();
+      }
+      /**
+       * <code>repeated double radar = 1;</code>
+       * @param index The index of the element to return.
+       * @return The radar at the given index.
+       */
+      public double getRadar(int index) {
+        return radar_.getDouble(index);
+      }
+      /**
+       * <code>repeated double radar = 1;</code>
+       * @param index The index to set the value at.
+       * @param value The radar to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRadar(
+          int index, double value) {
+        
+        ensureRadarIsMutable();
+        radar_.setDouble(index, value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated double radar = 1;</code>
+       * @param value The radar to add.
+       * @return This builder for chaining.
+       */
+      public Builder addRadar(double value) {
+        
+        ensureRadarIsMutable();
+        radar_.addDouble(value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated double radar = 1;</code>
+       * @param values The radar to add.
+       * @return This builder for chaining.
+       */
+      public Builder addAllRadar(
+          java.lang.Iterable<? extends java.lang.Double> values) {
+        ensureRadarIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, radar_);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated double radar = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearRadar() {
+        radar_ = emptyDoubleList();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+
+      private com.google.protobuf.Internal.IntList line_ = emptyIntList();
+      private void ensureLineIsMutable() {
+        if (!((bitField0_ & 0x00000002) != 0)) {
+          line_ = mutableCopy(line_);
+          bitField0_ |= 0x00000002;
+        }
+      }
+      /**
+       * <code>repeated int32 line = 2;</code>
+       * @return A list containing the line.
+       */
+      public java.util.List<java.lang.Integer>
+          getLineList() {
+        return ((bitField0_ & 0x00000002) != 0) ?
+                 java.util.Collections.unmodifiableList(line_) : line_;
+      }
+      /**
+       * <code>repeated int32 line = 2;</code>
+       * @return The count of line.
+       */
+      public int getLineCount() {
+        return line_.size();
+      }
+      /**
+       * <code>repeated int32 line = 2;</code>
+       * @param index The index of the element to return.
+       * @return The line at the given index.
+       */
+      public int getLine(int index) {
+        return line_.getInt(index);
+      }
+      /**
+       * <code>repeated int32 line = 2;</code>
+       * @param index The index to set the value at.
+       * @param value The line to set.
+       * @return This builder for chaining.
+       */
+      public Builder setLine(
+          int index, int value) {
+        
+        ensureLineIsMutable();
+        line_.setInt(index, value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated int32 line = 2;</code>
+       * @param value The line to add.
+       * @return This builder for chaining.
+       */
+      public Builder addLine(int value) {
+        
+        ensureLineIsMutable();
+        line_.addInt(value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated int32 line = 2;</code>
+       * @param values The line to add.
+       * @return This builder for chaining.
+       */
+      public Builder addAllLine(
+          java.lang.Iterable<? extends java.lang.Integer> values) {
+        ensureLineIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, line_);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated int32 line = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearLine() {
+        line_ = emptyIntList();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object userId_ = "";
+      /**
+       * <code>string user_id = 3;</code>
+       * @return The userId.
+       */
+      public java.lang.String getUserId() {
+        java.lang.Object ref = userId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          userId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string user_id = 3;</code>
+       * @return The bytes for userId.
+       */
+      public com.google.protobuf.ByteString
+          getUserIdBytes() {
+        java.lang.Object ref = userId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          userId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string user_id = 3;</code>
+       * @param value The userId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setUserId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        userId_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string user_id = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearUserId() {
+        userId_ = getDefaultInstance().getUserId();
+        bitField0_ = (bitField0_ & ~0x00000004);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string user_id = 3;</code>
+       * @param value The bytes for userId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setUserIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        userId_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object updateTime_ = "";
+      /**
+       * <code>string update_time = 4;</code>
+       * @return The updateTime.
+       */
+      public java.lang.String getUpdateTime() {
+        java.lang.Object ref = updateTime_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          updateTime_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string update_time = 4;</code>
+       * @return The bytes for updateTime.
+       */
+      public com.google.protobuf.ByteString
+          getUpdateTimeBytes() {
+        java.lang.Object ref = updateTime_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          updateTime_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string update_time = 4;</code>
+       * @param value The updateTime to set.
+       * @return This builder for chaining.
+       */
+      public Builder setUpdateTime(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        updateTime_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string update_time = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearUpdateTime() {
+        updateTime_ = getDefaultInstance().getUpdateTime();
+        bitField0_ = (bitField0_ & ~0x00000008);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string update_time = 4;</code>
+       * @param value The bytes for updateTime to set.
+       * @return This builder for chaining.
+       */
+      public Builder setUpdateTimeBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        updateTime_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object error_ = "";
+      /**
+       * <code>string error = 5;</code>
+       * @return The error.
+       */
+      public java.lang.String getError() {
+        java.lang.Object ref = error_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          error_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string error = 5;</code>
+       * @return The bytes for error.
+       */
+      public com.google.protobuf.ByteString
+          getErrorBytes() {
+        java.lang.Object ref = error_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          error_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string error = 5;</code>
+       * @param value The error to set.
+       * @return This builder for chaining.
+       */
+      public Builder setError(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        error_ = value;
+        bitField0_ |= 0x00000010;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string error = 5;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearError() {
+        error_ = getDefaultInstance().getError();
+        bitField0_ = (bitField0_ & ~0x00000010);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string error = 5;</code>
+       * @param value The bytes for error to set.
+       * @return This builder for chaining.
+       */
+      public Builder setErrorBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        error_ = value;
+        bitField0_ |= 0x00000010;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:bridge.DashboardResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:bridge.DashboardResponse)
+    private static final com.bridge.proto.ChatProto.DashboardResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.bridge.proto.ChatProto.DashboardResponse();
+    }
+
+    public static com.bridge.proto.ChatProto.DashboardResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<DashboardResponse>
+        PARSER = new com.google.protobuf.AbstractParser<DashboardResponse>() {
+      @java.lang.Override
+      public DashboardResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<DashboardResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<DashboardResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.bridge.proto.ChatProto.DashboardResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface DashboardSummaryRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:bridge.DashboardSummaryRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string user_id = 1;</code>
+     * @return The userId.
+     */
+    java.lang.String getUserId();
+    /**
+     * <code>string user_id = 1;</code>
+     * @return The bytes for userId.
+     */
+    com.google.protobuf.ByteString
+        getUserIdBytes();
+  }
+  /**
+   * Protobuf type {@code bridge.DashboardSummaryRequest}
+   */
+  public static final class DashboardSummaryRequest extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:bridge.DashboardSummaryRequest)
+      DashboardSummaryRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use DashboardSummaryRequest.newBuilder() to construct.
+    private DashboardSummaryRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private DashboardSummaryRequest() {
+      userId_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new DashboardSummaryRequest();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_DashboardSummaryRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_DashboardSummaryRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.bridge.proto.ChatProto.DashboardSummaryRequest.class, com.bridge.proto.ChatProto.DashboardSummaryRequest.Builder.class);
+    }
+
+    public static final int USER_ID_FIELD_NUMBER = 1;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object userId_ = "";
+    /**
+     * <code>string user_id = 1;</code>
+     * @return The userId.
+     */
+    @java.lang.Override
+    public java.lang.String getUserId() {
+      java.lang.Object ref = userId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        userId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string user_id = 1;</code>
+     * @return The bytes for userId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getUserIdBytes() {
+      java.lang.Object ref = userId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        userId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(userId_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, userId_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(userId_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, userId_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.bridge.proto.ChatProto.DashboardSummaryRequest)) {
+        return super.equals(obj);
+      }
+      com.bridge.proto.ChatProto.DashboardSummaryRequest other = (com.bridge.proto.ChatProto.DashboardSummaryRequest) obj;
+
+      if (!getUserId()
+          .equals(other.getUserId())) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + USER_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getUserId().hashCode();
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.bridge.proto.ChatProto.DashboardSummaryRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.DashboardSummaryRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.DashboardSummaryRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.DashboardSummaryRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.DashboardSummaryRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.DashboardSummaryRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.DashboardSummaryRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.DashboardSummaryRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.DashboardSummaryRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.DashboardSummaryRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.DashboardSummaryRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.DashboardSummaryRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.bridge.proto.ChatProto.DashboardSummaryRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code bridge.DashboardSummaryRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:bridge.DashboardSummaryRequest)
+        com.bridge.proto.ChatProto.DashboardSummaryRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_DashboardSummaryRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_DashboardSummaryRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.bridge.proto.ChatProto.DashboardSummaryRequest.class, com.bridge.proto.ChatProto.DashboardSummaryRequest.Builder.class);
+      }
+
+      // Construct using com.bridge.proto.ChatProto.DashboardSummaryRequest.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        userId_ = "";
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_DashboardSummaryRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.DashboardSummaryRequest getDefaultInstanceForType() {
+        return com.bridge.proto.ChatProto.DashboardSummaryRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.DashboardSummaryRequest build() {
+        com.bridge.proto.ChatProto.DashboardSummaryRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.DashboardSummaryRequest buildPartial() {
+        com.bridge.proto.ChatProto.DashboardSummaryRequest result = new com.bridge.proto.ChatProto.DashboardSummaryRequest(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(com.bridge.proto.ChatProto.DashboardSummaryRequest result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.userId_ = userId_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.bridge.proto.ChatProto.DashboardSummaryRequest) {
+          return mergeFrom((com.bridge.proto.ChatProto.DashboardSummaryRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.bridge.proto.ChatProto.DashboardSummaryRequest other) {
+        if (other == com.bridge.proto.ChatProto.DashboardSummaryRequest.getDefaultInstance()) return this;
+        if (!other.getUserId().isEmpty()) {
+          userId_ = other.userId_;
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                userId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private java.lang.Object userId_ = "";
+      /**
+       * <code>string user_id = 1;</code>
+       * @return The userId.
+       */
+      public java.lang.String getUserId() {
+        java.lang.Object ref = userId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          userId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string user_id = 1;</code>
+       * @return The bytes for userId.
+       */
+      public com.google.protobuf.ByteString
+          getUserIdBytes() {
+        java.lang.Object ref = userId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          userId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string user_id = 1;</code>
+       * @param value The userId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setUserId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        userId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string user_id = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearUserId() {
+        userId_ = getDefaultInstance().getUserId();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string user_id = 1;</code>
+       * @param value The bytes for userId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setUserIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        userId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:bridge.DashboardSummaryRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:bridge.DashboardSummaryRequest)
+    private static final com.bridge.proto.ChatProto.DashboardSummaryRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.bridge.proto.ChatProto.DashboardSummaryRequest();
+    }
+
+    public static com.bridge.proto.ChatProto.DashboardSummaryRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<DashboardSummaryRequest>
+        PARSER = new com.google.protobuf.AbstractParser<DashboardSummaryRequest>() {
+      @java.lang.Override
+      public DashboardSummaryRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<DashboardSummaryRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<DashboardSummaryRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.bridge.proto.ChatProto.DashboardSummaryRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface DashboardSummaryResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:bridge.DashboardSummaryResponse)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>double avg_mastery = 1;</code>
+     * @return The avgMastery.
+     */
+    double getAvgMastery();
+
+    /**
+     * <code>string strongest_subject = 2;</code>
+     * @return The strongestSubject.
+     */
+    java.lang.String getStrongestSubject();
+    /**
+     * <code>string strongest_subject = 2;</code>
+     * @return The bytes for strongestSubject.
+     */
+    com.google.protobuf.ByteString
+        getStrongestSubjectBytes();
+
+    /**
+     * <code>string weakest_subject = 3;</code>
+     * @return The weakestSubject.
+     */
+    java.lang.String getWeakestSubject();
+    /**
+     * <code>string weakest_subject = 3;</code>
+     * @return The bytes for weakestSubject.
+     */
+    com.google.protobuf.ByteString
+        getWeakestSubjectBytes();
+
+    /**
+     * <code>int32 total_questions_this_week = 4;</code>
+     * @return The totalQuestionsThisWeek.
+     */
+    int getTotalQuestionsThisWeek();
+
+    /**
+     * <code>map&lt;string, double&gt; subject_details = 5;</code>
+     */
+    int getSubjectDetailsCount();
+    /**
+     * <code>map&lt;string, double&gt; subject_details = 5;</code>
+     */
+    boolean containsSubjectDetails(
+        java.lang.String key);
+    /**
+     * Use {@link #getSubjectDetailsMap()} instead.
+     */
+    @java.lang.Deprecated
+    java.util.Map<java.lang.String, java.lang.Double>
+    getSubjectDetails();
+    /**
+     * <code>map&lt;string, double&gt; subject_details = 5;</code>
+     */
+    java.util.Map<java.lang.String, java.lang.Double>
+    getSubjectDetailsMap();
+    /**
+     * <code>map&lt;string, double&gt; subject_details = 5;</code>
+     */
+    double getSubjectDetailsOrDefault(
+        java.lang.String key,
+        double defaultValue);
+    /**
+     * <code>map&lt;string, double&gt; subject_details = 5;</code>
+     */
+    double getSubjectDetailsOrThrow(
+        java.lang.String key);
+  }
+  /**
+   * Protobuf type {@code bridge.DashboardSummaryResponse}
+   */
+  public static final class DashboardSummaryResponse extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:bridge.DashboardSummaryResponse)
+      DashboardSummaryResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use DashboardSummaryResponse.newBuilder() to construct.
+    private DashboardSummaryResponse(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private DashboardSummaryResponse() {
+      strongestSubject_ = "";
+      weakestSubject_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new DashboardSummaryResponse();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_DashboardSummaryResponse_descriptor;
+    }
+
+    @SuppressWarnings({"rawtypes"})
+    @java.lang.Override
+    protected com.google.protobuf.MapField internalGetMapField(
+        int number) {
+      switch (number) {
+        case 5:
+          return internalGetSubjectDetails();
+        default:
+          throw new RuntimeException(
+              "Invalid map field number: " + number);
+      }
+    }
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_DashboardSummaryResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.bridge.proto.ChatProto.DashboardSummaryResponse.class, com.bridge.proto.ChatProto.DashboardSummaryResponse.Builder.class);
+    }
+
+    public static final int AVG_MASTERY_FIELD_NUMBER = 1;
+    private double avgMastery_ = 0D;
+    /**
+     * <code>double avg_mastery = 1;</code>
+     * @return The avgMastery.
+     */
+    @java.lang.Override
+    public double getAvgMastery() {
+      return avgMastery_;
+    }
+
+    public static final int STRONGEST_SUBJECT_FIELD_NUMBER = 2;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object strongestSubject_ = "";
+    /**
+     * <code>string strongest_subject = 2;</code>
+     * @return The strongestSubject.
+     */
+    @java.lang.Override
+    public java.lang.String getStrongestSubject() {
+      java.lang.Object ref = strongestSubject_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        strongestSubject_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string strongest_subject = 2;</code>
+     * @return The bytes for strongestSubject.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getStrongestSubjectBytes() {
+      java.lang.Object ref = strongestSubject_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        strongestSubject_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int WEAKEST_SUBJECT_FIELD_NUMBER = 3;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object weakestSubject_ = "";
+    /**
+     * <code>string weakest_subject = 3;</code>
+     * @return The weakestSubject.
+     */
+    @java.lang.Override
+    public java.lang.String getWeakestSubject() {
+      java.lang.Object ref = weakestSubject_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        weakestSubject_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string weakest_subject = 3;</code>
+     * @return The bytes for weakestSubject.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getWeakestSubjectBytes() {
+      java.lang.Object ref = weakestSubject_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        weakestSubject_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int TOTAL_QUESTIONS_THIS_WEEK_FIELD_NUMBER = 4;
+    private int totalQuestionsThisWeek_ = 0;
+    /**
+     * <code>int32 total_questions_this_week = 4;</code>
+     * @return The totalQuestionsThisWeek.
+     */
+    @java.lang.Override
+    public int getTotalQuestionsThisWeek() {
+      return totalQuestionsThisWeek_;
+    }
+
+    public static final int SUBJECT_DETAILS_FIELD_NUMBER = 5;
+    private static final class SubjectDetailsDefaultEntryHolder {
+      static final com.google.protobuf.MapEntry<
+          java.lang.String, java.lang.Double> defaultEntry =
+              com.google.protobuf.MapEntry
+              .<java.lang.String, java.lang.Double>newDefaultInstance(
+                  com.bridge.proto.ChatProto.internal_static_bridge_DashboardSummaryResponse_SubjectDetailsEntry_descriptor, 
+                  com.google.protobuf.WireFormat.FieldType.STRING,
+                  "",
+                  com.google.protobuf.WireFormat.FieldType.DOUBLE,
+                  0D);
+    }
+    @SuppressWarnings("serial")
+    private com.google.protobuf.MapField<
+        java.lang.String, java.lang.Double> subjectDetails_;
+    private com.google.protobuf.MapField<java.lang.String, java.lang.Double>
+    internalGetSubjectDetails() {
+      if (subjectDetails_ == null) {
+        return com.google.protobuf.MapField.emptyMapField(
+            SubjectDetailsDefaultEntryHolder.defaultEntry);
+      }
+      return subjectDetails_;
+    }
+    public int getSubjectDetailsCount() {
+      return internalGetSubjectDetails().getMap().size();
+    }
+    /**
+     * <code>map&lt;string, double&gt; subject_details = 5;</code>
+     */
+    @java.lang.Override
+    public boolean containsSubjectDetails(
+        java.lang.String key) {
+      if (key == null) { throw new NullPointerException("map key"); }
+      return internalGetSubjectDetails().getMap().containsKey(key);
+    }
+    /**
+     * Use {@link #getSubjectDetailsMap()} instead.
+     */
+    @java.lang.Override
+    @java.lang.Deprecated
+    public java.util.Map<java.lang.String, java.lang.Double> getSubjectDetails() {
+      return getSubjectDetailsMap();
+    }
+    /**
+     * <code>map&lt;string, double&gt; subject_details = 5;</code>
+     */
+    @java.lang.Override
+    public java.util.Map<java.lang.String, java.lang.Double> getSubjectDetailsMap() {
+      return internalGetSubjectDetails().getMap();
+    }
+    /**
+     * <code>map&lt;string, double&gt; subject_details = 5;</code>
+     */
+    @java.lang.Override
+    public double getSubjectDetailsOrDefault(
+        java.lang.String key,
+        double defaultValue) {
+      if (key == null) { throw new NullPointerException("map key"); }
+      java.util.Map<java.lang.String, java.lang.Double> map =
+          internalGetSubjectDetails().getMap();
+      return map.containsKey(key) ? map.get(key) : defaultValue;
+    }
+    /**
+     * <code>map&lt;string, double&gt; subject_details = 5;</code>
+     */
+    @java.lang.Override
+    public double getSubjectDetailsOrThrow(
+        java.lang.String key) {
+      if (key == null) { throw new NullPointerException("map key"); }
+      java.util.Map<java.lang.String, java.lang.Double> map =
+          internalGetSubjectDetails().getMap();
+      if (!map.containsKey(key)) {
+        throw new java.lang.IllegalArgumentException();
+      }
+      return map.get(key);
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (java.lang.Double.doubleToRawLongBits(avgMastery_) != 0) {
+        output.writeDouble(1, avgMastery_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(strongestSubject_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, strongestSubject_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(weakestSubject_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, weakestSubject_);
+      }
+      if (totalQuestionsThisWeek_ != 0) {
+        output.writeInt32(4, totalQuestionsThisWeek_);
+      }
+      com.google.protobuf.GeneratedMessageV3
+        .serializeStringMapTo(
+          output,
+          internalGetSubjectDetails(),
+          SubjectDetailsDefaultEntryHolder.defaultEntry,
+          5);
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (java.lang.Double.doubleToRawLongBits(avgMastery_) != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeDoubleSize(1, avgMastery_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(strongestSubject_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, strongestSubject_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(weakestSubject_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, weakestSubject_);
+      }
+      if (totalQuestionsThisWeek_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(4, totalQuestionsThisWeek_);
+      }
+      for (java.util.Map.Entry<java.lang.String, java.lang.Double> entry
+           : internalGetSubjectDetails().getMap().entrySet()) {
+        com.google.protobuf.MapEntry<java.lang.String, java.lang.Double>
+        subjectDetails__ = SubjectDetailsDefaultEntryHolder.defaultEntry.newBuilderForType()
+            .setKey(entry.getKey())
+            .setValue(entry.getValue())
+            .build();
+        size += com.google.protobuf.CodedOutputStream
+            .computeMessageSize(5, subjectDetails__);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.bridge.proto.ChatProto.DashboardSummaryResponse)) {
+        return super.equals(obj);
+      }
+      com.bridge.proto.ChatProto.DashboardSummaryResponse other = (com.bridge.proto.ChatProto.DashboardSummaryResponse) obj;
+
+      if (java.lang.Double.doubleToLongBits(getAvgMastery())
+          != java.lang.Double.doubleToLongBits(
+              other.getAvgMastery())) return false;
+      if (!getStrongestSubject()
+          .equals(other.getStrongestSubject())) return false;
+      if (!getWeakestSubject()
+          .equals(other.getWeakestSubject())) return false;
+      if (getTotalQuestionsThisWeek()
+          != other.getTotalQuestionsThisWeek()) return false;
+      if (!internalGetSubjectDetails().equals(
+          other.internalGetSubjectDetails())) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + AVG_MASTERY_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          java.lang.Double.doubleToLongBits(getAvgMastery()));
+      hash = (37 * hash) + STRONGEST_SUBJECT_FIELD_NUMBER;
+      hash = (53 * hash) + getStrongestSubject().hashCode();
+      hash = (37 * hash) + WEAKEST_SUBJECT_FIELD_NUMBER;
+      hash = (53 * hash) + getWeakestSubject().hashCode();
+      hash = (37 * hash) + TOTAL_QUESTIONS_THIS_WEEK_FIELD_NUMBER;
+      hash = (53 * hash) + getTotalQuestionsThisWeek();
+      if (!internalGetSubjectDetails().getMap().isEmpty()) {
+        hash = (37 * hash) + SUBJECT_DETAILS_FIELD_NUMBER;
+        hash = (53 * hash) + internalGetSubjectDetails().hashCode();
+      }
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.bridge.proto.ChatProto.DashboardSummaryResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.DashboardSummaryResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.DashboardSummaryResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.DashboardSummaryResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.DashboardSummaryResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.DashboardSummaryResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.DashboardSummaryResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.DashboardSummaryResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.DashboardSummaryResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.DashboardSummaryResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.DashboardSummaryResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.DashboardSummaryResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.bridge.proto.ChatProto.DashboardSummaryResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code bridge.DashboardSummaryResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:bridge.DashboardSummaryResponse)
+        com.bridge.proto.ChatProto.DashboardSummaryResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_DashboardSummaryResponse_descriptor;
+      }
+
+      @SuppressWarnings({"rawtypes"})
+      protected com.google.protobuf.MapField internalGetMapField(
+          int number) {
+        switch (number) {
+          case 5:
+            return internalGetSubjectDetails();
+          default:
+            throw new RuntimeException(
+                "Invalid map field number: " + number);
+        }
+      }
+      @SuppressWarnings({"rawtypes"})
+      protected com.google.protobuf.MapField internalGetMutableMapField(
+          int number) {
+        switch (number) {
+          case 5:
+            return internalGetMutableSubjectDetails();
+          default:
+            throw new RuntimeException(
+                "Invalid map field number: " + number);
+        }
+      }
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_DashboardSummaryResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.bridge.proto.ChatProto.DashboardSummaryResponse.class, com.bridge.proto.ChatProto.DashboardSummaryResponse.Builder.class);
+      }
+
+      // Construct using com.bridge.proto.ChatProto.DashboardSummaryResponse.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        avgMastery_ = 0D;
+        strongestSubject_ = "";
+        weakestSubject_ = "";
+        totalQuestionsThisWeek_ = 0;
+        internalGetMutableSubjectDetails().clear();
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_DashboardSummaryResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.DashboardSummaryResponse getDefaultInstanceForType() {
+        return com.bridge.proto.ChatProto.DashboardSummaryResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.DashboardSummaryResponse build() {
+        com.bridge.proto.ChatProto.DashboardSummaryResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.DashboardSummaryResponse buildPartial() {
+        com.bridge.proto.ChatProto.DashboardSummaryResponse result = new com.bridge.proto.ChatProto.DashboardSummaryResponse(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(com.bridge.proto.ChatProto.DashboardSummaryResponse result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.avgMastery_ = avgMastery_;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.strongestSubject_ = strongestSubject_;
+        }
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.weakestSubject_ = weakestSubject_;
+        }
+        if (((from_bitField0_ & 0x00000008) != 0)) {
+          result.totalQuestionsThisWeek_ = totalQuestionsThisWeek_;
+        }
+        if (((from_bitField0_ & 0x00000010) != 0)) {
+          result.subjectDetails_ = internalGetSubjectDetails();
+          result.subjectDetails_.makeImmutable();
+        }
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.bridge.proto.ChatProto.DashboardSummaryResponse) {
+          return mergeFrom((com.bridge.proto.ChatProto.DashboardSummaryResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.bridge.proto.ChatProto.DashboardSummaryResponse other) {
+        if (other == com.bridge.proto.ChatProto.DashboardSummaryResponse.getDefaultInstance()) return this;
+        if (other.getAvgMastery() != 0D) {
+          setAvgMastery(other.getAvgMastery());
+        }
+        if (!other.getStrongestSubject().isEmpty()) {
+          strongestSubject_ = other.strongestSubject_;
+          bitField0_ |= 0x00000002;
+          onChanged();
+        }
+        if (!other.getWeakestSubject().isEmpty()) {
+          weakestSubject_ = other.weakestSubject_;
+          bitField0_ |= 0x00000004;
+          onChanged();
+        }
+        if (other.getTotalQuestionsThisWeek() != 0) {
+          setTotalQuestionsThisWeek(other.getTotalQuestionsThisWeek());
+        }
+        internalGetMutableSubjectDetails().mergeFrom(
+            other.internalGetSubjectDetails());
+        bitField0_ |= 0x00000010;
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 9: {
+                avgMastery_ = input.readDouble();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 9
+              case 18: {
+                strongestSubject_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 18
+              case 26: {
+                weakestSubject_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 26
+              case 32: {
+                totalQuestionsThisWeek_ = input.readInt32();
+                bitField0_ |= 0x00000008;
+                break;
+              } // case 32
+              case 42: {
+                com.google.protobuf.MapEntry<java.lang.String, java.lang.Double>
+                subjectDetails__ = input.readMessage(
+                    SubjectDetailsDefaultEntryHolder.defaultEntry.getParserForType(), extensionRegistry);
+                internalGetMutableSubjectDetails().getMutableMap().put(
+                    subjectDetails__.getKey(), subjectDetails__.getValue());
+                bitField0_ |= 0x00000010;
+                break;
+              } // case 42
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private double avgMastery_ ;
+      /**
+       * <code>double avg_mastery = 1;</code>
+       * @return The avgMastery.
+       */
+      @java.lang.Override
+      public double getAvgMastery() {
+        return avgMastery_;
+      }
+      /**
+       * <code>double avg_mastery = 1;</code>
+       * @param value The avgMastery to set.
+       * @return This builder for chaining.
+       */
+      public Builder setAvgMastery(double value) {
+        
+        avgMastery_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>double avg_mastery = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearAvgMastery() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        avgMastery_ = 0D;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object strongestSubject_ = "";
+      /**
+       * <code>string strongest_subject = 2;</code>
+       * @return The strongestSubject.
+       */
+      public java.lang.String getStrongestSubject() {
+        java.lang.Object ref = strongestSubject_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          strongestSubject_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string strongest_subject = 2;</code>
+       * @return The bytes for strongestSubject.
+       */
+      public com.google.protobuf.ByteString
+          getStrongestSubjectBytes() {
+        java.lang.Object ref = strongestSubject_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          strongestSubject_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string strongest_subject = 2;</code>
+       * @param value The strongestSubject to set.
+       * @return This builder for chaining.
+       */
+      public Builder setStrongestSubject(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        strongestSubject_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string strongest_subject = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearStrongestSubject() {
+        strongestSubject_ = getDefaultInstance().getStrongestSubject();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string strongest_subject = 2;</code>
+       * @param value The bytes for strongestSubject to set.
+       * @return This builder for chaining.
+       */
+      public Builder setStrongestSubjectBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        strongestSubject_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object weakestSubject_ = "";
+      /**
+       * <code>string weakest_subject = 3;</code>
+       * @return The weakestSubject.
+       */
+      public java.lang.String getWeakestSubject() {
+        java.lang.Object ref = weakestSubject_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          weakestSubject_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string weakest_subject = 3;</code>
+       * @return The bytes for weakestSubject.
+       */
+      public com.google.protobuf.ByteString
+          getWeakestSubjectBytes() {
+        java.lang.Object ref = weakestSubject_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          weakestSubject_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string weakest_subject = 3;</code>
+       * @param value The weakestSubject to set.
+       * @return This builder for chaining.
+       */
+      public Builder setWeakestSubject(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        weakestSubject_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string weakest_subject = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearWeakestSubject() {
+        weakestSubject_ = getDefaultInstance().getWeakestSubject();
+        bitField0_ = (bitField0_ & ~0x00000004);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string weakest_subject = 3;</code>
+       * @param value The bytes for weakestSubject to set.
+       * @return This builder for chaining.
+       */
+      public Builder setWeakestSubjectBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        weakestSubject_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+
+      private int totalQuestionsThisWeek_ ;
+      /**
+       * <code>int32 total_questions_this_week = 4;</code>
+       * @return The totalQuestionsThisWeek.
+       */
+      @java.lang.Override
+      public int getTotalQuestionsThisWeek() {
+        return totalQuestionsThisWeek_;
+      }
+      /**
+       * <code>int32 total_questions_this_week = 4;</code>
+       * @param value The totalQuestionsThisWeek to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTotalQuestionsThisWeek(int value) {
+        
+        totalQuestionsThisWeek_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int32 total_questions_this_week = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTotalQuestionsThisWeek() {
+        bitField0_ = (bitField0_ & ~0x00000008);
+        totalQuestionsThisWeek_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private com.google.protobuf.MapField<
+          java.lang.String, java.lang.Double> subjectDetails_;
+      private com.google.protobuf.MapField<java.lang.String, java.lang.Double>
+          internalGetSubjectDetails() {
+        if (subjectDetails_ == null) {
+          return com.google.protobuf.MapField.emptyMapField(
+              SubjectDetailsDefaultEntryHolder.defaultEntry);
+        }
+        return subjectDetails_;
+      }
+      private com.google.protobuf.MapField<java.lang.String, java.lang.Double>
+          internalGetMutableSubjectDetails() {
+        if (subjectDetails_ == null) {
+          subjectDetails_ = com.google.protobuf.MapField.newMapField(
+              SubjectDetailsDefaultEntryHolder.defaultEntry);
+        }
+        if (!subjectDetails_.isMutable()) {
+          subjectDetails_ = subjectDetails_.copy();
+        }
+        bitField0_ |= 0x00000010;
+        onChanged();
+        return subjectDetails_;
+      }
+      public int getSubjectDetailsCount() {
+        return internalGetSubjectDetails().getMap().size();
+      }
+      /**
+       * <code>map&lt;string, double&gt; subject_details = 5;</code>
+       */
+      @java.lang.Override
+      public boolean containsSubjectDetails(
+          java.lang.String key) {
+        if (key == null) { throw new NullPointerException("map key"); }
+        return internalGetSubjectDetails().getMap().containsKey(key);
+      }
+      /**
+       * Use {@link #getSubjectDetailsMap()} instead.
+       */
+      @java.lang.Override
+      @java.lang.Deprecated
+      public java.util.Map<java.lang.String, java.lang.Double> getSubjectDetails() {
+        return getSubjectDetailsMap();
+      }
+      /**
+       * <code>map&lt;string, double&gt; subject_details = 5;</code>
+       */
+      @java.lang.Override
+      public java.util.Map<java.lang.String, java.lang.Double> getSubjectDetailsMap() {
+        return internalGetSubjectDetails().getMap();
+      }
+      /**
+       * <code>map&lt;string, double&gt; subject_details = 5;</code>
+       */
+      @java.lang.Override
+      public double getSubjectDetailsOrDefault(
+          java.lang.String key,
+          double defaultValue) {
+        if (key == null) { throw new NullPointerException("map key"); }
+        java.util.Map<java.lang.String, java.lang.Double> map =
+            internalGetSubjectDetails().getMap();
+        return map.containsKey(key) ? map.get(key) : defaultValue;
+      }
+      /**
+       * <code>map&lt;string, double&gt; subject_details = 5;</code>
+       */
+      @java.lang.Override
+      public double getSubjectDetailsOrThrow(
+          java.lang.String key) {
+        if (key == null) { throw new NullPointerException("map key"); }
+        java.util.Map<java.lang.String, java.lang.Double> map =
+            internalGetSubjectDetails().getMap();
+        if (!map.containsKey(key)) {
+          throw new java.lang.IllegalArgumentException();
+        }
+        return map.get(key);
+      }
+      public Builder clearSubjectDetails() {
+        bitField0_ = (bitField0_ & ~0x00000010);
+        internalGetMutableSubjectDetails().getMutableMap()
+            .clear();
+        return this;
+      }
+      /**
+       * <code>map&lt;string, double&gt; subject_details = 5;</code>
+       */
+      public Builder removeSubjectDetails(
+          java.lang.String key) {
+        if (key == null) { throw new NullPointerException("map key"); }
+        internalGetMutableSubjectDetails().getMutableMap()
+            .remove(key);
+        return this;
+      }
+      /**
+       * Use alternate mutation accessors instead.
+       */
+      @java.lang.Deprecated
+      public java.util.Map<java.lang.String, java.lang.Double>
+          getMutableSubjectDetails() {
+        bitField0_ |= 0x00000010;
+        return internalGetMutableSubjectDetails().getMutableMap();
+      }
+      /**
+       * <code>map&lt;string, double&gt; subject_details = 5;</code>
+       */
+      public Builder putSubjectDetails(
+          java.lang.String key,
+          double value) {
+        if (key == null) { throw new NullPointerException("map key"); }
+        
+        internalGetMutableSubjectDetails().getMutableMap()
+            .put(key, value);
+        bitField0_ |= 0x00000010;
+        return this;
+      }
+      /**
+       * <code>map&lt;string, double&gt; subject_details = 5;</code>
+       */
+      public Builder putAllSubjectDetails(
+          java.util.Map<java.lang.String, java.lang.Double> values) {
+        internalGetMutableSubjectDetails().getMutableMap()
+            .putAll(values);
+        bitField0_ |= 0x00000010;
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:bridge.DashboardSummaryResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:bridge.DashboardSummaryResponse)
+    private static final com.bridge.proto.ChatProto.DashboardSummaryResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.bridge.proto.ChatProto.DashboardSummaryResponse();
+    }
+
+    public static com.bridge.proto.ChatProto.DashboardSummaryResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<DashboardSummaryResponse>
+        PARSER = new com.google.protobuf.AbstractParser<DashboardSummaryResponse>() {
+      @java.lang.Override
+      public DashboardSummaryResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<DashboardSummaryResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<DashboardSummaryResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.bridge.proto.ChatProto.DashboardSummaryResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface WeeklyReportRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:bridge.WeeklyReportRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string user_id = 1;</code>
+     * @return The userId.
+     */
+    java.lang.String getUserId();
+    /**
+     * <code>string user_id = 1;</code>
+     * @return The bytes for userId.
+     */
+    com.google.protobuf.ByteString
+        getUserIdBytes();
+  }
+  /**
+   * Protobuf type {@code bridge.WeeklyReportRequest}
+   */
+  public static final class WeeklyReportRequest extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:bridge.WeeklyReportRequest)
+      WeeklyReportRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use WeeklyReportRequest.newBuilder() to construct.
+    private WeeklyReportRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private WeeklyReportRequest() {
+      userId_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new WeeklyReportRequest();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_WeeklyReportRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_WeeklyReportRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.bridge.proto.ChatProto.WeeklyReportRequest.class, com.bridge.proto.ChatProto.WeeklyReportRequest.Builder.class);
+    }
+
+    public static final int USER_ID_FIELD_NUMBER = 1;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object userId_ = "";
+    /**
+     * <code>string user_id = 1;</code>
+     * @return The userId.
+     */
+    @java.lang.Override
+    public java.lang.String getUserId() {
+      java.lang.Object ref = userId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        userId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string user_id = 1;</code>
+     * @return The bytes for userId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getUserIdBytes() {
+      java.lang.Object ref = userId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        userId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(userId_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, userId_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(userId_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, userId_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.bridge.proto.ChatProto.WeeklyReportRequest)) {
+        return super.equals(obj);
+      }
+      com.bridge.proto.ChatProto.WeeklyReportRequest other = (com.bridge.proto.ChatProto.WeeklyReportRequest) obj;
+
+      if (!getUserId()
+          .equals(other.getUserId())) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + USER_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getUserId().hashCode();
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.bridge.proto.ChatProto.WeeklyReportRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.WeeklyReportRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.WeeklyReportRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.WeeklyReportRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.WeeklyReportRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.WeeklyReportRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.WeeklyReportRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.WeeklyReportRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.WeeklyReportRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.WeeklyReportRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.WeeklyReportRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.WeeklyReportRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.bridge.proto.ChatProto.WeeklyReportRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code bridge.WeeklyReportRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:bridge.WeeklyReportRequest)
+        com.bridge.proto.ChatProto.WeeklyReportRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_WeeklyReportRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_WeeklyReportRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.bridge.proto.ChatProto.WeeklyReportRequest.class, com.bridge.proto.ChatProto.WeeklyReportRequest.Builder.class);
+      }
+
+      // Construct using com.bridge.proto.ChatProto.WeeklyReportRequest.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        userId_ = "";
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_WeeklyReportRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.WeeklyReportRequest getDefaultInstanceForType() {
+        return com.bridge.proto.ChatProto.WeeklyReportRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.WeeklyReportRequest build() {
+        com.bridge.proto.ChatProto.WeeklyReportRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.WeeklyReportRequest buildPartial() {
+        com.bridge.proto.ChatProto.WeeklyReportRequest result = new com.bridge.proto.ChatProto.WeeklyReportRequest(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(com.bridge.proto.ChatProto.WeeklyReportRequest result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.userId_ = userId_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.bridge.proto.ChatProto.WeeklyReportRequest) {
+          return mergeFrom((com.bridge.proto.ChatProto.WeeklyReportRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.bridge.proto.ChatProto.WeeklyReportRequest other) {
+        if (other == com.bridge.proto.ChatProto.WeeklyReportRequest.getDefaultInstance()) return this;
+        if (!other.getUserId().isEmpty()) {
+          userId_ = other.userId_;
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                userId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private java.lang.Object userId_ = "";
+      /**
+       * <code>string user_id = 1;</code>
+       * @return The userId.
+       */
+      public java.lang.String getUserId() {
+        java.lang.Object ref = userId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          userId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string user_id = 1;</code>
+       * @return The bytes for userId.
+       */
+      public com.google.protobuf.ByteString
+          getUserIdBytes() {
+        java.lang.Object ref = userId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          userId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string user_id = 1;</code>
+       * @param value The userId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setUserId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        userId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string user_id = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearUserId() {
+        userId_ = getDefaultInstance().getUserId();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string user_id = 1;</code>
+       * @param value The bytes for userId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setUserIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        userId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:bridge.WeeklyReportRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:bridge.WeeklyReportRequest)
+    private static final com.bridge.proto.ChatProto.WeeklyReportRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.bridge.proto.ChatProto.WeeklyReportRequest();
+    }
+
+    public static com.bridge.proto.ChatProto.WeeklyReportRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<WeeklyReportRequest>
+        PARSER = new com.google.protobuf.AbstractParser<WeeklyReportRequest>() {
+      @java.lang.Override
+      public WeeklyReportRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<WeeklyReportRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<WeeklyReportRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.bridge.proto.ChatProto.WeeklyReportRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface WeeklyReportResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:bridge.WeeklyReportResponse)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string report = 1;</code>
+     * @return The report.
+     */
+    java.lang.String getReport();
+    /**
+     * <code>string report = 1;</code>
+     * @return The bytes for report.
+     */
+    com.google.protobuf.ByteString
+        getReportBytes();
+
+    /**
+     * <code>string user_id = 2;</code>
+     * @return The userId.
+     */
+    java.lang.String getUserId();
+    /**
+     * <code>string user_id = 2;</code>
+     * @return The bytes for userId.
+     */
+    com.google.protobuf.ByteString
+        getUserIdBytes();
+
+    /**
+     * <code>string generated_at = 3;</code>
+     * @return The generatedAt.
+     */
+    java.lang.String getGeneratedAt();
+    /**
+     * <code>string generated_at = 3;</code>
+     * @return The bytes for generatedAt.
+     */
+    com.google.protobuf.ByteString
+        getGeneratedAtBytes();
+
+    /**
+     * <code>string error = 4;</code>
+     * @return The error.
+     */
+    java.lang.String getError();
+    /**
+     * <code>string error = 4;</code>
+     * @return The bytes for error.
+     */
+    com.google.protobuf.ByteString
+        getErrorBytes();
+  }
+  /**
+   * Protobuf type {@code bridge.WeeklyReportResponse}
+   */
+  public static final class WeeklyReportResponse extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:bridge.WeeklyReportResponse)
+      WeeklyReportResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use WeeklyReportResponse.newBuilder() to construct.
+    private WeeklyReportResponse(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private WeeklyReportResponse() {
+      report_ = "";
+      userId_ = "";
+      generatedAt_ = "";
+      error_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new WeeklyReportResponse();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_WeeklyReportResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_WeeklyReportResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.bridge.proto.ChatProto.WeeklyReportResponse.class, com.bridge.proto.ChatProto.WeeklyReportResponse.Builder.class);
+    }
+
+    public static final int REPORT_FIELD_NUMBER = 1;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object report_ = "";
+    /**
+     * <code>string report = 1;</code>
+     * @return The report.
+     */
+    @java.lang.Override
+    public java.lang.String getReport() {
+      java.lang.Object ref = report_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        report_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string report = 1;</code>
+     * @return The bytes for report.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getReportBytes() {
+      java.lang.Object ref = report_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        report_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int USER_ID_FIELD_NUMBER = 2;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object userId_ = "";
+    /**
+     * <code>string user_id = 2;</code>
+     * @return The userId.
+     */
+    @java.lang.Override
+    public java.lang.String getUserId() {
+      java.lang.Object ref = userId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        userId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string user_id = 2;</code>
+     * @return The bytes for userId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getUserIdBytes() {
+      java.lang.Object ref = userId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        userId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int GENERATED_AT_FIELD_NUMBER = 3;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object generatedAt_ = "";
+    /**
+     * <code>string generated_at = 3;</code>
+     * @return The generatedAt.
+     */
+    @java.lang.Override
+    public java.lang.String getGeneratedAt() {
+      java.lang.Object ref = generatedAt_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        generatedAt_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string generated_at = 3;</code>
+     * @return The bytes for generatedAt.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getGeneratedAtBytes() {
+      java.lang.Object ref = generatedAt_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        generatedAt_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int ERROR_FIELD_NUMBER = 4;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object error_ = "";
+    /**
+     * <code>string error = 4;</code>
+     * @return The error.
+     */
+    @java.lang.Override
+    public java.lang.String getError() {
+      java.lang.Object ref = error_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        error_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string error = 4;</code>
+     * @return The bytes for error.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getErrorBytes() {
+      java.lang.Object ref = error_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        error_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(report_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, report_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(userId_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, userId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(generatedAt_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, generatedAt_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(error_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 4, error_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(report_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, report_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(userId_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, userId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(generatedAt_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, generatedAt_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(error_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, error_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.bridge.proto.ChatProto.WeeklyReportResponse)) {
+        return super.equals(obj);
+      }
+      com.bridge.proto.ChatProto.WeeklyReportResponse other = (com.bridge.proto.ChatProto.WeeklyReportResponse) obj;
+
+      if (!getReport()
+          .equals(other.getReport())) return false;
+      if (!getUserId()
+          .equals(other.getUserId())) return false;
+      if (!getGeneratedAt()
+          .equals(other.getGeneratedAt())) return false;
+      if (!getError()
+          .equals(other.getError())) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + REPORT_FIELD_NUMBER;
+      hash = (53 * hash) + getReport().hashCode();
+      hash = (37 * hash) + USER_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getUserId().hashCode();
+      hash = (37 * hash) + GENERATED_AT_FIELD_NUMBER;
+      hash = (53 * hash) + getGeneratedAt().hashCode();
+      hash = (37 * hash) + ERROR_FIELD_NUMBER;
+      hash = (53 * hash) + getError().hashCode();
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.bridge.proto.ChatProto.WeeklyReportResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.WeeklyReportResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.WeeklyReportResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.WeeklyReportResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.WeeklyReportResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.WeeklyReportResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.WeeklyReportResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.WeeklyReportResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.WeeklyReportResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.WeeklyReportResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.WeeklyReportResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.WeeklyReportResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.bridge.proto.ChatProto.WeeklyReportResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code bridge.WeeklyReportResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:bridge.WeeklyReportResponse)
+        com.bridge.proto.ChatProto.WeeklyReportResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_WeeklyReportResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_WeeklyReportResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.bridge.proto.ChatProto.WeeklyReportResponse.class, com.bridge.proto.ChatProto.WeeklyReportResponse.Builder.class);
+      }
+
+      // Construct using com.bridge.proto.ChatProto.WeeklyReportResponse.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        report_ = "";
+        userId_ = "";
+        generatedAt_ = "";
+        error_ = "";
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_WeeklyReportResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.WeeklyReportResponse getDefaultInstanceForType() {
+        return com.bridge.proto.ChatProto.WeeklyReportResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.WeeklyReportResponse build() {
+        com.bridge.proto.ChatProto.WeeklyReportResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.WeeklyReportResponse buildPartial() {
+        com.bridge.proto.ChatProto.WeeklyReportResponse result = new com.bridge.proto.ChatProto.WeeklyReportResponse(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(com.bridge.proto.ChatProto.WeeklyReportResponse result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.report_ = report_;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.userId_ = userId_;
+        }
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.generatedAt_ = generatedAt_;
+        }
+        if (((from_bitField0_ & 0x00000008) != 0)) {
+          result.error_ = error_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.bridge.proto.ChatProto.WeeklyReportResponse) {
+          return mergeFrom((com.bridge.proto.ChatProto.WeeklyReportResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.bridge.proto.ChatProto.WeeklyReportResponse other) {
+        if (other == com.bridge.proto.ChatProto.WeeklyReportResponse.getDefaultInstance()) return this;
+        if (!other.getReport().isEmpty()) {
+          report_ = other.report_;
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        if (!other.getUserId().isEmpty()) {
+          userId_ = other.userId_;
+          bitField0_ |= 0x00000002;
+          onChanged();
+        }
+        if (!other.getGeneratedAt().isEmpty()) {
+          generatedAt_ = other.generatedAt_;
+          bitField0_ |= 0x00000004;
+          onChanged();
+        }
+        if (!other.getError().isEmpty()) {
+          error_ = other.error_;
+          bitField0_ |= 0x00000008;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                report_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              case 18: {
+                userId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 18
+              case 26: {
+                generatedAt_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 26
+              case 34: {
+                error_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000008;
+                break;
+              } // case 34
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private java.lang.Object report_ = "";
+      /**
+       * <code>string report = 1;</code>
+       * @return The report.
+       */
+      public java.lang.String getReport() {
+        java.lang.Object ref = report_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          report_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string report = 1;</code>
+       * @return The bytes for report.
+       */
+      public com.google.protobuf.ByteString
+          getReportBytes() {
+        java.lang.Object ref = report_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          report_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string report = 1;</code>
+       * @param value The report to set.
+       * @return This builder for chaining.
+       */
+      public Builder setReport(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        report_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string report = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearReport() {
+        report_ = getDefaultInstance().getReport();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string report = 1;</code>
+       * @param value The bytes for report to set.
+       * @return This builder for chaining.
+       */
+      public Builder setReportBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        report_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object userId_ = "";
+      /**
+       * <code>string user_id = 2;</code>
+       * @return The userId.
+       */
+      public java.lang.String getUserId() {
+        java.lang.Object ref = userId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          userId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string user_id = 2;</code>
+       * @return The bytes for userId.
+       */
+      public com.google.protobuf.ByteString
+          getUserIdBytes() {
+        java.lang.Object ref = userId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          userId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string user_id = 2;</code>
+       * @param value The userId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setUserId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        userId_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string user_id = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearUserId() {
+        userId_ = getDefaultInstance().getUserId();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string user_id = 2;</code>
+       * @param value The bytes for userId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setUserIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        userId_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object generatedAt_ = "";
+      /**
+       * <code>string generated_at = 3;</code>
+       * @return The generatedAt.
+       */
+      public java.lang.String getGeneratedAt() {
+        java.lang.Object ref = generatedAt_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          generatedAt_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string generated_at = 3;</code>
+       * @return The bytes for generatedAt.
+       */
+      public com.google.protobuf.ByteString
+          getGeneratedAtBytes() {
+        java.lang.Object ref = generatedAt_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          generatedAt_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string generated_at = 3;</code>
+       * @param value The generatedAt to set.
+       * @return This builder for chaining.
+       */
+      public Builder setGeneratedAt(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        generatedAt_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string generated_at = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearGeneratedAt() {
+        generatedAt_ = getDefaultInstance().getGeneratedAt();
+        bitField0_ = (bitField0_ & ~0x00000004);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string generated_at = 3;</code>
+       * @param value The bytes for generatedAt to set.
+       * @return This builder for chaining.
+       */
+      public Builder setGeneratedAtBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        generatedAt_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object error_ = "";
+      /**
+       * <code>string error = 4;</code>
+       * @return The error.
+       */
+      public java.lang.String getError() {
+        java.lang.Object ref = error_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          error_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string error = 4;</code>
+       * @return The bytes for error.
+       */
+      public com.google.protobuf.ByteString
+          getErrorBytes() {
+        java.lang.Object ref = error_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          error_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string error = 4;</code>
+       * @param value The error to set.
+       * @return This builder for chaining.
+       */
+      public Builder setError(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        error_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string error = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearError() {
+        error_ = getDefaultInstance().getError();
+        bitField0_ = (bitField0_ & ~0x00000008);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string error = 4;</code>
+       * @param value The bytes for error to set.
+       * @return This builder for chaining.
+       */
+      public Builder setErrorBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        error_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:bridge.WeeklyReportResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:bridge.WeeklyReportResponse)
+    private static final com.bridge.proto.ChatProto.WeeklyReportResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.bridge.proto.ChatProto.WeeklyReportResponse();
+    }
+
+    public static com.bridge.proto.ChatProto.WeeklyReportResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<WeeklyReportResponse>
+        PARSER = new com.google.protobuf.AbstractParser<WeeklyReportResponse>() {
+      @java.lang.Override
+      public WeeklyReportResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<WeeklyReportResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<WeeklyReportResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.bridge.proto.ChatProto.WeeklyReportResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface PdfParseRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:bridge.PdfParseRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>bytes pdf_data = 1;</code>
+     * @return The pdfData.
+     */
+    com.google.protobuf.ByteString getPdfData();
+
+    /**
+     * <code>string filename = 2;</code>
+     * @return The filename.
+     */
+    java.lang.String getFilename();
+    /**
+     * <code>string filename = 2;</code>
+     * @return The bytes for filename.
+     */
+    com.google.protobuf.ByteString
+        getFilenameBytes();
+  }
+  /**
+   * Protobuf type {@code bridge.PdfParseRequest}
+   */
+  public static final class PdfParseRequest extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:bridge.PdfParseRequest)
+      PdfParseRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use PdfParseRequest.newBuilder() to construct.
+    private PdfParseRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private PdfParseRequest() {
+      pdfData_ = com.google.protobuf.ByteString.EMPTY;
+      filename_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new PdfParseRequest();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_PdfParseRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_PdfParseRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.bridge.proto.ChatProto.PdfParseRequest.class, com.bridge.proto.ChatProto.PdfParseRequest.Builder.class);
+    }
+
+    public static final int PDF_DATA_FIELD_NUMBER = 1;
+    private com.google.protobuf.ByteString pdfData_ = com.google.protobuf.ByteString.EMPTY;
+    /**
+     * <code>bytes pdf_data = 1;</code>
+     * @return The pdfData.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString getPdfData() {
+      return pdfData_;
+    }
+
+    public static final int FILENAME_FIELD_NUMBER = 2;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object filename_ = "";
+    /**
+     * <code>string filename = 2;</code>
+     * @return The filename.
+     */
+    @java.lang.Override
+    public java.lang.String getFilename() {
+      java.lang.Object ref = filename_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        filename_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string filename = 2;</code>
+     * @return The bytes for filename.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getFilenameBytes() {
+      java.lang.Object ref = filename_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        filename_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!pdfData_.isEmpty()) {
+        output.writeBytes(1, pdfData_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(filename_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, filename_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!pdfData_.isEmpty()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(1, pdfData_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(filename_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, filename_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.bridge.proto.ChatProto.PdfParseRequest)) {
+        return super.equals(obj);
+      }
+      com.bridge.proto.ChatProto.PdfParseRequest other = (com.bridge.proto.ChatProto.PdfParseRequest) obj;
+
+      if (!getPdfData()
+          .equals(other.getPdfData())) return false;
+      if (!getFilename()
+          .equals(other.getFilename())) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + PDF_DATA_FIELD_NUMBER;
+      hash = (53 * hash) + getPdfData().hashCode();
+      hash = (37 * hash) + FILENAME_FIELD_NUMBER;
+      hash = (53 * hash) + getFilename().hashCode();
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.bridge.proto.ChatProto.PdfParseRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.PdfParseRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.PdfParseRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.PdfParseRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.PdfParseRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.PdfParseRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.PdfParseRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.PdfParseRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.PdfParseRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.PdfParseRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.PdfParseRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.PdfParseRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.bridge.proto.ChatProto.PdfParseRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code bridge.PdfParseRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:bridge.PdfParseRequest)
+        com.bridge.proto.ChatProto.PdfParseRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_PdfParseRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_PdfParseRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.bridge.proto.ChatProto.PdfParseRequest.class, com.bridge.proto.ChatProto.PdfParseRequest.Builder.class);
+      }
+
+      // Construct using com.bridge.proto.ChatProto.PdfParseRequest.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        pdfData_ = com.google.protobuf.ByteString.EMPTY;
+        filename_ = "";
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_PdfParseRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.PdfParseRequest getDefaultInstanceForType() {
+        return com.bridge.proto.ChatProto.PdfParseRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.PdfParseRequest build() {
+        com.bridge.proto.ChatProto.PdfParseRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.PdfParseRequest buildPartial() {
+        com.bridge.proto.ChatProto.PdfParseRequest result = new com.bridge.proto.ChatProto.PdfParseRequest(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(com.bridge.proto.ChatProto.PdfParseRequest result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.pdfData_ = pdfData_;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.filename_ = filename_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.bridge.proto.ChatProto.PdfParseRequest) {
+          return mergeFrom((com.bridge.proto.ChatProto.PdfParseRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.bridge.proto.ChatProto.PdfParseRequest other) {
+        if (other == com.bridge.proto.ChatProto.PdfParseRequest.getDefaultInstance()) return this;
+        if (other.getPdfData() != com.google.protobuf.ByteString.EMPTY) {
+          setPdfData(other.getPdfData());
+        }
+        if (!other.getFilename().isEmpty()) {
+          filename_ = other.filename_;
+          bitField0_ |= 0x00000002;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                pdfData_ = input.readBytes();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              case 18: {
+                filename_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 18
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private com.google.protobuf.ByteString pdfData_ = com.google.protobuf.ByteString.EMPTY;
+      /**
+       * <code>bytes pdf_data = 1;</code>
+       * @return The pdfData.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString getPdfData() {
+        return pdfData_;
+      }
+      /**
+       * <code>bytes pdf_data = 1;</code>
+       * @param value The pdfData to set.
+       * @return This builder for chaining.
+       */
+      public Builder setPdfData(com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        pdfData_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bytes pdf_data = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearPdfData() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        pdfData_ = getDefaultInstance().getPdfData();
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object filename_ = "";
+      /**
+       * <code>string filename = 2;</code>
+       * @return The filename.
+       */
+      public java.lang.String getFilename() {
+        java.lang.Object ref = filename_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          filename_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string filename = 2;</code>
+       * @return The bytes for filename.
+       */
+      public com.google.protobuf.ByteString
+          getFilenameBytes() {
+        java.lang.Object ref = filename_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          filename_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string filename = 2;</code>
+       * @param value The filename to set.
+       * @return This builder for chaining.
+       */
+      public Builder setFilename(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        filename_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string filename = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearFilename() {
+        filename_ = getDefaultInstance().getFilename();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string filename = 2;</code>
+       * @param value The bytes for filename to set.
+       * @return This builder for chaining.
+       */
+      public Builder setFilenameBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        filename_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:bridge.PdfParseRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:bridge.PdfParseRequest)
+    private static final com.bridge.proto.ChatProto.PdfParseRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.bridge.proto.ChatProto.PdfParseRequest();
+    }
+
+    public static com.bridge.proto.ChatProto.PdfParseRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<PdfParseRequest>
+        PARSER = new com.google.protobuf.AbstractParser<PdfParseRequest>() {
+      @java.lang.Override
+      public PdfParseRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<PdfParseRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<PdfParseRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.bridge.proto.ChatProto.PdfParseRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface PdfParseResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:bridge.PdfParseResponse)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string content = 1;</code>
+     * @return The content.
+     */
+    java.lang.String getContent();
+    /**
+     * <code>string content = 1;</code>
+     * @return The bytes for content.
+     */
+    com.google.protobuf.ByteString
+        getContentBytes();
+
+    /**
+     * <code>int32 page_count = 2;</code>
+     * @return The pageCount.
+     */
+    int getPageCount();
+
+    /**
+     * <code>bool success = 3;</code>
+     * @return The success.
+     */
+    boolean getSuccess();
+
+    /**
+     * <code>string error = 4;</code>
+     * @return The error.
+     */
+    java.lang.String getError();
+    /**
+     * <code>string error = 4;</code>
+     * @return The bytes for error.
+     */
+    com.google.protobuf.ByteString
+        getErrorBytes();
+  }
+  /**
+   * Protobuf type {@code bridge.PdfParseResponse}
+   */
+  public static final class PdfParseResponse extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:bridge.PdfParseResponse)
+      PdfParseResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use PdfParseResponse.newBuilder() to construct.
+    private PdfParseResponse(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private PdfParseResponse() {
+      content_ = "";
+      error_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new PdfParseResponse();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_PdfParseResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_PdfParseResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.bridge.proto.ChatProto.PdfParseResponse.class, com.bridge.proto.ChatProto.PdfParseResponse.Builder.class);
+    }
+
+    public static final int CONTENT_FIELD_NUMBER = 1;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object content_ = "";
+    /**
+     * <code>string content = 1;</code>
+     * @return The content.
+     */
+    @java.lang.Override
+    public java.lang.String getContent() {
+      java.lang.Object ref = content_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        content_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string content = 1;</code>
+     * @return The bytes for content.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getContentBytes() {
+      java.lang.Object ref = content_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        content_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int PAGE_COUNT_FIELD_NUMBER = 2;
+    private int pageCount_ = 0;
+    /**
+     * <code>int32 page_count = 2;</code>
+     * @return The pageCount.
+     */
+    @java.lang.Override
+    public int getPageCount() {
+      return pageCount_;
+    }
+
+    public static final int SUCCESS_FIELD_NUMBER = 3;
+    private boolean success_ = false;
+    /**
+     * <code>bool success = 3;</code>
+     * @return The success.
+     */
+    @java.lang.Override
+    public boolean getSuccess() {
+      return success_;
+    }
+
+    public static final int ERROR_FIELD_NUMBER = 4;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object error_ = "";
+    /**
+     * <code>string error = 4;</code>
+     * @return The error.
+     */
+    @java.lang.Override
+    public java.lang.String getError() {
+      java.lang.Object ref = error_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        error_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string error = 4;</code>
+     * @return The bytes for error.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getErrorBytes() {
+      java.lang.Object ref = error_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        error_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(content_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, content_);
+      }
+      if (pageCount_ != 0) {
+        output.writeInt32(2, pageCount_);
+      }
+      if (success_ != false) {
+        output.writeBool(3, success_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(error_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 4, error_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(content_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, content_);
+      }
+      if (pageCount_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(2, pageCount_);
+      }
+      if (success_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(3, success_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(error_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, error_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.bridge.proto.ChatProto.PdfParseResponse)) {
+        return super.equals(obj);
+      }
+      com.bridge.proto.ChatProto.PdfParseResponse other = (com.bridge.proto.ChatProto.PdfParseResponse) obj;
+
+      if (!getContent()
+          .equals(other.getContent())) return false;
+      if (getPageCount()
+          != other.getPageCount()) return false;
+      if (getSuccess()
+          != other.getSuccess()) return false;
+      if (!getError()
+          .equals(other.getError())) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + CONTENT_FIELD_NUMBER;
+      hash = (53 * hash) + getContent().hashCode();
+      hash = (37 * hash) + PAGE_COUNT_FIELD_NUMBER;
+      hash = (53 * hash) + getPageCount();
+      hash = (37 * hash) + SUCCESS_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getSuccess());
+      hash = (37 * hash) + ERROR_FIELD_NUMBER;
+      hash = (53 * hash) + getError().hashCode();
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.bridge.proto.ChatProto.PdfParseResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.PdfParseResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.PdfParseResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.PdfParseResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.PdfParseResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.PdfParseResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.PdfParseResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.PdfParseResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.PdfParseResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.PdfParseResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.PdfParseResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.PdfParseResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.bridge.proto.ChatProto.PdfParseResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code bridge.PdfParseResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:bridge.PdfParseResponse)
+        com.bridge.proto.ChatProto.PdfParseResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_PdfParseResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_PdfParseResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.bridge.proto.ChatProto.PdfParseResponse.class, com.bridge.proto.ChatProto.PdfParseResponse.Builder.class);
+      }
+
+      // Construct using com.bridge.proto.ChatProto.PdfParseResponse.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        content_ = "";
+        pageCount_ = 0;
+        success_ = false;
+        error_ = "";
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_PdfParseResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.PdfParseResponse getDefaultInstanceForType() {
+        return com.bridge.proto.ChatProto.PdfParseResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.PdfParseResponse build() {
+        com.bridge.proto.ChatProto.PdfParseResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.PdfParseResponse buildPartial() {
+        com.bridge.proto.ChatProto.PdfParseResponse result = new com.bridge.proto.ChatProto.PdfParseResponse(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(com.bridge.proto.ChatProto.PdfParseResponse result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.content_ = content_;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.pageCount_ = pageCount_;
+        }
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.success_ = success_;
+        }
+        if (((from_bitField0_ & 0x00000008) != 0)) {
+          result.error_ = error_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.bridge.proto.ChatProto.PdfParseResponse) {
+          return mergeFrom((com.bridge.proto.ChatProto.PdfParseResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.bridge.proto.ChatProto.PdfParseResponse other) {
+        if (other == com.bridge.proto.ChatProto.PdfParseResponse.getDefaultInstance()) return this;
+        if (!other.getContent().isEmpty()) {
+          content_ = other.content_;
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        if (other.getPageCount() != 0) {
+          setPageCount(other.getPageCount());
+        }
+        if (other.getSuccess() != false) {
+          setSuccess(other.getSuccess());
+        }
+        if (!other.getError().isEmpty()) {
+          error_ = other.error_;
+          bitField0_ |= 0x00000008;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                content_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              case 16: {
+                pageCount_ = input.readInt32();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 16
+              case 24: {
+                success_ = input.readBool();
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 24
+              case 34: {
+                error_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000008;
+                break;
+              } // case 34
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private java.lang.Object content_ = "";
+      /**
+       * <code>string content = 1;</code>
+       * @return The content.
+       */
+      public java.lang.String getContent() {
+        java.lang.Object ref = content_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          content_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string content = 1;</code>
+       * @return The bytes for content.
+       */
+      public com.google.protobuf.ByteString
+          getContentBytes() {
+        java.lang.Object ref = content_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          content_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string content = 1;</code>
+       * @param value The content to set.
+       * @return This builder for chaining.
+       */
+      public Builder setContent(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        content_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string content = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearContent() {
+        content_ = getDefaultInstance().getContent();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string content = 1;</code>
+       * @param value The bytes for content to set.
+       * @return This builder for chaining.
+       */
+      public Builder setContentBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        content_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+
+      private int pageCount_ ;
+      /**
+       * <code>int32 page_count = 2;</code>
+       * @return The pageCount.
+       */
+      @java.lang.Override
+      public int getPageCount() {
+        return pageCount_;
+      }
+      /**
+       * <code>int32 page_count = 2;</code>
+       * @param value The pageCount to set.
+       * @return This builder for chaining.
+       */
+      public Builder setPageCount(int value) {
+        
+        pageCount_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int32 page_count = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearPageCount() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        pageCount_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private boolean success_ ;
+      /**
+       * <code>bool success = 3;</code>
+       * @return The success.
+       */
+      @java.lang.Override
+      public boolean getSuccess() {
+        return success_;
+      }
+      /**
+       * <code>bool success = 3;</code>
+       * @param value The success to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSuccess(boolean value) {
+        
+        success_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool success = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSuccess() {
+        bitField0_ = (bitField0_ & ~0x00000004);
+        success_ = false;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object error_ = "";
+      /**
+       * <code>string error = 4;</code>
+       * @return The error.
+       */
+      public java.lang.String getError() {
+        java.lang.Object ref = error_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          error_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string error = 4;</code>
+       * @return The bytes for error.
+       */
+      public com.google.protobuf.ByteString
+          getErrorBytes() {
+        java.lang.Object ref = error_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          error_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string error = 4;</code>
+       * @param value The error to set.
+       * @return This builder for chaining.
+       */
+      public Builder setError(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        error_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string error = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearError() {
+        error_ = getDefaultInstance().getError();
+        bitField0_ = (bitField0_ & ~0x00000008);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string error = 4;</code>
+       * @param value The bytes for error to set.
+       * @return This builder for chaining.
+       */
+      public Builder setErrorBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        error_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:bridge.PdfParseResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:bridge.PdfParseResponse)
+    private static final com.bridge.proto.ChatProto.PdfParseResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.bridge.proto.ChatProto.PdfParseResponse();
+    }
+
+    public static com.bridge.proto.ChatProto.PdfParseResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<PdfParseResponse>
+        PARSER = new com.google.protobuf.AbstractParser<PdfParseResponse>() {
+      @java.lang.Override
+      public PdfParseResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<PdfParseResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<PdfParseResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.bridge.proto.ChatProto.PdfParseResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface SandboxExecuteRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:bridge.SandboxExecuteRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string prompt = 1;</code>
+     * @return The prompt.
+     */
+    java.lang.String getPrompt();
+    /**
+     * <code>string prompt = 1;</code>
+     * @return The bytes for prompt.
+     */
+    com.google.protobuf.ByteString
+        getPromptBytes();
+
+    /**
+     * <code>string work_dir = 2;</code>
+     * @return The workDir.
+     */
+    java.lang.String getWorkDir();
+    /**
+     * <code>string work_dir = 2;</code>
+     * @return The bytes for workDir.
+     */
+    com.google.protobuf.ByteString
+        getWorkDirBytes();
+
+    /**
+     * <code>int32 max_turns = 3;</code>
+     * @return The maxTurns.
+     */
+    int getMaxTurns();
+
+    /**
+     * <code>string model = 4;</code>
+     * @return The model.
+     */
+    java.lang.String getModel();
+    /**
+     * <code>string model = 4;</code>
+     * @return The bytes for model.
+     */
+    com.google.protobuf.ByteString
+        getModelBytes();
+
+    /**
+     * <code>string api_key = 5;</code>
+     * @return The apiKey.
+     */
+    java.lang.String getApiKey();
+    /**
+     * <code>string api_key = 5;</code>
+     * @return The bytes for apiKey.
+     */
+    com.google.protobuf.ByteString
+        getApiKeyBytes();
+
+    /**
+     * <code>string base_url = 6;</code>
+     * @return The baseUrl.
+     */
+    java.lang.String getBaseUrl();
+    /**
+     * <code>string base_url = 6;</code>
+     * @return The bytes for baseUrl.
+     */
+    com.google.protobuf.ByteString
+        getBaseUrlBytes();
+
+    /**
+     * <code>string provider = 7;</code>
+     * @return The provider.
+     */
+    java.lang.String getProvider();
+    /**
+     * <code>string provider = 7;</code>
+     * @return The bytes for provider.
+     */
+    com.google.protobuf.ByteString
+        getProviderBytes();
+
+    /**
+     * <code>string session_id = 8;</code>
+     * @return The sessionId.
+     */
+    java.lang.String getSessionId();
+    /**
+     * <code>string session_id = 8;</code>
+     * @return The bytes for sessionId.
+     */
+    com.google.protobuf.ByteString
+        getSessionIdBytes();
+  }
+  /**
+   * Protobuf type {@code bridge.SandboxExecuteRequest}
+   */
+  public static final class SandboxExecuteRequest extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:bridge.SandboxExecuteRequest)
+      SandboxExecuteRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use SandboxExecuteRequest.newBuilder() to construct.
+    private SandboxExecuteRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private SandboxExecuteRequest() {
+      prompt_ = "";
+      workDir_ = "";
+      model_ = "";
+      apiKey_ = "";
+      baseUrl_ = "";
+      provider_ = "";
+      sessionId_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new SandboxExecuteRequest();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_SandboxExecuteRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_SandboxExecuteRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.bridge.proto.ChatProto.SandboxExecuteRequest.class, com.bridge.proto.ChatProto.SandboxExecuteRequest.Builder.class);
+    }
+
+    public static final int PROMPT_FIELD_NUMBER = 1;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object prompt_ = "";
+    /**
+     * <code>string prompt = 1;</code>
+     * @return The prompt.
+     */
+    @java.lang.Override
+    public java.lang.String getPrompt() {
+      java.lang.Object ref = prompt_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        prompt_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string prompt = 1;</code>
+     * @return The bytes for prompt.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getPromptBytes() {
+      java.lang.Object ref = prompt_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        prompt_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int WORK_DIR_FIELD_NUMBER = 2;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object workDir_ = "";
+    /**
+     * <code>string work_dir = 2;</code>
+     * @return The workDir.
+     */
+    @java.lang.Override
+    public java.lang.String getWorkDir() {
+      java.lang.Object ref = workDir_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        workDir_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string work_dir = 2;</code>
+     * @return The bytes for workDir.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getWorkDirBytes() {
+      java.lang.Object ref = workDir_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        workDir_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int MAX_TURNS_FIELD_NUMBER = 3;
+    private int maxTurns_ = 0;
+    /**
+     * <code>int32 max_turns = 3;</code>
+     * @return The maxTurns.
+     */
+    @java.lang.Override
+    public int getMaxTurns() {
+      return maxTurns_;
+    }
+
+    public static final int MODEL_FIELD_NUMBER = 4;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object model_ = "";
+    /**
+     * <code>string model = 4;</code>
+     * @return The model.
+     */
+    @java.lang.Override
+    public java.lang.String getModel() {
+      java.lang.Object ref = model_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        model_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string model = 4;</code>
+     * @return The bytes for model.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getModelBytes() {
+      java.lang.Object ref = model_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        model_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int API_KEY_FIELD_NUMBER = 5;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object apiKey_ = "";
+    /**
+     * <code>string api_key = 5;</code>
+     * @return The apiKey.
+     */
+    @java.lang.Override
+    public java.lang.String getApiKey() {
+      java.lang.Object ref = apiKey_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        apiKey_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string api_key = 5;</code>
+     * @return The bytes for apiKey.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getApiKeyBytes() {
+      java.lang.Object ref = apiKey_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        apiKey_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int BASE_URL_FIELD_NUMBER = 6;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object baseUrl_ = "";
+    /**
+     * <code>string base_url = 6;</code>
+     * @return The baseUrl.
+     */
+    @java.lang.Override
+    public java.lang.String getBaseUrl() {
+      java.lang.Object ref = baseUrl_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        baseUrl_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string base_url = 6;</code>
+     * @return The bytes for baseUrl.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getBaseUrlBytes() {
+      java.lang.Object ref = baseUrl_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        baseUrl_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int PROVIDER_FIELD_NUMBER = 7;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object provider_ = "";
+    /**
+     * <code>string provider = 7;</code>
+     * @return The provider.
+     */
+    @java.lang.Override
+    public java.lang.String getProvider() {
+      java.lang.Object ref = provider_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        provider_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string provider = 7;</code>
+     * @return The bytes for provider.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getProviderBytes() {
+      java.lang.Object ref = provider_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        provider_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int SESSION_ID_FIELD_NUMBER = 8;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object sessionId_ = "";
+    /**
+     * <code>string session_id = 8;</code>
+     * @return The sessionId.
+     */
+    @java.lang.Override
+    public java.lang.String getSessionId() {
+      java.lang.Object ref = sessionId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        sessionId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string session_id = 8;</code>
+     * @return The bytes for sessionId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getSessionIdBytes() {
+      java.lang.Object ref = sessionId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        sessionId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(prompt_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, prompt_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(workDir_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, workDir_);
+      }
+      if (maxTurns_ != 0) {
+        output.writeInt32(3, maxTurns_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(model_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 4, model_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(apiKey_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 5, apiKey_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(baseUrl_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 6, baseUrl_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(provider_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 7, provider_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(sessionId_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 8, sessionId_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(prompt_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, prompt_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(workDir_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, workDir_);
+      }
+      if (maxTurns_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(3, maxTurns_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(model_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, model_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(apiKey_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, apiKey_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(baseUrl_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, baseUrl_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(provider_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(7, provider_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(sessionId_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(8, sessionId_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.bridge.proto.ChatProto.SandboxExecuteRequest)) {
+        return super.equals(obj);
+      }
+      com.bridge.proto.ChatProto.SandboxExecuteRequest other = (com.bridge.proto.ChatProto.SandboxExecuteRequest) obj;
+
+      if (!getPrompt()
+          .equals(other.getPrompt())) return false;
+      if (!getWorkDir()
+          .equals(other.getWorkDir())) return false;
+      if (getMaxTurns()
+          != other.getMaxTurns()) return false;
+      if (!getModel()
+          .equals(other.getModel())) return false;
+      if (!getApiKey()
+          .equals(other.getApiKey())) return false;
+      if (!getBaseUrl()
+          .equals(other.getBaseUrl())) return false;
+      if (!getProvider()
+          .equals(other.getProvider())) return false;
+      if (!getSessionId()
+          .equals(other.getSessionId())) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + PROMPT_FIELD_NUMBER;
+      hash = (53 * hash) + getPrompt().hashCode();
+      hash = (37 * hash) + WORK_DIR_FIELD_NUMBER;
+      hash = (53 * hash) + getWorkDir().hashCode();
+      hash = (37 * hash) + MAX_TURNS_FIELD_NUMBER;
+      hash = (53 * hash) + getMaxTurns();
+      hash = (37 * hash) + MODEL_FIELD_NUMBER;
+      hash = (53 * hash) + getModel().hashCode();
+      hash = (37 * hash) + API_KEY_FIELD_NUMBER;
+      hash = (53 * hash) + getApiKey().hashCode();
+      hash = (37 * hash) + BASE_URL_FIELD_NUMBER;
+      hash = (53 * hash) + getBaseUrl().hashCode();
+      hash = (37 * hash) + PROVIDER_FIELD_NUMBER;
+      hash = (53 * hash) + getProvider().hashCode();
+      hash = (37 * hash) + SESSION_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getSessionId().hashCode();
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.bridge.proto.ChatProto.SandboxExecuteRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SandboxExecuteRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SandboxExecuteRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SandboxExecuteRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SandboxExecuteRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SandboxExecuteRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SandboxExecuteRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SandboxExecuteRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SandboxExecuteRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SandboxExecuteRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SandboxExecuteRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SandboxExecuteRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.bridge.proto.ChatProto.SandboxExecuteRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code bridge.SandboxExecuteRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:bridge.SandboxExecuteRequest)
+        com.bridge.proto.ChatProto.SandboxExecuteRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SandboxExecuteRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SandboxExecuteRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.bridge.proto.ChatProto.SandboxExecuteRequest.class, com.bridge.proto.ChatProto.SandboxExecuteRequest.Builder.class);
+      }
+
+      // Construct using com.bridge.proto.ChatProto.SandboxExecuteRequest.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        prompt_ = "";
+        workDir_ = "";
+        maxTurns_ = 0;
+        model_ = "";
+        apiKey_ = "";
+        baseUrl_ = "";
+        provider_ = "";
+        sessionId_ = "";
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SandboxExecuteRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SandboxExecuteRequest getDefaultInstanceForType() {
+        return com.bridge.proto.ChatProto.SandboxExecuteRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SandboxExecuteRequest build() {
+        com.bridge.proto.ChatProto.SandboxExecuteRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SandboxExecuteRequest buildPartial() {
+        com.bridge.proto.ChatProto.SandboxExecuteRequest result = new com.bridge.proto.ChatProto.SandboxExecuteRequest(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(com.bridge.proto.ChatProto.SandboxExecuteRequest result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.prompt_ = prompt_;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.workDir_ = workDir_;
+        }
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.maxTurns_ = maxTurns_;
+        }
+        if (((from_bitField0_ & 0x00000008) != 0)) {
+          result.model_ = model_;
+        }
+        if (((from_bitField0_ & 0x00000010) != 0)) {
+          result.apiKey_ = apiKey_;
+        }
+        if (((from_bitField0_ & 0x00000020) != 0)) {
+          result.baseUrl_ = baseUrl_;
+        }
+        if (((from_bitField0_ & 0x00000040) != 0)) {
+          result.provider_ = provider_;
+        }
+        if (((from_bitField0_ & 0x00000080) != 0)) {
+          result.sessionId_ = sessionId_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.bridge.proto.ChatProto.SandboxExecuteRequest) {
+          return mergeFrom((com.bridge.proto.ChatProto.SandboxExecuteRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.bridge.proto.ChatProto.SandboxExecuteRequest other) {
+        if (other == com.bridge.proto.ChatProto.SandboxExecuteRequest.getDefaultInstance()) return this;
+        if (!other.getPrompt().isEmpty()) {
+          prompt_ = other.prompt_;
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        if (!other.getWorkDir().isEmpty()) {
+          workDir_ = other.workDir_;
+          bitField0_ |= 0x00000002;
+          onChanged();
+        }
+        if (other.getMaxTurns() != 0) {
+          setMaxTurns(other.getMaxTurns());
+        }
+        if (!other.getModel().isEmpty()) {
+          model_ = other.model_;
+          bitField0_ |= 0x00000008;
+          onChanged();
+        }
+        if (!other.getApiKey().isEmpty()) {
+          apiKey_ = other.apiKey_;
+          bitField0_ |= 0x00000010;
+          onChanged();
+        }
+        if (!other.getBaseUrl().isEmpty()) {
+          baseUrl_ = other.baseUrl_;
+          bitField0_ |= 0x00000020;
+          onChanged();
+        }
+        if (!other.getProvider().isEmpty()) {
+          provider_ = other.provider_;
+          bitField0_ |= 0x00000040;
+          onChanged();
+        }
+        if (!other.getSessionId().isEmpty()) {
+          sessionId_ = other.sessionId_;
+          bitField0_ |= 0x00000080;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                prompt_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              case 18: {
+                workDir_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 18
+              case 24: {
+                maxTurns_ = input.readInt32();
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 24
+              case 34: {
+                model_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000008;
+                break;
+              } // case 34
+              case 42: {
+                apiKey_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000010;
+                break;
+              } // case 42
+              case 50: {
+                baseUrl_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000020;
+                break;
+              } // case 50
+              case 58: {
+                provider_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000040;
+                break;
+              } // case 58
+              case 66: {
+                sessionId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000080;
+                break;
+              } // case 66
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private java.lang.Object prompt_ = "";
+      /**
+       * <code>string prompt = 1;</code>
+       * @return The prompt.
+       */
+      public java.lang.String getPrompt() {
+        java.lang.Object ref = prompt_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          prompt_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string prompt = 1;</code>
+       * @return The bytes for prompt.
+       */
+      public com.google.protobuf.ByteString
+          getPromptBytes() {
+        java.lang.Object ref = prompt_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          prompt_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string prompt = 1;</code>
+       * @param value The prompt to set.
+       * @return This builder for chaining.
+       */
+      public Builder setPrompt(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        prompt_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string prompt = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearPrompt() {
+        prompt_ = getDefaultInstance().getPrompt();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string prompt = 1;</code>
+       * @param value The bytes for prompt to set.
+       * @return This builder for chaining.
+       */
+      public Builder setPromptBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        prompt_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object workDir_ = "";
+      /**
+       * <code>string work_dir = 2;</code>
+       * @return The workDir.
+       */
+      public java.lang.String getWorkDir() {
+        java.lang.Object ref = workDir_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          workDir_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string work_dir = 2;</code>
+       * @return The bytes for workDir.
+       */
+      public com.google.protobuf.ByteString
+          getWorkDirBytes() {
+        java.lang.Object ref = workDir_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          workDir_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string work_dir = 2;</code>
+       * @param value The workDir to set.
+       * @return This builder for chaining.
+       */
+      public Builder setWorkDir(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        workDir_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string work_dir = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearWorkDir() {
+        workDir_ = getDefaultInstance().getWorkDir();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string work_dir = 2;</code>
+       * @param value The bytes for workDir to set.
+       * @return This builder for chaining.
+       */
+      public Builder setWorkDirBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        workDir_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+
+      private int maxTurns_ ;
+      /**
+       * <code>int32 max_turns = 3;</code>
+       * @return The maxTurns.
+       */
+      @java.lang.Override
+      public int getMaxTurns() {
+        return maxTurns_;
+      }
+      /**
+       * <code>int32 max_turns = 3;</code>
+       * @param value The maxTurns to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMaxTurns(int value) {
+        
+        maxTurns_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int32 max_turns = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMaxTurns() {
+        bitField0_ = (bitField0_ & ~0x00000004);
+        maxTurns_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object model_ = "";
+      /**
+       * <code>string model = 4;</code>
+       * @return The model.
+       */
+      public java.lang.String getModel() {
+        java.lang.Object ref = model_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          model_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string model = 4;</code>
+       * @return The bytes for model.
+       */
+      public com.google.protobuf.ByteString
+          getModelBytes() {
+        java.lang.Object ref = model_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          model_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string model = 4;</code>
+       * @param value The model to set.
+       * @return This builder for chaining.
+       */
+      public Builder setModel(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        model_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string model = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearModel() {
+        model_ = getDefaultInstance().getModel();
+        bitField0_ = (bitField0_ & ~0x00000008);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string model = 4;</code>
+       * @param value The bytes for model to set.
+       * @return This builder for chaining.
+       */
+      public Builder setModelBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        model_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object apiKey_ = "";
+      /**
+       * <code>string api_key = 5;</code>
+       * @return The apiKey.
+       */
+      public java.lang.String getApiKey() {
+        java.lang.Object ref = apiKey_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          apiKey_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string api_key = 5;</code>
+       * @return The bytes for apiKey.
+       */
+      public com.google.protobuf.ByteString
+          getApiKeyBytes() {
+        java.lang.Object ref = apiKey_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          apiKey_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string api_key = 5;</code>
+       * @param value The apiKey to set.
+       * @return This builder for chaining.
+       */
+      public Builder setApiKey(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        apiKey_ = value;
+        bitField0_ |= 0x00000010;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string api_key = 5;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearApiKey() {
+        apiKey_ = getDefaultInstance().getApiKey();
+        bitField0_ = (bitField0_ & ~0x00000010);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string api_key = 5;</code>
+       * @param value The bytes for apiKey to set.
+       * @return This builder for chaining.
+       */
+      public Builder setApiKeyBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        apiKey_ = value;
+        bitField0_ |= 0x00000010;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object baseUrl_ = "";
+      /**
+       * <code>string base_url = 6;</code>
+       * @return The baseUrl.
+       */
+      public java.lang.String getBaseUrl() {
+        java.lang.Object ref = baseUrl_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          baseUrl_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string base_url = 6;</code>
+       * @return The bytes for baseUrl.
+       */
+      public com.google.protobuf.ByteString
+          getBaseUrlBytes() {
+        java.lang.Object ref = baseUrl_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          baseUrl_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string base_url = 6;</code>
+       * @param value The baseUrl to set.
+       * @return This builder for chaining.
+       */
+      public Builder setBaseUrl(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        baseUrl_ = value;
+        bitField0_ |= 0x00000020;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string base_url = 6;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearBaseUrl() {
+        baseUrl_ = getDefaultInstance().getBaseUrl();
+        bitField0_ = (bitField0_ & ~0x00000020);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string base_url = 6;</code>
+       * @param value The bytes for baseUrl to set.
+       * @return This builder for chaining.
+       */
+      public Builder setBaseUrlBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        baseUrl_ = value;
+        bitField0_ |= 0x00000020;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object provider_ = "";
+      /**
+       * <code>string provider = 7;</code>
+       * @return The provider.
+       */
+      public java.lang.String getProvider() {
+        java.lang.Object ref = provider_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          provider_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string provider = 7;</code>
+       * @return The bytes for provider.
+       */
+      public com.google.protobuf.ByteString
+          getProviderBytes() {
+        java.lang.Object ref = provider_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          provider_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string provider = 7;</code>
+       * @param value The provider to set.
+       * @return This builder for chaining.
+       */
+      public Builder setProvider(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        provider_ = value;
+        bitField0_ |= 0x00000040;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string provider = 7;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearProvider() {
+        provider_ = getDefaultInstance().getProvider();
+        bitField0_ = (bitField0_ & ~0x00000040);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string provider = 7;</code>
+       * @param value The bytes for provider to set.
+       * @return This builder for chaining.
+       */
+      public Builder setProviderBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        provider_ = value;
+        bitField0_ |= 0x00000040;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object sessionId_ = "";
+      /**
+       * <code>string session_id = 8;</code>
+       * @return The sessionId.
+       */
+      public java.lang.String getSessionId() {
+        java.lang.Object ref = sessionId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          sessionId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string session_id = 8;</code>
+       * @return The bytes for sessionId.
+       */
+      public com.google.protobuf.ByteString
+          getSessionIdBytes() {
+        java.lang.Object ref = sessionId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          sessionId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string session_id = 8;</code>
+       * @param value The sessionId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSessionId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        sessionId_ = value;
+        bitField0_ |= 0x00000080;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string session_id = 8;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSessionId() {
+        sessionId_ = getDefaultInstance().getSessionId();
+        bitField0_ = (bitField0_ & ~0x00000080);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string session_id = 8;</code>
+       * @param value The bytes for sessionId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSessionIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        sessionId_ = value;
+        bitField0_ |= 0x00000080;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:bridge.SandboxExecuteRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:bridge.SandboxExecuteRequest)
+    private static final com.bridge.proto.ChatProto.SandboxExecuteRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.bridge.proto.ChatProto.SandboxExecuteRequest();
+    }
+
+    public static com.bridge.proto.ChatProto.SandboxExecuteRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<SandboxExecuteRequest>
+        PARSER = new com.google.protobuf.AbstractParser<SandboxExecuteRequest>() {
+      @java.lang.Override
+      public SandboxExecuteRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<SandboxExecuteRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<SandboxExecuteRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.bridge.proto.ChatProto.SandboxExecuteRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface SandboxExecuteResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:bridge.SandboxExecuteResponse)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string session_id = 1;</code>
+     * @return The sessionId.
+     */
+    java.lang.String getSessionId();
+    /**
+     * <code>string session_id = 1;</code>
+     * @return The bytes for sessionId.
+     */
+    com.google.protobuf.ByteString
+        getSessionIdBytes();
+
+    /**
+     * <code>bool success = 2;</code>
+     * @return The success.
+     */
+    boolean getSuccess();
+
+    /**
+     * <code>string error = 3;</code>
+     * @return The error.
+     */
+    java.lang.String getError();
+    /**
+     * <code>string error = 3;</code>
+     * @return The bytes for error.
+     */
+    com.google.protobuf.ByteString
+        getErrorBytes();
+
+    /**
+     * <code>string final_result = 4;</code>
+     * @return The finalResult.
+     */
+    java.lang.String getFinalResult();
+    /**
+     * <code>string final_result = 4;</code>
+     * @return The bytes for finalResult.
+     */
+    com.google.protobuf.ByteString
+        getFinalResultBytes();
+
+    /**
+     * <code>int32 turns_used = 5;</code>
+     * @return The turnsUsed.
+     */
+    int getTurnsUsed();
+
+    /**
+     * <code>int64 timestamp = 6;</code>
+     * @return The timestamp.
+     */
+    long getTimestamp();
+  }
+  /**
+   * Protobuf type {@code bridge.SandboxExecuteResponse}
+   */
+  public static final class SandboxExecuteResponse extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:bridge.SandboxExecuteResponse)
+      SandboxExecuteResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use SandboxExecuteResponse.newBuilder() to construct.
+    private SandboxExecuteResponse(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private SandboxExecuteResponse() {
+      sessionId_ = "";
+      error_ = "";
+      finalResult_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new SandboxExecuteResponse();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_SandboxExecuteResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_SandboxExecuteResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.bridge.proto.ChatProto.SandboxExecuteResponse.class, com.bridge.proto.ChatProto.SandboxExecuteResponse.Builder.class);
+    }
+
+    public static final int SESSION_ID_FIELD_NUMBER = 1;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object sessionId_ = "";
+    /**
+     * <code>string session_id = 1;</code>
+     * @return The sessionId.
+     */
+    @java.lang.Override
+    public java.lang.String getSessionId() {
+      java.lang.Object ref = sessionId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        sessionId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string session_id = 1;</code>
+     * @return The bytes for sessionId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getSessionIdBytes() {
+      java.lang.Object ref = sessionId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        sessionId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int SUCCESS_FIELD_NUMBER = 2;
+    private boolean success_ = false;
+    /**
+     * <code>bool success = 2;</code>
+     * @return The success.
+     */
+    @java.lang.Override
+    public boolean getSuccess() {
+      return success_;
+    }
+
+    public static final int ERROR_FIELD_NUMBER = 3;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object error_ = "";
+    /**
+     * <code>string error = 3;</code>
+     * @return The error.
+     */
+    @java.lang.Override
+    public java.lang.String getError() {
+      java.lang.Object ref = error_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        error_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string error = 3;</code>
+     * @return The bytes for error.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getErrorBytes() {
+      java.lang.Object ref = error_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        error_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int FINAL_RESULT_FIELD_NUMBER = 4;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object finalResult_ = "";
+    /**
+     * <code>string final_result = 4;</code>
+     * @return The finalResult.
+     */
+    @java.lang.Override
+    public java.lang.String getFinalResult() {
+      java.lang.Object ref = finalResult_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        finalResult_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string final_result = 4;</code>
+     * @return The bytes for finalResult.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getFinalResultBytes() {
+      java.lang.Object ref = finalResult_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        finalResult_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int TURNS_USED_FIELD_NUMBER = 5;
+    private int turnsUsed_ = 0;
+    /**
+     * <code>int32 turns_used = 5;</code>
+     * @return The turnsUsed.
+     */
+    @java.lang.Override
+    public int getTurnsUsed() {
+      return turnsUsed_;
+    }
+
+    public static final int TIMESTAMP_FIELD_NUMBER = 6;
+    private long timestamp_ = 0L;
+    /**
+     * <code>int64 timestamp = 6;</code>
+     * @return The timestamp.
+     */
+    @java.lang.Override
+    public long getTimestamp() {
+      return timestamp_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(sessionId_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, sessionId_);
+      }
+      if (success_ != false) {
+        output.writeBool(2, success_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(error_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, error_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(finalResult_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 4, finalResult_);
+      }
+      if (turnsUsed_ != 0) {
+        output.writeInt32(5, turnsUsed_);
+      }
+      if (timestamp_ != 0L) {
+        output.writeInt64(6, timestamp_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(sessionId_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, sessionId_);
+      }
+      if (success_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(2, success_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(error_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, error_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(finalResult_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, finalResult_);
+      }
+      if (turnsUsed_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(5, turnsUsed_);
+      }
+      if (timestamp_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(6, timestamp_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.bridge.proto.ChatProto.SandboxExecuteResponse)) {
+        return super.equals(obj);
+      }
+      com.bridge.proto.ChatProto.SandboxExecuteResponse other = (com.bridge.proto.ChatProto.SandboxExecuteResponse) obj;
+
+      if (!getSessionId()
+          .equals(other.getSessionId())) return false;
+      if (getSuccess()
+          != other.getSuccess()) return false;
+      if (!getError()
+          .equals(other.getError())) return false;
+      if (!getFinalResult()
+          .equals(other.getFinalResult())) return false;
+      if (getTurnsUsed()
+          != other.getTurnsUsed()) return false;
+      if (getTimestamp()
+          != other.getTimestamp()) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + SESSION_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getSessionId().hashCode();
+      hash = (37 * hash) + SUCCESS_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getSuccess());
+      hash = (37 * hash) + ERROR_FIELD_NUMBER;
+      hash = (53 * hash) + getError().hashCode();
+      hash = (37 * hash) + FINAL_RESULT_FIELD_NUMBER;
+      hash = (53 * hash) + getFinalResult().hashCode();
+      hash = (37 * hash) + TURNS_USED_FIELD_NUMBER;
+      hash = (53 * hash) + getTurnsUsed();
+      hash = (37 * hash) + TIMESTAMP_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getTimestamp());
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.bridge.proto.ChatProto.SandboxExecuteResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SandboxExecuteResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SandboxExecuteResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SandboxExecuteResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SandboxExecuteResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SandboxExecuteResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SandboxExecuteResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SandboxExecuteResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SandboxExecuteResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SandboxExecuteResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SandboxExecuteResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SandboxExecuteResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.bridge.proto.ChatProto.SandboxExecuteResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code bridge.SandboxExecuteResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:bridge.SandboxExecuteResponse)
+        com.bridge.proto.ChatProto.SandboxExecuteResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SandboxExecuteResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SandboxExecuteResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.bridge.proto.ChatProto.SandboxExecuteResponse.class, com.bridge.proto.ChatProto.SandboxExecuteResponse.Builder.class);
+      }
+
+      // Construct using com.bridge.proto.ChatProto.SandboxExecuteResponse.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        sessionId_ = "";
+        success_ = false;
+        error_ = "";
+        finalResult_ = "";
+        turnsUsed_ = 0;
+        timestamp_ = 0L;
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SandboxExecuteResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SandboxExecuteResponse getDefaultInstanceForType() {
+        return com.bridge.proto.ChatProto.SandboxExecuteResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SandboxExecuteResponse build() {
+        com.bridge.proto.ChatProto.SandboxExecuteResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SandboxExecuteResponse buildPartial() {
+        com.bridge.proto.ChatProto.SandboxExecuteResponse result = new com.bridge.proto.ChatProto.SandboxExecuteResponse(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(com.bridge.proto.ChatProto.SandboxExecuteResponse result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.sessionId_ = sessionId_;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.success_ = success_;
+        }
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.error_ = error_;
+        }
+        if (((from_bitField0_ & 0x00000008) != 0)) {
+          result.finalResult_ = finalResult_;
+        }
+        if (((from_bitField0_ & 0x00000010) != 0)) {
+          result.turnsUsed_ = turnsUsed_;
+        }
+        if (((from_bitField0_ & 0x00000020) != 0)) {
+          result.timestamp_ = timestamp_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.bridge.proto.ChatProto.SandboxExecuteResponse) {
+          return mergeFrom((com.bridge.proto.ChatProto.SandboxExecuteResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.bridge.proto.ChatProto.SandboxExecuteResponse other) {
+        if (other == com.bridge.proto.ChatProto.SandboxExecuteResponse.getDefaultInstance()) return this;
+        if (!other.getSessionId().isEmpty()) {
+          sessionId_ = other.sessionId_;
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        if (other.getSuccess() != false) {
+          setSuccess(other.getSuccess());
+        }
+        if (!other.getError().isEmpty()) {
+          error_ = other.error_;
+          bitField0_ |= 0x00000004;
+          onChanged();
+        }
+        if (!other.getFinalResult().isEmpty()) {
+          finalResult_ = other.finalResult_;
+          bitField0_ |= 0x00000008;
+          onChanged();
+        }
+        if (other.getTurnsUsed() != 0) {
+          setTurnsUsed(other.getTurnsUsed());
+        }
+        if (other.getTimestamp() != 0L) {
+          setTimestamp(other.getTimestamp());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                sessionId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              case 16: {
+                success_ = input.readBool();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 16
+              case 26: {
+                error_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 26
+              case 34: {
+                finalResult_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000008;
+                break;
+              } // case 34
+              case 40: {
+                turnsUsed_ = input.readInt32();
+                bitField0_ |= 0x00000010;
+                break;
+              } // case 40
+              case 48: {
+                timestamp_ = input.readInt64();
+                bitField0_ |= 0x00000020;
+                break;
+              } // case 48
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private java.lang.Object sessionId_ = "";
+      /**
+       * <code>string session_id = 1;</code>
+       * @return The sessionId.
+       */
+      public java.lang.String getSessionId() {
+        java.lang.Object ref = sessionId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          sessionId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string session_id = 1;</code>
+       * @return The bytes for sessionId.
+       */
+      public com.google.protobuf.ByteString
+          getSessionIdBytes() {
+        java.lang.Object ref = sessionId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          sessionId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string session_id = 1;</code>
+       * @param value The sessionId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSessionId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        sessionId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string session_id = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSessionId() {
+        sessionId_ = getDefaultInstance().getSessionId();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string session_id = 1;</code>
+       * @param value The bytes for sessionId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSessionIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        sessionId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+
+      private boolean success_ ;
+      /**
+       * <code>bool success = 2;</code>
+       * @return The success.
+       */
+      @java.lang.Override
+      public boolean getSuccess() {
+        return success_;
+      }
+      /**
+       * <code>bool success = 2;</code>
+       * @param value The success to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSuccess(boolean value) {
+        
+        success_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool success = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSuccess() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        success_ = false;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object error_ = "";
+      /**
+       * <code>string error = 3;</code>
+       * @return The error.
+       */
+      public java.lang.String getError() {
+        java.lang.Object ref = error_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          error_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string error = 3;</code>
+       * @return The bytes for error.
+       */
+      public com.google.protobuf.ByteString
+          getErrorBytes() {
+        java.lang.Object ref = error_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          error_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string error = 3;</code>
+       * @param value The error to set.
+       * @return This builder for chaining.
+       */
+      public Builder setError(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        error_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string error = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearError() {
+        error_ = getDefaultInstance().getError();
+        bitField0_ = (bitField0_ & ~0x00000004);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string error = 3;</code>
+       * @param value The bytes for error to set.
+       * @return This builder for chaining.
+       */
+      public Builder setErrorBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        error_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object finalResult_ = "";
+      /**
+       * <code>string final_result = 4;</code>
+       * @return The finalResult.
+       */
+      public java.lang.String getFinalResult() {
+        java.lang.Object ref = finalResult_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          finalResult_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string final_result = 4;</code>
+       * @return The bytes for finalResult.
+       */
+      public com.google.protobuf.ByteString
+          getFinalResultBytes() {
+        java.lang.Object ref = finalResult_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          finalResult_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string final_result = 4;</code>
+       * @param value The finalResult to set.
+       * @return This builder for chaining.
+       */
+      public Builder setFinalResult(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        finalResult_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string final_result = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearFinalResult() {
+        finalResult_ = getDefaultInstance().getFinalResult();
+        bitField0_ = (bitField0_ & ~0x00000008);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string final_result = 4;</code>
+       * @param value The bytes for finalResult to set.
+       * @return This builder for chaining.
+       */
+      public Builder setFinalResultBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        finalResult_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+
+      private int turnsUsed_ ;
+      /**
+       * <code>int32 turns_used = 5;</code>
+       * @return The turnsUsed.
+       */
+      @java.lang.Override
+      public int getTurnsUsed() {
+        return turnsUsed_;
+      }
+      /**
+       * <code>int32 turns_used = 5;</code>
+       * @param value The turnsUsed to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTurnsUsed(int value) {
+        
+        turnsUsed_ = value;
+        bitField0_ |= 0x00000010;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int32 turns_used = 5;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTurnsUsed() {
+        bitField0_ = (bitField0_ & ~0x00000010);
+        turnsUsed_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private long timestamp_ ;
+      /**
+       * <code>int64 timestamp = 6;</code>
+       * @return The timestamp.
+       */
+      @java.lang.Override
+      public long getTimestamp() {
+        return timestamp_;
+      }
+      /**
+       * <code>int64 timestamp = 6;</code>
+       * @param value The timestamp to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTimestamp(long value) {
+        
+        timestamp_ = value;
+        bitField0_ |= 0x00000020;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 timestamp = 6;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTimestamp() {
+        bitField0_ = (bitField0_ & ~0x00000020);
+        timestamp_ = 0L;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:bridge.SandboxExecuteResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:bridge.SandboxExecuteResponse)
+    private static final com.bridge.proto.ChatProto.SandboxExecuteResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.bridge.proto.ChatProto.SandboxExecuteResponse();
+    }
+
+    public static com.bridge.proto.ChatProto.SandboxExecuteResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<SandboxExecuteResponse>
+        PARSER = new com.google.protobuf.AbstractParser<SandboxExecuteResponse>() {
+      @java.lang.Override
+      public SandboxExecuteResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<SandboxExecuteResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<SandboxExecuteResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.bridge.proto.ChatProto.SandboxExecuteResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface SandboxTaskRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:bridge.SandboxTaskRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string action = 1;</code>
+     * @return The action.
+     */
+    java.lang.String getAction();
+    /**
+     * <code>string action = 1;</code>
+     * @return The bytes for action.
+     */
+    com.google.protobuf.ByteString
+        getActionBytes();
+
+    /**
+     * <code>string task_id = 2;</code>
+     * @return The taskId.
+     */
+    java.lang.String getTaskId();
+    /**
+     * <code>string task_id = 2;</code>
+     * @return The bytes for taskId.
+     */
+    com.google.protobuf.ByteString
+        getTaskIdBytes();
+
+    /**
+     * <code>string work_dir = 3;</code>
+     * @return The workDir.
+     */
+    java.lang.String getWorkDir();
+    /**
+     * <code>string work_dir = 3;</code>
+     * @return The bytes for workDir.
+     */
+    com.google.protobuf.ByteString
+        getWorkDirBytes();
+
+    /**
+     * <code>string target_task_id = 4;</code>
+     * @return The targetTaskId.
+     */
+    java.lang.String getTargetTaskId();
+    /**
+     * <code>string target_task_id = 4;</code>
+     * @return The bytes for targetTaskId.
+     */
+    com.google.protobuf.ByteString
+        getTargetTaskIdBytes();
+  }
+  /**
+   * Protobuf type {@code bridge.SandboxTaskRequest}
+   */
+  public static final class SandboxTaskRequest extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:bridge.SandboxTaskRequest)
+      SandboxTaskRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use SandboxTaskRequest.newBuilder() to construct.
+    private SandboxTaskRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private SandboxTaskRequest() {
+      action_ = "";
+      taskId_ = "";
+      workDir_ = "";
+      targetTaskId_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new SandboxTaskRequest();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_SandboxTaskRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_SandboxTaskRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.bridge.proto.ChatProto.SandboxTaskRequest.class, com.bridge.proto.ChatProto.SandboxTaskRequest.Builder.class);
+    }
+
+    public static final int ACTION_FIELD_NUMBER = 1;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object action_ = "";
+    /**
+     * <code>string action = 1;</code>
+     * @return The action.
+     */
+    @java.lang.Override
+    public java.lang.String getAction() {
+      java.lang.Object ref = action_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        action_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string action = 1;</code>
+     * @return The bytes for action.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getActionBytes() {
+      java.lang.Object ref = action_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        action_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int TASK_ID_FIELD_NUMBER = 2;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object taskId_ = "";
+    /**
+     * <code>string task_id = 2;</code>
+     * @return The taskId.
+     */
+    @java.lang.Override
+    public java.lang.String getTaskId() {
+      java.lang.Object ref = taskId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        taskId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string task_id = 2;</code>
+     * @return The bytes for taskId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getTaskIdBytes() {
+      java.lang.Object ref = taskId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        taskId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int WORK_DIR_FIELD_NUMBER = 3;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object workDir_ = "";
+    /**
+     * <code>string work_dir = 3;</code>
+     * @return The workDir.
+     */
+    @java.lang.Override
+    public java.lang.String getWorkDir() {
+      java.lang.Object ref = workDir_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        workDir_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string work_dir = 3;</code>
+     * @return The bytes for workDir.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getWorkDirBytes() {
+      java.lang.Object ref = workDir_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        workDir_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int TARGET_TASK_ID_FIELD_NUMBER = 4;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object targetTaskId_ = "";
+    /**
+     * <code>string target_task_id = 4;</code>
+     * @return The targetTaskId.
+     */
+    @java.lang.Override
+    public java.lang.String getTargetTaskId() {
+      java.lang.Object ref = targetTaskId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        targetTaskId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string target_task_id = 4;</code>
+     * @return The bytes for targetTaskId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getTargetTaskIdBytes() {
+      java.lang.Object ref = targetTaskId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        targetTaskId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(action_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, action_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(taskId_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, taskId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(workDir_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, workDir_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(targetTaskId_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 4, targetTaskId_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(action_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, action_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(taskId_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, taskId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(workDir_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, workDir_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(targetTaskId_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, targetTaskId_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.bridge.proto.ChatProto.SandboxTaskRequest)) {
+        return super.equals(obj);
+      }
+      com.bridge.proto.ChatProto.SandboxTaskRequest other = (com.bridge.proto.ChatProto.SandboxTaskRequest) obj;
+
+      if (!getAction()
+          .equals(other.getAction())) return false;
+      if (!getTaskId()
+          .equals(other.getTaskId())) return false;
+      if (!getWorkDir()
+          .equals(other.getWorkDir())) return false;
+      if (!getTargetTaskId()
+          .equals(other.getTargetTaskId())) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + ACTION_FIELD_NUMBER;
+      hash = (53 * hash) + getAction().hashCode();
+      hash = (37 * hash) + TASK_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getTaskId().hashCode();
+      hash = (37 * hash) + WORK_DIR_FIELD_NUMBER;
+      hash = (53 * hash) + getWorkDir().hashCode();
+      hash = (37 * hash) + TARGET_TASK_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getTargetTaskId().hashCode();
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.bridge.proto.ChatProto.SandboxTaskRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SandboxTaskRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SandboxTaskRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SandboxTaskRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SandboxTaskRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SandboxTaskRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SandboxTaskRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SandboxTaskRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SandboxTaskRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SandboxTaskRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SandboxTaskRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SandboxTaskRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.bridge.proto.ChatProto.SandboxTaskRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code bridge.SandboxTaskRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:bridge.SandboxTaskRequest)
+        com.bridge.proto.ChatProto.SandboxTaskRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SandboxTaskRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SandboxTaskRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.bridge.proto.ChatProto.SandboxTaskRequest.class, com.bridge.proto.ChatProto.SandboxTaskRequest.Builder.class);
+      }
+
+      // Construct using com.bridge.proto.ChatProto.SandboxTaskRequest.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        action_ = "";
+        taskId_ = "";
+        workDir_ = "";
+        targetTaskId_ = "";
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SandboxTaskRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SandboxTaskRequest getDefaultInstanceForType() {
+        return com.bridge.proto.ChatProto.SandboxTaskRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SandboxTaskRequest build() {
+        com.bridge.proto.ChatProto.SandboxTaskRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SandboxTaskRequest buildPartial() {
+        com.bridge.proto.ChatProto.SandboxTaskRequest result = new com.bridge.proto.ChatProto.SandboxTaskRequest(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(com.bridge.proto.ChatProto.SandboxTaskRequest result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.action_ = action_;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.taskId_ = taskId_;
+        }
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.workDir_ = workDir_;
+        }
+        if (((from_bitField0_ & 0x00000008) != 0)) {
+          result.targetTaskId_ = targetTaskId_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.bridge.proto.ChatProto.SandboxTaskRequest) {
+          return mergeFrom((com.bridge.proto.ChatProto.SandboxTaskRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.bridge.proto.ChatProto.SandboxTaskRequest other) {
+        if (other == com.bridge.proto.ChatProto.SandboxTaskRequest.getDefaultInstance()) return this;
+        if (!other.getAction().isEmpty()) {
+          action_ = other.action_;
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        if (!other.getTaskId().isEmpty()) {
+          taskId_ = other.taskId_;
+          bitField0_ |= 0x00000002;
+          onChanged();
+        }
+        if (!other.getWorkDir().isEmpty()) {
+          workDir_ = other.workDir_;
+          bitField0_ |= 0x00000004;
+          onChanged();
+        }
+        if (!other.getTargetTaskId().isEmpty()) {
+          targetTaskId_ = other.targetTaskId_;
+          bitField0_ |= 0x00000008;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                action_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              case 18: {
+                taskId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 18
+              case 26: {
+                workDir_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 26
+              case 34: {
+                targetTaskId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000008;
+                break;
+              } // case 34
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private java.lang.Object action_ = "";
+      /**
+       * <code>string action = 1;</code>
+       * @return The action.
+       */
+      public java.lang.String getAction() {
+        java.lang.Object ref = action_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          action_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string action = 1;</code>
+       * @return The bytes for action.
+       */
+      public com.google.protobuf.ByteString
+          getActionBytes() {
+        java.lang.Object ref = action_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          action_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string action = 1;</code>
+       * @param value The action to set.
+       * @return This builder for chaining.
+       */
+      public Builder setAction(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        action_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string action = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearAction() {
+        action_ = getDefaultInstance().getAction();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string action = 1;</code>
+       * @param value The bytes for action to set.
+       * @return This builder for chaining.
+       */
+      public Builder setActionBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        action_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object taskId_ = "";
+      /**
+       * <code>string task_id = 2;</code>
+       * @return The taskId.
+       */
+      public java.lang.String getTaskId() {
+        java.lang.Object ref = taskId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          taskId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string task_id = 2;</code>
+       * @return The bytes for taskId.
+       */
+      public com.google.protobuf.ByteString
+          getTaskIdBytes() {
+        java.lang.Object ref = taskId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          taskId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string task_id = 2;</code>
+       * @param value The taskId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTaskId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        taskId_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string task_id = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTaskId() {
+        taskId_ = getDefaultInstance().getTaskId();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string task_id = 2;</code>
+       * @param value The bytes for taskId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTaskIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        taskId_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object workDir_ = "";
+      /**
+       * <code>string work_dir = 3;</code>
+       * @return The workDir.
+       */
+      public java.lang.String getWorkDir() {
+        java.lang.Object ref = workDir_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          workDir_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string work_dir = 3;</code>
+       * @return The bytes for workDir.
+       */
+      public com.google.protobuf.ByteString
+          getWorkDirBytes() {
+        java.lang.Object ref = workDir_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          workDir_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string work_dir = 3;</code>
+       * @param value The workDir to set.
+       * @return This builder for chaining.
+       */
+      public Builder setWorkDir(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        workDir_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string work_dir = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearWorkDir() {
+        workDir_ = getDefaultInstance().getWorkDir();
+        bitField0_ = (bitField0_ & ~0x00000004);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string work_dir = 3;</code>
+       * @param value The bytes for workDir to set.
+       * @return This builder for chaining.
+       */
+      public Builder setWorkDirBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        workDir_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object targetTaskId_ = "";
+      /**
+       * <code>string target_task_id = 4;</code>
+       * @return The targetTaskId.
+       */
+      public java.lang.String getTargetTaskId() {
+        java.lang.Object ref = targetTaskId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          targetTaskId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string target_task_id = 4;</code>
+       * @return The bytes for targetTaskId.
+       */
+      public com.google.protobuf.ByteString
+          getTargetTaskIdBytes() {
+        java.lang.Object ref = targetTaskId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          targetTaskId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string target_task_id = 4;</code>
+       * @param value The targetTaskId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTargetTaskId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        targetTaskId_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string target_task_id = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTargetTaskId() {
+        targetTaskId_ = getDefaultInstance().getTargetTaskId();
+        bitField0_ = (bitField0_ & ~0x00000008);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string target_task_id = 4;</code>
+       * @param value The bytes for targetTaskId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTargetTaskIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        targetTaskId_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:bridge.SandboxTaskRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:bridge.SandboxTaskRequest)
+    private static final com.bridge.proto.ChatProto.SandboxTaskRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.bridge.proto.ChatProto.SandboxTaskRequest();
+    }
+
+    public static com.bridge.proto.ChatProto.SandboxTaskRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<SandboxTaskRequest>
+        PARSER = new com.google.protobuf.AbstractParser<SandboxTaskRequest>() {
+      @java.lang.Override
+      public SandboxTaskRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<SandboxTaskRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<SandboxTaskRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.bridge.proto.ChatProto.SandboxTaskRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface SandboxTaskResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:bridge.SandboxTaskResponse)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>bool success = 1;</code>
+     * @return The success.
+     */
+    boolean getSuccess();
+
+    /**
+     * <code>string action = 2;</code>
+     * @return The action.
+     */
+    java.lang.String getAction();
+    /**
+     * <code>string action = 2;</code>
+     * @return The bytes for action.
+     */
+    com.google.protobuf.ByteString
+        getActionBytes();
+
+    /**
+     * <code>string error = 3;</code>
+     * @return The error.
+     */
+    java.lang.String getError();
+    /**
+     * <code>string error = 3;</code>
+     * @return The bytes for error.
+     */
+    com.google.protobuf.ByteString
+        getErrorBytes();
+
+    /**
+     * <code>string data = 4;</code>
+     * @return The data.
+     */
+    java.lang.String getData();
+    /**
+     * <code>string data = 4;</code>
+     * @return The bytes for data.
+     */
+    com.google.protobuf.ByteString
+        getDataBytes();
+
+    /**
+     * <code>string task_id = 5;</code>
+     * @return The taskId.
+     */
+    java.lang.String getTaskId();
+    /**
+     * <code>string task_id = 5;</code>
+     * @return The bytes for taskId.
+     */
+    com.google.protobuf.ByteString
+        getTaskIdBytes();
+  }
+  /**
+   * Protobuf type {@code bridge.SandboxTaskResponse}
+   */
+  public static final class SandboxTaskResponse extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:bridge.SandboxTaskResponse)
+      SandboxTaskResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use SandboxTaskResponse.newBuilder() to construct.
+    private SandboxTaskResponse(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private SandboxTaskResponse() {
+      action_ = "";
+      error_ = "";
+      data_ = "";
+      taskId_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new SandboxTaskResponse();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_SandboxTaskResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_SandboxTaskResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.bridge.proto.ChatProto.SandboxTaskResponse.class, com.bridge.proto.ChatProto.SandboxTaskResponse.Builder.class);
+    }
+
+    public static final int SUCCESS_FIELD_NUMBER = 1;
+    private boolean success_ = false;
+    /**
+     * <code>bool success = 1;</code>
+     * @return The success.
+     */
+    @java.lang.Override
+    public boolean getSuccess() {
+      return success_;
+    }
+
+    public static final int ACTION_FIELD_NUMBER = 2;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object action_ = "";
+    /**
+     * <code>string action = 2;</code>
+     * @return The action.
+     */
+    @java.lang.Override
+    public java.lang.String getAction() {
+      java.lang.Object ref = action_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        action_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string action = 2;</code>
+     * @return The bytes for action.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getActionBytes() {
+      java.lang.Object ref = action_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        action_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int ERROR_FIELD_NUMBER = 3;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object error_ = "";
+    /**
+     * <code>string error = 3;</code>
+     * @return The error.
+     */
+    @java.lang.Override
+    public java.lang.String getError() {
+      java.lang.Object ref = error_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        error_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string error = 3;</code>
+     * @return The bytes for error.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getErrorBytes() {
+      java.lang.Object ref = error_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        error_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int DATA_FIELD_NUMBER = 4;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object data_ = "";
+    /**
+     * <code>string data = 4;</code>
+     * @return The data.
+     */
+    @java.lang.Override
+    public java.lang.String getData() {
+      java.lang.Object ref = data_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        data_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string data = 4;</code>
+     * @return The bytes for data.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getDataBytes() {
+      java.lang.Object ref = data_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        data_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int TASK_ID_FIELD_NUMBER = 5;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object taskId_ = "";
+    /**
+     * <code>string task_id = 5;</code>
+     * @return The taskId.
+     */
+    @java.lang.Override
+    public java.lang.String getTaskId() {
+      java.lang.Object ref = taskId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        taskId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string task_id = 5;</code>
+     * @return The bytes for taskId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getTaskIdBytes() {
+      java.lang.Object ref = taskId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        taskId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (success_ != false) {
+        output.writeBool(1, success_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(action_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, action_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(error_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, error_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(data_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 4, data_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(taskId_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 5, taskId_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (success_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(1, success_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(action_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, action_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(error_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, error_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(data_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, data_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(taskId_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, taskId_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.bridge.proto.ChatProto.SandboxTaskResponse)) {
+        return super.equals(obj);
+      }
+      com.bridge.proto.ChatProto.SandboxTaskResponse other = (com.bridge.proto.ChatProto.SandboxTaskResponse) obj;
+
+      if (getSuccess()
+          != other.getSuccess()) return false;
+      if (!getAction()
+          .equals(other.getAction())) return false;
+      if (!getError()
+          .equals(other.getError())) return false;
+      if (!getData()
+          .equals(other.getData())) return false;
+      if (!getTaskId()
+          .equals(other.getTaskId())) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + SUCCESS_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getSuccess());
+      hash = (37 * hash) + ACTION_FIELD_NUMBER;
+      hash = (53 * hash) + getAction().hashCode();
+      hash = (37 * hash) + ERROR_FIELD_NUMBER;
+      hash = (53 * hash) + getError().hashCode();
+      hash = (37 * hash) + DATA_FIELD_NUMBER;
+      hash = (53 * hash) + getData().hashCode();
+      hash = (37 * hash) + TASK_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getTaskId().hashCode();
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.bridge.proto.ChatProto.SandboxTaskResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SandboxTaskResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SandboxTaskResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SandboxTaskResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SandboxTaskResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SandboxTaskResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SandboxTaskResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SandboxTaskResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SandboxTaskResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SandboxTaskResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SandboxTaskResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SandboxTaskResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.bridge.proto.ChatProto.SandboxTaskResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code bridge.SandboxTaskResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:bridge.SandboxTaskResponse)
+        com.bridge.proto.ChatProto.SandboxTaskResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SandboxTaskResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SandboxTaskResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.bridge.proto.ChatProto.SandboxTaskResponse.class, com.bridge.proto.ChatProto.SandboxTaskResponse.Builder.class);
+      }
+
+      // Construct using com.bridge.proto.ChatProto.SandboxTaskResponse.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        success_ = false;
+        action_ = "";
+        error_ = "";
+        data_ = "";
+        taskId_ = "";
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SandboxTaskResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SandboxTaskResponse getDefaultInstanceForType() {
+        return com.bridge.proto.ChatProto.SandboxTaskResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SandboxTaskResponse build() {
+        com.bridge.proto.ChatProto.SandboxTaskResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SandboxTaskResponse buildPartial() {
+        com.bridge.proto.ChatProto.SandboxTaskResponse result = new com.bridge.proto.ChatProto.SandboxTaskResponse(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(com.bridge.proto.ChatProto.SandboxTaskResponse result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.success_ = success_;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.action_ = action_;
+        }
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.error_ = error_;
+        }
+        if (((from_bitField0_ & 0x00000008) != 0)) {
+          result.data_ = data_;
+        }
+        if (((from_bitField0_ & 0x00000010) != 0)) {
+          result.taskId_ = taskId_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.bridge.proto.ChatProto.SandboxTaskResponse) {
+          return mergeFrom((com.bridge.proto.ChatProto.SandboxTaskResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.bridge.proto.ChatProto.SandboxTaskResponse other) {
+        if (other == com.bridge.proto.ChatProto.SandboxTaskResponse.getDefaultInstance()) return this;
+        if (other.getSuccess() != false) {
+          setSuccess(other.getSuccess());
+        }
+        if (!other.getAction().isEmpty()) {
+          action_ = other.action_;
+          bitField0_ |= 0x00000002;
+          onChanged();
+        }
+        if (!other.getError().isEmpty()) {
+          error_ = other.error_;
+          bitField0_ |= 0x00000004;
+          onChanged();
+        }
+        if (!other.getData().isEmpty()) {
+          data_ = other.data_;
+          bitField0_ |= 0x00000008;
+          onChanged();
+        }
+        if (!other.getTaskId().isEmpty()) {
+          taskId_ = other.taskId_;
+          bitField0_ |= 0x00000010;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 8: {
+                success_ = input.readBool();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 8
+              case 18: {
+                action_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 18
+              case 26: {
+                error_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 26
+              case 34: {
+                data_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000008;
+                break;
+              } // case 34
+              case 42: {
+                taskId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000010;
+                break;
+              } // case 42
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private boolean success_ ;
+      /**
+       * <code>bool success = 1;</code>
+       * @return The success.
+       */
+      @java.lang.Override
+      public boolean getSuccess() {
+        return success_;
+      }
+      /**
+       * <code>bool success = 1;</code>
+       * @param value The success to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSuccess(boolean value) {
+        
+        success_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool success = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSuccess() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        success_ = false;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object action_ = "";
+      /**
+       * <code>string action = 2;</code>
+       * @return The action.
+       */
+      public java.lang.String getAction() {
+        java.lang.Object ref = action_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          action_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string action = 2;</code>
+       * @return The bytes for action.
+       */
+      public com.google.protobuf.ByteString
+          getActionBytes() {
+        java.lang.Object ref = action_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          action_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string action = 2;</code>
+       * @param value The action to set.
+       * @return This builder for chaining.
+       */
+      public Builder setAction(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        action_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string action = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearAction() {
+        action_ = getDefaultInstance().getAction();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string action = 2;</code>
+       * @param value The bytes for action to set.
+       * @return This builder for chaining.
+       */
+      public Builder setActionBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        action_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object error_ = "";
+      /**
+       * <code>string error = 3;</code>
+       * @return The error.
+       */
+      public java.lang.String getError() {
+        java.lang.Object ref = error_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          error_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string error = 3;</code>
+       * @return The bytes for error.
+       */
+      public com.google.protobuf.ByteString
+          getErrorBytes() {
+        java.lang.Object ref = error_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          error_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string error = 3;</code>
+       * @param value The error to set.
+       * @return This builder for chaining.
+       */
+      public Builder setError(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        error_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string error = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearError() {
+        error_ = getDefaultInstance().getError();
+        bitField0_ = (bitField0_ & ~0x00000004);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string error = 3;</code>
+       * @param value The bytes for error to set.
+       * @return This builder for chaining.
+       */
+      public Builder setErrorBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        error_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object data_ = "";
+      /**
+       * <code>string data = 4;</code>
+       * @return The data.
+       */
+      public java.lang.String getData() {
+        java.lang.Object ref = data_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          data_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string data = 4;</code>
+       * @return The bytes for data.
+       */
+      public com.google.protobuf.ByteString
+          getDataBytes() {
+        java.lang.Object ref = data_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          data_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string data = 4;</code>
+       * @param value The data to set.
+       * @return This builder for chaining.
+       */
+      public Builder setData(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        data_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string data = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearData() {
+        data_ = getDefaultInstance().getData();
+        bitField0_ = (bitField0_ & ~0x00000008);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string data = 4;</code>
+       * @param value The bytes for data to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDataBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        data_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object taskId_ = "";
+      /**
+       * <code>string task_id = 5;</code>
+       * @return The taskId.
+       */
+      public java.lang.String getTaskId() {
+        java.lang.Object ref = taskId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          taskId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string task_id = 5;</code>
+       * @return The bytes for taskId.
+       */
+      public com.google.protobuf.ByteString
+          getTaskIdBytes() {
+        java.lang.Object ref = taskId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          taskId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string task_id = 5;</code>
+       * @param value The taskId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTaskId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        taskId_ = value;
+        bitField0_ |= 0x00000010;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string task_id = 5;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTaskId() {
+        taskId_ = getDefaultInstance().getTaskId();
+        bitField0_ = (bitField0_ & ~0x00000010);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string task_id = 5;</code>
+       * @param value The bytes for taskId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTaskIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        taskId_ = value;
+        bitField0_ |= 0x00000010;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:bridge.SandboxTaskResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:bridge.SandboxTaskResponse)
+    private static final com.bridge.proto.ChatProto.SandboxTaskResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.bridge.proto.ChatProto.SandboxTaskResponse();
+    }
+
+    public static com.bridge.proto.ChatProto.SandboxTaskResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<SandboxTaskResponse>
+        PARSER = new com.google.protobuf.AbstractParser<SandboxTaskResponse>() {
+      @java.lang.Override
+      public SandboxTaskResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<SandboxTaskResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<SandboxTaskResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.bridge.proto.ChatProto.SandboxTaskResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface SandboxToolEventOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:bridge.SandboxToolEvent)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string session_id = 1;</code>
+     * @return The sessionId.
+     */
+    java.lang.String getSessionId();
+    /**
+     * <code>string session_id = 1;</code>
+     * @return The bytes for sessionId.
+     */
+    com.google.protobuf.ByteString
+        getSessionIdBytes();
+
+    /**
+     * <code>string event_type = 2;</code>
+     * @return The eventType.
+     */
+    java.lang.String getEventType();
+    /**
+     * <code>string event_type = 2;</code>
+     * @return The bytes for eventType.
+     */
+    com.google.protobuf.ByteString
+        getEventTypeBytes();
+
+    /**
+     * <code>string tool_name = 3;</code>
+     * @return The toolName.
+     */
+    java.lang.String getToolName();
+    /**
+     * <code>string tool_name = 3;</code>
+     * @return The bytes for toolName.
+     */
+    com.google.protobuf.ByteString
+        getToolNameBytes();
+
+    /**
+     * <code>string args_json = 4;</code>
+     * @return The argsJson.
+     */
+    java.lang.String getArgsJson();
+    /**
+     * <code>string args_json = 4;</code>
+     * @return The bytes for argsJson.
+     */
+    com.google.protobuf.ByteString
+        getArgsJsonBytes();
+
+    /**
+     * <code>string result = 5;</code>
+     * @return The result.
+     */
+    java.lang.String getResult();
+    /**
+     * <code>string result = 5;</code>
+     * @return The bytes for result.
+     */
+    com.google.protobuf.ByteString
+        getResultBytes();
+
+    /**
+     * <code>bool is_error = 6;</code>
+     * @return The isError.
+     */
+    boolean getIsError();
+
+    /**
+     * <code>string content = 7;</code>
+     * @return The content.
+     */
+    java.lang.String getContent();
+    /**
+     * <code>string content = 7;</code>
+     * @return The bytes for content.
+     */
+    com.google.protobuf.ByteString
+        getContentBytes();
+
+    /**
+     * <code>string status_data = 8;</code>
+     * @return The statusData.
+     */
+    java.lang.String getStatusData();
+    /**
+     * <code>string status_data = 8;</code>
+     * @return The bytes for statusData.
+     */
+    com.google.protobuf.ByteString
+        getStatusDataBytes();
+
+    /**
+     * <code>int64 timestamp = 9;</code>
+     * @return The timestamp.
+     */
+    long getTimestamp();
+  }
+  /**
+   * Protobuf type {@code bridge.SandboxToolEvent}
+   */
+  public static final class SandboxToolEvent extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:bridge.SandboxToolEvent)
+      SandboxToolEventOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use SandboxToolEvent.newBuilder() to construct.
+    private SandboxToolEvent(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private SandboxToolEvent() {
+      sessionId_ = "";
+      eventType_ = "";
+      toolName_ = "";
+      argsJson_ = "";
+      result_ = "";
+      content_ = "";
+      statusData_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new SandboxToolEvent();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_SandboxToolEvent_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_SandboxToolEvent_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.bridge.proto.ChatProto.SandboxToolEvent.class, com.bridge.proto.ChatProto.SandboxToolEvent.Builder.class);
+    }
+
+    public static final int SESSION_ID_FIELD_NUMBER = 1;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object sessionId_ = "";
+    /**
+     * <code>string session_id = 1;</code>
+     * @return The sessionId.
+     */
+    @java.lang.Override
+    public java.lang.String getSessionId() {
+      java.lang.Object ref = sessionId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        sessionId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string session_id = 1;</code>
+     * @return The bytes for sessionId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getSessionIdBytes() {
+      java.lang.Object ref = sessionId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        sessionId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int EVENT_TYPE_FIELD_NUMBER = 2;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object eventType_ = "";
+    /**
+     * <code>string event_type = 2;</code>
+     * @return The eventType.
+     */
+    @java.lang.Override
+    public java.lang.String getEventType() {
+      java.lang.Object ref = eventType_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        eventType_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string event_type = 2;</code>
+     * @return The bytes for eventType.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getEventTypeBytes() {
+      java.lang.Object ref = eventType_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        eventType_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int TOOL_NAME_FIELD_NUMBER = 3;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object toolName_ = "";
+    /**
+     * <code>string tool_name = 3;</code>
+     * @return The toolName.
+     */
+    @java.lang.Override
+    public java.lang.String getToolName() {
+      java.lang.Object ref = toolName_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        toolName_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string tool_name = 3;</code>
+     * @return The bytes for toolName.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getToolNameBytes() {
+      java.lang.Object ref = toolName_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        toolName_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int ARGS_JSON_FIELD_NUMBER = 4;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object argsJson_ = "";
+    /**
+     * <code>string args_json = 4;</code>
+     * @return The argsJson.
+     */
+    @java.lang.Override
+    public java.lang.String getArgsJson() {
+      java.lang.Object ref = argsJson_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        argsJson_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string args_json = 4;</code>
+     * @return The bytes for argsJson.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getArgsJsonBytes() {
+      java.lang.Object ref = argsJson_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        argsJson_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int RESULT_FIELD_NUMBER = 5;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object result_ = "";
+    /**
+     * <code>string result = 5;</code>
+     * @return The result.
+     */
+    @java.lang.Override
+    public java.lang.String getResult() {
+      java.lang.Object ref = result_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        result_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string result = 5;</code>
+     * @return The bytes for result.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getResultBytes() {
+      java.lang.Object ref = result_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        result_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int IS_ERROR_FIELD_NUMBER = 6;
+    private boolean isError_ = false;
+    /**
+     * <code>bool is_error = 6;</code>
+     * @return The isError.
+     */
+    @java.lang.Override
+    public boolean getIsError() {
+      return isError_;
+    }
+
+    public static final int CONTENT_FIELD_NUMBER = 7;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object content_ = "";
+    /**
+     * <code>string content = 7;</code>
+     * @return The content.
+     */
+    @java.lang.Override
+    public java.lang.String getContent() {
+      java.lang.Object ref = content_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        content_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string content = 7;</code>
+     * @return The bytes for content.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getContentBytes() {
+      java.lang.Object ref = content_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        content_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int STATUS_DATA_FIELD_NUMBER = 8;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object statusData_ = "";
+    /**
+     * <code>string status_data = 8;</code>
+     * @return The statusData.
+     */
+    @java.lang.Override
+    public java.lang.String getStatusData() {
+      java.lang.Object ref = statusData_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        statusData_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string status_data = 8;</code>
+     * @return The bytes for statusData.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getStatusDataBytes() {
+      java.lang.Object ref = statusData_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        statusData_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int TIMESTAMP_FIELD_NUMBER = 9;
+    private long timestamp_ = 0L;
+    /**
+     * <code>int64 timestamp = 9;</code>
+     * @return The timestamp.
+     */
+    @java.lang.Override
+    public long getTimestamp() {
+      return timestamp_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(sessionId_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, sessionId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(eventType_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, eventType_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(toolName_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, toolName_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(argsJson_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 4, argsJson_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(result_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 5, result_);
+      }
+      if (isError_ != false) {
+        output.writeBool(6, isError_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(content_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 7, content_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(statusData_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 8, statusData_);
+      }
+      if (timestamp_ != 0L) {
+        output.writeInt64(9, timestamp_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(sessionId_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, sessionId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(eventType_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, eventType_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(toolName_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, toolName_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(argsJson_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, argsJson_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(result_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, result_);
+      }
+      if (isError_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(6, isError_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(content_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(7, content_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(statusData_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(8, statusData_);
+      }
+      if (timestamp_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(9, timestamp_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.bridge.proto.ChatProto.SandboxToolEvent)) {
+        return super.equals(obj);
+      }
+      com.bridge.proto.ChatProto.SandboxToolEvent other = (com.bridge.proto.ChatProto.SandboxToolEvent) obj;
+
+      if (!getSessionId()
+          .equals(other.getSessionId())) return false;
+      if (!getEventType()
+          .equals(other.getEventType())) return false;
+      if (!getToolName()
+          .equals(other.getToolName())) return false;
+      if (!getArgsJson()
+          .equals(other.getArgsJson())) return false;
+      if (!getResult()
+          .equals(other.getResult())) return false;
+      if (getIsError()
+          != other.getIsError()) return false;
+      if (!getContent()
+          .equals(other.getContent())) return false;
+      if (!getStatusData()
+          .equals(other.getStatusData())) return false;
+      if (getTimestamp()
+          != other.getTimestamp()) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + SESSION_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getSessionId().hashCode();
+      hash = (37 * hash) + EVENT_TYPE_FIELD_NUMBER;
+      hash = (53 * hash) + getEventType().hashCode();
+      hash = (37 * hash) + TOOL_NAME_FIELD_NUMBER;
+      hash = (53 * hash) + getToolName().hashCode();
+      hash = (37 * hash) + ARGS_JSON_FIELD_NUMBER;
+      hash = (53 * hash) + getArgsJson().hashCode();
+      hash = (37 * hash) + RESULT_FIELD_NUMBER;
+      hash = (53 * hash) + getResult().hashCode();
+      hash = (37 * hash) + IS_ERROR_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getIsError());
+      hash = (37 * hash) + CONTENT_FIELD_NUMBER;
+      hash = (53 * hash) + getContent().hashCode();
+      hash = (37 * hash) + STATUS_DATA_FIELD_NUMBER;
+      hash = (53 * hash) + getStatusData().hashCode();
+      hash = (37 * hash) + TIMESTAMP_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getTimestamp());
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.bridge.proto.ChatProto.SandboxToolEvent parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SandboxToolEvent parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SandboxToolEvent parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SandboxToolEvent parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SandboxToolEvent parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SandboxToolEvent parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SandboxToolEvent parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SandboxToolEvent parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SandboxToolEvent parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SandboxToolEvent parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SandboxToolEvent parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SandboxToolEvent parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.bridge.proto.ChatProto.SandboxToolEvent prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code bridge.SandboxToolEvent}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:bridge.SandboxToolEvent)
+        com.bridge.proto.ChatProto.SandboxToolEventOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SandboxToolEvent_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SandboxToolEvent_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.bridge.proto.ChatProto.SandboxToolEvent.class, com.bridge.proto.ChatProto.SandboxToolEvent.Builder.class);
+      }
+
+      // Construct using com.bridge.proto.ChatProto.SandboxToolEvent.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        sessionId_ = "";
+        eventType_ = "";
+        toolName_ = "";
+        argsJson_ = "";
+        result_ = "";
+        isError_ = false;
+        content_ = "";
+        statusData_ = "";
+        timestamp_ = 0L;
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SandboxToolEvent_descriptor;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SandboxToolEvent getDefaultInstanceForType() {
+        return com.bridge.proto.ChatProto.SandboxToolEvent.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SandboxToolEvent build() {
+        com.bridge.proto.ChatProto.SandboxToolEvent result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SandboxToolEvent buildPartial() {
+        com.bridge.proto.ChatProto.SandboxToolEvent result = new com.bridge.proto.ChatProto.SandboxToolEvent(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(com.bridge.proto.ChatProto.SandboxToolEvent result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.sessionId_ = sessionId_;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.eventType_ = eventType_;
+        }
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.toolName_ = toolName_;
+        }
+        if (((from_bitField0_ & 0x00000008) != 0)) {
+          result.argsJson_ = argsJson_;
+        }
+        if (((from_bitField0_ & 0x00000010) != 0)) {
+          result.result_ = result_;
+        }
+        if (((from_bitField0_ & 0x00000020) != 0)) {
+          result.isError_ = isError_;
+        }
+        if (((from_bitField0_ & 0x00000040) != 0)) {
+          result.content_ = content_;
+        }
+        if (((from_bitField0_ & 0x00000080) != 0)) {
+          result.statusData_ = statusData_;
+        }
+        if (((from_bitField0_ & 0x00000100) != 0)) {
+          result.timestamp_ = timestamp_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.bridge.proto.ChatProto.SandboxToolEvent) {
+          return mergeFrom((com.bridge.proto.ChatProto.SandboxToolEvent)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.bridge.proto.ChatProto.SandboxToolEvent other) {
+        if (other == com.bridge.proto.ChatProto.SandboxToolEvent.getDefaultInstance()) return this;
+        if (!other.getSessionId().isEmpty()) {
+          sessionId_ = other.sessionId_;
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        if (!other.getEventType().isEmpty()) {
+          eventType_ = other.eventType_;
+          bitField0_ |= 0x00000002;
+          onChanged();
+        }
+        if (!other.getToolName().isEmpty()) {
+          toolName_ = other.toolName_;
+          bitField0_ |= 0x00000004;
+          onChanged();
+        }
+        if (!other.getArgsJson().isEmpty()) {
+          argsJson_ = other.argsJson_;
+          bitField0_ |= 0x00000008;
+          onChanged();
+        }
+        if (!other.getResult().isEmpty()) {
+          result_ = other.result_;
+          bitField0_ |= 0x00000010;
+          onChanged();
+        }
+        if (other.getIsError() != false) {
+          setIsError(other.getIsError());
+        }
+        if (!other.getContent().isEmpty()) {
+          content_ = other.content_;
+          bitField0_ |= 0x00000040;
+          onChanged();
+        }
+        if (!other.getStatusData().isEmpty()) {
+          statusData_ = other.statusData_;
+          bitField0_ |= 0x00000080;
+          onChanged();
+        }
+        if (other.getTimestamp() != 0L) {
+          setTimestamp(other.getTimestamp());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                sessionId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              case 18: {
+                eventType_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 18
+              case 26: {
+                toolName_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 26
+              case 34: {
+                argsJson_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000008;
+                break;
+              } // case 34
+              case 42: {
+                result_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000010;
+                break;
+              } // case 42
+              case 48: {
+                isError_ = input.readBool();
+                bitField0_ |= 0x00000020;
+                break;
+              } // case 48
+              case 58: {
+                content_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000040;
+                break;
+              } // case 58
+              case 66: {
+                statusData_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000080;
+                break;
+              } // case 66
+              case 72: {
+                timestamp_ = input.readInt64();
+                bitField0_ |= 0x00000100;
+                break;
+              } // case 72
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private java.lang.Object sessionId_ = "";
+      /**
+       * <code>string session_id = 1;</code>
+       * @return The sessionId.
+       */
+      public java.lang.String getSessionId() {
+        java.lang.Object ref = sessionId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          sessionId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string session_id = 1;</code>
+       * @return The bytes for sessionId.
+       */
+      public com.google.protobuf.ByteString
+          getSessionIdBytes() {
+        java.lang.Object ref = sessionId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          sessionId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string session_id = 1;</code>
+       * @param value The sessionId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSessionId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        sessionId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string session_id = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSessionId() {
+        sessionId_ = getDefaultInstance().getSessionId();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string session_id = 1;</code>
+       * @param value The bytes for sessionId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSessionIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        sessionId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object eventType_ = "";
+      /**
+       * <code>string event_type = 2;</code>
+       * @return The eventType.
+       */
+      public java.lang.String getEventType() {
+        java.lang.Object ref = eventType_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          eventType_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string event_type = 2;</code>
+       * @return The bytes for eventType.
+       */
+      public com.google.protobuf.ByteString
+          getEventTypeBytes() {
+        java.lang.Object ref = eventType_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          eventType_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string event_type = 2;</code>
+       * @param value The eventType to set.
+       * @return This builder for chaining.
+       */
+      public Builder setEventType(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        eventType_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string event_type = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearEventType() {
+        eventType_ = getDefaultInstance().getEventType();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string event_type = 2;</code>
+       * @param value The bytes for eventType to set.
+       * @return This builder for chaining.
+       */
+      public Builder setEventTypeBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        eventType_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object toolName_ = "";
+      /**
+       * <code>string tool_name = 3;</code>
+       * @return The toolName.
+       */
+      public java.lang.String getToolName() {
+        java.lang.Object ref = toolName_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          toolName_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string tool_name = 3;</code>
+       * @return The bytes for toolName.
+       */
+      public com.google.protobuf.ByteString
+          getToolNameBytes() {
+        java.lang.Object ref = toolName_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          toolName_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string tool_name = 3;</code>
+       * @param value The toolName to set.
+       * @return This builder for chaining.
+       */
+      public Builder setToolName(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        toolName_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string tool_name = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearToolName() {
+        toolName_ = getDefaultInstance().getToolName();
+        bitField0_ = (bitField0_ & ~0x00000004);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string tool_name = 3;</code>
+       * @param value The bytes for toolName to set.
+       * @return This builder for chaining.
+       */
+      public Builder setToolNameBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        toolName_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object argsJson_ = "";
+      /**
+       * <code>string args_json = 4;</code>
+       * @return The argsJson.
+       */
+      public java.lang.String getArgsJson() {
+        java.lang.Object ref = argsJson_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          argsJson_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string args_json = 4;</code>
+       * @return The bytes for argsJson.
+       */
+      public com.google.protobuf.ByteString
+          getArgsJsonBytes() {
+        java.lang.Object ref = argsJson_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          argsJson_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string args_json = 4;</code>
+       * @param value The argsJson to set.
+       * @return This builder for chaining.
+       */
+      public Builder setArgsJson(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        argsJson_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string args_json = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearArgsJson() {
+        argsJson_ = getDefaultInstance().getArgsJson();
+        bitField0_ = (bitField0_ & ~0x00000008);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string args_json = 4;</code>
+       * @param value The bytes for argsJson to set.
+       * @return This builder for chaining.
+       */
+      public Builder setArgsJsonBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        argsJson_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object result_ = "";
+      /**
+       * <code>string result = 5;</code>
+       * @return The result.
+       */
+      public java.lang.String getResult() {
+        java.lang.Object ref = result_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          result_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string result = 5;</code>
+       * @return The bytes for result.
+       */
+      public com.google.protobuf.ByteString
+          getResultBytes() {
+        java.lang.Object ref = result_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          result_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string result = 5;</code>
+       * @param value The result to set.
+       * @return This builder for chaining.
+       */
+      public Builder setResult(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        result_ = value;
+        bitField0_ |= 0x00000010;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string result = 5;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearResult() {
+        result_ = getDefaultInstance().getResult();
+        bitField0_ = (bitField0_ & ~0x00000010);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string result = 5;</code>
+       * @param value The bytes for result to set.
+       * @return This builder for chaining.
+       */
+      public Builder setResultBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        result_ = value;
+        bitField0_ |= 0x00000010;
+        onChanged();
+        return this;
+      }
+
+      private boolean isError_ ;
+      /**
+       * <code>bool is_error = 6;</code>
+       * @return The isError.
+       */
+      @java.lang.Override
+      public boolean getIsError() {
+        return isError_;
+      }
+      /**
+       * <code>bool is_error = 6;</code>
+       * @param value The isError to set.
+       * @return This builder for chaining.
+       */
+      public Builder setIsError(boolean value) {
+        
+        isError_ = value;
+        bitField0_ |= 0x00000020;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool is_error = 6;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearIsError() {
+        bitField0_ = (bitField0_ & ~0x00000020);
+        isError_ = false;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object content_ = "";
+      /**
+       * <code>string content = 7;</code>
+       * @return The content.
+       */
+      public java.lang.String getContent() {
+        java.lang.Object ref = content_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          content_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string content = 7;</code>
+       * @return The bytes for content.
+       */
+      public com.google.protobuf.ByteString
+          getContentBytes() {
+        java.lang.Object ref = content_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          content_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string content = 7;</code>
+       * @param value The content to set.
+       * @return This builder for chaining.
+       */
+      public Builder setContent(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        content_ = value;
+        bitField0_ |= 0x00000040;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string content = 7;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearContent() {
+        content_ = getDefaultInstance().getContent();
+        bitField0_ = (bitField0_ & ~0x00000040);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string content = 7;</code>
+       * @param value The bytes for content to set.
+       * @return This builder for chaining.
+       */
+      public Builder setContentBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        content_ = value;
+        bitField0_ |= 0x00000040;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object statusData_ = "";
+      /**
+       * <code>string status_data = 8;</code>
+       * @return The statusData.
+       */
+      public java.lang.String getStatusData() {
+        java.lang.Object ref = statusData_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          statusData_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string status_data = 8;</code>
+       * @return The bytes for statusData.
+       */
+      public com.google.protobuf.ByteString
+          getStatusDataBytes() {
+        java.lang.Object ref = statusData_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          statusData_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string status_data = 8;</code>
+       * @param value The statusData to set.
+       * @return This builder for chaining.
+       */
+      public Builder setStatusData(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        statusData_ = value;
+        bitField0_ |= 0x00000080;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string status_data = 8;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearStatusData() {
+        statusData_ = getDefaultInstance().getStatusData();
+        bitField0_ = (bitField0_ & ~0x00000080);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string status_data = 8;</code>
+       * @param value The bytes for statusData to set.
+       * @return This builder for chaining.
+       */
+      public Builder setStatusDataBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        statusData_ = value;
+        bitField0_ |= 0x00000080;
+        onChanged();
+        return this;
+      }
+
+      private long timestamp_ ;
+      /**
+       * <code>int64 timestamp = 9;</code>
+       * @return The timestamp.
+       */
+      @java.lang.Override
+      public long getTimestamp() {
+        return timestamp_;
+      }
+      /**
+       * <code>int64 timestamp = 9;</code>
+       * @param value The timestamp to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTimestamp(long value) {
+        
+        timestamp_ = value;
+        bitField0_ |= 0x00000100;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 timestamp = 9;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTimestamp() {
+        bitField0_ = (bitField0_ & ~0x00000100);
+        timestamp_ = 0L;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:bridge.SandboxToolEvent)
+    }
+
+    // @@protoc_insertion_point(class_scope:bridge.SandboxToolEvent)
+    private static final com.bridge.proto.ChatProto.SandboxToolEvent DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.bridge.proto.ChatProto.SandboxToolEvent();
+    }
+
+    public static com.bridge.proto.ChatProto.SandboxToolEvent getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<SandboxToolEvent>
+        PARSER = new com.google.protobuf.AbstractParser<SandboxToolEvent>() {
+      @java.lang.Override
+      public SandboxToolEvent parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<SandboxToolEvent> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<SandboxToolEvent> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.bridge.proto.ChatProto.SandboxToolEvent getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface SwarmMessageOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:bridge.SwarmMessage)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>.bridge.SwarmMessage.Type type = 1;</code>
+     * @return The enum numeric value on the wire for type.
+     */
+    int getTypeValue();
+    /**
+     * <code>.bridge.SwarmMessage.Type type = 1;</code>
+     * @return The type.
+     */
+    com.bridge.proto.ChatProto.SwarmMessage.Type getType();
+
+    /**
+     * <code>string from_id = 2;</code>
+     * @return The fromId.
+     */
+    java.lang.String getFromId();
+    /**
+     * <code>string from_id = 2;</code>
+     * @return The bytes for fromId.
+     */
+    com.google.protobuf.ByteString
+        getFromIdBytes();
+
+    /**
+     * <code>string to_id = 3;</code>
+     * @return The toId.
+     */
+    java.lang.String getToId();
+    /**
+     * <code>string to_id = 3;</code>
+     * @return The bytes for toId.
+     */
+    com.google.protobuf.ByteString
+        getToIdBytes();
+
+    /**
+     * <code>string content = 4;</code>
+     * @return The content.
+     */
+    java.lang.String getContent();
+    /**
+     * <code>string content = 4;</code>
+     * @return The bytes for content.
+     */
+    com.google.protobuf.ByteString
+        getContentBytes();
+
+    /**
+     * <code>string task = 5;</code>
+     * @return The task.
+     */
+    java.lang.String getTask();
+    /**
+     * <code>string task = 5;</code>
+     * @return The bytes for task.
+     */
+    com.google.protobuf.ByteString
+        getTaskBytes();
+
+    /**
+     * <code>string result = 6;</code>
+     * @return The result.
+     */
+    java.lang.String getResult();
+    /**
+     * <code>string result = 6;</code>
+     * @return The bytes for result.
+     */
+    com.google.protobuf.ByteString
+        getResultBytes();
+
+    /**
+     * <code>string msg_id = 7;</code>
+     * @return The msgId.
+     */
+    java.lang.String getMsgId();
+    /**
+     * <code>string msg_id = 7;</code>
+     * @return The bytes for msgId.
+     */
+    com.google.protobuf.ByteString
+        getMsgIdBytes();
+
+    /**
+     * <code>repeated string capabilities = 8;</code>
+     * @return A list containing the capabilities.
+     */
+    java.util.List<java.lang.String>
+        getCapabilitiesList();
+    /**
+     * <code>repeated string capabilities = 8;</code>
+     * @return The count of capabilities.
+     */
+    int getCapabilitiesCount();
+    /**
+     * <code>repeated string capabilities = 8;</code>
+     * @param index The index of the element to return.
+     * @return The capabilities at the given index.
+     */
+    java.lang.String getCapabilities(int index);
+    /**
+     * <code>repeated string capabilities = 8;</code>
+     * @param index The index of the value to return.
+     * @return The bytes of the capabilities at the given index.
+     */
+    com.google.protobuf.ByteString
+        getCapabilitiesBytes(int index);
+
+    /**
+     * <code>repeated string specialties = 9;</code>
+     * @return A list containing the specialties.
+     */
+    java.util.List<java.lang.String>
+        getSpecialtiesList();
+    /**
+     * <code>repeated string specialties = 9;</code>
+     * @return The count of specialties.
+     */
+    int getSpecialtiesCount();
+    /**
+     * <code>repeated string specialties = 9;</code>
+     * @param index The index of the element to return.
+     * @return The specialties at the given index.
+     */
+    java.lang.String getSpecialties(int index);
+    /**
+     * <code>repeated string specialties = 9;</code>
+     * @param index The index of the value to return.
+     * @return The bytes of the specialties at the given index.
+     */
+    com.google.protobuf.ByteString
+        getSpecialtiesBytes(int index);
+
+    /**
+     * <code>int64 timestamp = 10;</code>
+     * @return The timestamp.
+     */
+    long getTimestamp();
+  }
+  /**
+   * Protobuf type {@code bridge.SwarmMessage}
+   */
+  public static final class SwarmMessage extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:bridge.SwarmMessage)
+      SwarmMessageOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use SwarmMessage.newBuilder() to construct.
+    private SwarmMessage(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private SwarmMessage() {
+      type_ = 0;
+      fromId_ = "";
+      toId_ = "";
+      content_ = "";
+      task_ = "";
+      result_ = "";
+      msgId_ = "";
+      capabilities_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      specialties_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new SwarmMessage();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_SwarmMessage_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_SwarmMessage_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.bridge.proto.ChatProto.SwarmMessage.class, com.bridge.proto.ChatProto.SwarmMessage.Builder.class);
+    }
+
+    /**
+     * Protobuf enum {@code bridge.SwarmMessage.Type}
+     */
+    public enum Type
+        implements com.google.protobuf.ProtocolMessageEnum {
+      /**
+       * <code>REGISTER = 0;</code>
+       */
+      REGISTER(0),
+      /**
+       * <code>REGISTER_ACK = 1;</code>
+       */
+      REGISTER_ACK(1),
+      /**
+       * <code>HEARTBEAT = 2;</code>
+       */
+      HEARTBEAT(2),
+      /**
+       * <code>BROADCAST = 3;</code>
+       */
+      BROADCAST(3),
+      /**
+       * <code>DIRECT = 4;</code>
+       */
+      DIRECT(4),
+      /**
+       * <code>HELP_REQUEST = 5;</code>
+       */
+      HELP_REQUEST(5),
+      /**
+       * <code>HELP_RESPONSE = 6;</code>
+       */
+      HELP_RESPONSE(6),
+      /**
+       * <code>NODE_LIST = 7;</code>
+       */
+      NODE_LIST(7),
+      UNRECOGNIZED(-1),
+      ;
+
+      /**
+       * <code>REGISTER = 0;</code>
+       */
+      public static final int REGISTER_VALUE = 0;
+      /**
+       * <code>REGISTER_ACK = 1;</code>
+       */
+      public static final int REGISTER_ACK_VALUE = 1;
+      /**
+       * <code>HEARTBEAT = 2;</code>
+       */
+      public static final int HEARTBEAT_VALUE = 2;
+      /**
+       * <code>BROADCAST = 3;</code>
+       */
+      public static final int BROADCAST_VALUE = 3;
+      /**
+       * <code>DIRECT = 4;</code>
+       */
+      public static final int DIRECT_VALUE = 4;
+      /**
+       * <code>HELP_REQUEST = 5;</code>
+       */
+      public static final int HELP_REQUEST_VALUE = 5;
+      /**
+       * <code>HELP_RESPONSE = 6;</code>
+       */
+      public static final int HELP_RESPONSE_VALUE = 6;
+      /**
+       * <code>NODE_LIST = 7;</code>
+       */
+      public static final int NODE_LIST_VALUE = 7;
+
+
+      public final int getNumber() {
+        if (this == UNRECOGNIZED) {
+          throw new java.lang.IllegalArgumentException(
+              "Can't get the number of an unknown enum value.");
+        }
+        return value;
+      }
+
+      /**
+       * @param value The numeric wire value of the corresponding enum entry.
+       * @return The enum associated with the given numeric wire value.
+       * @deprecated Use {@link #forNumber(int)} instead.
+       */
+      @java.lang.Deprecated
+      public static Type valueOf(int value) {
+        return forNumber(value);
+      }
+
+      /**
+       * @param value The numeric wire value of the corresponding enum entry.
+       * @return The enum associated with the given numeric wire value.
+       */
+      public static Type forNumber(int value) {
+        switch (value) {
+          case 0: return REGISTER;
+          case 1: return REGISTER_ACK;
+          case 2: return HEARTBEAT;
+          case 3: return BROADCAST;
+          case 4: return DIRECT;
+          case 5: return HELP_REQUEST;
+          case 6: return HELP_RESPONSE;
+          case 7: return NODE_LIST;
+          default: return null;
+        }
+      }
+
+      public static com.google.protobuf.Internal.EnumLiteMap<Type>
+          internalGetValueMap() {
+        return internalValueMap;
+      }
+      private static final com.google.protobuf.Internal.EnumLiteMap<
+          Type> internalValueMap =
+            new com.google.protobuf.Internal.EnumLiteMap<Type>() {
+              public Type findValueByNumber(int number) {
+                return Type.forNumber(number);
+              }
+            };
+
+      public final com.google.protobuf.Descriptors.EnumValueDescriptor
+          getValueDescriptor() {
+        if (this == UNRECOGNIZED) {
+          throw new java.lang.IllegalStateException(
+              "Can't get the descriptor of an unrecognized enum value.");
+        }
+        return getDescriptor().getValues().get(ordinal());
+      }
+      public final com.google.protobuf.Descriptors.EnumDescriptor
+          getDescriptorForType() {
+        return getDescriptor();
+      }
+      public static final com.google.protobuf.Descriptors.EnumDescriptor
+          getDescriptor() {
+        return com.bridge.proto.ChatProto.SwarmMessage.getDescriptor().getEnumTypes().get(0);
+      }
+
+      private static final Type[] VALUES = values();
+
+      public static Type valueOf(
+          com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
+        if (desc.getType() != getDescriptor()) {
+          throw new java.lang.IllegalArgumentException(
+            "EnumValueDescriptor is not for this type.");
+        }
+        if (desc.getIndex() == -1) {
+          return UNRECOGNIZED;
+        }
+        return VALUES[desc.getIndex()];
+      }
+
+      private final int value;
+
+      private Type(int value) {
+        this.value = value;
+      }
+
+      // @@protoc_insertion_point(enum_scope:bridge.SwarmMessage.Type)
+    }
+
+    public static final int TYPE_FIELD_NUMBER = 1;
+    private int type_ = 0;
+    /**
+     * <code>.bridge.SwarmMessage.Type type = 1;</code>
+     * @return The enum numeric value on the wire for type.
+     */
+    @java.lang.Override public int getTypeValue() {
+      return type_;
+    }
+    /**
+     * <code>.bridge.SwarmMessage.Type type = 1;</code>
+     * @return The type.
+     */
+    @java.lang.Override public com.bridge.proto.ChatProto.SwarmMessage.Type getType() {
+      com.bridge.proto.ChatProto.SwarmMessage.Type result = com.bridge.proto.ChatProto.SwarmMessage.Type.forNumber(type_);
+      return result == null ? com.bridge.proto.ChatProto.SwarmMessage.Type.UNRECOGNIZED : result;
+    }
+
+    public static final int FROM_ID_FIELD_NUMBER = 2;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object fromId_ = "";
+    /**
+     * <code>string from_id = 2;</code>
+     * @return The fromId.
+     */
+    @java.lang.Override
+    public java.lang.String getFromId() {
+      java.lang.Object ref = fromId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        fromId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string from_id = 2;</code>
+     * @return The bytes for fromId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getFromIdBytes() {
+      java.lang.Object ref = fromId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        fromId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int TO_ID_FIELD_NUMBER = 3;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object toId_ = "";
+    /**
+     * <code>string to_id = 3;</code>
+     * @return The toId.
+     */
+    @java.lang.Override
+    public java.lang.String getToId() {
+      java.lang.Object ref = toId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        toId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string to_id = 3;</code>
+     * @return The bytes for toId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getToIdBytes() {
+      java.lang.Object ref = toId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        toId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int CONTENT_FIELD_NUMBER = 4;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object content_ = "";
+    /**
+     * <code>string content = 4;</code>
+     * @return The content.
+     */
+    @java.lang.Override
+    public java.lang.String getContent() {
+      java.lang.Object ref = content_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        content_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string content = 4;</code>
+     * @return The bytes for content.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getContentBytes() {
+      java.lang.Object ref = content_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        content_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int TASK_FIELD_NUMBER = 5;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object task_ = "";
+    /**
+     * <code>string task = 5;</code>
+     * @return The task.
+     */
+    @java.lang.Override
+    public java.lang.String getTask() {
+      java.lang.Object ref = task_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        task_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string task = 5;</code>
+     * @return The bytes for task.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getTaskBytes() {
+      java.lang.Object ref = task_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        task_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int RESULT_FIELD_NUMBER = 6;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object result_ = "";
+    /**
+     * <code>string result = 6;</code>
+     * @return The result.
+     */
+    @java.lang.Override
+    public java.lang.String getResult() {
+      java.lang.Object ref = result_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        result_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string result = 6;</code>
+     * @return The bytes for result.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getResultBytes() {
+      java.lang.Object ref = result_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        result_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int MSG_ID_FIELD_NUMBER = 7;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object msgId_ = "";
+    /**
+     * <code>string msg_id = 7;</code>
+     * @return The msgId.
+     */
+    @java.lang.Override
+    public java.lang.String getMsgId() {
+      java.lang.Object ref = msgId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        msgId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string msg_id = 7;</code>
+     * @return The bytes for msgId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getMsgIdBytes() {
+      java.lang.Object ref = msgId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        msgId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int CAPABILITIES_FIELD_NUMBER = 8;
+    @SuppressWarnings("serial")
+    private com.google.protobuf.LazyStringList capabilities_;
+    /**
+     * <code>repeated string capabilities = 8;</code>
+     * @return A list containing the capabilities.
+     */
+    public com.google.protobuf.ProtocolStringList
+        getCapabilitiesList() {
+      return capabilities_;
+    }
+    /**
+     * <code>repeated string capabilities = 8;</code>
+     * @return The count of capabilities.
+     */
+    public int getCapabilitiesCount() {
+      return capabilities_.size();
+    }
+    /**
+     * <code>repeated string capabilities = 8;</code>
+     * @param index The index of the element to return.
+     * @return The capabilities at the given index.
+     */
+    public java.lang.String getCapabilities(int index) {
+      return capabilities_.get(index);
+    }
+    /**
+     * <code>repeated string capabilities = 8;</code>
+     * @param index The index of the value to return.
+     * @return The bytes of the capabilities at the given index.
+     */
+    public com.google.protobuf.ByteString
+        getCapabilitiesBytes(int index) {
+      return capabilities_.getByteString(index);
+    }
+
+    public static final int SPECIALTIES_FIELD_NUMBER = 9;
+    @SuppressWarnings("serial")
+    private com.google.protobuf.LazyStringList specialties_;
+    /**
+     * <code>repeated string specialties = 9;</code>
+     * @return A list containing the specialties.
+     */
+    public com.google.protobuf.ProtocolStringList
+        getSpecialtiesList() {
+      return specialties_;
+    }
+    /**
+     * <code>repeated string specialties = 9;</code>
+     * @return The count of specialties.
+     */
+    public int getSpecialtiesCount() {
+      return specialties_.size();
+    }
+    /**
+     * <code>repeated string specialties = 9;</code>
+     * @param index The index of the element to return.
+     * @return The specialties at the given index.
+     */
+    public java.lang.String getSpecialties(int index) {
+      return specialties_.get(index);
+    }
+    /**
+     * <code>repeated string specialties = 9;</code>
+     * @param index The index of the value to return.
+     * @return The bytes of the specialties at the given index.
+     */
+    public com.google.protobuf.ByteString
+        getSpecialtiesBytes(int index) {
+      return specialties_.getByteString(index);
+    }
+
+    public static final int TIMESTAMP_FIELD_NUMBER = 10;
+    private long timestamp_ = 0L;
+    /**
+     * <code>int64 timestamp = 10;</code>
+     * @return The timestamp.
+     */
+    @java.lang.Override
+    public long getTimestamp() {
+      return timestamp_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (type_ != com.bridge.proto.ChatProto.SwarmMessage.Type.REGISTER.getNumber()) {
+        output.writeEnum(1, type_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(fromId_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, fromId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(toId_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, toId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(content_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 4, content_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(task_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 5, task_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(result_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 6, result_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(msgId_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 7, msgId_);
+      }
+      for (int i = 0; i < capabilities_.size(); i++) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 8, capabilities_.getRaw(i));
+      }
+      for (int i = 0; i < specialties_.size(); i++) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 9, specialties_.getRaw(i));
+      }
+      if (timestamp_ != 0L) {
+        output.writeInt64(10, timestamp_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (type_ != com.bridge.proto.ChatProto.SwarmMessage.Type.REGISTER.getNumber()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeEnumSize(1, type_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(fromId_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, fromId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(toId_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, toId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(content_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, content_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(task_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, task_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(result_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, result_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(msgId_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(7, msgId_);
+      }
+      {
+        int dataSize = 0;
+        for (int i = 0; i < capabilities_.size(); i++) {
+          dataSize += computeStringSizeNoTag(capabilities_.getRaw(i));
+        }
+        size += dataSize;
+        size += 1 * getCapabilitiesList().size();
+      }
+      {
+        int dataSize = 0;
+        for (int i = 0; i < specialties_.size(); i++) {
+          dataSize += computeStringSizeNoTag(specialties_.getRaw(i));
+        }
+        size += dataSize;
+        size += 1 * getSpecialtiesList().size();
+      }
+      if (timestamp_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(10, timestamp_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.bridge.proto.ChatProto.SwarmMessage)) {
+        return super.equals(obj);
+      }
+      com.bridge.proto.ChatProto.SwarmMessage other = (com.bridge.proto.ChatProto.SwarmMessage) obj;
+
+      if (type_ != other.type_) return false;
+      if (!getFromId()
+          .equals(other.getFromId())) return false;
+      if (!getToId()
+          .equals(other.getToId())) return false;
+      if (!getContent()
+          .equals(other.getContent())) return false;
+      if (!getTask()
+          .equals(other.getTask())) return false;
+      if (!getResult()
+          .equals(other.getResult())) return false;
+      if (!getMsgId()
+          .equals(other.getMsgId())) return false;
+      if (!getCapabilitiesList()
+          .equals(other.getCapabilitiesList())) return false;
+      if (!getSpecialtiesList()
+          .equals(other.getSpecialtiesList())) return false;
+      if (getTimestamp()
+          != other.getTimestamp()) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + TYPE_FIELD_NUMBER;
+      hash = (53 * hash) + type_;
+      hash = (37 * hash) + FROM_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getFromId().hashCode();
+      hash = (37 * hash) + TO_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getToId().hashCode();
+      hash = (37 * hash) + CONTENT_FIELD_NUMBER;
+      hash = (53 * hash) + getContent().hashCode();
+      hash = (37 * hash) + TASK_FIELD_NUMBER;
+      hash = (53 * hash) + getTask().hashCode();
+      hash = (37 * hash) + RESULT_FIELD_NUMBER;
+      hash = (53 * hash) + getResult().hashCode();
+      hash = (37 * hash) + MSG_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getMsgId().hashCode();
+      if (getCapabilitiesCount() > 0) {
+        hash = (37 * hash) + CAPABILITIES_FIELD_NUMBER;
+        hash = (53 * hash) + getCapabilitiesList().hashCode();
+      }
+      if (getSpecialtiesCount() > 0) {
+        hash = (37 * hash) + SPECIALTIES_FIELD_NUMBER;
+        hash = (53 * hash) + getSpecialtiesList().hashCode();
+      }
+      hash = (37 * hash) + TIMESTAMP_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getTimestamp());
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.bridge.proto.ChatProto.SwarmMessage parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SwarmMessage parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmMessage parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SwarmMessage parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmMessage parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SwarmMessage parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmMessage parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SwarmMessage parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmMessage parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SwarmMessage parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmMessage parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SwarmMessage parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.bridge.proto.ChatProto.SwarmMessage prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code bridge.SwarmMessage}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:bridge.SwarmMessage)
+        com.bridge.proto.ChatProto.SwarmMessageOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SwarmMessage_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SwarmMessage_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.bridge.proto.ChatProto.SwarmMessage.class, com.bridge.proto.ChatProto.SwarmMessage.Builder.class);
+      }
+
+      // Construct using com.bridge.proto.ChatProto.SwarmMessage.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        type_ = 0;
+        fromId_ = "";
+        toId_ = "";
+        content_ = "";
+        task_ = "";
+        result_ = "";
+        msgId_ = "";
+        capabilities_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000080);
+        specialties_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000100);
+        timestamp_ = 0L;
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SwarmMessage_descriptor;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SwarmMessage getDefaultInstanceForType() {
+        return com.bridge.proto.ChatProto.SwarmMessage.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SwarmMessage build() {
+        com.bridge.proto.ChatProto.SwarmMessage result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SwarmMessage buildPartial() {
+        com.bridge.proto.ChatProto.SwarmMessage result = new com.bridge.proto.ChatProto.SwarmMessage(this);
+        buildPartialRepeatedFields(result);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartialRepeatedFields(com.bridge.proto.ChatProto.SwarmMessage result) {
+        if (((bitField0_ & 0x00000080) != 0)) {
+          capabilities_ = capabilities_.getUnmodifiableView();
+          bitField0_ = (bitField0_ & ~0x00000080);
+        }
+        result.capabilities_ = capabilities_;
+        if (((bitField0_ & 0x00000100) != 0)) {
+          specialties_ = specialties_.getUnmodifiableView();
+          bitField0_ = (bitField0_ & ~0x00000100);
+        }
+        result.specialties_ = specialties_;
+      }
+
+      private void buildPartial0(com.bridge.proto.ChatProto.SwarmMessage result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.type_ = type_;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.fromId_ = fromId_;
+        }
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.toId_ = toId_;
+        }
+        if (((from_bitField0_ & 0x00000008) != 0)) {
+          result.content_ = content_;
+        }
+        if (((from_bitField0_ & 0x00000010) != 0)) {
+          result.task_ = task_;
+        }
+        if (((from_bitField0_ & 0x00000020) != 0)) {
+          result.result_ = result_;
+        }
+        if (((from_bitField0_ & 0x00000040) != 0)) {
+          result.msgId_ = msgId_;
+        }
+        if (((from_bitField0_ & 0x00000200) != 0)) {
+          result.timestamp_ = timestamp_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.bridge.proto.ChatProto.SwarmMessage) {
+          return mergeFrom((com.bridge.proto.ChatProto.SwarmMessage)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.bridge.proto.ChatProto.SwarmMessage other) {
+        if (other == com.bridge.proto.ChatProto.SwarmMessage.getDefaultInstance()) return this;
+        if (other.type_ != 0) {
+          setTypeValue(other.getTypeValue());
+        }
+        if (!other.getFromId().isEmpty()) {
+          fromId_ = other.fromId_;
+          bitField0_ |= 0x00000002;
+          onChanged();
+        }
+        if (!other.getToId().isEmpty()) {
+          toId_ = other.toId_;
+          bitField0_ |= 0x00000004;
+          onChanged();
+        }
+        if (!other.getContent().isEmpty()) {
+          content_ = other.content_;
+          bitField0_ |= 0x00000008;
+          onChanged();
+        }
+        if (!other.getTask().isEmpty()) {
+          task_ = other.task_;
+          bitField0_ |= 0x00000010;
+          onChanged();
+        }
+        if (!other.getResult().isEmpty()) {
+          result_ = other.result_;
+          bitField0_ |= 0x00000020;
+          onChanged();
+        }
+        if (!other.getMsgId().isEmpty()) {
+          msgId_ = other.msgId_;
+          bitField0_ |= 0x00000040;
+          onChanged();
+        }
+        if (!other.capabilities_.isEmpty()) {
+          if (capabilities_.isEmpty()) {
+            capabilities_ = other.capabilities_;
+            bitField0_ = (bitField0_ & ~0x00000080);
+          } else {
+            ensureCapabilitiesIsMutable();
+            capabilities_.addAll(other.capabilities_);
+          }
+          onChanged();
+        }
+        if (!other.specialties_.isEmpty()) {
+          if (specialties_.isEmpty()) {
+            specialties_ = other.specialties_;
+            bitField0_ = (bitField0_ & ~0x00000100);
+          } else {
+            ensureSpecialtiesIsMutable();
+            specialties_.addAll(other.specialties_);
+          }
+          onChanged();
+        }
+        if (other.getTimestamp() != 0L) {
+          setTimestamp(other.getTimestamp());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 8: {
+                type_ = input.readEnum();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 8
+              case 18: {
+                fromId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 18
+              case 26: {
+                toId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 26
+              case 34: {
+                content_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000008;
+                break;
+              } // case 34
+              case 42: {
+                task_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000010;
+                break;
+              } // case 42
+              case 50: {
+                result_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000020;
+                break;
+              } // case 50
+              case 58: {
+                msgId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000040;
+                break;
+              } // case 58
+              case 66: {
+                java.lang.String s = input.readStringRequireUtf8();
+                ensureCapabilitiesIsMutable();
+                capabilities_.add(s);
+                break;
+              } // case 66
+              case 74: {
+                java.lang.String s = input.readStringRequireUtf8();
+                ensureSpecialtiesIsMutable();
+                specialties_.add(s);
+                break;
+              } // case 74
+              case 80: {
+                timestamp_ = input.readInt64();
+                bitField0_ |= 0x00000200;
+                break;
+              } // case 80
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private int type_ = 0;
+      /**
+       * <code>.bridge.SwarmMessage.Type type = 1;</code>
+       * @return The enum numeric value on the wire for type.
+       */
+      @java.lang.Override public int getTypeValue() {
+        return type_;
+      }
+      /**
+       * <code>.bridge.SwarmMessage.Type type = 1;</code>
+       * @param value The enum numeric value on the wire for type to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTypeValue(int value) {
+        type_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.bridge.SwarmMessage.Type type = 1;</code>
+       * @return The type.
+       */
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SwarmMessage.Type getType() {
+        com.bridge.proto.ChatProto.SwarmMessage.Type result = com.bridge.proto.ChatProto.SwarmMessage.Type.forNumber(type_);
+        return result == null ? com.bridge.proto.ChatProto.SwarmMessage.Type.UNRECOGNIZED : result;
+      }
+      /**
+       * <code>.bridge.SwarmMessage.Type type = 1;</code>
+       * @param value The type to set.
+       * @return This builder for chaining.
+       */
+      public Builder setType(com.bridge.proto.ChatProto.SwarmMessage.Type value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        bitField0_ |= 0x00000001;
+        type_ = value.getNumber();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.bridge.SwarmMessage.Type type = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearType() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        type_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object fromId_ = "";
+      /**
+       * <code>string from_id = 2;</code>
+       * @return The fromId.
+       */
+      public java.lang.String getFromId() {
+        java.lang.Object ref = fromId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          fromId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string from_id = 2;</code>
+       * @return The bytes for fromId.
+       */
+      public com.google.protobuf.ByteString
+          getFromIdBytes() {
+        java.lang.Object ref = fromId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          fromId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string from_id = 2;</code>
+       * @param value The fromId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setFromId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        fromId_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string from_id = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearFromId() {
+        fromId_ = getDefaultInstance().getFromId();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string from_id = 2;</code>
+       * @param value The bytes for fromId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setFromIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        fromId_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object toId_ = "";
+      /**
+       * <code>string to_id = 3;</code>
+       * @return The toId.
+       */
+      public java.lang.String getToId() {
+        java.lang.Object ref = toId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          toId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string to_id = 3;</code>
+       * @return The bytes for toId.
+       */
+      public com.google.protobuf.ByteString
+          getToIdBytes() {
+        java.lang.Object ref = toId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          toId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string to_id = 3;</code>
+       * @param value The toId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setToId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        toId_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string to_id = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearToId() {
+        toId_ = getDefaultInstance().getToId();
+        bitField0_ = (bitField0_ & ~0x00000004);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string to_id = 3;</code>
+       * @param value The bytes for toId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setToIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        toId_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object content_ = "";
+      /**
+       * <code>string content = 4;</code>
+       * @return The content.
+       */
+      public java.lang.String getContent() {
+        java.lang.Object ref = content_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          content_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string content = 4;</code>
+       * @return The bytes for content.
+       */
+      public com.google.protobuf.ByteString
+          getContentBytes() {
+        java.lang.Object ref = content_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          content_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string content = 4;</code>
+       * @param value The content to set.
+       * @return This builder for chaining.
+       */
+      public Builder setContent(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        content_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string content = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearContent() {
+        content_ = getDefaultInstance().getContent();
+        bitField0_ = (bitField0_ & ~0x00000008);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string content = 4;</code>
+       * @param value The bytes for content to set.
+       * @return This builder for chaining.
+       */
+      public Builder setContentBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        content_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object task_ = "";
+      /**
+       * <code>string task = 5;</code>
+       * @return The task.
+       */
+      public java.lang.String getTask() {
+        java.lang.Object ref = task_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          task_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string task = 5;</code>
+       * @return The bytes for task.
+       */
+      public com.google.protobuf.ByteString
+          getTaskBytes() {
+        java.lang.Object ref = task_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          task_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string task = 5;</code>
+       * @param value The task to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTask(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        task_ = value;
+        bitField0_ |= 0x00000010;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string task = 5;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTask() {
+        task_ = getDefaultInstance().getTask();
+        bitField0_ = (bitField0_ & ~0x00000010);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string task = 5;</code>
+       * @param value The bytes for task to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTaskBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        task_ = value;
+        bitField0_ |= 0x00000010;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object result_ = "";
+      /**
+       * <code>string result = 6;</code>
+       * @return The result.
+       */
+      public java.lang.String getResult() {
+        java.lang.Object ref = result_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          result_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string result = 6;</code>
+       * @return The bytes for result.
+       */
+      public com.google.protobuf.ByteString
+          getResultBytes() {
+        java.lang.Object ref = result_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          result_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string result = 6;</code>
+       * @param value The result to set.
+       * @return This builder for chaining.
+       */
+      public Builder setResult(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        result_ = value;
+        bitField0_ |= 0x00000020;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string result = 6;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearResult() {
+        result_ = getDefaultInstance().getResult();
+        bitField0_ = (bitField0_ & ~0x00000020);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string result = 6;</code>
+       * @param value The bytes for result to set.
+       * @return This builder for chaining.
+       */
+      public Builder setResultBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        result_ = value;
+        bitField0_ |= 0x00000020;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object msgId_ = "";
+      /**
+       * <code>string msg_id = 7;</code>
+       * @return The msgId.
+       */
+      public java.lang.String getMsgId() {
+        java.lang.Object ref = msgId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          msgId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string msg_id = 7;</code>
+       * @return The bytes for msgId.
+       */
+      public com.google.protobuf.ByteString
+          getMsgIdBytes() {
+        java.lang.Object ref = msgId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          msgId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string msg_id = 7;</code>
+       * @param value The msgId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMsgId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        msgId_ = value;
+        bitField0_ |= 0x00000040;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string msg_id = 7;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMsgId() {
+        msgId_ = getDefaultInstance().getMsgId();
+        bitField0_ = (bitField0_ & ~0x00000040);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string msg_id = 7;</code>
+       * @param value The bytes for msgId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMsgIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        msgId_ = value;
+        bitField0_ |= 0x00000040;
+        onChanged();
+        return this;
+      }
+
+      private com.google.protobuf.LazyStringList capabilities_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      private void ensureCapabilitiesIsMutable() {
+        if (!((bitField0_ & 0x00000080) != 0)) {
+          capabilities_ = new com.google.protobuf.LazyStringArrayList(capabilities_);
+          bitField0_ |= 0x00000080;
+         }
+      }
+      /**
+       * <code>repeated string capabilities = 8;</code>
+       * @return A list containing the capabilities.
+       */
+      public com.google.protobuf.ProtocolStringList
+          getCapabilitiesList() {
+        return capabilities_.getUnmodifiableView();
+      }
+      /**
+       * <code>repeated string capabilities = 8;</code>
+       * @return The count of capabilities.
+       */
+      public int getCapabilitiesCount() {
+        return capabilities_.size();
+      }
+      /**
+       * <code>repeated string capabilities = 8;</code>
+       * @param index The index of the element to return.
+       * @return The capabilities at the given index.
+       */
+      public java.lang.String getCapabilities(int index) {
+        return capabilities_.get(index);
+      }
+      /**
+       * <code>repeated string capabilities = 8;</code>
+       * @param index The index of the value to return.
+       * @return The bytes of the capabilities at the given index.
+       */
+      public com.google.protobuf.ByteString
+          getCapabilitiesBytes(int index) {
+        return capabilities_.getByteString(index);
+      }
+      /**
+       * <code>repeated string capabilities = 8;</code>
+       * @param index The index to set the value at.
+       * @param value The capabilities to set.
+       * @return This builder for chaining.
+       */
+      public Builder setCapabilities(
+          int index, java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        ensureCapabilitiesIsMutable();
+        capabilities_.set(index, value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string capabilities = 8;</code>
+       * @param value The capabilities to add.
+       * @return This builder for chaining.
+       */
+      public Builder addCapabilities(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        ensureCapabilitiesIsMutable();
+        capabilities_.add(value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string capabilities = 8;</code>
+       * @param values The capabilities to add.
+       * @return This builder for chaining.
+       */
+      public Builder addAllCapabilities(
+          java.lang.Iterable<java.lang.String> values) {
+        ensureCapabilitiesIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, capabilities_);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string capabilities = 8;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearCapabilities() {
+        capabilities_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000080);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string capabilities = 8;</code>
+       * @param value The bytes of the capabilities to add.
+       * @return This builder for chaining.
+       */
+      public Builder addCapabilitiesBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        ensureCapabilitiesIsMutable();
+        capabilities_.add(value);
+        onChanged();
+        return this;
+      }
+
+      private com.google.protobuf.LazyStringList specialties_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      private void ensureSpecialtiesIsMutable() {
+        if (!((bitField0_ & 0x00000100) != 0)) {
+          specialties_ = new com.google.protobuf.LazyStringArrayList(specialties_);
+          bitField0_ |= 0x00000100;
+         }
+      }
+      /**
+       * <code>repeated string specialties = 9;</code>
+       * @return A list containing the specialties.
+       */
+      public com.google.protobuf.ProtocolStringList
+          getSpecialtiesList() {
+        return specialties_.getUnmodifiableView();
+      }
+      /**
+       * <code>repeated string specialties = 9;</code>
+       * @return The count of specialties.
+       */
+      public int getSpecialtiesCount() {
+        return specialties_.size();
+      }
+      /**
+       * <code>repeated string specialties = 9;</code>
+       * @param index The index of the element to return.
+       * @return The specialties at the given index.
+       */
+      public java.lang.String getSpecialties(int index) {
+        return specialties_.get(index);
+      }
+      /**
+       * <code>repeated string specialties = 9;</code>
+       * @param index The index of the value to return.
+       * @return The bytes of the specialties at the given index.
+       */
+      public com.google.protobuf.ByteString
+          getSpecialtiesBytes(int index) {
+        return specialties_.getByteString(index);
+      }
+      /**
+       * <code>repeated string specialties = 9;</code>
+       * @param index The index to set the value at.
+       * @param value The specialties to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSpecialties(
+          int index, java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        ensureSpecialtiesIsMutable();
+        specialties_.set(index, value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string specialties = 9;</code>
+       * @param value The specialties to add.
+       * @return This builder for chaining.
+       */
+      public Builder addSpecialties(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        ensureSpecialtiesIsMutable();
+        specialties_.add(value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string specialties = 9;</code>
+       * @param values The specialties to add.
+       * @return This builder for chaining.
+       */
+      public Builder addAllSpecialties(
+          java.lang.Iterable<java.lang.String> values) {
+        ensureSpecialtiesIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, specialties_);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string specialties = 9;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSpecialties() {
+        specialties_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000100);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string specialties = 9;</code>
+       * @param value The bytes of the specialties to add.
+       * @return This builder for chaining.
+       */
+      public Builder addSpecialtiesBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        ensureSpecialtiesIsMutable();
+        specialties_.add(value);
+        onChanged();
+        return this;
+      }
+
+      private long timestamp_ ;
+      /**
+       * <code>int64 timestamp = 10;</code>
+       * @return The timestamp.
+       */
+      @java.lang.Override
+      public long getTimestamp() {
+        return timestamp_;
+      }
+      /**
+       * <code>int64 timestamp = 10;</code>
+       * @param value The timestamp to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTimestamp(long value) {
+        
+        timestamp_ = value;
+        bitField0_ |= 0x00000200;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 timestamp = 10;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTimestamp() {
+        bitField0_ = (bitField0_ & ~0x00000200);
+        timestamp_ = 0L;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:bridge.SwarmMessage)
+    }
+
+    // @@protoc_insertion_point(class_scope:bridge.SwarmMessage)
+    private static final com.bridge.proto.ChatProto.SwarmMessage DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.bridge.proto.ChatProto.SwarmMessage();
+    }
+
+    public static com.bridge.proto.ChatProto.SwarmMessage getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<SwarmMessage>
+        PARSER = new com.google.protobuf.AbstractParser<SwarmMessage>() {
+      @java.lang.Override
+      public SwarmMessage parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<SwarmMessage> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<SwarmMessage> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.bridge.proto.ChatProto.SwarmMessage getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface SwarmAgentNodeOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:bridge.SwarmAgentNode)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string agent_id = 1;</code>
+     * @return The agentId.
+     */
+    java.lang.String getAgentId();
+    /**
+     * <code>string agent_id = 1;</code>
+     * @return The bytes for agentId.
+     */
+    com.google.protobuf.ByteString
+        getAgentIdBytes();
+
+    /**
+     * <code>repeated string capabilities = 2;</code>
+     * @return A list containing the capabilities.
+     */
+    java.util.List<java.lang.String>
+        getCapabilitiesList();
+    /**
+     * <code>repeated string capabilities = 2;</code>
+     * @return The count of capabilities.
+     */
+    int getCapabilitiesCount();
+    /**
+     * <code>repeated string capabilities = 2;</code>
+     * @param index The index of the element to return.
+     * @return The capabilities at the given index.
+     */
+    java.lang.String getCapabilities(int index);
+    /**
+     * <code>repeated string capabilities = 2;</code>
+     * @param index The index of the value to return.
+     * @return The bytes of the capabilities at the given index.
+     */
+    com.google.protobuf.ByteString
+        getCapabilitiesBytes(int index);
+
+    /**
+     * <code>repeated string specialties = 3;</code>
+     * @return A list containing the specialties.
+     */
+    java.util.List<java.lang.String>
+        getSpecialtiesList();
+    /**
+     * <code>repeated string specialties = 3;</code>
+     * @return The count of specialties.
+     */
+    int getSpecialtiesCount();
+    /**
+     * <code>repeated string specialties = 3;</code>
+     * @param index The index of the element to return.
+     * @return The specialties at the given index.
+     */
+    java.lang.String getSpecialties(int index);
+    /**
+     * <code>repeated string specialties = 3;</code>
+     * @param index The index of the value to return.
+     * @return The bytes of the specialties at the given index.
+     */
+    com.google.protobuf.ByteString
+        getSpecialtiesBytes(int index);
+
+    /**
+     * <code>string status = 4;</code>
+     * @return The status.
+     */
+    java.lang.String getStatus();
+    /**
+     * <code>string status = 4;</code>
+     * @return The bytes for status.
+     */
+    com.google.protobuf.ByteString
+        getStatusBytes();
+
+    /**
+     * <code>int64 registered_at = 5;</code>
+     * @return The registeredAt.
+     */
+    long getRegisteredAt();
+
+    /**
+     * <code>int64 last_heartbeat = 6;</code>
+     * @return The lastHeartbeat.
+     */
+    long getLastHeartbeat();
+  }
+  /**
+   * Protobuf type {@code bridge.SwarmAgentNode}
+   */
+  public static final class SwarmAgentNode extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:bridge.SwarmAgentNode)
+      SwarmAgentNodeOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use SwarmAgentNode.newBuilder() to construct.
+    private SwarmAgentNode(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private SwarmAgentNode() {
+      agentId_ = "";
+      capabilities_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      specialties_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      status_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new SwarmAgentNode();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_SwarmAgentNode_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_SwarmAgentNode_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.bridge.proto.ChatProto.SwarmAgentNode.class, com.bridge.proto.ChatProto.SwarmAgentNode.Builder.class);
+    }
+
+    public static final int AGENT_ID_FIELD_NUMBER = 1;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object agentId_ = "";
+    /**
+     * <code>string agent_id = 1;</code>
+     * @return The agentId.
+     */
+    @java.lang.Override
+    public java.lang.String getAgentId() {
+      java.lang.Object ref = agentId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        agentId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string agent_id = 1;</code>
+     * @return The bytes for agentId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getAgentIdBytes() {
+      java.lang.Object ref = agentId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        agentId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int CAPABILITIES_FIELD_NUMBER = 2;
+    @SuppressWarnings("serial")
+    private com.google.protobuf.LazyStringList capabilities_;
+    /**
+     * <code>repeated string capabilities = 2;</code>
+     * @return A list containing the capabilities.
+     */
+    public com.google.protobuf.ProtocolStringList
+        getCapabilitiesList() {
+      return capabilities_;
+    }
+    /**
+     * <code>repeated string capabilities = 2;</code>
+     * @return The count of capabilities.
+     */
+    public int getCapabilitiesCount() {
+      return capabilities_.size();
+    }
+    /**
+     * <code>repeated string capabilities = 2;</code>
+     * @param index The index of the element to return.
+     * @return The capabilities at the given index.
+     */
+    public java.lang.String getCapabilities(int index) {
+      return capabilities_.get(index);
+    }
+    /**
+     * <code>repeated string capabilities = 2;</code>
+     * @param index The index of the value to return.
+     * @return The bytes of the capabilities at the given index.
+     */
+    public com.google.protobuf.ByteString
+        getCapabilitiesBytes(int index) {
+      return capabilities_.getByteString(index);
+    }
+
+    public static final int SPECIALTIES_FIELD_NUMBER = 3;
+    @SuppressWarnings("serial")
+    private com.google.protobuf.LazyStringList specialties_;
+    /**
+     * <code>repeated string specialties = 3;</code>
+     * @return A list containing the specialties.
+     */
+    public com.google.protobuf.ProtocolStringList
+        getSpecialtiesList() {
+      return specialties_;
+    }
+    /**
+     * <code>repeated string specialties = 3;</code>
+     * @return The count of specialties.
+     */
+    public int getSpecialtiesCount() {
+      return specialties_.size();
+    }
+    /**
+     * <code>repeated string specialties = 3;</code>
+     * @param index The index of the element to return.
+     * @return The specialties at the given index.
+     */
+    public java.lang.String getSpecialties(int index) {
+      return specialties_.get(index);
+    }
+    /**
+     * <code>repeated string specialties = 3;</code>
+     * @param index The index of the value to return.
+     * @return The bytes of the specialties at the given index.
+     */
+    public com.google.protobuf.ByteString
+        getSpecialtiesBytes(int index) {
+      return specialties_.getByteString(index);
+    }
+
+    public static final int STATUS_FIELD_NUMBER = 4;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object status_ = "";
+    /**
+     * <code>string status = 4;</code>
+     * @return The status.
+     */
+    @java.lang.Override
+    public java.lang.String getStatus() {
+      java.lang.Object ref = status_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        status_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string status = 4;</code>
+     * @return The bytes for status.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getStatusBytes() {
+      java.lang.Object ref = status_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        status_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int REGISTERED_AT_FIELD_NUMBER = 5;
+    private long registeredAt_ = 0L;
+    /**
+     * <code>int64 registered_at = 5;</code>
+     * @return The registeredAt.
+     */
+    @java.lang.Override
+    public long getRegisteredAt() {
+      return registeredAt_;
+    }
+
+    public static final int LAST_HEARTBEAT_FIELD_NUMBER = 6;
+    private long lastHeartbeat_ = 0L;
+    /**
+     * <code>int64 last_heartbeat = 6;</code>
+     * @return The lastHeartbeat.
+     */
+    @java.lang.Override
+    public long getLastHeartbeat() {
+      return lastHeartbeat_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(agentId_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, agentId_);
+      }
+      for (int i = 0; i < capabilities_.size(); i++) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, capabilities_.getRaw(i));
+      }
+      for (int i = 0; i < specialties_.size(); i++) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, specialties_.getRaw(i));
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(status_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 4, status_);
+      }
+      if (registeredAt_ != 0L) {
+        output.writeInt64(5, registeredAt_);
+      }
+      if (lastHeartbeat_ != 0L) {
+        output.writeInt64(6, lastHeartbeat_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(agentId_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, agentId_);
+      }
+      {
+        int dataSize = 0;
+        for (int i = 0; i < capabilities_.size(); i++) {
+          dataSize += computeStringSizeNoTag(capabilities_.getRaw(i));
+        }
+        size += dataSize;
+        size += 1 * getCapabilitiesList().size();
+      }
+      {
+        int dataSize = 0;
+        for (int i = 0; i < specialties_.size(); i++) {
+          dataSize += computeStringSizeNoTag(specialties_.getRaw(i));
+        }
+        size += dataSize;
+        size += 1 * getSpecialtiesList().size();
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(status_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, status_);
+      }
+      if (registeredAt_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(5, registeredAt_);
+      }
+      if (lastHeartbeat_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(6, lastHeartbeat_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.bridge.proto.ChatProto.SwarmAgentNode)) {
+        return super.equals(obj);
+      }
+      com.bridge.proto.ChatProto.SwarmAgentNode other = (com.bridge.proto.ChatProto.SwarmAgentNode) obj;
+
+      if (!getAgentId()
+          .equals(other.getAgentId())) return false;
+      if (!getCapabilitiesList()
+          .equals(other.getCapabilitiesList())) return false;
+      if (!getSpecialtiesList()
+          .equals(other.getSpecialtiesList())) return false;
+      if (!getStatus()
+          .equals(other.getStatus())) return false;
+      if (getRegisteredAt()
+          != other.getRegisteredAt()) return false;
+      if (getLastHeartbeat()
+          != other.getLastHeartbeat()) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + AGENT_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getAgentId().hashCode();
+      if (getCapabilitiesCount() > 0) {
+        hash = (37 * hash) + CAPABILITIES_FIELD_NUMBER;
+        hash = (53 * hash) + getCapabilitiesList().hashCode();
+      }
+      if (getSpecialtiesCount() > 0) {
+        hash = (37 * hash) + SPECIALTIES_FIELD_NUMBER;
+        hash = (53 * hash) + getSpecialtiesList().hashCode();
+      }
+      hash = (37 * hash) + STATUS_FIELD_NUMBER;
+      hash = (53 * hash) + getStatus().hashCode();
+      hash = (37 * hash) + REGISTERED_AT_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getRegisteredAt());
+      hash = (37 * hash) + LAST_HEARTBEAT_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getLastHeartbeat());
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.bridge.proto.ChatProto.SwarmAgentNode parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SwarmAgentNode parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmAgentNode parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SwarmAgentNode parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmAgentNode parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SwarmAgentNode parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmAgentNode parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SwarmAgentNode parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmAgentNode parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SwarmAgentNode parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmAgentNode parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SwarmAgentNode parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.bridge.proto.ChatProto.SwarmAgentNode prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code bridge.SwarmAgentNode}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:bridge.SwarmAgentNode)
+        com.bridge.proto.ChatProto.SwarmAgentNodeOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SwarmAgentNode_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SwarmAgentNode_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.bridge.proto.ChatProto.SwarmAgentNode.class, com.bridge.proto.ChatProto.SwarmAgentNode.Builder.class);
+      }
+
+      // Construct using com.bridge.proto.ChatProto.SwarmAgentNode.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        agentId_ = "";
+        capabilities_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000002);
+        specialties_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000004);
+        status_ = "";
+        registeredAt_ = 0L;
+        lastHeartbeat_ = 0L;
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SwarmAgentNode_descriptor;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SwarmAgentNode getDefaultInstanceForType() {
+        return com.bridge.proto.ChatProto.SwarmAgentNode.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SwarmAgentNode build() {
+        com.bridge.proto.ChatProto.SwarmAgentNode result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SwarmAgentNode buildPartial() {
+        com.bridge.proto.ChatProto.SwarmAgentNode result = new com.bridge.proto.ChatProto.SwarmAgentNode(this);
+        buildPartialRepeatedFields(result);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartialRepeatedFields(com.bridge.proto.ChatProto.SwarmAgentNode result) {
+        if (((bitField0_ & 0x00000002) != 0)) {
+          capabilities_ = capabilities_.getUnmodifiableView();
+          bitField0_ = (bitField0_ & ~0x00000002);
+        }
+        result.capabilities_ = capabilities_;
+        if (((bitField0_ & 0x00000004) != 0)) {
+          specialties_ = specialties_.getUnmodifiableView();
+          bitField0_ = (bitField0_ & ~0x00000004);
+        }
+        result.specialties_ = specialties_;
+      }
+
+      private void buildPartial0(com.bridge.proto.ChatProto.SwarmAgentNode result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.agentId_ = agentId_;
+        }
+        if (((from_bitField0_ & 0x00000008) != 0)) {
+          result.status_ = status_;
+        }
+        if (((from_bitField0_ & 0x00000010) != 0)) {
+          result.registeredAt_ = registeredAt_;
+        }
+        if (((from_bitField0_ & 0x00000020) != 0)) {
+          result.lastHeartbeat_ = lastHeartbeat_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.bridge.proto.ChatProto.SwarmAgentNode) {
+          return mergeFrom((com.bridge.proto.ChatProto.SwarmAgentNode)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.bridge.proto.ChatProto.SwarmAgentNode other) {
+        if (other == com.bridge.proto.ChatProto.SwarmAgentNode.getDefaultInstance()) return this;
+        if (!other.getAgentId().isEmpty()) {
+          agentId_ = other.agentId_;
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        if (!other.capabilities_.isEmpty()) {
+          if (capabilities_.isEmpty()) {
+            capabilities_ = other.capabilities_;
+            bitField0_ = (bitField0_ & ~0x00000002);
+          } else {
+            ensureCapabilitiesIsMutable();
+            capabilities_.addAll(other.capabilities_);
+          }
+          onChanged();
+        }
+        if (!other.specialties_.isEmpty()) {
+          if (specialties_.isEmpty()) {
+            specialties_ = other.specialties_;
+            bitField0_ = (bitField0_ & ~0x00000004);
+          } else {
+            ensureSpecialtiesIsMutable();
+            specialties_.addAll(other.specialties_);
+          }
+          onChanged();
+        }
+        if (!other.getStatus().isEmpty()) {
+          status_ = other.status_;
+          bitField0_ |= 0x00000008;
+          onChanged();
+        }
+        if (other.getRegisteredAt() != 0L) {
+          setRegisteredAt(other.getRegisteredAt());
+        }
+        if (other.getLastHeartbeat() != 0L) {
+          setLastHeartbeat(other.getLastHeartbeat());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                agentId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              case 18: {
+                java.lang.String s = input.readStringRequireUtf8();
+                ensureCapabilitiesIsMutable();
+                capabilities_.add(s);
+                break;
+              } // case 18
+              case 26: {
+                java.lang.String s = input.readStringRequireUtf8();
+                ensureSpecialtiesIsMutable();
+                specialties_.add(s);
+                break;
+              } // case 26
+              case 34: {
+                status_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000008;
+                break;
+              } // case 34
+              case 40: {
+                registeredAt_ = input.readInt64();
+                bitField0_ |= 0x00000010;
+                break;
+              } // case 40
+              case 48: {
+                lastHeartbeat_ = input.readInt64();
+                bitField0_ |= 0x00000020;
+                break;
+              } // case 48
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private java.lang.Object agentId_ = "";
+      /**
+       * <code>string agent_id = 1;</code>
+       * @return The agentId.
+       */
+      public java.lang.String getAgentId() {
+        java.lang.Object ref = agentId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          agentId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string agent_id = 1;</code>
+       * @return The bytes for agentId.
+       */
+      public com.google.protobuf.ByteString
+          getAgentIdBytes() {
+        java.lang.Object ref = agentId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          agentId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string agent_id = 1;</code>
+       * @param value The agentId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setAgentId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        agentId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string agent_id = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearAgentId() {
+        agentId_ = getDefaultInstance().getAgentId();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string agent_id = 1;</code>
+       * @param value The bytes for agentId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setAgentIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        agentId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+
+      private com.google.protobuf.LazyStringList capabilities_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      private void ensureCapabilitiesIsMutable() {
+        if (!((bitField0_ & 0x00000002) != 0)) {
+          capabilities_ = new com.google.protobuf.LazyStringArrayList(capabilities_);
+          bitField0_ |= 0x00000002;
+         }
+      }
+      /**
+       * <code>repeated string capabilities = 2;</code>
+       * @return A list containing the capabilities.
+       */
+      public com.google.protobuf.ProtocolStringList
+          getCapabilitiesList() {
+        return capabilities_.getUnmodifiableView();
+      }
+      /**
+       * <code>repeated string capabilities = 2;</code>
+       * @return The count of capabilities.
+       */
+      public int getCapabilitiesCount() {
+        return capabilities_.size();
+      }
+      /**
+       * <code>repeated string capabilities = 2;</code>
+       * @param index The index of the element to return.
+       * @return The capabilities at the given index.
+       */
+      public java.lang.String getCapabilities(int index) {
+        return capabilities_.get(index);
+      }
+      /**
+       * <code>repeated string capabilities = 2;</code>
+       * @param index The index of the value to return.
+       * @return The bytes of the capabilities at the given index.
+       */
+      public com.google.protobuf.ByteString
+          getCapabilitiesBytes(int index) {
+        return capabilities_.getByteString(index);
+      }
+      /**
+       * <code>repeated string capabilities = 2;</code>
+       * @param index The index to set the value at.
+       * @param value The capabilities to set.
+       * @return This builder for chaining.
+       */
+      public Builder setCapabilities(
+          int index, java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        ensureCapabilitiesIsMutable();
+        capabilities_.set(index, value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string capabilities = 2;</code>
+       * @param value The capabilities to add.
+       * @return This builder for chaining.
+       */
+      public Builder addCapabilities(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        ensureCapabilitiesIsMutable();
+        capabilities_.add(value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string capabilities = 2;</code>
+       * @param values The capabilities to add.
+       * @return This builder for chaining.
+       */
+      public Builder addAllCapabilities(
+          java.lang.Iterable<java.lang.String> values) {
+        ensureCapabilitiesIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, capabilities_);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string capabilities = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearCapabilities() {
+        capabilities_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string capabilities = 2;</code>
+       * @param value The bytes of the capabilities to add.
+       * @return This builder for chaining.
+       */
+      public Builder addCapabilitiesBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        ensureCapabilitiesIsMutable();
+        capabilities_.add(value);
+        onChanged();
+        return this;
+      }
+
+      private com.google.protobuf.LazyStringList specialties_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      private void ensureSpecialtiesIsMutable() {
+        if (!((bitField0_ & 0x00000004) != 0)) {
+          specialties_ = new com.google.protobuf.LazyStringArrayList(specialties_);
+          bitField0_ |= 0x00000004;
+         }
+      }
+      /**
+       * <code>repeated string specialties = 3;</code>
+       * @return A list containing the specialties.
+       */
+      public com.google.protobuf.ProtocolStringList
+          getSpecialtiesList() {
+        return specialties_.getUnmodifiableView();
+      }
+      /**
+       * <code>repeated string specialties = 3;</code>
+       * @return The count of specialties.
+       */
+      public int getSpecialtiesCount() {
+        return specialties_.size();
+      }
+      /**
+       * <code>repeated string specialties = 3;</code>
+       * @param index The index of the element to return.
+       * @return The specialties at the given index.
+       */
+      public java.lang.String getSpecialties(int index) {
+        return specialties_.get(index);
+      }
+      /**
+       * <code>repeated string specialties = 3;</code>
+       * @param index The index of the value to return.
+       * @return The bytes of the specialties at the given index.
+       */
+      public com.google.protobuf.ByteString
+          getSpecialtiesBytes(int index) {
+        return specialties_.getByteString(index);
+      }
+      /**
+       * <code>repeated string specialties = 3;</code>
+       * @param index The index to set the value at.
+       * @param value The specialties to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSpecialties(
+          int index, java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        ensureSpecialtiesIsMutable();
+        specialties_.set(index, value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string specialties = 3;</code>
+       * @param value The specialties to add.
+       * @return This builder for chaining.
+       */
+      public Builder addSpecialties(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        ensureSpecialtiesIsMutable();
+        specialties_.add(value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string specialties = 3;</code>
+       * @param values The specialties to add.
+       * @return This builder for chaining.
+       */
+      public Builder addAllSpecialties(
+          java.lang.Iterable<java.lang.String> values) {
+        ensureSpecialtiesIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, specialties_);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string specialties = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSpecialties() {
+        specialties_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000004);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string specialties = 3;</code>
+       * @param value The bytes of the specialties to add.
+       * @return This builder for chaining.
+       */
+      public Builder addSpecialtiesBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        ensureSpecialtiesIsMutable();
+        specialties_.add(value);
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object status_ = "";
+      /**
+       * <code>string status = 4;</code>
+       * @return The status.
+       */
+      public java.lang.String getStatus() {
+        java.lang.Object ref = status_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          status_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string status = 4;</code>
+       * @return The bytes for status.
+       */
+      public com.google.protobuf.ByteString
+          getStatusBytes() {
+        java.lang.Object ref = status_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          status_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string status = 4;</code>
+       * @param value The status to set.
+       * @return This builder for chaining.
+       */
+      public Builder setStatus(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        status_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string status = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearStatus() {
+        status_ = getDefaultInstance().getStatus();
+        bitField0_ = (bitField0_ & ~0x00000008);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string status = 4;</code>
+       * @param value The bytes for status to set.
+       * @return This builder for chaining.
+       */
+      public Builder setStatusBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        status_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+
+      private long registeredAt_ ;
+      /**
+       * <code>int64 registered_at = 5;</code>
+       * @return The registeredAt.
+       */
+      @java.lang.Override
+      public long getRegisteredAt() {
+        return registeredAt_;
+      }
+      /**
+       * <code>int64 registered_at = 5;</code>
+       * @param value The registeredAt to set.
+       * @return This builder for chaining.
+       */
+      public Builder setRegisteredAt(long value) {
+        
+        registeredAt_ = value;
+        bitField0_ |= 0x00000010;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 registered_at = 5;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearRegisteredAt() {
+        bitField0_ = (bitField0_ & ~0x00000010);
+        registeredAt_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private long lastHeartbeat_ ;
+      /**
+       * <code>int64 last_heartbeat = 6;</code>
+       * @return The lastHeartbeat.
+       */
+      @java.lang.Override
+      public long getLastHeartbeat() {
+        return lastHeartbeat_;
+      }
+      /**
+       * <code>int64 last_heartbeat = 6;</code>
+       * @param value The lastHeartbeat to set.
+       * @return This builder for chaining.
+       */
+      public Builder setLastHeartbeat(long value) {
+        
+        lastHeartbeat_ = value;
+        bitField0_ |= 0x00000020;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 last_heartbeat = 6;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearLastHeartbeat() {
+        bitField0_ = (bitField0_ & ~0x00000020);
+        lastHeartbeat_ = 0L;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:bridge.SwarmAgentNode)
+    }
+
+    // @@protoc_insertion_point(class_scope:bridge.SwarmAgentNode)
+    private static final com.bridge.proto.ChatProto.SwarmAgentNode DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.bridge.proto.ChatProto.SwarmAgentNode();
+    }
+
+    public static com.bridge.proto.ChatProto.SwarmAgentNode getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<SwarmAgentNode>
+        PARSER = new com.google.protobuf.AbstractParser<SwarmAgentNode>() {
+      @java.lang.Override
+      public SwarmAgentNode parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<SwarmAgentNode> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<SwarmAgentNode> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.bridge.proto.ChatProto.SwarmAgentNode getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface SwarmRegisterRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:bridge.SwarmRegisterRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string agent_id = 1;</code>
+     * @return The agentId.
+     */
+    java.lang.String getAgentId();
+    /**
+     * <code>string agent_id = 1;</code>
+     * @return The bytes for agentId.
+     */
+    com.google.protobuf.ByteString
+        getAgentIdBytes();
+
+    /**
+     * <code>repeated string capabilities = 2;</code>
+     * @return A list containing the capabilities.
+     */
+    java.util.List<java.lang.String>
+        getCapabilitiesList();
+    /**
+     * <code>repeated string capabilities = 2;</code>
+     * @return The count of capabilities.
+     */
+    int getCapabilitiesCount();
+    /**
+     * <code>repeated string capabilities = 2;</code>
+     * @param index The index of the element to return.
+     * @return The capabilities at the given index.
+     */
+    java.lang.String getCapabilities(int index);
+    /**
+     * <code>repeated string capabilities = 2;</code>
+     * @param index The index of the value to return.
+     * @return The bytes of the capabilities at the given index.
+     */
+    com.google.protobuf.ByteString
+        getCapabilitiesBytes(int index);
+
+    /**
+     * <code>repeated string specialties = 3;</code>
+     * @return A list containing the specialties.
+     */
+    java.util.List<java.lang.String>
+        getSpecialtiesList();
+    /**
+     * <code>repeated string specialties = 3;</code>
+     * @return The count of specialties.
+     */
+    int getSpecialtiesCount();
+    /**
+     * <code>repeated string specialties = 3;</code>
+     * @param index The index of the element to return.
+     * @return The specialties at the given index.
+     */
+    java.lang.String getSpecialties(int index);
+    /**
+     * <code>repeated string specialties = 3;</code>
+     * @param index The index of the value to return.
+     * @return The bytes of the specialties at the given index.
+     */
+    com.google.protobuf.ByteString
+        getSpecialtiesBytes(int index);
+  }
+  /**
+   * Protobuf type {@code bridge.SwarmRegisterRequest}
+   */
+  public static final class SwarmRegisterRequest extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:bridge.SwarmRegisterRequest)
+      SwarmRegisterRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use SwarmRegisterRequest.newBuilder() to construct.
+    private SwarmRegisterRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private SwarmRegisterRequest() {
+      agentId_ = "";
+      capabilities_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      specialties_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new SwarmRegisterRequest();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_SwarmRegisterRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_SwarmRegisterRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.bridge.proto.ChatProto.SwarmRegisterRequest.class, com.bridge.proto.ChatProto.SwarmRegisterRequest.Builder.class);
+    }
+
+    public static final int AGENT_ID_FIELD_NUMBER = 1;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object agentId_ = "";
+    /**
+     * <code>string agent_id = 1;</code>
+     * @return The agentId.
+     */
+    @java.lang.Override
+    public java.lang.String getAgentId() {
+      java.lang.Object ref = agentId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        agentId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string agent_id = 1;</code>
+     * @return The bytes for agentId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getAgentIdBytes() {
+      java.lang.Object ref = agentId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        agentId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int CAPABILITIES_FIELD_NUMBER = 2;
+    @SuppressWarnings("serial")
+    private com.google.protobuf.LazyStringList capabilities_;
+    /**
+     * <code>repeated string capabilities = 2;</code>
+     * @return A list containing the capabilities.
+     */
+    public com.google.protobuf.ProtocolStringList
+        getCapabilitiesList() {
+      return capabilities_;
+    }
+    /**
+     * <code>repeated string capabilities = 2;</code>
+     * @return The count of capabilities.
+     */
+    public int getCapabilitiesCount() {
+      return capabilities_.size();
+    }
+    /**
+     * <code>repeated string capabilities = 2;</code>
+     * @param index The index of the element to return.
+     * @return The capabilities at the given index.
+     */
+    public java.lang.String getCapabilities(int index) {
+      return capabilities_.get(index);
+    }
+    /**
+     * <code>repeated string capabilities = 2;</code>
+     * @param index The index of the value to return.
+     * @return The bytes of the capabilities at the given index.
+     */
+    public com.google.protobuf.ByteString
+        getCapabilitiesBytes(int index) {
+      return capabilities_.getByteString(index);
+    }
+
+    public static final int SPECIALTIES_FIELD_NUMBER = 3;
+    @SuppressWarnings("serial")
+    private com.google.protobuf.LazyStringList specialties_;
+    /**
+     * <code>repeated string specialties = 3;</code>
+     * @return A list containing the specialties.
+     */
+    public com.google.protobuf.ProtocolStringList
+        getSpecialtiesList() {
+      return specialties_;
+    }
+    /**
+     * <code>repeated string specialties = 3;</code>
+     * @return The count of specialties.
+     */
+    public int getSpecialtiesCount() {
+      return specialties_.size();
+    }
+    /**
+     * <code>repeated string specialties = 3;</code>
+     * @param index The index of the element to return.
+     * @return The specialties at the given index.
+     */
+    public java.lang.String getSpecialties(int index) {
+      return specialties_.get(index);
+    }
+    /**
+     * <code>repeated string specialties = 3;</code>
+     * @param index The index of the value to return.
+     * @return The bytes of the specialties at the given index.
+     */
+    public com.google.protobuf.ByteString
+        getSpecialtiesBytes(int index) {
+      return specialties_.getByteString(index);
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(agentId_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, agentId_);
+      }
+      for (int i = 0; i < capabilities_.size(); i++) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, capabilities_.getRaw(i));
+      }
+      for (int i = 0; i < specialties_.size(); i++) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, specialties_.getRaw(i));
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(agentId_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, agentId_);
+      }
+      {
+        int dataSize = 0;
+        for (int i = 0; i < capabilities_.size(); i++) {
+          dataSize += computeStringSizeNoTag(capabilities_.getRaw(i));
+        }
+        size += dataSize;
+        size += 1 * getCapabilitiesList().size();
+      }
+      {
+        int dataSize = 0;
+        for (int i = 0; i < specialties_.size(); i++) {
+          dataSize += computeStringSizeNoTag(specialties_.getRaw(i));
+        }
+        size += dataSize;
+        size += 1 * getSpecialtiesList().size();
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.bridge.proto.ChatProto.SwarmRegisterRequest)) {
+        return super.equals(obj);
+      }
+      com.bridge.proto.ChatProto.SwarmRegisterRequest other = (com.bridge.proto.ChatProto.SwarmRegisterRequest) obj;
+
+      if (!getAgentId()
+          .equals(other.getAgentId())) return false;
+      if (!getCapabilitiesList()
+          .equals(other.getCapabilitiesList())) return false;
+      if (!getSpecialtiesList()
+          .equals(other.getSpecialtiesList())) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + AGENT_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getAgentId().hashCode();
+      if (getCapabilitiesCount() > 0) {
+        hash = (37 * hash) + CAPABILITIES_FIELD_NUMBER;
+        hash = (53 * hash) + getCapabilitiesList().hashCode();
+      }
+      if (getSpecialtiesCount() > 0) {
+        hash = (37 * hash) + SPECIALTIES_FIELD_NUMBER;
+        hash = (53 * hash) + getSpecialtiesList().hashCode();
+      }
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.bridge.proto.ChatProto.SwarmRegisterRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SwarmRegisterRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmRegisterRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SwarmRegisterRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmRegisterRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SwarmRegisterRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmRegisterRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SwarmRegisterRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmRegisterRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SwarmRegisterRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmRegisterRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SwarmRegisterRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.bridge.proto.ChatProto.SwarmRegisterRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code bridge.SwarmRegisterRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:bridge.SwarmRegisterRequest)
+        com.bridge.proto.ChatProto.SwarmRegisterRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SwarmRegisterRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SwarmRegisterRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.bridge.proto.ChatProto.SwarmRegisterRequest.class, com.bridge.proto.ChatProto.SwarmRegisterRequest.Builder.class);
+      }
+
+      // Construct using com.bridge.proto.ChatProto.SwarmRegisterRequest.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        agentId_ = "";
+        capabilities_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000002);
+        specialties_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000004);
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SwarmRegisterRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SwarmRegisterRequest getDefaultInstanceForType() {
+        return com.bridge.proto.ChatProto.SwarmRegisterRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SwarmRegisterRequest build() {
+        com.bridge.proto.ChatProto.SwarmRegisterRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SwarmRegisterRequest buildPartial() {
+        com.bridge.proto.ChatProto.SwarmRegisterRequest result = new com.bridge.proto.ChatProto.SwarmRegisterRequest(this);
+        buildPartialRepeatedFields(result);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartialRepeatedFields(com.bridge.proto.ChatProto.SwarmRegisterRequest result) {
+        if (((bitField0_ & 0x00000002) != 0)) {
+          capabilities_ = capabilities_.getUnmodifiableView();
+          bitField0_ = (bitField0_ & ~0x00000002);
+        }
+        result.capabilities_ = capabilities_;
+        if (((bitField0_ & 0x00000004) != 0)) {
+          specialties_ = specialties_.getUnmodifiableView();
+          bitField0_ = (bitField0_ & ~0x00000004);
+        }
+        result.specialties_ = specialties_;
+      }
+
+      private void buildPartial0(com.bridge.proto.ChatProto.SwarmRegisterRequest result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.agentId_ = agentId_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.bridge.proto.ChatProto.SwarmRegisterRequest) {
+          return mergeFrom((com.bridge.proto.ChatProto.SwarmRegisterRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.bridge.proto.ChatProto.SwarmRegisterRequest other) {
+        if (other == com.bridge.proto.ChatProto.SwarmRegisterRequest.getDefaultInstance()) return this;
+        if (!other.getAgentId().isEmpty()) {
+          agentId_ = other.agentId_;
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        if (!other.capabilities_.isEmpty()) {
+          if (capabilities_.isEmpty()) {
+            capabilities_ = other.capabilities_;
+            bitField0_ = (bitField0_ & ~0x00000002);
+          } else {
+            ensureCapabilitiesIsMutable();
+            capabilities_.addAll(other.capabilities_);
+          }
+          onChanged();
+        }
+        if (!other.specialties_.isEmpty()) {
+          if (specialties_.isEmpty()) {
+            specialties_ = other.specialties_;
+            bitField0_ = (bitField0_ & ~0x00000004);
+          } else {
+            ensureSpecialtiesIsMutable();
+            specialties_.addAll(other.specialties_);
+          }
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                agentId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              case 18: {
+                java.lang.String s = input.readStringRequireUtf8();
+                ensureCapabilitiesIsMutable();
+                capabilities_.add(s);
+                break;
+              } // case 18
+              case 26: {
+                java.lang.String s = input.readStringRequireUtf8();
+                ensureSpecialtiesIsMutable();
+                specialties_.add(s);
+                break;
+              } // case 26
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private java.lang.Object agentId_ = "";
+      /**
+       * <code>string agent_id = 1;</code>
+       * @return The agentId.
+       */
+      public java.lang.String getAgentId() {
+        java.lang.Object ref = agentId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          agentId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string agent_id = 1;</code>
+       * @return The bytes for agentId.
+       */
+      public com.google.protobuf.ByteString
+          getAgentIdBytes() {
+        java.lang.Object ref = agentId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          agentId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string agent_id = 1;</code>
+       * @param value The agentId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setAgentId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        agentId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string agent_id = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearAgentId() {
+        agentId_ = getDefaultInstance().getAgentId();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string agent_id = 1;</code>
+       * @param value The bytes for agentId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setAgentIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        agentId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+
+      private com.google.protobuf.LazyStringList capabilities_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      private void ensureCapabilitiesIsMutable() {
+        if (!((bitField0_ & 0x00000002) != 0)) {
+          capabilities_ = new com.google.protobuf.LazyStringArrayList(capabilities_);
+          bitField0_ |= 0x00000002;
+         }
+      }
+      /**
+       * <code>repeated string capabilities = 2;</code>
+       * @return A list containing the capabilities.
+       */
+      public com.google.protobuf.ProtocolStringList
+          getCapabilitiesList() {
+        return capabilities_.getUnmodifiableView();
+      }
+      /**
+       * <code>repeated string capabilities = 2;</code>
+       * @return The count of capabilities.
+       */
+      public int getCapabilitiesCount() {
+        return capabilities_.size();
+      }
+      /**
+       * <code>repeated string capabilities = 2;</code>
+       * @param index The index of the element to return.
+       * @return The capabilities at the given index.
+       */
+      public java.lang.String getCapabilities(int index) {
+        return capabilities_.get(index);
+      }
+      /**
+       * <code>repeated string capabilities = 2;</code>
+       * @param index The index of the value to return.
+       * @return The bytes of the capabilities at the given index.
+       */
+      public com.google.protobuf.ByteString
+          getCapabilitiesBytes(int index) {
+        return capabilities_.getByteString(index);
+      }
+      /**
+       * <code>repeated string capabilities = 2;</code>
+       * @param index The index to set the value at.
+       * @param value The capabilities to set.
+       * @return This builder for chaining.
+       */
+      public Builder setCapabilities(
+          int index, java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        ensureCapabilitiesIsMutable();
+        capabilities_.set(index, value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string capabilities = 2;</code>
+       * @param value The capabilities to add.
+       * @return This builder for chaining.
+       */
+      public Builder addCapabilities(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        ensureCapabilitiesIsMutable();
+        capabilities_.add(value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string capabilities = 2;</code>
+       * @param values The capabilities to add.
+       * @return This builder for chaining.
+       */
+      public Builder addAllCapabilities(
+          java.lang.Iterable<java.lang.String> values) {
+        ensureCapabilitiesIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, capabilities_);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string capabilities = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearCapabilities() {
+        capabilities_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string capabilities = 2;</code>
+       * @param value The bytes of the capabilities to add.
+       * @return This builder for chaining.
+       */
+      public Builder addCapabilitiesBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        ensureCapabilitiesIsMutable();
+        capabilities_.add(value);
+        onChanged();
+        return this;
+      }
+
+      private com.google.protobuf.LazyStringList specialties_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      private void ensureSpecialtiesIsMutable() {
+        if (!((bitField0_ & 0x00000004) != 0)) {
+          specialties_ = new com.google.protobuf.LazyStringArrayList(specialties_);
+          bitField0_ |= 0x00000004;
+         }
+      }
+      /**
+       * <code>repeated string specialties = 3;</code>
+       * @return A list containing the specialties.
+       */
+      public com.google.protobuf.ProtocolStringList
+          getSpecialtiesList() {
+        return specialties_.getUnmodifiableView();
+      }
+      /**
+       * <code>repeated string specialties = 3;</code>
+       * @return The count of specialties.
+       */
+      public int getSpecialtiesCount() {
+        return specialties_.size();
+      }
+      /**
+       * <code>repeated string specialties = 3;</code>
+       * @param index The index of the element to return.
+       * @return The specialties at the given index.
+       */
+      public java.lang.String getSpecialties(int index) {
+        return specialties_.get(index);
+      }
+      /**
+       * <code>repeated string specialties = 3;</code>
+       * @param index The index of the value to return.
+       * @return The bytes of the specialties at the given index.
+       */
+      public com.google.protobuf.ByteString
+          getSpecialtiesBytes(int index) {
+        return specialties_.getByteString(index);
+      }
+      /**
+       * <code>repeated string specialties = 3;</code>
+       * @param index The index to set the value at.
+       * @param value The specialties to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSpecialties(
+          int index, java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        ensureSpecialtiesIsMutable();
+        specialties_.set(index, value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string specialties = 3;</code>
+       * @param value The specialties to add.
+       * @return This builder for chaining.
+       */
+      public Builder addSpecialties(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        ensureSpecialtiesIsMutable();
+        specialties_.add(value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string specialties = 3;</code>
+       * @param values The specialties to add.
+       * @return This builder for chaining.
+       */
+      public Builder addAllSpecialties(
+          java.lang.Iterable<java.lang.String> values) {
+        ensureSpecialtiesIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, specialties_);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string specialties = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSpecialties() {
+        specialties_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000004);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string specialties = 3;</code>
+       * @param value The bytes of the specialties to add.
+       * @return This builder for chaining.
+       */
+      public Builder addSpecialtiesBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        ensureSpecialtiesIsMutable();
+        specialties_.add(value);
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:bridge.SwarmRegisterRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:bridge.SwarmRegisterRequest)
+    private static final com.bridge.proto.ChatProto.SwarmRegisterRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.bridge.proto.ChatProto.SwarmRegisterRequest();
+    }
+
+    public static com.bridge.proto.ChatProto.SwarmRegisterRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<SwarmRegisterRequest>
+        PARSER = new com.google.protobuf.AbstractParser<SwarmRegisterRequest>() {
+      @java.lang.Override
+      public SwarmRegisterRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<SwarmRegisterRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<SwarmRegisterRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.bridge.proto.ChatProto.SwarmRegisterRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface SwarmRegisterResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:bridge.SwarmRegisterResponse)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>bool success = 1;</code>
+     * @return The success.
+     */
+    boolean getSuccess();
+
+    /**
+     * <code>string message = 2;</code>
+     * @return The message.
+     */
+    java.lang.String getMessage();
+    /**
+     * <code>string message = 2;</code>
+     * @return The bytes for message.
+     */
+    com.google.protobuf.ByteString
+        getMessageBytes();
+
+    /**
+     * <code>int32 node_count = 3;</code>
+     * @return The nodeCount.
+     */
+    int getNodeCount();
+  }
+  /**
+   * Protobuf type {@code bridge.SwarmRegisterResponse}
+   */
+  public static final class SwarmRegisterResponse extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:bridge.SwarmRegisterResponse)
+      SwarmRegisterResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use SwarmRegisterResponse.newBuilder() to construct.
+    private SwarmRegisterResponse(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private SwarmRegisterResponse() {
+      message_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new SwarmRegisterResponse();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_SwarmRegisterResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_SwarmRegisterResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.bridge.proto.ChatProto.SwarmRegisterResponse.class, com.bridge.proto.ChatProto.SwarmRegisterResponse.Builder.class);
+    }
+
+    public static final int SUCCESS_FIELD_NUMBER = 1;
+    private boolean success_ = false;
+    /**
+     * <code>bool success = 1;</code>
+     * @return The success.
+     */
+    @java.lang.Override
+    public boolean getSuccess() {
+      return success_;
+    }
+
+    public static final int MESSAGE_FIELD_NUMBER = 2;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object message_ = "";
+    /**
+     * <code>string message = 2;</code>
+     * @return The message.
+     */
+    @java.lang.Override
+    public java.lang.String getMessage() {
+      java.lang.Object ref = message_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        message_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string message = 2;</code>
+     * @return The bytes for message.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getMessageBytes() {
+      java.lang.Object ref = message_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        message_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int NODE_COUNT_FIELD_NUMBER = 3;
+    private int nodeCount_ = 0;
+    /**
+     * <code>int32 node_count = 3;</code>
+     * @return The nodeCount.
+     */
+    @java.lang.Override
+    public int getNodeCount() {
+      return nodeCount_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (success_ != false) {
+        output.writeBool(1, success_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(message_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, message_);
+      }
+      if (nodeCount_ != 0) {
+        output.writeInt32(3, nodeCount_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (success_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(1, success_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(message_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, message_);
+      }
+      if (nodeCount_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(3, nodeCount_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.bridge.proto.ChatProto.SwarmRegisterResponse)) {
+        return super.equals(obj);
+      }
+      com.bridge.proto.ChatProto.SwarmRegisterResponse other = (com.bridge.proto.ChatProto.SwarmRegisterResponse) obj;
+
+      if (getSuccess()
+          != other.getSuccess()) return false;
+      if (!getMessage()
+          .equals(other.getMessage())) return false;
+      if (getNodeCount()
+          != other.getNodeCount()) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + SUCCESS_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getSuccess());
+      hash = (37 * hash) + MESSAGE_FIELD_NUMBER;
+      hash = (53 * hash) + getMessage().hashCode();
+      hash = (37 * hash) + NODE_COUNT_FIELD_NUMBER;
+      hash = (53 * hash) + getNodeCount();
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.bridge.proto.ChatProto.SwarmRegisterResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SwarmRegisterResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmRegisterResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SwarmRegisterResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmRegisterResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SwarmRegisterResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmRegisterResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SwarmRegisterResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmRegisterResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SwarmRegisterResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmRegisterResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SwarmRegisterResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.bridge.proto.ChatProto.SwarmRegisterResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code bridge.SwarmRegisterResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:bridge.SwarmRegisterResponse)
+        com.bridge.proto.ChatProto.SwarmRegisterResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SwarmRegisterResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SwarmRegisterResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.bridge.proto.ChatProto.SwarmRegisterResponse.class, com.bridge.proto.ChatProto.SwarmRegisterResponse.Builder.class);
+      }
+
+      // Construct using com.bridge.proto.ChatProto.SwarmRegisterResponse.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        success_ = false;
+        message_ = "";
+        nodeCount_ = 0;
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SwarmRegisterResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SwarmRegisterResponse getDefaultInstanceForType() {
+        return com.bridge.proto.ChatProto.SwarmRegisterResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SwarmRegisterResponse build() {
+        com.bridge.proto.ChatProto.SwarmRegisterResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SwarmRegisterResponse buildPartial() {
+        com.bridge.proto.ChatProto.SwarmRegisterResponse result = new com.bridge.proto.ChatProto.SwarmRegisterResponse(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(com.bridge.proto.ChatProto.SwarmRegisterResponse result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.success_ = success_;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.message_ = message_;
+        }
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.nodeCount_ = nodeCount_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.bridge.proto.ChatProto.SwarmRegisterResponse) {
+          return mergeFrom((com.bridge.proto.ChatProto.SwarmRegisterResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.bridge.proto.ChatProto.SwarmRegisterResponse other) {
+        if (other == com.bridge.proto.ChatProto.SwarmRegisterResponse.getDefaultInstance()) return this;
+        if (other.getSuccess() != false) {
+          setSuccess(other.getSuccess());
+        }
+        if (!other.getMessage().isEmpty()) {
+          message_ = other.message_;
+          bitField0_ |= 0x00000002;
+          onChanged();
+        }
+        if (other.getNodeCount() != 0) {
+          setNodeCount(other.getNodeCount());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 8: {
+                success_ = input.readBool();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 8
+              case 18: {
+                message_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 18
+              case 24: {
+                nodeCount_ = input.readInt32();
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 24
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private boolean success_ ;
+      /**
+       * <code>bool success = 1;</code>
+       * @return The success.
+       */
+      @java.lang.Override
+      public boolean getSuccess() {
+        return success_;
+      }
+      /**
+       * <code>bool success = 1;</code>
+       * @param value The success to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSuccess(boolean value) {
+        
+        success_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool success = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSuccess() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        success_ = false;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object message_ = "";
+      /**
+       * <code>string message = 2;</code>
+       * @return The message.
+       */
+      public java.lang.String getMessage() {
+        java.lang.Object ref = message_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          message_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string message = 2;</code>
+       * @return The bytes for message.
+       */
+      public com.google.protobuf.ByteString
+          getMessageBytes() {
+        java.lang.Object ref = message_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          message_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string message = 2;</code>
+       * @param value The message to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMessage(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        message_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string message = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMessage() {
+        message_ = getDefaultInstance().getMessage();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string message = 2;</code>
+       * @param value The bytes for message to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMessageBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        message_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+
+      private int nodeCount_ ;
+      /**
+       * <code>int32 node_count = 3;</code>
+       * @return The nodeCount.
+       */
+      @java.lang.Override
+      public int getNodeCount() {
+        return nodeCount_;
+      }
+      /**
+       * <code>int32 node_count = 3;</code>
+       * @param value The nodeCount to set.
+       * @return This builder for chaining.
+       */
+      public Builder setNodeCount(int value) {
+        
+        nodeCount_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int32 node_count = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearNodeCount() {
+        bitField0_ = (bitField0_ & ~0x00000004);
+        nodeCount_ = 0;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:bridge.SwarmRegisterResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:bridge.SwarmRegisterResponse)
+    private static final com.bridge.proto.ChatProto.SwarmRegisterResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.bridge.proto.ChatProto.SwarmRegisterResponse();
+    }
+
+    public static com.bridge.proto.ChatProto.SwarmRegisterResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<SwarmRegisterResponse>
+        PARSER = new com.google.protobuf.AbstractParser<SwarmRegisterResponse>() {
+      @java.lang.Override
+      public SwarmRegisterResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<SwarmRegisterResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<SwarmRegisterResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.bridge.proto.ChatProto.SwarmRegisterResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface SwarmHelpRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:bridge.SwarmHelpRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string from_id = 1;</code>
+     * @return The fromId.
+     */
+    java.lang.String getFromId();
+    /**
+     * <code>string from_id = 1;</code>
+     * @return The bytes for fromId.
+     */
+    com.google.protobuf.ByteString
+        getFromIdBytes();
+
+    /**
+     * <code>string task = 2;</code>
+     * @return The task.
+     */
+    java.lang.String getTask();
+    /**
+     * <code>string task = 2;</code>
+     * @return The bytes for task.
+     */
+    com.google.protobuf.ByteString
+        getTaskBytes();
+
+    /**
+     * <code>double timeout_seconds = 3;</code>
+     * @return The timeoutSeconds.
+     */
+    double getTimeoutSeconds();
+  }
+  /**
+   * Protobuf type {@code bridge.SwarmHelpRequest}
+   */
+  public static final class SwarmHelpRequest extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:bridge.SwarmHelpRequest)
+      SwarmHelpRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use SwarmHelpRequest.newBuilder() to construct.
+    private SwarmHelpRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private SwarmHelpRequest() {
+      fromId_ = "";
+      task_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new SwarmHelpRequest();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_SwarmHelpRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_SwarmHelpRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.bridge.proto.ChatProto.SwarmHelpRequest.class, com.bridge.proto.ChatProto.SwarmHelpRequest.Builder.class);
+    }
+
+    public static final int FROM_ID_FIELD_NUMBER = 1;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object fromId_ = "";
+    /**
+     * <code>string from_id = 1;</code>
+     * @return The fromId.
+     */
+    @java.lang.Override
+    public java.lang.String getFromId() {
+      java.lang.Object ref = fromId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        fromId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string from_id = 1;</code>
+     * @return The bytes for fromId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getFromIdBytes() {
+      java.lang.Object ref = fromId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        fromId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int TASK_FIELD_NUMBER = 2;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object task_ = "";
+    /**
+     * <code>string task = 2;</code>
+     * @return The task.
+     */
+    @java.lang.Override
+    public java.lang.String getTask() {
+      java.lang.Object ref = task_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        task_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string task = 2;</code>
+     * @return The bytes for task.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getTaskBytes() {
+      java.lang.Object ref = task_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        task_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int TIMEOUT_SECONDS_FIELD_NUMBER = 3;
+    private double timeoutSeconds_ = 0D;
+    /**
+     * <code>double timeout_seconds = 3;</code>
+     * @return The timeoutSeconds.
+     */
+    @java.lang.Override
+    public double getTimeoutSeconds() {
+      return timeoutSeconds_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(fromId_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, fromId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(task_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, task_);
+      }
+      if (java.lang.Double.doubleToRawLongBits(timeoutSeconds_) != 0) {
+        output.writeDouble(3, timeoutSeconds_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(fromId_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, fromId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(task_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, task_);
+      }
+      if (java.lang.Double.doubleToRawLongBits(timeoutSeconds_) != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeDoubleSize(3, timeoutSeconds_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.bridge.proto.ChatProto.SwarmHelpRequest)) {
+        return super.equals(obj);
+      }
+      com.bridge.proto.ChatProto.SwarmHelpRequest other = (com.bridge.proto.ChatProto.SwarmHelpRequest) obj;
+
+      if (!getFromId()
+          .equals(other.getFromId())) return false;
+      if (!getTask()
+          .equals(other.getTask())) return false;
+      if (java.lang.Double.doubleToLongBits(getTimeoutSeconds())
+          != java.lang.Double.doubleToLongBits(
+              other.getTimeoutSeconds())) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + FROM_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getFromId().hashCode();
+      hash = (37 * hash) + TASK_FIELD_NUMBER;
+      hash = (53 * hash) + getTask().hashCode();
+      hash = (37 * hash) + TIMEOUT_SECONDS_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          java.lang.Double.doubleToLongBits(getTimeoutSeconds()));
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.bridge.proto.ChatProto.SwarmHelpRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SwarmHelpRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmHelpRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SwarmHelpRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmHelpRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SwarmHelpRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmHelpRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SwarmHelpRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmHelpRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SwarmHelpRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmHelpRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SwarmHelpRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.bridge.proto.ChatProto.SwarmHelpRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code bridge.SwarmHelpRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:bridge.SwarmHelpRequest)
+        com.bridge.proto.ChatProto.SwarmHelpRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SwarmHelpRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SwarmHelpRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.bridge.proto.ChatProto.SwarmHelpRequest.class, com.bridge.proto.ChatProto.SwarmHelpRequest.Builder.class);
+      }
+
+      // Construct using com.bridge.proto.ChatProto.SwarmHelpRequest.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        fromId_ = "";
+        task_ = "";
+        timeoutSeconds_ = 0D;
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SwarmHelpRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SwarmHelpRequest getDefaultInstanceForType() {
+        return com.bridge.proto.ChatProto.SwarmHelpRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SwarmHelpRequest build() {
+        com.bridge.proto.ChatProto.SwarmHelpRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SwarmHelpRequest buildPartial() {
+        com.bridge.proto.ChatProto.SwarmHelpRequest result = new com.bridge.proto.ChatProto.SwarmHelpRequest(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(com.bridge.proto.ChatProto.SwarmHelpRequest result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.fromId_ = fromId_;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.task_ = task_;
+        }
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.timeoutSeconds_ = timeoutSeconds_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.bridge.proto.ChatProto.SwarmHelpRequest) {
+          return mergeFrom((com.bridge.proto.ChatProto.SwarmHelpRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.bridge.proto.ChatProto.SwarmHelpRequest other) {
+        if (other == com.bridge.proto.ChatProto.SwarmHelpRequest.getDefaultInstance()) return this;
+        if (!other.getFromId().isEmpty()) {
+          fromId_ = other.fromId_;
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        if (!other.getTask().isEmpty()) {
+          task_ = other.task_;
+          bitField0_ |= 0x00000002;
+          onChanged();
+        }
+        if (other.getTimeoutSeconds() != 0D) {
+          setTimeoutSeconds(other.getTimeoutSeconds());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                fromId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              case 18: {
+                task_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 18
+              case 25: {
+                timeoutSeconds_ = input.readDouble();
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 25
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private java.lang.Object fromId_ = "";
+      /**
+       * <code>string from_id = 1;</code>
+       * @return The fromId.
+       */
+      public java.lang.String getFromId() {
+        java.lang.Object ref = fromId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          fromId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string from_id = 1;</code>
+       * @return The bytes for fromId.
+       */
+      public com.google.protobuf.ByteString
+          getFromIdBytes() {
+        java.lang.Object ref = fromId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          fromId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string from_id = 1;</code>
+       * @param value The fromId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setFromId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        fromId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string from_id = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearFromId() {
+        fromId_ = getDefaultInstance().getFromId();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string from_id = 1;</code>
+       * @param value The bytes for fromId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setFromIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        fromId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object task_ = "";
+      /**
+       * <code>string task = 2;</code>
+       * @return The task.
+       */
+      public java.lang.String getTask() {
+        java.lang.Object ref = task_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          task_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string task = 2;</code>
+       * @return The bytes for task.
+       */
+      public com.google.protobuf.ByteString
+          getTaskBytes() {
+        java.lang.Object ref = task_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          task_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string task = 2;</code>
+       * @param value The task to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTask(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        task_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string task = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTask() {
+        task_ = getDefaultInstance().getTask();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string task = 2;</code>
+       * @param value The bytes for task to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTaskBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        task_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+
+      private double timeoutSeconds_ ;
+      /**
+       * <code>double timeout_seconds = 3;</code>
+       * @return The timeoutSeconds.
+       */
+      @java.lang.Override
+      public double getTimeoutSeconds() {
+        return timeoutSeconds_;
+      }
+      /**
+       * <code>double timeout_seconds = 3;</code>
+       * @param value The timeoutSeconds to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTimeoutSeconds(double value) {
+        
+        timeoutSeconds_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>double timeout_seconds = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTimeoutSeconds() {
+        bitField0_ = (bitField0_ & ~0x00000004);
+        timeoutSeconds_ = 0D;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:bridge.SwarmHelpRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:bridge.SwarmHelpRequest)
+    private static final com.bridge.proto.ChatProto.SwarmHelpRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.bridge.proto.ChatProto.SwarmHelpRequest();
+    }
+
+    public static com.bridge.proto.ChatProto.SwarmHelpRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<SwarmHelpRequest>
+        PARSER = new com.google.protobuf.AbstractParser<SwarmHelpRequest>() {
+      @java.lang.Override
+      public SwarmHelpRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<SwarmHelpRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<SwarmHelpRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.bridge.proto.ChatProto.SwarmHelpRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface SwarmHelpResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:bridge.SwarmHelpResponse)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string from_id = 1;</code>
+     * @return The fromId.
+     */
+    java.lang.String getFromId();
+    /**
+     * <code>string from_id = 1;</code>
+     * @return The bytes for fromId.
+     */
+    com.google.protobuf.ByteString
+        getFromIdBytes();
+
+    /**
+     * <code>string to_id = 2;</code>
+     * @return The toId.
+     */
+    java.lang.String getToId();
+    /**
+     * <code>string to_id = 2;</code>
+     * @return The bytes for toId.
+     */
+    com.google.protobuf.ByteString
+        getToIdBytes();
+
+    /**
+     * <code>string task = 3;</code>
+     * @return The task.
+     */
+    java.lang.String getTask();
+    /**
+     * <code>string task = 3;</code>
+     * @return The bytes for task.
+     */
+    com.google.protobuf.ByteString
+        getTaskBytes();
+
+    /**
+     * <code>string result = 4;</code>
+     * @return The result.
+     */
+    java.lang.String getResult();
+    /**
+     * <code>string result = 4;</code>
+     * @return The bytes for result.
+     */
+    com.google.protobuf.ByteString
+        getResultBytes();
+
+    /**
+     * <code>bool found = 5;</code>
+     * @return The found.
+     */
+    boolean getFound();
+  }
+  /**
+   * Protobuf type {@code bridge.SwarmHelpResponse}
+   */
+  public static final class SwarmHelpResponse extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:bridge.SwarmHelpResponse)
+      SwarmHelpResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use SwarmHelpResponse.newBuilder() to construct.
+    private SwarmHelpResponse(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private SwarmHelpResponse() {
+      fromId_ = "";
+      toId_ = "";
+      task_ = "";
+      result_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new SwarmHelpResponse();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_SwarmHelpResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_SwarmHelpResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.bridge.proto.ChatProto.SwarmHelpResponse.class, com.bridge.proto.ChatProto.SwarmHelpResponse.Builder.class);
+    }
+
+    public static final int FROM_ID_FIELD_NUMBER = 1;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object fromId_ = "";
+    /**
+     * <code>string from_id = 1;</code>
+     * @return The fromId.
+     */
+    @java.lang.Override
+    public java.lang.String getFromId() {
+      java.lang.Object ref = fromId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        fromId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string from_id = 1;</code>
+     * @return The bytes for fromId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getFromIdBytes() {
+      java.lang.Object ref = fromId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        fromId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int TO_ID_FIELD_NUMBER = 2;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object toId_ = "";
+    /**
+     * <code>string to_id = 2;</code>
+     * @return The toId.
+     */
+    @java.lang.Override
+    public java.lang.String getToId() {
+      java.lang.Object ref = toId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        toId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string to_id = 2;</code>
+     * @return The bytes for toId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getToIdBytes() {
+      java.lang.Object ref = toId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        toId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int TASK_FIELD_NUMBER = 3;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object task_ = "";
+    /**
+     * <code>string task = 3;</code>
+     * @return The task.
+     */
+    @java.lang.Override
+    public java.lang.String getTask() {
+      java.lang.Object ref = task_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        task_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string task = 3;</code>
+     * @return The bytes for task.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getTaskBytes() {
+      java.lang.Object ref = task_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        task_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int RESULT_FIELD_NUMBER = 4;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object result_ = "";
+    /**
+     * <code>string result = 4;</code>
+     * @return The result.
+     */
+    @java.lang.Override
+    public java.lang.String getResult() {
+      java.lang.Object ref = result_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        result_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string result = 4;</code>
+     * @return The bytes for result.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getResultBytes() {
+      java.lang.Object ref = result_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        result_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int FOUND_FIELD_NUMBER = 5;
+    private boolean found_ = false;
+    /**
+     * <code>bool found = 5;</code>
+     * @return The found.
+     */
+    @java.lang.Override
+    public boolean getFound() {
+      return found_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(fromId_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, fromId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(toId_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, toId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(task_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, task_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(result_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 4, result_);
+      }
+      if (found_ != false) {
+        output.writeBool(5, found_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(fromId_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, fromId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(toId_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, toId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(task_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, task_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(result_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, result_);
+      }
+      if (found_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(5, found_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.bridge.proto.ChatProto.SwarmHelpResponse)) {
+        return super.equals(obj);
+      }
+      com.bridge.proto.ChatProto.SwarmHelpResponse other = (com.bridge.proto.ChatProto.SwarmHelpResponse) obj;
+
+      if (!getFromId()
+          .equals(other.getFromId())) return false;
+      if (!getToId()
+          .equals(other.getToId())) return false;
+      if (!getTask()
+          .equals(other.getTask())) return false;
+      if (!getResult()
+          .equals(other.getResult())) return false;
+      if (getFound()
+          != other.getFound()) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + FROM_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getFromId().hashCode();
+      hash = (37 * hash) + TO_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getToId().hashCode();
+      hash = (37 * hash) + TASK_FIELD_NUMBER;
+      hash = (53 * hash) + getTask().hashCode();
+      hash = (37 * hash) + RESULT_FIELD_NUMBER;
+      hash = (53 * hash) + getResult().hashCode();
+      hash = (37 * hash) + FOUND_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getFound());
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.bridge.proto.ChatProto.SwarmHelpResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SwarmHelpResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmHelpResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SwarmHelpResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmHelpResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SwarmHelpResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmHelpResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SwarmHelpResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmHelpResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SwarmHelpResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmHelpResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SwarmHelpResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.bridge.proto.ChatProto.SwarmHelpResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code bridge.SwarmHelpResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:bridge.SwarmHelpResponse)
+        com.bridge.proto.ChatProto.SwarmHelpResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SwarmHelpResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SwarmHelpResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.bridge.proto.ChatProto.SwarmHelpResponse.class, com.bridge.proto.ChatProto.SwarmHelpResponse.Builder.class);
+      }
+
+      // Construct using com.bridge.proto.ChatProto.SwarmHelpResponse.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        fromId_ = "";
+        toId_ = "";
+        task_ = "";
+        result_ = "";
+        found_ = false;
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SwarmHelpResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SwarmHelpResponse getDefaultInstanceForType() {
+        return com.bridge.proto.ChatProto.SwarmHelpResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SwarmHelpResponse build() {
+        com.bridge.proto.ChatProto.SwarmHelpResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SwarmHelpResponse buildPartial() {
+        com.bridge.proto.ChatProto.SwarmHelpResponse result = new com.bridge.proto.ChatProto.SwarmHelpResponse(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(com.bridge.proto.ChatProto.SwarmHelpResponse result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.fromId_ = fromId_;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.toId_ = toId_;
+        }
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.task_ = task_;
+        }
+        if (((from_bitField0_ & 0x00000008) != 0)) {
+          result.result_ = result_;
+        }
+        if (((from_bitField0_ & 0x00000010) != 0)) {
+          result.found_ = found_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.bridge.proto.ChatProto.SwarmHelpResponse) {
+          return mergeFrom((com.bridge.proto.ChatProto.SwarmHelpResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.bridge.proto.ChatProto.SwarmHelpResponse other) {
+        if (other == com.bridge.proto.ChatProto.SwarmHelpResponse.getDefaultInstance()) return this;
+        if (!other.getFromId().isEmpty()) {
+          fromId_ = other.fromId_;
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        if (!other.getToId().isEmpty()) {
+          toId_ = other.toId_;
+          bitField0_ |= 0x00000002;
+          onChanged();
+        }
+        if (!other.getTask().isEmpty()) {
+          task_ = other.task_;
+          bitField0_ |= 0x00000004;
+          onChanged();
+        }
+        if (!other.getResult().isEmpty()) {
+          result_ = other.result_;
+          bitField0_ |= 0x00000008;
+          onChanged();
+        }
+        if (other.getFound() != false) {
+          setFound(other.getFound());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                fromId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              case 18: {
+                toId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 18
+              case 26: {
+                task_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 26
+              case 34: {
+                result_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000008;
+                break;
+              } // case 34
+              case 40: {
+                found_ = input.readBool();
+                bitField0_ |= 0x00000010;
+                break;
+              } // case 40
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private java.lang.Object fromId_ = "";
+      /**
+       * <code>string from_id = 1;</code>
+       * @return The fromId.
+       */
+      public java.lang.String getFromId() {
+        java.lang.Object ref = fromId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          fromId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string from_id = 1;</code>
+       * @return The bytes for fromId.
+       */
+      public com.google.protobuf.ByteString
+          getFromIdBytes() {
+        java.lang.Object ref = fromId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          fromId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string from_id = 1;</code>
+       * @param value The fromId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setFromId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        fromId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string from_id = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearFromId() {
+        fromId_ = getDefaultInstance().getFromId();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string from_id = 1;</code>
+       * @param value The bytes for fromId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setFromIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        fromId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object toId_ = "";
+      /**
+       * <code>string to_id = 2;</code>
+       * @return The toId.
+       */
+      public java.lang.String getToId() {
+        java.lang.Object ref = toId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          toId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string to_id = 2;</code>
+       * @return The bytes for toId.
+       */
+      public com.google.protobuf.ByteString
+          getToIdBytes() {
+        java.lang.Object ref = toId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          toId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string to_id = 2;</code>
+       * @param value The toId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setToId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        toId_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string to_id = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearToId() {
+        toId_ = getDefaultInstance().getToId();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string to_id = 2;</code>
+       * @param value The bytes for toId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setToIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        toId_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object task_ = "";
+      /**
+       * <code>string task = 3;</code>
+       * @return The task.
+       */
+      public java.lang.String getTask() {
+        java.lang.Object ref = task_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          task_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string task = 3;</code>
+       * @return The bytes for task.
+       */
+      public com.google.protobuf.ByteString
+          getTaskBytes() {
+        java.lang.Object ref = task_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          task_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string task = 3;</code>
+       * @param value The task to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTask(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        task_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string task = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTask() {
+        task_ = getDefaultInstance().getTask();
+        bitField0_ = (bitField0_ & ~0x00000004);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string task = 3;</code>
+       * @param value The bytes for task to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTaskBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        task_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object result_ = "";
+      /**
+       * <code>string result = 4;</code>
+       * @return The result.
+       */
+      public java.lang.String getResult() {
+        java.lang.Object ref = result_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          result_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string result = 4;</code>
+       * @return The bytes for result.
+       */
+      public com.google.protobuf.ByteString
+          getResultBytes() {
+        java.lang.Object ref = result_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          result_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string result = 4;</code>
+       * @param value The result to set.
+       * @return This builder for chaining.
+       */
+      public Builder setResult(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        result_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string result = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearResult() {
+        result_ = getDefaultInstance().getResult();
+        bitField0_ = (bitField0_ & ~0x00000008);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string result = 4;</code>
+       * @param value The bytes for result to set.
+       * @return This builder for chaining.
+       */
+      public Builder setResultBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        result_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+
+      private boolean found_ ;
+      /**
+       * <code>bool found = 5;</code>
+       * @return The found.
+       */
+      @java.lang.Override
+      public boolean getFound() {
+        return found_;
+      }
+      /**
+       * <code>bool found = 5;</code>
+       * @param value The found to set.
+       * @return This builder for chaining.
+       */
+      public Builder setFound(boolean value) {
+        
+        found_ = value;
+        bitField0_ |= 0x00000010;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool found = 5;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearFound() {
+        bitField0_ = (bitField0_ & ~0x00000010);
+        found_ = false;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:bridge.SwarmHelpResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:bridge.SwarmHelpResponse)
+    private static final com.bridge.proto.ChatProto.SwarmHelpResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.bridge.proto.ChatProto.SwarmHelpResponse();
+    }
+
+    public static com.bridge.proto.ChatProto.SwarmHelpResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<SwarmHelpResponse>
+        PARSER = new com.google.protobuf.AbstractParser<SwarmHelpResponse>() {
+      @java.lang.Override
+      public SwarmHelpResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<SwarmHelpResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<SwarmHelpResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.bridge.proto.ChatProto.SwarmHelpResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface SwarmNodeListResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:bridge.SwarmNodeListResponse)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>repeated .bridge.SwarmAgentNode nodes = 1;</code>
+     */
+    java.util.List<com.bridge.proto.ChatProto.SwarmAgentNode> 
+        getNodesList();
+    /**
+     * <code>repeated .bridge.SwarmAgentNode nodes = 1;</code>
+     */
+    com.bridge.proto.ChatProto.SwarmAgentNode getNodes(int index);
+    /**
+     * <code>repeated .bridge.SwarmAgentNode nodes = 1;</code>
+     */
+    int getNodesCount();
+    /**
+     * <code>repeated .bridge.SwarmAgentNode nodes = 1;</code>
+     */
+    java.util.List<? extends com.bridge.proto.ChatProto.SwarmAgentNodeOrBuilder> 
+        getNodesOrBuilderList();
+    /**
+     * <code>repeated .bridge.SwarmAgentNode nodes = 1;</code>
+     */
+    com.bridge.proto.ChatProto.SwarmAgentNodeOrBuilder getNodesOrBuilder(
+        int index);
+  }
+  /**
+   * Protobuf type {@code bridge.SwarmNodeListResponse}
+   */
+  public static final class SwarmNodeListResponse extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:bridge.SwarmNodeListResponse)
+      SwarmNodeListResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use SwarmNodeListResponse.newBuilder() to construct.
+    private SwarmNodeListResponse(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private SwarmNodeListResponse() {
+      nodes_ = java.util.Collections.emptyList();
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new SwarmNodeListResponse();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_SwarmNodeListResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_SwarmNodeListResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.bridge.proto.ChatProto.SwarmNodeListResponse.class, com.bridge.proto.ChatProto.SwarmNodeListResponse.Builder.class);
+    }
+
+    public static final int NODES_FIELD_NUMBER = 1;
+    @SuppressWarnings("serial")
+    private java.util.List<com.bridge.proto.ChatProto.SwarmAgentNode> nodes_;
+    /**
+     * <code>repeated .bridge.SwarmAgentNode nodes = 1;</code>
+     */
+    @java.lang.Override
+    public java.util.List<com.bridge.proto.ChatProto.SwarmAgentNode> getNodesList() {
+      return nodes_;
+    }
+    /**
+     * <code>repeated .bridge.SwarmAgentNode nodes = 1;</code>
+     */
+    @java.lang.Override
+    public java.util.List<? extends com.bridge.proto.ChatProto.SwarmAgentNodeOrBuilder> 
+        getNodesOrBuilderList() {
+      return nodes_;
+    }
+    /**
+     * <code>repeated .bridge.SwarmAgentNode nodes = 1;</code>
+     */
+    @java.lang.Override
+    public int getNodesCount() {
+      return nodes_.size();
+    }
+    /**
+     * <code>repeated .bridge.SwarmAgentNode nodes = 1;</code>
+     */
+    @java.lang.Override
+    public com.bridge.proto.ChatProto.SwarmAgentNode getNodes(int index) {
+      return nodes_.get(index);
+    }
+    /**
+     * <code>repeated .bridge.SwarmAgentNode nodes = 1;</code>
+     */
+    @java.lang.Override
+    public com.bridge.proto.ChatProto.SwarmAgentNodeOrBuilder getNodesOrBuilder(
+        int index) {
+      return nodes_.get(index);
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      for (int i = 0; i < nodes_.size(); i++) {
+        output.writeMessage(1, nodes_.get(i));
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      for (int i = 0; i < nodes_.size(); i++) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(1, nodes_.get(i));
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.bridge.proto.ChatProto.SwarmNodeListResponse)) {
+        return super.equals(obj);
+      }
+      com.bridge.proto.ChatProto.SwarmNodeListResponse other = (com.bridge.proto.ChatProto.SwarmNodeListResponse) obj;
+
+      if (!getNodesList()
+          .equals(other.getNodesList())) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      if (getNodesCount() > 0) {
+        hash = (37 * hash) + NODES_FIELD_NUMBER;
+        hash = (53 * hash) + getNodesList().hashCode();
+      }
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.bridge.proto.ChatProto.SwarmNodeListResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SwarmNodeListResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmNodeListResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SwarmNodeListResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmNodeListResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.SwarmNodeListResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmNodeListResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SwarmNodeListResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmNodeListResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SwarmNodeListResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.SwarmNodeListResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.SwarmNodeListResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.bridge.proto.ChatProto.SwarmNodeListResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code bridge.SwarmNodeListResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:bridge.SwarmNodeListResponse)
+        com.bridge.proto.ChatProto.SwarmNodeListResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SwarmNodeListResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SwarmNodeListResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.bridge.proto.ChatProto.SwarmNodeListResponse.class, com.bridge.proto.ChatProto.SwarmNodeListResponse.Builder.class);
+      }
+
+      // Construct using com.bridge.proto.ChatProto.SwarmNodeListResponse.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        if (nodesBuilder_ == null) {
+          nodes_ = java.util.Collections.emptyList();
+        } else {
+          nodes_ = null;
+          nodesBuilder_.clear();
+        }
+        bitField0_ = (bitField0_ & ~0x00000001);
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_SwarmNodeListResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SwarmNodeListResponse getDefaultInstanceForType() {
+        return com.bridge.proto.ChatProto.SwarmNodeListResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SwarmNodeListResponse build() {
+        com.bridge.proto.ChatProto.SwarmNodeListResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.SwarmNodeListResponse buildPartial() {
+        com.bridge.proto.ChatProto.SwarmNodeListResponse result = new com.bridge.proto.ChatProto.SwarmNodeListResponse(this);
+        buildPartialRepeatedFields(result);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartialRepeatedFields(com.bridge.proto.ChatProto.SwarmNodeListResponse result) {
+        if (nodesBuilder_ == null) {
+          if (((bitField0_ & 0x00000001) != 0)) {
+            nodes_ = java.util.Collections.unmodifiableList(nodes_);
+            bitField0_ = (bitField0_ & ~0x00000001);
+          }
+          result.nodes_ = nodes_;
+        } else {
+          result.nodes_ = nodesBuilder_.build();
+        }
+      }
+
+      private void buildPartial0(com.bridge.proto.ChatProto.SwarmNodeListResponse result) {
+        int from_bitField0_ = bitField0_;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.bridge.proto.ChatProto.SwarmNodeListResponse) {
+          return mergeFrom((com.bridge.proto.ChatProto.SwarmNodeListResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.bridge.proto.ChatProto.SwarmNodeListResponse other) {
+        if (other == com.bridge.proto.ChatProto.SwarmNodeListResponse.getDefaultInstance()) return this;
+        if (nodesBuilder_ == null) {
+          if (!other.nodes_.isEmpty()) {
+            if (nodes_.isEmpty()) {
+              nodes_ = other.nodes_;
+              bitField0_ = (bitField0_ & ~0x00000001);
+            } else {
+              ensureNodesIsMutable();
+              nodes_.addAll(other.nodes_);
+            }
+            onChanged();
+          }
+        } else {
+          if (!other.nodes_.isEmpty()) {
+            if (nodesBuilder_.isEmpty()) {
+              nodesBuilder_.dispose();
+              nodesBuilder_ = null;
+              nodes_ = other.nodes_;
+              bitField0_ = (bitField0_ & ~0x00000001);
+              nodesBuilder_ = 
+                com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+                   getNodesFieldBuilder() : null;
+            } else {
+              nodesBuilder_.addAllMessages(other.nodes_);
+            }
+          }
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                com.bridge.proto.ChatProto.SwarmAgentNode m =
+                    input.readMessage(
+                        com.bridge.proto.ChatProto.SwarmAgentNode.parser(),
+                        extensionRegistry);
+                if (nodesBuilder_ == null) {
+                  ensureNodesIsMutable();
+                  nodes_.add(m);
+                } else {
+                  nodesBuilder_.addMessage(m);
+                }
+                break;
+              } // case 10
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private java.util.List<com.bridge.proto.ChatProto.SwarmAgentNode> nodes_ =
+        java.util.Collections.emptyList();
+      private void ensureNodesIsMutable() {
+        if (!((bitField0_ & 0x00000001) != 0)) {
+          nodes_ = new java.util.ArrayList<com.bridge.proto.ChatProto.SwarmAgentNode>(nodes_);
+          bitField0_ |= 0x00000001;
+         }
+      }
+
+      private com.google.protobuf.RepeatedFieldBuilderV3<
+          com.bridge.proto.ChatProto.SwarmAgentNode, com.bridge.proto.ChatProto.SwarmAgentNode.Builder, com.bridge.proto.ChatProto.SwarmAgentNodeOrBuilder> nodesBuilder_;
+
+      /**
+       * <code>repeated .bridge.SwarmAgentNode nodes = 1;</code>
+       */
+      public java.util.List<com.bridge.proto.ChatProto.SwarmAgentNode> getNodesList() {
+        if (nodesBuilder_ == null) {
+          return java.util.Collections.unmodifiableList(nodes_);
+        } else {
+          return nodesBuilder_.getMessageList();
+        }
+      }
+      /**
+       * <code>repeated .bridge.SwarmAgentNode nodes = 1;</code>
+       */
+      public int getNodesCount() {
+        if (nodesBuilder_ == null) {
+          return nodes_.size();
+        } else {
+          return nodesBuilder_.getCount();
+        }
+      }
+      /**
+       * <code>repeated .bridge.SwarmAgentNode nodes = 1;</code>
+       */
+      public com.bridge.proto.ChatProto.SwarmAgentNode getNodes(int index) {
+        if (nodesBuilder_ == null) {
+          return nodes_.get(index);
+        } else {
+          return nodesBuilder_.getMessage(index);
+        }
+      }
+      /**
+       * <code>repeated .bridge.SwarmAgentNode nodes = 1;</code>
+       */
+      public Builder setNodes(
+          int index, com.bridge.proto.ChatProto.SwarmAgentNode value) {
+        if (nodesBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureNodesIsMutable();
+          nodes_.set(index, value);
+          onChanged();
+        } else {
+          nodesBuilder_.setMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .bridge.SwarmAgentNode nodes = 1;</code>
+       */
+      public Builder setNodes(
+          int index, com.bridge.proto.ChatProto.SwarmAgentNode.Builder builderForValue) {
+        if (nodesBuilder_ == null) {
+          ensureNodesIsMutable();
+          nodes_.set(index, builderForValue.build());
+          onChanged();
+        } else {
+          nodesBuilder_.setMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .bridge.SwarmAgentNode nodes = 1;</code>
+       */
+      public Builder addNodes(com.bridge.proto.ChatProto.SwarmAgentNode value) {
+        if (nodesBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureNodesIsMutable();
+          nodes_.add(value);
+          onChanged();
+        } else {
+          nodesBuilder_.addMessage(value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .bridge.SwarmAgentNode nodes = 1;</code>
+       */
+      public Builder addNodes(
+          int index, com.bridge.proto.ChatProto.SwarmAgentNode value) {
+        if (nodesBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureNodesIsMutable();
+          nodes_.add(index, value);
+          onChanged();
+        } else {
+          nodesBuilder_.addMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .bridge.SwarmAgentNode nodes = 1;</code>
+       */
+      public Builder addNodes(
+          com.bridge.proto.ChatProto.SwarmAgentNode.Builder builderForValue) {
+        if (nodesBuilder_ == null) {
+          ensureNodesIsMutable();
+          nodes_.add(builderForValue.build());
+          onChanged();
+        } else {
+          nodesBuilder_.addMessage(builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .bridge.SwarmAgentNode nodes = 1;</code>
+       */
+      public Builder addNodes(
+          int index, com.bridge.proto.ChatProto.SwarmAgentNode.Builder builderForValue) {
+        if (nodesBuilder_ == null) {
+          ensureNodesIsMutable();
+          nodes_.add(index, builderForValue.build());
+          onChanged();
+        } else {
+          nodesBuilder_.addMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .bridge.SwarmAgentNode nodes = 1;</code>
+       */
+      public Builder addAllNodes(
+          java.lang.Iterable<? extends com.bridge.proto.ChatProto.SwarmAgentNode> values) {
+        if (nodesBuilder_ == null) {
+          ensureNodesIsMutable();
+          com.google.protobuf.AbstractMessageLite.Builder.addAll(
+              values, nodes_);
+          onChanged();
+        } else {
+          nodesBuilder_.addAllMessages(values);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .bridge.SwarmAgentNode nodes = 1;</code>
+       */
+      public Builder clearNodes() {
+        if (nodesBuilder_ == null) {
+          nodes_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000001);
+          onChanged();
+        } else {
+          nodesBuilder_.clear();
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .bridge.SwarmAgentNode nodes = 1;</code>
+       */
+      public Builder removeNodes(int index) {
+        if (nodesBuilder_ == null) {
+          ensureNodesIsMutable();
+          nodes_.remove(index);
+          onChanged();
+        } else {
+          nodesBuilder_.remove(index);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .bridge.SwarmAgentNode nodes = 1;</code>
+       */
+      public com.bridge.proto.ChatProto.SwarmAgentNode.Builder getNodesBuilder(
+          int index) {
+        return getNodesFieldBuilder().getBuilder(index);
+      }
+      /**
+       * <code>repeated .bridge.SwarmAgentNode nodes = 1;</code>
+       */
+      public com.bridge.proto.ChatProto.SwarmAgentNodeOrBuilder getNodesOrBuilder(
+          int index) {
+        if (nodesBuilder_ == null) {
+          return nodes_.get(index);  } else {
+          return nodesBuilder_.getMessageOrBuilder(index);
+        }
+      }
+      /**
+       * <code>repeated .bridge.SwarmAgentNode nodes = 1;</code>
+       */
+      public java.util.List<? extends com.bridge.proto.ChatProto.SwarmAgentNodeOrBuilder> 
+           getNodesOrBuilderList() {
+        if (nodesBuilder_ != null) {
+          return nodesBuilder_.getMessageOrBuilderList();
+        } else {
+          return java.util.Collections.unmodifiableList(nodes_);
+        }
+      }
+      /**
+       * <code>repeated .bridge.SwarmAgentNode nodes = 1;</code>
+       */
+      public com.bridge.proto.ChatProto.SwarmAgentNode.Builder addNodesBuilder() {
+        return getNodesFieldBuilder().addBuilder(
+            com.bridge.proto.ChatProto.SwarmAgentNode.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .bridge.SwarmAgentNode nodes = 1;</code>
+       */
+      public com.bridge.proto.ChatProto.SwarmAgentNode.Builder addNodesBuilder(
+          int index) {
+        return getNodesFieldBuilder().addBuilder(
+            index, com.bridge.proto.ChatProto.SwarmAgentNode.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .bridge.SwarmAgentNode nodes = 1;</code>
+       */
+      public java.util.List<com.bridge.proto.ChatProto.SwarmAgentNode.Builder> 
+           getNodesBuilderList() {
+        return getNodesFieldBuilder().getBuilderList();
+      }
+      private com.google.protobuf.RepeatedFieldBuilderV3<
+          com.bridge.proto.ChatProto.SwarmAgentNode, com.bridge.proto.ChatProto.SwarmAgentNode.Builder, com.bridge.proto.ChatProto.SwarmAgentNodeOrBuilder> 
+          getNodesFieldBuilder() {
+        if (nodesBuilder_ == null) {
+          nodesBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
+              com.bridge.proto.ChatProto.SwarmAgentNode, com.bridge.proto.ChatProto.SwarmAgentNode.Builder, com.bridge.proto.ChatProto.SwarmAgentNodeOrBuilder>(
+                  nodes_,
+                  ((bitField0_ & 0x00000001) != 0),
+                  getParentForChildren(),
+                  isClean());
+          nodes_ = null;
+        }
+        return nodesBuilder_;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:bridge.SwarmNodeListResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:bridge.SwarmNodeListResponse)
+    private static final com.bridge.proto.ChatProto.SwarmNodeListResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.bridge.proto.ChatProto.SwarmNodeListResponse();
+    }
+
+    public static com.bridge.proto.ChatProto.SwarmNodeListResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<SwarmNodeListResponse>
+        PARSER = new com.google.protobuf.AbstractParser<SwarmNodeListResponse>() {
+      @java.lang.Override
+      public SwarmNodeListResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<SwarmNodeListResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<SwarmNodeListResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.bridge.proto.ChatProto.SwarmNodeListResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
   public interface RpcMessageOrBuilder extends
       // @@protoc_insertion_point(interface_extends:bridge.RpcMessage)
       com.google.protobuf.MessageOrBuilder {
@@ -7086,6 +29173,121 @@ java.lang.String defaultValue) {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_bridge_GroupChatResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_CompanionReadRequest_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_CompanionReadRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_CompanionReadResponse_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_CompanionReadResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_DashboardRequest_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_DashboardRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_DashboardResponse_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_DashboardResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_DashboardSummaryRequest_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_DashboardSummaryRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_DashboardSummaryResponse_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_DashboardSummaryResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_DashboardSummaryResponse_SubjectDetailsEntry_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_DashboardSummaryResponse_SubjectDetailsEntry_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_WeeklyReportRequest_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_WeeklyReportRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_WeeklyReportResponse_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_WeeklyReportResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_PdfParseRequest_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_PdfParseRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_PdfParseResponse_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_PdfParseResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_SandboxExecuteRequest_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_SandboxExecuteRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_SandboxExecuteResponse_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_SandboxExecuteResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_SandboxTaskRequest_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_SandboxTaskRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_SandboxTaskResponse_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_SandboxTaskResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_SandboxToolEvent_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_SandboxToolEvent_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_SwarmMessage_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_SwarmMessage_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_SwarmAgentNode_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_SwarmAgentNode_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_SwarmRegisterRequest_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_SwarmRegisterRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_SwarmRegisterResponse_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_SwarmRegisterResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_SwarmHelpRequest_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_SwarmHelpRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_SwarmHelpResponse_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_SwarmHelpResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_SwarmNodeListResponse_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_SwarmNodeListResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_bridge_RpcMessage_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -7121,13 +29323,75 @@ java.lang.String defaultValue) {
       "sponse\022\020\n\010group_id\030\001 \001(\003\022\016\n\006bot_id\030\002 \001(\005" +
       "\022\020\n\010bot_name\030\003 \001(\t\022\017\n\007content\030\004 \001(\t\022\017\n\007s" +
       "uccess\030\005 \001(\010\022\r\n\005error\030\006 \001(\t\022\021\n\ttimestamp" +
-      "\030\007 \001(\003\"\321\001\n\nRpcMessage\022%\n\004type\030\001 \001(\0162\027.br" +
-      "idge.RpcMessage.Type\022\n\n\002id\030\002 \001(\003\022\024\n\014serv" +
-      "ice_name\030\003 \001(\t\022\023\n\013method_name\030\004 \001(\t\022\017\n\007p" +
-      "ayload\030\005 \001(\014\022\022\n\nerror_code\030\006 \001(\005\022\022\n\nerro" +
-      "r_desc\030\007 \001(\t\",\n\004Type\022\013\n\007REQUEST\020\000\022\014\n\010RES" +
-      "PONSE\020\001\022\t\n\005ERROR\020\002B\035\n\020com.bridge.protoB\t" +
-      "ChatProtob\006proto3"
+      "\030\007 \001(\003\"E\n\024CompanionReadRequest\022\017\n\007user_i" +
+      "d\030\001 \001(\005\022\016\n\006action\030\002 \001(\t\022\014\n\004text\030\003 \001(\t\"d\n" +
+      "\025CompanionReadResponse\022\021\n\taudio_url\030\001 \001(" +
+      "\t\022\030\n\020explanation_text\030\002 \001(\t\022\017\n\007success\030\003" +
+      " \001(\010\022\r\n\005error\030\004 \001(\t\"#\n\020DashboardRequest\022" +
+      "\017\n\007user_id\030\001 \001(\t\"e\n\021DashboardResponse\022\r\n" +
+      "\005radar\030\001 \003(\001\022\014\n\004line\030\002 \003(\005\022\017\n\007user_id\030\003 " +
+      "\001(\t\022\023\n\013update_time\030\004 \001(\t\022\r\n\005error\030\005 \001(\t\"" +
+      "*\n\027DashboardSummaryRequest\022\017\n\007user_id\030\001 " +
+      "\001(\t\"\214\002\n\030DashboardSummaryResponse\022\023\n\013avg_" +
+      "mastery\030\001 \001(\001\022\031\n\021strongest_subject\030\002 \001(\t" +
+      "\022\027\n\017weakest_subject\030\003 \001(\t\022!\n\031total_quest" +
+      "ions_this_week\030\004 \001(\005\022M\n\017subject_details\030" +
+      "\005 \003(\01324.bridge.DashboardSummaryResponse." +
+      "SubjectDetailsEntry\0325\n\023SubjectDetailsEnt" +
+      "ry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\001:\0028\001\"&\n\023We" +
+      "eklyReportRequest\022\017\n\007user_id\030\001 \001(\t\"\\\n\024We" +
+      "eklyReportResponse\022\016\n\006report\030\001 \001(\t\022\017\n\007us" +
+      "er_id\030\002 \001(\t\022\024\n\014generated_at\030\003 \001(\t\022\r\n\005err" +
+      "or\030\004 \001(\t\"5\n\017PdfParseRequest\022\020\n\010pdf_data\030" +
+      "\001 \001(\014\022\020\n\010filename\030\002 \001(\t\"W\n\020PdfParseRespo" +
+      "nse\022\017\n\007content\030\001 \001(\t\022\022\n\npage_count\030\002 \001(\005" +
+      "\022\017\n\007success\030\003 \001(\010\022\r\n\005error\030\004 \001(\t\"\244\001\n\025San" +
+      "dboxExecuteRequest\022\016\n\006prompt\030\001 \001(\t\022\020\n\010wo" +
+      "rk_dir\030\002 \001(\t\022\021\n\tmax_turns\030\003 \001(\005\022\r\n\005model" +
+      "\030\004 \001(\t\022\017\n\007api_key\030\005 \001(\t\022\020\n\010base_url\030\006 \001(" +
+      "\t\022\020\n\010provider\030\007 \001(\t\022\022\n\nsession_id\030\010 \001(\t\"" +
+      "\211\001\n\026SandboxExecuteResponse\022\022\n\nsession_id" +
+      "\030\001 \001(\t\022\017\n\007success\030\002 \001(\010\022\r\n\005error\030\003 \001(\t\022\024" +
+      "\n\014final_result\030\004 \001(\t\022\022\n\nturns_used\030\005 \001(\005" +
+      "\022\021\n\ttimestamp\030\006 \001(\003\"_\n\022SandboxTaskReques" +
+      "t\022\016\n\006action\030\001 \001(\t\022\017\n\007task_id\030\002 \001(\t\022\020\n\010wo" +
+      "rk_dir\030\003 \001(\t\022\026\n\016target_task_id\030\004 \001(\t\"d\n\023" +
+      "SandboxTaskResponse\022\017\n\007success\030\001 \001(\010\022\016\n\006" +
+      "action\030\002 \001(\t\022\r\n\005error\030\003 \001(\t\022\014\n\004data\030\004 \001(" +
+      "\t\022\017\n\007task_id\030\005 \001(\t\"\273\001\n\020SandboxToolEvent\022" +
+      "\022\n\nsession_id\030\001 \001(\t\022\022\n\nevent_type\030\002 \001(\t\022" +
+      "\021\n\ttool_name\030\003 \001(\t\022\021\n\targs_json\030\004 \001(\t\022\016\n" +
+      "\006result\030\005 \001(\t\022\020\n\010is_error\030\006 \001(\010\022\017\n\007conte" +
+      "nt\030\007 \001(\t\022\023\n\013status_data\030\010 \001(\t\022\021\n\ttimesta" +
+      "mp\030\t \001(\003\"\333\002\n\014SwarmMessage\022\'\n\004type\030\001 \001(\0162" +
+      "\031.bridge.SwarmMessage.Type\022\017\n\007from_id\030\002 " +
+      "\001(\t\022\r\n\005to_id\030\003 \001(\t\022\017\n\007content\030\004 \001(\t\022\014\n\004t" +
+      "ask\030\005 \001(\t\022\016\n\006result\030\006 \001(\t\022\016\n\006msg_id\030\007 \001(" +
+      "\t\022\024\n\014capabilities\030\010 \003(\t\022\023\n\013specialties\030\t" +
+      " \003(\t\022\021\n\ttimestamp\030\n \001(\003\"\204\001\n\004Type\022\014\n\010REGI" +
+      "STER\020\000\022\020\n\014REGISTER_ACK\020\001\022\r\n\tHEARTBEAT\020\002\022" +
+      "\r\n\tBROADCAST\020\003\022\n\n\006DIRECT\020\004\022\020\n\014HELP_REQUE" +
+      "ST\020\005\022\021\n\rHELP_RESPONSE\020\006\022\r\n\tNODE_LIST\020\007\"\214" +
+      "\001\n\016SwarmAgentNode\022\020\n\010agent_id\030\001 \001(\t\022\024\n\014c" +
+      "apabilities\030\002 \003(\t\022\023\n\013specialties\030\003 \003(\t\022\016" +
+      "\n\006status\030\004 \001(\t\022\025\n\rregistered_at\030\005 \001(\003\022\026\n" +
+      "\016last_heartbeat\030\006 \001(\003\"S\n\024SwarmRegisterRe" +
+      "quest\022\020\n\010agent_id\030\001 \001(\t\022\024\n\014capabilities\030" +
+      "\002 \003(\t\022\023\n\013specialties\030\003 \003(\t\"M\n\025SwarmRegis" +
+      "terResponse\022\017\n\007success\030\001 \001(\010\022\017\n\007message\030" +
+      "\002 \001(\t\022\022\n\nnode_count\030\003 \001(\005\"J\n\020SwarmHelpRe" +
+      "quest\022\017\n\007from_id\030\001 \001(\t\022\014\n\004task\030\002 \001(\t\022\027\n\017" +
+      "timeout_seconds\030\003 \001(\001\"`\n\021SwarmHelpRespon" +
+      "se\022\017\n\007from_id\030\001 \001(\t\022\r\n\005to_id\030\002 \001(\t\022\014\n\004ta" +
+      "sk\030\003 \001(\t\022\016\n\006result\030\004 \001(\t\022\r\n\005found\030\005 \001(\010\"" +
+      ">\n\025SwarmNodeListResponse\022%\n\005nodes\030\001 \003(\0132" +
+      "\026.bridge.SwarmAgentNode\"\321\001\n\nRpcMessage\022%" +
+      "\n\004type\030\001 \001(\0162\027.bridge.RpcMessage.Type\022\n\n" +
+      "\002id\030\002 \001(\003\022\024\n\014service_name\030\003 \001(\t\022\023\n\013metho" +
+      "d_name\030\004 \001(\t\022\017\n\007payload\030\005 \001(\014\022\022\n\nerror_c" +
+      "ode\030\006 \001(\005\022\022\n\nerror_desc\030\007 \001(\t\",\n\004Type\022\013\n" +
+      "\007REQUEST\020\000\022\014\n\010RESPONSE\020\001\022\t\n\005ERROR\020\002B\035\n\020c" +
+      "om.bridge.protoB\tChatProtob\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -7169,8 +29433,146 @@ java.lang.String defaultValue) {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_bridge_GroupChatResponse_descriptor,
         new java.lang.String[] { "GroupId", "BotId", "BotName", "Content", "Success", "Error", "Timestamp", });
-    internal_static_bridge_RpcMessage_descriptor =
+    internal_static_bridge_CompanionReadRequest_descriptor =
       getDescriptor().getMessageTypes().get(4);
+    internal_static_bridge_CompanionReadRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_CompanionReadRequest_descriptor,
+        new java.lang.String[] { "UserId", "Action", "Text", });
+    internal_static_bridge_CompanionReadResponse_descriptor =
+      getDescriptor().getMessageTypes().get(5);
+    internal_static_bridge_CompanionReadResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_CompanionReadResponse_descriptor,
+        new java.lang.String[] { "AudioUrl", "ExplanationText", "Success", "Error", });
+    internal_static_bridge_DashboardRequest_descriptor =
+      getDescriptor().getMessageTypes().get(6);
+    internal_static_bridge_DashboardRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_DashboardRequest_descriptor,
+        new java.lang.String[] { "UserId", });
+    internal_static_bridge_DashboardResponse_descriptor =
+      getDescriptor().getMessageTypes().get(7);
+    internal_static_bridge_DashboardResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_DashboardResponse_descriptor,
+        new java.lang.String[] { "Radar", "Line", "UserId", "UpdateTime", "Error", });
+    internal_static_bridge_DashboardSummaryRequest_descriptor =
+      getDescriptor().getMessageTypes().get(8);
+    internal_static_bridge_DashboardSummaryRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_DashboardSummaryRequest_descriptor,
+        new java.lang.String[] { "UserId", });
+    internal_static_bridge_DashboardSummaryResponse_descriptor =
+      getDescriptor().getMessageTypes().get(9);
+    internal_static_bridge_DashboardSummaryResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_DashboardSummaryResponse_descriptor,
+        new java.lang.String[] { "AvgMastery", "StrongestSubject", "WeakestSubject", "TotalQuestionsThisWeek", "SubjectDetails", });
+    internal_static_bridge_DashboardSummaryResponse_SubjectDetailsEntry_descriptor =
+      internal_static_bridge_DashboardSummaryResponse_descriptor.getNestedTypes().get(0);
+    internal_static_bridge_DashboardSummaryResponse_SubjectDetailsEntry_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_DashboardSummaryResponse_SubjectDetailsEntry_descriptor,
+        new java.lang.String[] { "Key", "Value", });
+    internal_static_bridge_WeeklyReportRequest_descriptor =
+      getDescriptor().getMessageTypes().get(10);
+    internal_static_bridge_WeeklyReportRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_WeeklyReportRequest_descriptor,
+        new java.lang.String[] { "UserId", });
+    internal_static_bridge_WeeklyReportResponse_descriptor =
+      getDescriptor().getMessageTypes().get(11);
+    internal_static_bridge_WeeklyReportResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_WeeklyReportResponse_descriptor,
+        new java.lang.String[] { "Report", "UserId", "GeneratedAt", "Error", });
+    internal_static_bridge_PdfParseRequest_descriptor =
+      getDescriptor().getMessageTypes().get(12);
+    internal_static_bridge_PdfParseRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_PdfParseRequest_descriptor,
+        new java.lang.String[] { "PdfData", "Filename", });
+    internal_static_bridge_PdfParseResponse_descriptor =
+      getDescriptor().getMessageTypes().get(13);
+    internal_static_bridge_PdfParseResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_PdfParseResponse_descriptor,
+        new java.lang.String[] { "Content", "PageCount", "Success", "Error", });
+    internal_static_bridge_SandboxExecuteRequest_descriptor =
+      getDescriptor().getMessageTypes().get(14);
+    internal_static_bridge_SandboxExecuteRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_SandboxExecuteRequest_descriptor,
+        new java.lang.String[] { "Prompt", "WorkDir", "MaxTurns", "Model", "ApiKey", "BaseUrl", "Provider", "SessionId", });
+    internal_static_bridge_SandboxExecuteResponse_descriptor =
+      getDescriptor().getMessageTypes().get(15);
+    internal_static_bridge_SandboxExecuteResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_SandboxExecuteResponse_descriptor,
+        new java.lang.String[] { "SessionId", "Success", "Error", "FinalResult", "TurnsUsed", "Timestamp", });
+    internal_static_bridge_SandboxTaskRequest_descriptor =
+      getDescriptor().getMessageTypes().get(16);
+    internal_static_bridge_SandboxTaskRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_SandboxTaskRequest_descriptor,
+        new java.lang.String[] { "Action", "TaskId", "WorkDir", "TargetTaskId", });
+    internal_static_bridge_SandboxTaskResponse_descriptor =
+      getDescriptor().getMessageTypes().get(17);
+    internal_static_bridge_SandboxTaskResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_SandboxTaskResponse_descriptor,
+        new java.lang.String[] { "Success", "Action", "Error", "Data", "TaskId", });
+    internal_static_bridge_SandboxToolEvent_descriptor =
+      getDescriptor().getMessageTypes().get(18);
+    internal_static_bridge_SandboxToolEvent_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_SandboxToolEvent_descriptor,
+        new java.lang.String[] { "SessionId", "EventType", "ToolName", "ArgsJson", "Result", "IsError", "Content", "StatusData", "Timestamp", });
+    internal_static_bridge_SwarmMessage_descriptor =
+      getDescriptor().getMessageTypes().get(19);
+    internal_static_bridge_SwarmMessage_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_SwarmMessage_descriptor,
+        new java.lang.String[] { "Type", "FromId", "ToId", "Content", "Task", "Result", "MsgId", "Capabilities", "Specialties", "Timestamp", });
+    internal_static_bridge_SwarmAgentNode_descriptor =
+      getDescriptor().getMessageTypes().get(20);
+    internal_static_bridge_SwarmAgentNode_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_SwarmAgentNode_descriptor,
+        new java.lang.String[] { "AgentId", "Capabilities", "Specialties", "Status", "RegisteredAt", "LastHeartbeat", });
+    internal_static_bridge_SwarmRegisterRequest_descriptor =
+      getDescriptor().getMessageTypes().get(21);
+    internal_static_bridge_SwarmRegisterRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_SwarmRegisterRequest_descriptor,
+        new java.lang.String[] { "AgentId", "Capabilities", "Specialties", });
+    internal_static_bridge_SwarmRegisterResponse_descriptor =
+      getDescriptor().getMessageTypes().get(22);
+    internal_static_bridge_SwarmRegisterResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_SwarmRegisterResponse_descriptor,
+        new java.lang.String[] { "Success", "Message", "NodeCount", });
+    internal_static_bridge_SwarmHelpRequest_descriptor =
+      getDescriptor().getMessageTypes().get(23);
+    internal_static_bridge_SwarmHelpRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_SwarmHelpRequest_descriptor,
+        new java.lang.String[] { "FromId", "Task", "TimeoutSeconds", });
+    internal_static_bridge_SwarmHelpResponse_descriptor =
+      getDescriptor().getMessageTypes().get(24);
+    internal_static_bridge_SwarmHelpResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_SwarmHelpResponse_descriptor,
+        new java.lang.String[] { "FromId", "ToId", "Task", "Result", "Found", });
+    internal_static_bridge_SwarmNodeListResponse_descriptor =
+      getDescriptor().getMessageTypes().get(25);
+    internal_static_bridge_SwarmNodeListResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_SwarmNodeListResponse_descriptor,
+        new java.lang.String[] { "Nodes", });
+    internal_static_bridge_RpcMessage_descriptor =
+      getDescriptor().getMessageTypes().get(26);
     internal_static_bridge_RpcMessage_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_bridge_RpcMessage_descriptor,

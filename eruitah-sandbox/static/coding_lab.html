@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Eruitah Coding Lab</title>
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
     <style>
@@ -81,10 +84,11 @@
         .tree-item .icon { width: 16px; text-align: center; flex-shrink: 0; }
         .tree-item .name { overflow: hidden; text-overflow: ellipsis; }
         
-        .tree-folder > .tree-item { font-weight: 500; }
+        .tree-folder > .tree-item { font-weight: 500; cursor: pointer; }
         .tree-folder > .tree-children { padding-left: 12px; }
-        .tree-folder.collapsed > .tree-children { display: none; }
-        .tree-folder > .tree-item .folder-icon::before { content: '📁'; }
+        .tree-folder.collapsed > .tree-children { display: none !important; }
+        .tree-folder:not(.collapsed) > .tree-children { display: block !important; }
+        .tree-folder > .tree-item .folder-icon::before { content: '📂'; }
         .tree-folder.collapsed > .tree-item .folder-icon::before { content: '📁'; }
         
         .tree-file .tree-item .file-icon::before { 
@@ -633,7 +637,6 @@
 
             for (const [name, value] of entries) {
                 if (value.__file) {
-                    // 文件
                     const fileDiv = document.createElement('div');
                     fileDiv.className = 'tree-file';
                     
@@ -646,21 +649,32 @@
                     fileDiv.appendChild(itemDiv);
                     container.appendChild(fileDiv);
                 } else {
-                    // 目录
                     const folderDiv = document.createElement('div');
-                    folderDiv.className = 'tree-folder';
+                    folderDiv.className = 'tree-folder collapsed';
                     
                     const itemDiv = document.createElement('div');
                     itemDiv.className = 'tree-item';
+                    itemDiv.style.cursor = 'pointer';
                     itemDiv.innerHTML = `<span class="icon folder-icon"></span><span class="name">${name}</span>`;
-                    itemDiv.onclick = (e) => {
-                        e.stopPropagation();
-                        folderDiv.classList.toggle('collapsed');
-                    };
                     
                     const childrenDiv = document.createElement('div');
                     childrenDiv.className = 'tree-children';
+                    childrenDiv.style.display = 'none';
                     renderTreeNode(childrenDiv, value, basePath + '/' + name);
+                    
+                    itemDiv.onclick = function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const isCollapsed = folderDiv.classList.contains('collapsed');
+                        console.log('Folder clicked:', name, 'collapsed:', isCollapsed);
+                        if (isCollapsed) {
+                            folderDiv.classList.remove('collapsed');
+                            childrenDiv.style.display = 'block';
+                        } else {
+                            folderDiv.classList.add('collapsed');
+                            childrenDiv.style.display = 'none';
+                        }
+                    };
                     
                     folderDiv.appendChild(itemDiv);
                     folderDiv.appendChild(childrenDiv);
@@ -841,15 +855,20 @@
             var task = input.value.trim();
             if (!task) return;
 
+            var message = {
+                task: task,
+                work_dir: sandboxDir  // 发送当前工作目录
+            };
+
             if (!ws || ws.readyState !== WebSocket.OPEN) {
                 connectWebSocket('ws://127.0.0.1:8001/ws/coding');
                 setTimeout(function() {
                     if (ws && ws.readyState === WebSocket.OPEN) {
-                        ws.send(JSON.stringify({ task: task }));
+                        ws.send(JSON.stringify(message));
                     }
                 }, 1000);
             } else {
-                ws.send(JSON.stringify({ task: task }));
+                ws.send(JSON.stringify(message));
             }
 
             input.value = '';

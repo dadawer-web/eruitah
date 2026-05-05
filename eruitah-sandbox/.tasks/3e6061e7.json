@@ -1,0 +1,19 @@
+{
+  "task_id": "3e6061e7",
+  "task_name": "开发登录功能",
+  "project_path": "/home/xmy/testscode",
+  "messages": [],
+  "active_files": [],
+  "blackboard": {
+    "current_goal": "",
+    "active_files": [],
+    "key_decisions": [],
+    "error_history": [],
+    "work_dir": "/home/xmy/testscode"
+  },
+  "latest_checkpoint_id": null,
+  "current_turn": 0,
+  "created_at": 1777120489.275301,
+  "updated_at": 1777125878.7064948,
+  "status": "deleted"
+}

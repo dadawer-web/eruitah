@@ -40,3 +40,17 @@ target_link_libraries(chat_server
 set_target_properties(chat_server PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )
+
+add_executable(crosslang_test
+    src/crosslang_test.cc
+    ${PROTO_SRCS}
+)
+
+target_link_libraries(crosslang_test
+    ${Protobuf_LIBRARIES}
+    z
+)
+
+set_target_properties(crosslang_test PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+)

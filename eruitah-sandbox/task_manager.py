@@ -1,0 +1,620 @@
+"""
+Eruitah 智能编程沙盒 - SessionManager (会话管理器)
+
+核心设计:
+  用户一句话 = 开启一个平行宇宙（独立任务）
+  AI 提炼标题 = 给这个平行宇宙贴个标签
+  记忆隔离 = 任务 A 的对话和代码，绝对不能串台到任务 B
+  回退隔离 = 撤销任务 A，只会把任务 A 相关的代码回滚，任务 B 毫发无损
+
+架构:
+  SessionManager = TaskRegistry (物理快照) + TaskManager (会话记忆) 的统一入口
+  - register_task(): 新任务注册 + 强制物理快照
+  - get_or_create_session(): 获取/创建任务会话
+  - rollback_session(): 物理级回滚 (文件还原 + 记忆截断)
+  - switch_session(): 切换任务 (保存当前 + 加载目标)
+"""
+
+import os
+import json
+import time
+import uuid
+import shutil
+import logging
+import threading
+from dataclasses import dataclass, field
+from typing import Optional, Dict, List, Any
+
+logger = logging.getLogger(__name__)
+
+COMPACT_THRESHOLD = 999
+COMPACT_KEEP_RECENT = 4
+
+TASK_STORAGE_DIR = os.environ.get(
+    "ERUITAH_TASK_DIR",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), ".tasks"),
+)
+
+SNAPSHOT_BASE_DIR = os.environ.get(
+    "ERUITAH_SNAPSHOT_DIR",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), ".eruitah_snapshots"),
+)
+
+IGNORE_PATTERNS = {
+    "node_modules", "__pycache__", ".git", "venv", ".venv",
+    "dist", "build", ".next", ".nuxt", "target", ".gradle",
+    ".eruitah_snapshots", ".checkpoints", ".eruitah_cache", ".tasks",
+}
+
+
+@dataclass
+class TaskSession:
+    id: str
+    summary: str
+    work_dir: str
+    snapshot_path: str
+    messages_before: List[Dict[str, Any]]
+    messages: List[Dict[str, Any]]
+    created_at: float
+    status: str = "active"
+    current_turn: int = 0
+    base_checkpoint_id: str = ""
+    worktree_dir: str = ""
+    base_task_id: str = ""
+    merge_commit_hash: str = ""
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "task_id": self.id,
+            "summary": self.summary,
+            "work_dir": self.work_dir,
+            "snapshot_path": self.snapshot_path,
+            "messages_before": self.messages_before,
+            "messages": self.messages,
+            "created_at": self.created_at,
+            "status": self.status,
+            "current_turn": self.current_turn,
+            "base_checkpoint_id": self.base_checkpoint_id,
+            "worktree_dir": self.worktree_dir,
+            "base_task_id": self.base_task_id,
+            "merge_commit_hash": self.merge_commit_hash,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "TaskSession":
+        return cls(
+            id=data.get("task_id", data.get("id", "")) or "",
+            summary=data.get("summary", "") or "",
+            work_dir=data.get("work_dir", "") or "",
+            snapshot_path=data.get("snapshot_path", "") or "",
+            messages_before=data.get("messages_before") or [],
+            messages=data.get("messages") or [],
+            created_at=data.get("created_at") or time.time(),
+            status=data.get("status", "active") or "active",
+            current_turn=data.get("current_turn", 0) or 0,
+            base_checkpoint_id=data.get("base_checkpoint_id", "") or "",
+            worktree_dir=data.get("worktree_dir", "") or "",
+            base_task_id=data.get("base_task_id", "") or "",
+            merge_commit_hash=data.get("merge_commit_hash", "") or "",
+        )
+
+
+class SessionManager:
+    def __init__(self):
+        self._sessions: Dict[str, TaskSession] = {}
+        self.current_task_id: Optional[str] = None
+        self._lock = threading.Lock()
+        self._sandboxes: Dict[str, Any] = {}
+        os.makedirs(TASK_STORAGE_DIR, exist_ok=True)
+        self._load_all()
+
+    def _get_sandbox(self, work_dir: str):
+        from sandbox_manager import get_sandbox
+        return get_sandbox(work_dir)
+
+    def _task_filepath(self, task_id: str) -> str:
+        return os.path.join(TASK_STORAGE_DIR, f"{task_id}.json")
+
+    def _snapshot_path(self, task_id: str) -> str:
+        return os.path.join(SNAPSHOT_BASE_DIR, f"{task_id}_pre")
+
+    def _ignore_filter(self, directory: str, contents: list) -> list:
+        return [name for name in contents if name in IGNORE_PATTERNS]
+
+    def _load_all(self):
+        if os.path.exists(TASK_STORAGE_DIR):
+            for filename in os.listdir(TASK_STORAGE_DIR):
+                if filename.endswith(".json"):
+                    filepath = os.path.join(TASK_STORAGE_DIR, filename)
+                    try:
+                        with open(filepath, "r", encoding="utf-8") as f:
+                            data = json.load(f)
+                        session = TaskSession.from_dict(data)
+                        self._sessions[session.id] = session
+                    except Exception as e:
+                        logger.error(f"加载任务失败 {filename}: {e}")
+        logger.info(f"SessionManager 已加载 {len(self._sessions)} 个任务会话")
+
+    def _save_session(self, session: TaskSession):
+        filepath = self._task_filepath(session.id)
+        try:
+            with open(filepath, "w", encoding="utf-8") as f:
+                json.dump(session.to_dict(), f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            logger.error(f"保存任务失败 {session.id}: {e}")
+
+    def _create_physical_snapshot(self, task_id: str, work_dir: str) -> str:
+        snapshot_path = self._snapshot_path(task_id)
+        if os.path.exists(work_dir):
+            if os.path.exists(snapshot_path):
+                shutil.rmtree(snapshot_path, ignore_errors=True)
+            shutil.copytree(
+                work_dir,
+                snapshot_path,
+                ignore=self._ignore_filter,
+                dirs_exist_ok=True,
+            )
+            logger.info(f"📦 物理快照已创建: {work_dir} → {snapshot_path}")
+        else:
+            logger.warning(f"工作目录不存在，跳过快照: {work_dir}")
+        return snapshot_path
+
+    def get_or_create_session(
+        self,
+        task_id: Optional[str],
+        first_prompt: str,
+        work_dir: str,
+        existing_messages: Optional[List[Dict[str, Any]]] = None,
+        base_task_id: str = "",
+        use_worktree: bool = True,
+    ) -> TaskSession:
+        with self._lock:
+            if task_id and task_id in self._sessions:
+                session = self._sessions[task_id]
+                logger.info(f"🔄 继续任务 {task_id}: {len(session.messages)} 条历史消息")
+                return session
+
+            new_id = task_id or f"task_{uuid.uuid4().hex[:8]}"
+            summary = first_prompt[:50] + ("..." if len(first_prompt) > 50 else "")
+
+            logger.info(f"📦 检测到新任务请求: {new_id}")
+
+            worktree_dir = ""
+            if use_worktree:
+                sandbox = self._get_sandbox(work_dir)
+                worktree_dir = sandbox.create_task_workspace(new_id, base_task_id=base_task_id)
+            else:
+                worktree_dir = work_dir
+                logger.info(f"📦 直通模式: 任务 {new_id} 直接在用户目录 {work_dir} 工作")
+
+            messages_before = existing_messages.copy() if existing_messages else []
+
+            session = TaskSession(
+                id=new_id,
+                summary=summary,
+                work_dir=work_dir,
+                snapshot_path="",
+                messages_before=messages_before,
+                messages=[],
+                created_at=time.time(),
+                status="active",
+                current_turn=0,
+                base_checkpoint_id=f"task/{new_id}",
+                worktree_dir=worktree_dir,
+                base_task_id=base_task_id,
+            )
+
+            self._sessions[new_id] = session
+            self._save_session(session)
+            self.current_task_id = new_id
+
+            if use_worktree:
+                logger.info(f"📦 任务 {new_id} 已注册 (Git 分支: task/{new_id}): {summary}")
+            else:
+                logger.info(f"📦 任务 {new_id} 已注册 (直通模式): {summary}")
+            return session
+
+    def _is_passthrough(self, session: TaskSession) -> bool:
+        return session.worktree_dir == session.work_dir
+
+    def rollback_session(self, task_id: str) -> Dict[str, Any]:
+        with self._lock:
+            if task_id not in self._sessions:
+                return {"success": False, "error": f"任务 {task_id} 不存在"}
+
+            session = self._sessions[task_id]
+
+            if session.status == "rolled_back":
+                return {"success": False, "error": f"任务 {task_id} 已被回退过"}
+
+            if self._is_passthrough(session):
+                return {"success": False, "error": "直通模式下不支持 Git 回退，请手动撤销更改"}
+
+            work_dir = session.work_dir
+            logger.info(f"⏪ 物理回退任务 {task_id}: {session.summary[:50]}")
+
+            try:
+                sandbox = self._get_sandbox(work_dir)
+                result = sandbox.rollback_to_task_start(task_id)
+
+                if not result.get("success"):
+                    return result
+
+                session.status = "rolled_back"
+                session.messages = []
+                session.current_turn = 0
+                self._save_session(session)
+
+                logger.info(f"⏪ 物理回退完成: {task_id}")
+
+                return {
+                    "success": True,
+                    "task_id": task_id,
+                    "summary": session.summary,
+                    "messages_before": session.messages_before,
+                    "work_dir": work_dir,
+                }
+
+            except Exception as e:
+                logger.error(f"⏪ 物理回退失败: {e}")
+                return {"success": False, "error": str(e)}
+
+    def switch_session(
+        self,
+        new_task_id: str,
+        current_messages: Optional[List[Dict[str, Any]]] = None,
+        current_turn: int = 0,
+    ) -> Dict[str, Any]:
+        with self._lock:
+            if self.current_task_id and self.current_task_id in self._sessions:
+                old_session = self._sessions[self.current_task_id]
+                if current_messages is not None:
+                    old_session.messages = current_messages
+                old_session.messages = old_session.messages or []
+                old_session.current_turn = current_turn
+                self._save_session(old_session)
+                logger.info(f"💾 已保存当前任务 {self.current_task_id}: {len(old_session.messages)} 条消息")
+
+            if new_task_id not in self._sessions:
+                return {"success": False, "error": f"任务 {new_task_id} 不存在"}
+
+            self.current_task_id = new_task_id
+            target = self._sessions[new_task_id]
+
+            sandbox = self._get_sandbox(target.work_dir)
+            worktree_dir = sandbox.switch_to_task(new_task_id)
+            if worktree_dir and not target.worktree_dir:
+                target.worktree_dir = worktree_dir
+                self._save_session(target)
+
+            logger.info(f"🔄 切换到任务 {new_task_id}: {target.summary[:50]}")
+
+            return {
+                "success": True,
+                "task_id": new_task_id,
+                "summary": target.summary,
+                "messages": target.messages,
+                "messages_before": target.messages_before,
+                "current_turn": target.current_turn,
+                "work_dir": target.worktree_dir or target.work_dir,
+            }
+
+    def update_session_messages(
+        self,
+        task_id: str,
+        messages: List[Dict[str, Any]],
+        current_turn: int = 0,
+    ):
+        with self._lock:
+            if task_id in self._sessions:
+                session = self._sessions[task_id]
+                session.messages = messages or []
+                session.current_turn = current_turn
+                self._save_session(session)
+
+                if len(session.messages) > COMPACT_THRESHOLD:
+                    self._compact_session_memory(task_id)
+
+    def _compact_session_memory(self, session_id: str):
+        if session_id not in self._sessions:
+            return
+
+        session = self._sessions[session_id]
+        messages = session.messages or []
+
+        if len(messages) <= COMPACT_THRESHOLD:
+            return
+
+        system_msg = None
+        start_idx = 0
+        if messages and messages[0].get("role") == "system":
+            system_msg = messages[0]
+            start_idx = 1
+
+        middle_end = len(messages) - COMPACT_KEEP_RECENT
+        if middle_end <= start_idx:
+            return
+
+        middle_messages = messages[start_idx:middle_end]
+        recent_messages = messages[middle_end:]
+
+        summary = self._call_cheap_llm_for_summary(middle_messages)
+
+        compacted = []
+        if system_msg:
+            compacted.append(system_msg)
+
+        compacted.append({
+            "role": "system",
+            "content": f"📚 历史压缩摘要 (自动生成，原始 {len(middle_messages)} 条消息已压缩):\n{summary}",
+        })
+
+        compacted.extend(recent_messages)
+
+        session.messages = compacted
+        self._save_session(session)
+
+        logger.info(
+            f"📦 任务 {session_id} 上下文已压缩: "
+            f"{len(messages)} → {len(compacted)} 条消息 "
+            f"(压缩了 {len(middle_messages)} 条中间对话)"
+        )
+
+    def compact_memory(self, session_id: str):
+        with self._lock:
+            self._compact_session_memory(session_id)
+
+    def _call_cheap_llm_for_summary(self, messages: List[Dict[str, Any]]) -> str:
+        structured_summary = self._generate_summary(messages)
+
+        try:
+            import os
+            summary_api_key = os.environ.get("OPENAI_API_KEY") or os.environ.get("ANTHROPIC_API_KEY")
+            summary_base_url = os.environ.get("OPENAI_BASE_URL")
+            if summary_base_url and not summary_base_url.endswith("/v1"):
+                summary_base_url = summary_base_url.rstrip("/") + "/v1"
+            summary_model = os.environ.get("ERUITAH_SUMMARY_MODEL", "mimo-v2.5-pro")
+
+            if not summary_api_key:
+                return structured_summary
+
+            from openai import OpenAI
+            client = OpenAI(api_key=summary_api_key, base_url=summary_base_url)
+
+            conversation_text = self._messages_to_text(messages)
+
+            response = client.chat.completions.create(
+                model=summary_model,
+                messages=[
+                    {"role": "system", "content": "你是一个代码助手的历史对话压缩器。请将以下对话历史压缩为一段简洁的摘要，保留：1) 用户的核心意图 2) 已执行的关键操作 3) 遇到的错误和解决方案。忽略冗余的试错过程。用中文输出，不超过200字。"},
+                    {"role": "user", "content": f"请压缩以下对话历史：\n\n{conversation_text[:3000]}"},
+                ],
+                max_tokens=300,
+                temperature=0.3,
+            )
+
+            llm_summary = response.choices[0].message.content.strip()
+            if llm_summary:
+                logger.info(f"🧠 LLM 压缩摘要生成成功: {llm_summary[:80]}...")
+                return llm_summary
+        except Exception as e:
+            logger.debug(f"LLM 摘要生成失败，回退到结构化摘要: {e}")
+
+        return structured_summary
+
+    def _messages_to_text(self, messages: List[Dict[str, Any]]) -> str:
+        lines = []
+        for msg in messages:
+            role = msg.get("role", "unknown")
+            content = str(msg.get("content", ""))[:200]
+            if role == "user":
+                lines.append(f"[用户] {content}")
+            elif role == "assistant":
+                tool_calls = msg.get("tool_calls", [])
+                if tool_calls:
+                    for tc in tool_calls:
+                        if isinstance(tc, dict):
+                            fn = tc.get("function", tc)
+                            if isinstance(fn, dict):
+                                name = fn.get("name", "?")
+                                lines.append(f"[助手→工具] {name}")
+                elif content:
+                    lines.append(f"[助手] {content[:100]}")
+            elif role == "tool":
+                if "error" in content.lower() or "失败" in content:
+                    lines.append(f"[工具结果-错误] {content[:80]}")
+                else:
+                    lines.append(f"[工具结果] {content[:50]}")
+            elif role == "system":
+                lines.append(f"[系统] {content[:100]}")
+        return "\n".join(lines)
+
+    def _generate_summary(self, messages: List[Dict[str, Any]]) -> str:
+        user_intents = []
+        tool_actions = []
+        errors = []
+
+        for msg in messages:
+            role = msg.get("role", "")
+            content = str(msg.get("content", ""))
+
+            if role == "user" and content:
+                user_intents.append(content[:100])
+            elif role == "assistant":
+                tool_calls = msg.get("tool_calls", [])
+                if tool_calls:
+                    for tc in tool_calls:
+                        if isinstance(tc, dict):
+                            fn = tc.get("function", tc)
+                            if isinstance(fn, dict):
+                                name = fn.get("name", "")
+                                args_str = fn.get("arguments", "{}")
+                                try:
+                                    args = json.loads(args_str) if isinstance(args_str, str) else args_str
+                                except Exception:
+                                    args = {}
+                                if name == "file_edit":
+                                    fp = args.get("file_path", "?")
+                                    tool_actions.append(f"编辑文件: {fp}")
+                                elif name == "bash":
+                                    cmd = args.get("command", "?")
+                                    tool_actions.append(f"执行命令: {cmd[:60]}")
+                                elif name == "file_read":
+                                    fp = args.get("file_path", "?")
+                                    tool_actions.append(f"读取文件: {fp}")
+                                else:
+                                    tool_actions.append(f"调用工具: {name}")
+            elif role == "tool":
+                if "error" in content.lower() or "失败" in content:
+                    errors.append(content[:80])
+
+        parts = []
+
+        if user_intents:
+            unique_intents = list(dict.fromkeys(user_intents))[:5]
+            parts.append("用户意图: " + " → ".join(unique_intents))
+
+        if tool_actions:
+            unique_actions = list(dict.fromkeys(tool_actions))[:10]
+            parts.append("执行操作: " + "; ".join(unique_actions))
+
+        if errors:
+            parts.append("遇到错误: " + "; ".join(errors[:3]))
+
+        if not parts:
+            return f"[系统折叠了前期的试错日志] ({len(messages)} 条消息)"
+
+        return "\n".join(parts)
+
+    def list_sessions(self, work_dir: str = "") -> List[Dict[str, Any]]:
+        with self._lock:
+            sessions = []
+            for session in self._sessions.values():
+                if work_dir and session.work_dir != work_dir:
+                    continue
+                d = session.to_dict()
+                d["created_at_str"] = time.strftime("%H:%M:%S", time.localtime(session.created_at))
+                sessions.append(d)
+            sessions.sort(key=lambda t: t.get("created_at", 0), reverse=True)
+            return sessions
+
+    def get_session(self, task_id: str) -> Optional[TaskSession]:
+        with self._lock:
+            return self._sessions.get(task_id)
+
+    def set_session_status(self, task_id: str, status: str):
+        with self._lock:
+            if task_id in self._sessions:
+                self._sessions[task_id].status = status
+                self._save_session(self._sessions[task_id])
+
+    def delete_session(self, task_id: str):
+        with self._lock:
+            if task_id in self._sessions:
+                session = self._sessions[task_id]
+                if os.path.exists(session.snapshot_path):
+                    shutil.rmtree(session.snapshot_path, ignore_errors=True)
+                filepath = self._task_filepath(task_id)
+                if os.path.exists(filepath):
+                    os.unlink(filepath)
+                del self._sessions[task_id]
+                logger.info(f"已删除任务: {task_id}")
+
+    def merge_session(self, task_id: str) -> Dict[str, Any]:
+        with self._lock:
+            if task_id not in self._sessions:
+                return {"status": "error", "message": f"任务 {task_id} 不存在"}
+
+            session = self._sessions[task_id]
+
+            if session.status == "merged":
+                return {"status": "error", "message": f"任务 {task_id} 已经合并过了"}
+
+            if self._is_passthrough(session):
+                session.status = "merged"
+                self._save_session(session)
+                return {"status": "success", "message": "直通模式下文件已在原目录，无需合并", "task_id": task_id}
+
+            sandbox = self._get_sandbox(session.work_dir)
+            result = sandbox.merge_task_to_main(task_id)
+
+            if result.get("status") == "success":
+                session.status = "merged"
+                session.merge_commit_hash = result.get("merge_commit_hash", "")
+                self._save_session(session)
+                logger.info(f"✅ 任务 {task_id} 已合并到主干 (merge_commit={session.merge_commit_hash})")
+            elif result.get("status") == "conflict":
+                session.status = "conflict"
+                self._save_session(session)
+                logger.warning(f"⚠️ 任务 {task_id} 合并冲突，等待人工解决")
+
+            return result
+
+    def rollback_step_session(self, task_id: str, steps: int = 1) -> Dict[str, Any]:
+        with self._lock:
+            if task_id not in self._sessions:
+                return {"success": False, "error": f"任务 {task_id} 不存在"}
+
+            session = self._sessions[task_id]
+
+            if session.status not in ("active",):
+                return {"success": False, "error": f"任务 {task_id} 状态为 {session.status}，无法回退步骤"}
+
+            if self._is_passthrough(session):
+                return {"success": False, "error": "直通模式下不支持 Git 步骤回退，请手动撤销更改"}
+
+            sandbox = self._get_sandbox(session.work_dir)
+            result = sandbox.rollback_task_step(task_id, steps=steps)
+
+            if result.get("success"):
+                msg_count = len(session.messages)
+                trim_count = min(steps * 2, msg_count)
+                if trim_count > 0 and msg_count > trim_count:
+                    session.messages = session.messages[:-trim_count]
+                session.current_turn = max(0, session.current_turn - steps)
+                self._save_session(session)
+                logger.info(f"⏪ 任务 {task_id} 回退 {result.get('steps_rolled_back', steps)} 步，消息裁剪 {trim_count} 条")
+
+            return result
+
+    def revert_merged_session(self, task_id: str) -> Dict[str, Any]:
+        with self._lock:
+            if task_id not in self._sessions:
+                return {"status": "error", "message": f"任务 {task_id} 不存在"}
+
+            session = self._sessions[task_id]
+
+            if session.status != "merged":
+                return {"status": "error", "message": f"任务 {task_id} 状态为 {session.status}，只能 revert 已合并的任务"}
+
+            if self._is_passthrough(session):
+                session.status = "reverted"
+                self._save_session(session)
+                return {"status": "success", "message": "直通模式下无需 revert，文件已在原目录", "task_id": task_id}
+
+            if not session.merge_commit_hash:
+                return {"status": "error", "message": f"任务 {task_id} 没有记录 merge commit hash，无法 revert"}
+
+            sandbox = self._get_sandbox(session.work_dir)
+            result = sandbox.revert_merged_task(task_id, session.merge_commit_hash)
+
+            if result.get("status") == "success":
+                session.status = "reverted"
+                self._save_session(session)
+                logger.info(f"🚑 任务 {task_id} 已通过 revert 安全抵消")
+
+            return result
+
+
+_session_manager: Optional[SessionManager] = None
+
+
+def get_session_manager() -> SessionManager:
+    global _session_manager
+    if _session_manager is None:
+        _session_manager = SessionManager()
+    return _session_manager
+
+
+def get_task_manager() -> SessionManager:
+    return get_session_manager()

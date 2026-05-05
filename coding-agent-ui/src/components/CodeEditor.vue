@@ -71,6 +71,20 @@ onMounted(async () => {
   const monaco = await import('monaco-editor')
   monacoInstance = monaco
 
+  if (!editorContainer.value) {
+    console.error('[CodeEditor] editorContainer ref is null, skipping editor creation')
+    return
+  }
+
+  self.MonacoEnvironment = {
+    getWorkerUrl: function (moduleId, label) {
+      return `data:text/javascript;charset=utf-8,${encodeURIComponent(`
+        self.MonacoEnvironment = { baseUrl: '/' };
+        importScripts('https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/base/worker/workerMain.js');
+      `)}`
+    }
+  }
+
   monaco.editor.defineTheme('geek-dark', {
     base: 'vs-dark',
     inherit: true,
@@ -95,28 +109,32 @@ onMounted(async () => {
     },
   })
 
-  editor = monaco.editor.create(editorContainer.value, {
-    value: store.currentCode || '// Waiting for agent...\n',
-    language: getLanguage(store.currentFile),
-    theme: 'geek-dark',
-    fontSize: 13,
-    fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace",
-    fontLigatures: true,
-    minimap: { enabled: false },
-    scrollBeyondLastLine: false,
-    smoothScrolling: true,
-    cursorBlinking: 'smooth',
-    cursorSmoothCaretAnimation: 'on',
-    renderLineHighlight: 'all',
-    padding: { top: 8 },
-    automaticLayout: true,
-    wordWrap: 'on',
-    tabSize: 2,
-    bracketPairColorization: { enabled: true },
-    guides: { bracketPairs: true, indentation: true },
-  })
+  try {
+    editor = monaco.editor.create(editorContainer.value, {
+      value: store.currentCode || '// Waiting for agent...\n',
+      language: getLanguage(store.currentFile),
+      theme: 'geek-dark',
+      fontSize: 13,
+      fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace",
+      fontLigatures: true,
+      minimap: { enabled: false },
+      scrollBeyondLastLine: false,
+      smoothScrolling: true,
+      cursorBlinking: 'smooth',
+      cursorSmoothCaretAnimation: 'on',
+      renderLineHighlight: 'all',
+      padding: { top: 8 },
+      automaticLayout: true,
+      wordWrap: 'on',
+      tabSize: 2,
+      bracketPairColorization: { enabled: true },
+      guides: { bracketPairs: true, indentation: true },
+    })
 
-  store.registerEditor(editor)
+    store.registerEditor(editor)
+  } catch (e) {
+    console.error('[CodeEditor] Failed to create Monaco editor:', e)
+  }
 })
 
 watch(() => store.currentFile, (newFile) => {

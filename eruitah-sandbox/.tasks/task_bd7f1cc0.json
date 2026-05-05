@@ -1,0 +1,15 @@
+{
+  "task_id": "task_bd7f1cc0",
+  "summary": "在当前目录下再创建一个新文件夹，实现数据结构查找所有的经典代码",
+  "work_dir": "/home/xmy/testscode",
+  "snapshot_path": "",
+  "messages_before": [],
+  "messages": [],
+  "created_at": 1777944135.743787,
+  "status": "active",
+  "current_turn": 0,
+  "base_checkpoint_id": "task/task_bd7f1cc0",
+  "worktree_dir": "/home/xmy/testscode",
+  "base_task_id": "",
+  "merge_commit_hash": ""
+}

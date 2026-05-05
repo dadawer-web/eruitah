@@ -243,10 +243,10 @@ def read_file(
     )
 
 
-def execute_file_read(file_path: str, start_line: Optional[int] = None, end_line: Optional[int] = None) -> tuple[str, bool]:
+def execute_file_read(file_path: str, start_line: Optional[int] = None, end_line: Optional[int] = None, work_dir: str = ".") -> tuple[str, bool]:
     """执行文件读取（供 agent_runner 调用）"""
     try:
-        result = read_file(file_path, start_line or 1, end_line)
+        result = read_file(file_path, start_line or 1, end_line, work_dir)
         
         if result.error:
             return result.error, True

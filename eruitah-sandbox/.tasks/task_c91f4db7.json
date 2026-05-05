@@ -1,0 +1,15 @@
+{
+  "task_id": "task_c91f4db7",
+  "summary": "基于任务 45eccc70 的结果继续开发",
+  "work_dir": "/tmp/eruitah-sandbox",
+  "snapshot_path": "",
+  "messages_before": [],
+  "messages": null,
+  "created_at": 1777727490.3072429,
+  "status": "active",
+  "current_turn": 1,
+  "base_checkpoint_id": "task/task_c91f4db7",
+  "worktree_dir": "/tmp/agent-worktrees/task_c91f4db7",
+  "base_task_id": "task_45eccc70",
+  "merge_commit_hash": ""
+}

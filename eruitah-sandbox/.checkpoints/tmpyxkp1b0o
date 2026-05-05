@@ -1,0 +1,1095 @@
+"""
+Eruitah 智能编程沙盒 - FastAPI Web 服务 v4
+
+v4 完全重写: 对齐用户伪代码的"神经系统"模式
+
+架构:
+┌──────────────┐    WebSocket     ┌──────────────────┐     API      ┌──────────┐
+│  Qt/C++ 客户端 │ <─────────────> │  FastAPI (本模块)  │ ──────────> │  LLM API  │
+│  Monaco Editor │   双向实时通信   │  main.py v4       │ <────────── │  Claude   │
+└──────────────┘                  └──────────────────┘              └──────────┘
+
+核心设计:
+  run_agent() 是同步生成器 → 通过 run_in_executor 放入线程池执行
+  → 主线程 async for 遍历 → websocket.send_json() 实时推送
+
+WebSocket 事件 (直接从 run_agent yield 出来):
+  {"type": "status",     "data": "Agent 正在思考..."}
+  {"type": "message",    "content": "大模型回复"}
+  {"type": "tool_start", "tool_name": "bash", "args": {...}}
+  {"type": "tool_end",   "tool_name": "bash", "result": "...", "is_error": false}
+  {"type": "finish",     "data": "最终结果"}
+  {"type": "error",      "data": "错误信息"}
+"""
+
+import os
+import json
+import time
+import asyncio
+import logging
+import uuid
+from typing import Optional
+from contextlib import asynccontextmanager
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+# 加载 .env 文件（优先从项目根目录加载）
+env_path = Path(__file__).parent.parent / ".env"
+if env_path.exists():
+    load_dotenv(env_path)
+    print(f"已加载环境变量文件: {env_path}")
+
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
+
+from agent_runner import run_agent, MAX_TURNS
+
+logger = logging.getLogger(__name__)
+
+# ============================================================================
+# 配置
+# ============================================================================
+
+SANDBOX_DIR = os.environ.get("ERUITAH_SANDBOX_DIR", "/tmp/eruitah-sandbox")
+API_PROVIDER = os.environ.get("ERUITAH_API_PROVIDER", "openai")
+DEFAULT_MODEL_OPENAI = os.environ.get("ERUITAH_MODEL_OPENAI", "gpt-4o")
+DEFAULT_MODEL_ANTHROPIC = os.environ.get("ERUITAH_MODEL_ANTHROPIC", "claude-sonnet-4-20250514")
+
+
+# ============================================================================
+# 请求模型
+# ============================================================================
+
+class ExecuteRequest(BaseModel):
+    prompt: str = Field(..., description="用户提示词", min_length=1)
+    work_dir: Optional[str] = Field(None, description="工作目录")
+    max_turns: int = Field(MAX_TURNS, description="最大循环轮数", ge=1, le=50)
+    api_key: Optional[str] = Field(None, description="API Key")
+    model: Optional[str] = Field(None, description="模型名称")
+    base_url: Optional[str] = Field(None, description="API 基础 URL")
+    provider: Optional[str] = Field(None, description="API 提供商: openai 或 anthropic")
+
+
+class HealthResponse(BaseModel):
+    status: str = "ok"
+    sandbox_dir: str = ""
+    api_provider: str = ""
+
+
+# ============================================================================
+# 应用生命周期
+# ============================================================================
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    os.makedirs(SANDBOX_DIR, exist_ok=True)
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    )
+    logger.info(f"Eruitah 沙盒服务 v4 启动，工作目录: {SANDBOX_DIR}")
+    yield
+    logger.info("Eruitah 沙盒服务关闭")
+
+
+app = FastAPI(
+    title="Eruitah 智能编程沙盒",
+    description="基于 Claude Code 核心逻辑的 AI 编程沙盒微服务 v4",
+    version="4.0.0",
+    lifespan=lifespan,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# 挂载静态文件目录
+STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+if os.path.isdir(STATIC_DIR):
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+
+# ============================================================================
+# 同步生成器 → 异步迭代器 适配器
+# ============================================================================
+
+async def _run_agent_async(
+    user_input: str,
+    work_dir: str = ".",
+    max_turns: int = MAX_TURNS,
+    api_key: Optional[str] = None,
+    model: Optional[str] = None,
+    base_url: Optional[str] = None,
+    provider: str = "openai",
+    initial_messages: Optional[list] = None,
+    start_turn: int = 1,
+    task_id: Optional[str] = None,
+):
+    """
+    将同步生成器 run_agent() 包装为异步迭代器
+
+    核心问题: run_agent() 是同步函数，内部调用 LLM API 会阻塞事件循环。
+    解决方案: 使用 asyncio.Queue + 线程池
+
+    ┌─────────────────┐         ┌──────────────────────┐
+    │  主线程 (async)  │         │  工作线程 (sync)      │
+    │                  │         │                      │
+    │  async for e:   │  ←Queue─  │  for e in run_agent: │
+    │    send_json(e) │         │    queue.put(e)      │
+    │                  │         │                      │
+    └─────────────────┘         └──────────────────────┘
+
+    这样 LLM API 的阻塞调用在工作线程中执行，
+    主线程的 WebSocket 心跳不会被卡住。
+    """
+    queue = asyncio.Queue()
+    loop = asyncio.get_event_loop()
+
+    def _sync_worker():
+        try:
+            for event in run_agent(
+                user_input=user_input,
+                work_dir=work_dir,
+                max_turns=max_turns,
+                api_key=api_key,
+                model=model,
+                base_url=base_url,
+                provider=provider,
+                initial_messages=initial_messages,
+                start_turn=start_turn,
+                task_id=task_id,
+            ):
+                loop.call_soon_threadsafe(queue.put_nowait, event)
+        except Exception as e:
+            loop.call_soon_threadsafe(
+                queue.put_nowait,
+                {"type": "error", "data": f"Agent 内部异常: {str(e)}"},
+            )
+        finally:
+            loop.call_soon_threadsafe(queue.put_nowait, None)
+
+    # 在线程池中启动同步生成器
+    import concurrent.futures
+    executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+    loop.run_in_executor(executor, _sync_worker)
+
+    # 从队列中消费事件
+    while True:
+        event = await queue.get()
+        if event is None:
+            break
+        yield event
+
+
+# ============================================================================
+# 系统指令拦截器 - 绕过大模型，0 Token 消耗
+# ============================================================================
+
+async def _handle_system_command(websocket, data: dict, safe_send):
+    """
+    网关拦截器：系统指令绝不经过大模型
+
+    前端发送: {"type": "system_command", "action": "list_checkpoints|rollback|clear_checkpoints", ...}
+    后端直接执行 Python 函数，Agent 完全不知道发生了什么
+    """
+    from rewind_system import get_rewind_system
+    from task_manager import get_task_manager
+
+    action = data.get("action", "")
+    task_id = data.get("task_id", "")
+    work_dir = data.get("work_dir", SANDBOX_DIR)
+
+    rewind_system = get_rewind_system()
+    tm = get_task_manager()
+
+    if action == "list_checkpoints":
+        session_id = task_id or tm.current_task_id or "default"
+        rewind_system.load_checkpoints(session_id)
+        checkpoints = rewind_system.list_checkpoints(session_id)
+        await safe_send({"type": "checkpoint_list", "data": checkpoints})
+        return
+
+    elif action == "rollback":
+        session_id = task_id or tm.current_task_id or "default"
+        steps = data.get("steps", 1)
+        rewind_system.load_checkpoints(session_id)
+
+        logger.info(f"⏪ 执行物理回档！绕过 Agent 大脑。session={session_id}, steps={steps}")
+
+        rewind_result = rewind_system.rewind(session_id, steps=steps)
+
+        if rewind_result.get("success"):
+            restored_files = rewind_result.get("restored_files", [])
+            target_turn = rewind_result.get("target_turn", 0)
+            truncated_messages = rewind_result.get("messages", [])
+
+            if tm.current_task_id:
+                task_data = tm.load_task(tm.current_task_id)
+                if task_data:
+                    task_data["messages"] = truncated_messages
+                    task_data["current_turn"] = target_turn
+                    tm.save_task(task_data)
+                    logger.info(f"⏪ 记忆截断: 任务 {tm.current_task_id} 回退到第 {target_turn} 轮, 剩余 {len(truncated_messages)} 条消息")
+
+            await safe_send({"type": "refresh_tree"})
+            await safe_send({
+                "type": "system_msg",
+                "content": f"✅ 已成功物理回退到第 {target_turn} 轮，恢复了 {len(restored_files)} 个文件",
+            })
+        else:
+            await safe_send({
+                "type": "system_msg",
+                "content": f"❌ 回退失败: {rewind_result.get('error', '未知错误')}",
+            })
+        return
+
+    elif action == "clear_checkpoints":
+        session_id = task_id or tm.current_task_id or "default"
+        rewind_system.load_checkpoints(session_id)
+        rewind_system.clear_checkpoints(session_id)
+        await safe_send({
+            "type": "system_msg",
+            "content": "✅ 所有检查点已清除",
+        })
+        return
+
+    else:
+        await safe_send({
+            "type": "system_msg",
+            "content": f"❌ 未知系统指令: {action}",
+        })
+        return
+
+
+# ============================================================================
+# WebSocket 端点 - /ws/coding
+# ============================================================================
+
+@app.websocket("/ws/coding")
+async def websocket_coding(websocket: WebSocket):
+    """
+    WebSocket 双向通信 - Agent 的"神经系统"
+
+    协议:
+      客户端发送: {"task": "写一个二叉树", "model": "gpt-4o", ...}
+      服务端推送: {"type": "status", "data": "Agent 正在思考..."}
+                 {"type": "tool_start", "tool_name": "bash", "args": {...}}
+                 {"type": "tool_end", "tool_name": "bash", "result": "...", "is_error": false}
+                 {"type": "finish", "data": "最终结果"}
+
+    Qt/C++ 对接示例:
+        void CodingLabWindow::onTextMessageReceived(QString message) {
+            QJsonObject obj = QJsonDocument::fromJson(message.toUtf8()).object();
+            QString type = obj["type"].toString();
+
+            if (type == "tool_start") {
+                // 显示: Agent 正在使用 bash 工具...
+                QString toolName = obj["tool_name"].toString();
+                ui->statusLabel->setText("正在执行: " + toolName);
+            }
+            else if (type == "tool_end") {
+                // 显示工具执行结果
+                bool isError = obj["is_error"].toBool();
+                QString result = obj["result"].toString();
+                if (isError) {
+                    appendTerminalLog("[ERROR] " + result);
+                } else {
+                    appendTerminalLog(result);
+                }
+            }
+            else if (type == "finish") {
+                ui->statusLabel->setText("任务完成");
+            }
+        }
+    """
+    await websocket.accept()
+    
+    ws_connected = True
+    
+    async def safe_send(data: dict):
+        nonlocal ws_connected
+        if not ws_connected:
+            return False
+        try:
+            await websocket.send_json(data)
+            return True
+        except Exception:
+            ws_connected = False
+            return False
+    
+    client_message_queue = asyncio.Queue()
+    
+    async def receive_client_messages():
+        nonlocal ws_connected
+        try:
+            while True:
+                raw = await websocket.receive_text()
+                try:
+                    data = json.loads(raw)
+                    if data.get("type") == "system_command":
+                        await _handle_system_command(websocket, data, safe_send)
+                        continue
+                    await client_message_queue.put(data)
+                except json.JSONDecodeError:
+                    pass
+        except Exception:
+            ws_connected = False
+    
+    receive_task = asyncio.create_task(receive_client_messages())
+    
+    try:
+        data = await client_message_queue.get()
+
+        if data.get("type") == "system_command":
+            await _handle_system_command(websocket, data, safe_send)
+            return
+
+        user_input = data.get("task") or data.get("prompt") or ""
+        if not user_input:
+            await safe_send({"type": "error", "data": "task/prompt 不能为空"})
+            return
+
+        work_dir = data.get("work_dir", SANDBOX_DIR)
+        max_turns = data.get("max_turns", MAX_TURNS)
+        api_key = data.get("api_key") or os.environ.get("OPENAI_API_KEY") or os.environ.get("ANTHROPIC_API_KEY")
+        model = data.get("model")
+        base_url = data.get("base_url") or os.environ.get("OPENAI_BASE_URL")
+        provider = data.get("provider", API_PROVIDER)
+
+        if not model:
+            model = DEFAULT_MODEL_ANTHROPIC if provider == "anthropic" else DEFAULT_MODEL_OPENAI
+
+        if base_url and not base_url.endswith("/v1"):
+            base_url = base_url.rstrip("/") + "/v1"
+
+        os.makedirs(work_dir, exist_ok=True)
+
+        from task_manager import get_task_manager
+        tm = get_task_manager()
+        task_id = data.get("task_id")
+        
+        initial_messages = None
+        start_turn = 1
+        
+        if task_id:
+            tm.current_task_id = task_id
+            task_data = tm.load_task(task_id)
+            if task_data and task_data.get("messages"):
+                initial_messages = task_data["messages"]
+                logger.info(f"🔄 脑部记忆替换: 加载任务 {task_id} 的 {len(initial_messages)} 条历史消息，本次对话重新开始30轮循环")
+        elif tm.current_task_id:
+            task_id = tm.current_task_id
+            task_data = tm.load_task(tm.current_task_id)
+            if task_data and task_data.get("messages"):
+                initial_messages = task_data["messages"]
+                logger.info(f"🔄 脑部记忆替换: 加载当前任务 {task_id} 的 {len(initial_messages)} 条历史消息，本次对话重新开始30轮循环")
+
+        agent_params = {
+            "user_input": user_input,
+            "work_dir": work_dir,
+            "max_turns": max_turns,
+            "api_key": api_key,
+            "model": model,
+            "base_url": base_url,
+            "provider": provider,
+            "task_id": task_id,
+            "initial_messages": initial_messages,
+            "start_turn": start_turn,
+        }
+        
+        while True:
+            async for event in _run_agent_async(**agent_params):
+                if not await safe_send(event):
+                    return
+                
+                if event.get("type") == "ask_user":
+                    question_id = event.get("data", {}).get("question_id", "")
+                    
+                    while True:
+                        try:
+                            msg = await asyncio.wait_for(client_message_queue.get(), timeout=300)
+                            if msg.get("type") == "user_answer" and msg.get("question_id") == question_id:
+                                from ask_user_tool import resolve_question
+                                resolve_question(question_id, msg.get("answer", ""))
+                                break
+                        except asyncio.TimeoutError:
+                            await safe_send({"type": "error", "data": "等待用户回答超时"})
+                            return
+                
+                if event.get("type") == "command_confirmation":
+                    event_data = event.get("data", {})
+                    confirm_id = str(uuid.uuid4())[:8]
+                    event_data["confirmation_id"] = confirm_id
+                    
+                    saved_messages = event_data.pop("messages", None)
+                    saved_turn = event_data.pop("turn", 1)
+                    
+                    if not await safe_send(event):
+                        return
+                    
+                    while True:
+                        try:
+                            msg = await asyncio.wait_for(client_message_queue.get(), timeout=300)
+                            if msg.get("type") == "command_confirm" and msg.get("confirmation_id") == confirm_id:
+                                from bash_executor import execute_bash
+                                command = event_data.get("command", "")
+                                
+                                if msg.get("approved"):
+                                    result = execute_bash(command, work_dir=work_dir, allow_warnings=True)
+                                    if result.blocked:
+                                        output = f"命令被拦截: {result.block_reason}"
+                                        is_error = True
+                                    else:
+                                        output = result.stdout or ""
+                                        if result.stderr:
+                                            output += f"\n[stderr]\n{result.stderr}"
+                                        is_error = result.exit_code != 0
+                                else:
+                                    output = "用户拒绝执行此命令"
+                                    is_error = True
+                                
+                                await safe_send({
+                                    "type": "tool_end",
+                                    "tool_name": "bash",
+                                    "result": output,
+                                    "is_error": is_error
+                                })
+                                
+                                if saved_messages:
+                                    tool_call_id = event_data.get("tool_call_id", "")
+                                    saved_messages.append({
+                                        "role": "tool",
+                                        "tool_call_id": tool_call_id,
+                                        "content": output,
+                                    })
+                                    agent_params["initial_messages"] = saved_messages
+                                    agent_params["start_turn"] = saved_turn
+                                    agent_params["user_input"] = ""
+                                else:
+                                    agent_params["user_input"] = f"命令执行结果:\n```\n{output}\n```\n请继续执行任务。"
+                                break
+                        except asyncio.TimeoutError:
+                            await safe_send({"type": "error", "data": "等待用户确认超时"})
+                            return
+                    
+                    break
+                else:
+                    await asyncio.sleep(0.01)
+            else:
+                break
+
+    except WebSocketDisconnect:
+        logger.info("WebSocket 客户端断开连接")
+    except Exception as e:
+        logger.error(f"WebSocket 异常: {e}")
+        await safe_send({"type": "error", "data": str(e)})
+    finally:
+        receive_task.cancel()
+        from ask_user_tool import cancel_all_questions
+        cancel_all_questions()
+        try:
+            await websocket.close()
+        except Exception:
+            pass
+
+
+# ============================================================================
+# WebSocket 端点 - 长连接多任务模式
+# ============================================================================
+
+@app.websocket("/ws/coding/persistent")
+async def websocket_coding_persistent(websocket: WebSocket):
+    """
+    持久 WebSocket 连接 - 支持多任务切换
+
+    协议:
+      客户端发送: {"action": "run", "task": "写一个二叉树", ...}
+      客户端发送: {"action": "switch_task", "task_id": "xxx"}
+      客户端发送: {"action": "create_task", "task_name": "xxx", "project_path": "xxx"}
+      客户端发送: {"action": "list_tasks", "project_path": "xxx"}
+      客户端发送: {"action": "ping"}
+      服务端推送: {"type": "pong"}
+      服务端推送: {"type": "task_switched", ...}
+    """
+    await websocket.accept()
+    
+    ws_connected = True
+    
+    async def safe_send(data: dict):
+        nonlocal ws_connected
+        if not ws_connected:
+            return False
+        try:
+            await websocket.send_json(data)
+            return True
+        except Exception:
+            ws_connected = False
+            return False
+    
+    from task_manager import get_task_manager
+    from rewind_system import get_rewind_system
+    task_manager = get_task_manager()
+    rewind_system = get_rewind_system()
+    
+    current_messages = []
+    current_active_files = set()
+    current_blackboard = {}
+    current_turn = 0
+    
+    try:
+        while ws_connected:
+            raw = await websocket.receive_text()
+
+            try:
+                data = json.loads(raw)
+            except json.JSONDecodeError:
+                await safe_send({"type": "error", "data": "无效的 JSON 格式"})
+                continue
+
+            action = data.get("action", "")
+
+            if data.get("type") == "system_command":
+                await _handle_system_command(websocket, data, safe_send)
+                continue
+
+            if action == "ping":
+                await safe_send({"type": "pong"})
+                continue
+
+            if action == "close":
+                break
+
+            if action == "list_tasks":
+                project_path = data.get("project_path", "")
+                tasks = task_manager.list_tasks(project_path)
+                await safe_send({"type": "task_list", "tasks": tasks})
+                continue
+
+            if action == "create_task":
+                task_id = data.get("task_id") or str(uuid.uuid4())[:8]
+                task_name = data.get("task_name", "新任务")
+                project_path = data.get("project_path", SANDBOX_DIR)
+                task_data = task_manager.create_task(task_id, task_name, project_path)
+                await safe_send({"type": "task_created", "task_data": task_data})
+                continue
+
+            if action == "switch_task":
+                new_task_id = data.get("task_id", "")
+                work_dir = data.get("work_dir", SANDBOX_DIR)
+                
+                if not new_task_id:
+                    await safe_send({"type": "error", "data": "task_id 不能为空"})
+                    continue
+                
+                switch_result = task_manager.switch_task(
+                    new_task_id=new_task_id,
+                    current_messages=current_messages,
+                    current_active_files=current_active_files,
+                    current_blackboard=current_blackboard,
+                    current_turn=current_turn,
+                    work_dir=work_dir,
+                    rewind_system=rewind_system,
+                )
+                
+                if switch_result["success"]:
+                    new_task_data = switch_result["task_data"]
+                    current_messages = new_task_data.get("messages", [])
+                    current_active_files = set(new_task_data.get("active_files", []))
+                    current_blackboard = new_task_data.get("blackboard", {})
+                    current_turn = new_task_data.get("current_turn", 0)
+                    
+                    await safe_send({
+                        "type": "task_switched",
+                        "data": {
+                            "task_id": new_task_id,
+                            "task_name": new_task_data.get("task_name", ""),
+                            "message": switch_result["message"],
+                            "restored_files": switch_result["restored_files"],
+                            "messages_count": len(current_messages),
+                            "current_turn": current_turn,
+                        },
+                    })
+                    await safe_send({"type": "refresh_tree"})
+                else:
+                    await safe_send({"type": "error", "data": switch_result.get("message", "切换任务失败")})
+                continue
+
+            if action == "run":
+                user_input = data.get("task") or data.get("prompt") or ""
+                if not user_input:
+                    await safe_send({"type": "error", "data": "task/prompt 不能为空"})
+                    continue
+
+                work_dir = data.get("work_dir", SANDBOX_DIR)
+                max_turns = data.get("max_turns", MAX_TURNS)
+                api_key = data.get("api_key") or os.environ.get("OPENAI_API_KEY") or os.environ.get("ANTHROPIC_API_KEY")
+                model = data.get("model")
+                base_url = data.get("base_url") or os.environ.get("OPENAI_BASE_URL")
+                provider = data.get("provider", API_PROVIDER)
+
+                if not model:
+                    model = DEFAULT_MODEL_ANTHROPIC if provider == "anthropic" else DEFAULT_MODEL_OPENAI
+
+                if base_url and not base_url.endswith("/v1"):
+                    base_url = base_url.rstrip("/") + "/v1"
+
+                os.makedirs(work_dir, exist_ok=True)
+
+                task_id = data.get("task_id") or task_manager.current_task_id
+                if task_id and not task_manager.current_task_id:
+                    task_manager.current_task_id = task_id
+
+                async for event in _run_agent_async(
+                    user_input=user_input,
+                    work_dir=work_dir,
+                    max_turns=max_turns,
+                    api_key=api_key,
+                    model=model,
+                    base_url=base_url,
+                    provider=provider,
+                    task_id=task_id,
+                ):
+                    if not await safe_send(event):
+                        break
+                    
+                    if event.get("type") == "status":
+                        import re
+                        m = re.search(r'第 (\d+)/', event.get("data", ""))
+                        if m:
+                            current_turn = int(m.group(1))
+                    
+                    if event.get("type") == "finish":
+                        if task_manager.current_task_id:
+                            task_manager.save_current_state(
+                                messages=current_messages,
+                                active_files=current_active_files,
+                                blackboard=current_blackboard,
+                                current_turn=current_turn,
+                            )
+                    
+                    await asyncio.sleep(0.01)
+
+    except WebSocketDisconnect:
+        logger.info("持久 WebSocket 客户端断开连接")
+    except Exception as e:
+        logger.error(f"持久 WebSocket 异常: {e}")
+        await safe_send({"type": "error", "data": str(e)})
+    finally:
+        if task_manager.current_task_id:
+            task_manager.save_current_state(
+                messages=current_messages,
+                active_files=current_active_files,
+                blackboard=current_blackboard,
+                current_turn=current_turn,
+            )
+        try:
+            await websocket.close()
+        except Exception:
+            pass
+
+
+# ============================================================================
+# REST API 端点 - 同步模式
+# ============================================================================
+
+@app.post("/api/v1/execute")
+async def execute_sync(request: ExecuteRequest):
+    """
+    同步执行模式 - 等待 Agent 完成后返回最终结果
+
+    适用于不需要实时流式推送的场景（如 CI/CD、批量任务）
+    """
+    work_dir = request.work_dir or SANDBOX_DIR
+    provider = request.provider or API_PROVIDER
+    model = request.model or (DEFAULT_MODEL_ANTHROPIC if provider == "anthropic" else DEFAULT_MODEL_OPENAI)
+    api_key = request.api_key or os.environ.get("OPENAI_API_KEY") or os.environ.get("ANTHROPIC_API_KEY")
+    base_url = request.base_url or os.environ.get("OPENAI_BASE_URL")
+
+    # 确保 base_url 有 /v1 后缀（通义千问兼容模式需要）
+    if base_url and not base_url.endswith("/v1"):
+        base_url = base_url.rstrip("/") + "/v1"
+
+    os.makedirs(work_dir, exist_ok=True)
+
+    final_result = None
+    all_events = []
+
+    async for event in _run_agent_async(
+        user_input=request.prompt,
+        work_dir=work_dir,
+        max_turns=request.max_turns,
+        api_key=api_key,
+        model=model,
+        base_url=base_url,
+        provider=provider,
+    ):
+        all_events.append(event)
+        if event.get("type") in ("finish", "error"):
+            final_result = event
+
+    if final_result is None:
+        return {"success": False, "message": "Agent 未产生最终结果", "events": all_events}
+
+    return {
+        "success": final_result.get("type") == "finish",
+        "message": final_result.get("data", ""),
+        "events": all_events,
+    }
+
+
+# ============================================================================
+# 文件管理 API
+# ============================================================================
+
+@app.get("/api/v1/files")
+async def list_files(path: str = SANDBOX_DIR):
+    """获取目录下的所有文件列表"""
+    import os
+    from pathlib import Path
+    
+    try:
+        base_path = Path(path)
+        if not base_path.exists():
+            base_path.mkdir(parents=True, exist_ok=True)
+            return {"files": []}
+        
+        files = []
+        for root, dirs, filenames in os.walk(base_path):
+            for filename in filenames:
+                full_path = os.path.join(root, filename)
+                rel_path = os.path.relpath(full_path, base_path)
+                files.append(rel_path)
+        
+        return {"files": sorted(files)}
+    except Exception as e:
+        return {"files": [], "error": str(e)}
+
+
+@app.get("/api/v1/browse")
+async def browse_directory(path: str = "/"):
+    """浏览文件系统，返回指定目录下的所有文件夹"""
+    import os
+    from pathlib import Path
+    
+    try:
+        base_path = Path(path)
+        if not base_path.exists():
+            return {"folders": [], "error": f"路径不存在: {path}"}
+        
+        if not base_path.is_dir():
+            return {"folders": [], "error": f"不是目录: {path}"}
+        
+        folders = []
+        try:
+            for item in base_path.iterdir():
+                if item.is_dir():
+                    try:
+                        folders.append({
+                            "name": item.name,
+                            "path": str(item.absolute()),
+                        })
+                    except PermissionError:
+                        continue
+        except PermissionError:
+            return {"folders": [], "error": f"无权限访问: {path}"}
+        
+        folders.sort(key=lambda x: x["name"].lower())
+        return {"folders": folders, "current_path": str(base_path.absolute())}
+    except Exception as e:
+        return {"folders": [], "error": str(e)}
+
+
+@app.get("/api/v1/file")
+async def read_file_content(path: str):
+    """读取文件内容"""
+    import os
+    
+    try:
+        if not os.path.exists(path):
+            return {"error": "文件不存在"}
+        
+        with open(path, 'r', encoding='utf-8', errors='replace') as f:
+            content = f.read()
+        
+        return {"content": content, "path": path}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+# ============================================================================
+# 任务管理 API
+# ============================================================================
+
+@app.get("/api/v1/tasks")
+async def list_tasks(project_path: str = ""):
+    from task_manager import get_task_manager
+    tm = get_task_manager()
+    tasks = tm.list_tasks(project_path)
+    for t in tasks:
+        if "task_id" in t:
+            t["id"] = t["task_id"]
+        if "created_at" in t:
+            t["created_at_str"] = time.strftime("%Y-%m-%d %H:%M", time.localtime(t["created_at"]))
+        if "updated_at" in t:
+            t["updated_at_str"] = time.strftime("%Y-%m-%d %H:%M", time.localtime(t["updated_at"]))
+    return {"tasks": tasks}
+
+
+@app.post("/api/v1/tasks")
+async def create_task(request: dict):
+    from task_manager import get_task_manager
+    tm = get_task_manager()
+    task_id = request.get("task_id") or str(uuid.uuid4())[:8]
+    project_path = request.get("project_path", SANDBOX_DIR)
+    task_name = request.get("task_name", "新任务")
+    task_data = tm.create_task(task_id, task_name, project_path)
+    return {"task_id": task_id, "task_name": task_name, "project_path": project_path}
+
+
+@app.get("/api/v1/tasks/{task_id}")
+async def get_task(task_id: str):
+    from task_manager import get_task_manager
+    tm = get_task_manager()
+    task = tm.load_task(task_id)
+    if not task:
+        return {"error": "任务不存在"}
+    return task
+
+
+@app.get("/api/v1/tasks/{task_id}/messages")
+async def get_task_messages(task_id: str):
+    from task_manager import get_task_manager
+    tm = get_task_manager()
+    task = tm.load_task(task_id)
+    if not task:
+        return {"messages": [], "count": 0}
+    messages = task.get("messages", [])
+    return {"messages": messages, "count": len(messages)}
+
+
+@app.put("/api/v1/tasks/{task_id}/status")
+async def update_task_status(task_id: str, request: dict):
+    from task_manager import get_task_manager
+    tm = get_task_manager()
+    task = tm.load_task(task_id)
+    if not task:
+        return {"error": "任务不存在"}
+    task["status"] = request.get("status", "active")
+    tm.save_task(task)
+    return {"task_id": task_id, "status": task["status"]}
+
+
+@app.post("/api/v1/tasks/{task_id}/switch")
+async def switch_task(task_id: str, request: dict):
+    from task_manager import get_task_manager
+    from rewind_system import get_rewind_system
+    tm = get_task_manager()
+    rewind_system = get_rewind_system()
+    
+    work_dir = request.get("work_dir", SANDBOX_DIR)
+    
+    current_messages = request.get("current_messages", [])
+    current_active_files = request.get("current_active_files", [])
+    current_blackboard = request.get("current_blackboard", {})
+    current_turn = request.get("current_turn", 0)
+    
+    switch_result = tm.switch_task(
+        new_task_id=task_id,
+        current_messages=current_messages,
+        current_active_files=set(current_active_files),
+        current_blackboard=current_blackboard,
+        current_turn=current_turn,
+        work_dir=work_dir,
+        rewind_system=rewind_system,
+    )
+    
+    if switch_result["success"]:
+        new_task_data = switch_result["task_data"]
+        return {
+            "success": True,
+            "task_id": task_id,
+            "task_name": new_task_data.get("task_name", ""),
+            "message": switch_result["message"],
+            "restored_files": switch_result["restored_files"],
+            "messages": new_task_data.get("messages", []),
+            "current_turn": new_task_data.get("current_turn", 0),
+            "blackboard": new_task_data.get("blackboard", {}),
+        }
+    else:
+        return {"success": False, "error": switch_result.get("message", "切换失败")}
+
+
+# ============================================================================
+# 健康检查
+# ============================================================================
+
+@app.get("/api/v1/health", response_model=HealthResponse)
+async def health_check():
+    return HealthResponse(sandbox_dir=SANDBOX_DIR, api_provider=API_PROVIDER)
+
+
+@app.get("/")
+async def root():
+    return {
+        "name": "Eruitah 智能编程沙盒",
+        "version": "4.0.0",
+        "endpoints": {
+            "ide": "/ide",
+            "websocket": "/ws/coding",
+            "websocket_persistent": "/ws/coding/persistent",
+            "execute": "/api/v1/execute",
+            "health": "/api/v1/health",
+        },
+    }
+
+
+@app.get("/ide")
+async def ide_page():
+    """IDE 界面 - 返回 coding_lab.html"""
+    from fastapi.responses import FileResponse
+    html_path = os.path.join(STATIC_DIR, "coding_lab.html")
+    if os.path.isfile(html_path):
+        return FileResponse(html_path, media_type="text/html")
+    return {"error": "coding_lab.html not found", "hint": "请确保 static/coding_lab.html 存在"}
+
+
+@app.websocket("/ws/terminal")
+async def websocket_terminal(websocket: WebSocket):
+    """
+    交互式终端 WebSocket - 真正的 shell 体验
+    
+    协议:
+      客户端发送: {"type": "input", "data": "ls\n"}
+                 {"type": "resize", "cols": 120, "rows": 40}
+      服务端推送: {"type": "output", "data": "file1\nfile2\n"}
+    """
+    from interactive_terminal import InteractiveTerminal
+    
+    await websocket.accept()
+    
+    ws_connected = True
+    
+    async def safe_send(data: dict):
+        nonlocal ws_connected
+        if not ws_connected:
+            return False
+        try:
+            await websocket.send_json(data)
+            return True
+        except Exception:
+            ws_connected = False
+            return False
+    
+    pty_session = None
+    output_task = None
+    
+    async def read_output():
+        nonlocal ws_connected
+        while pty_session and pty_session.running and ws_connected:
+            try:
+                output = pty_session.read(timeout=0.05)
+                if output:
+                    if not await safe_send({"type": "output", "data": output}):
+                        break
+                await asyncio.sleep(0.01)
+            except Exception as e:
+                logger.error(f"读取 PTY 输出失败: {e}")
+                break
+    
+    try:
+        data = await websocket.receive_json()
+        
+        if data.get("type") == "start":
+            work_dir = data.get("work_dir", SANDBOX_DIR)
+            cols = data.get("cols", 80)
+            rows = data.get("rows", 24)
+            shell = data.get("shell")
+            
+            pty_session = InteractiveTerminal(
+                work_dir=work_dir,
+                shell=shell,
+                cols=cols,
+                rows=rows
+            )
+            
+            if pty_session.start():
+                await safe_send({
+                    "type": "started",
+                    "data": {
+                        "pid": pty_session.pid,
+                        "shell": pty_session.shell,
+                        "cwd": pty_session.work_dir
+                    }
+                })
+                output_task = asyncio.create_task(read_output())
+            else:
+                await safe_send({"type": "error", "data": "启动终端失败"})
+                return
+        
+        while ws_connected:
+            try:
+                data = await websocket.receive_json()
+                
+                if data.get("type") == "input":
+                    input_data = data.get("data", "")
+                    if pty_session and input_data:
+                        pty_session.write(input_data)
+                
+                elif data.get("type") == "resize":
+                    cols = data.get("cols", 80)
+                    rows = data.get("rows", 24)
+                    if pty_session:
+                        pty_session.resize(cols, rows)
+                
+            except Exception as e:
+                logger.error(f"处理终端消息失败: {e}")
+                break
+                
+    except WebSocketDisconnect:
+        logger.info("交互式终端 WebSocket 断开")
+    except Exception as e:
+        logger.error(f"交互式终端异常: {e}")
+    finally:
+        ws_connected = False
+        if output_task:
+            output_task.cancel()
+        if pty_session:
+            pty_session.stop()
+        try:
+            await websocket.close()
+        except Exception:
+            pass
+
+
+# ============================================================================
+# 入口
+# ============================================================================
+
+if __name__ == "__main__":
+    import uvicorn
+
+    # 启动命令:
+    #   python3 main.py
+    #
+    # 或:
+    #   uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+    #
+    # 环境变量:
+    #   export ERUITAH_SANDBOX_DIR=/tmp/eruitah-sandbox
+    #   export ERUITAH_API_PROVIDER=openai
+    #   export OPENAI_API_KEY=sk-xxx
+
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8001,
+        reload=True,
+        log_level="info",
+    )

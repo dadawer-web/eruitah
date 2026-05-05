@@ -51,7 +51,9 @@ class SessionStorage:
                 id TEXT PRIMARY KEY,
                 created_at REAL,
                 work_dir TEXT,
-                status TEXT DEFAULT 'active'
+                status TEXT DEFAULT 'active',
+                task_name TEXT DEFAULT '',
+                project_path TEXT DEFAULT ''
             )
         """)
 
@@ -80,6 +82,28 @@ class SessionStorage:
                 FOREIGN KEY (session_id) REFERENCES sessions(id)
             )
         """)
+
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS tasks (
+                id TEXT PRIMARY KEY,
+                project_path TEXT,
+                task_name TEXT,
+                created_at REAL,
+                updated_at REAL,
+                status TEXT DEFAULT 'active',
+                blackboard TEXT DEFAULT '{}',
+                checkpoint_turn INTEGER DEFAULT 0
+            )
+        """)
+
+        try:
+            c.execute("ALTER TABLE sessions ADD COLUMN task_name TEXT DEFAULT ''")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            c.execute("ALTER TABLE sessions ADD COLUMN project_path TEXT DEFAULT ''")
+        except sqlite3.OperationalError:
+            pass
 
         conn.commit()
         conn.close()
@@ -224,10 +248,102 @@ class SessionStorage:
         """列出所有会话"""
         conn = sqlite3.connect(self.db_path)
         c = conn.cursor()
-        c.execute("SELECT id, created_at, work_dir, status FROM sessions ORDER BY created_at DESC")
+        c.execute("SELECT id, created_at, work_dir, status, task_name, project_path FROM sessions ORDER BY created_at DESC")
         rows = c.fetchall()
         conn.close()
-        return [{"id": r[0], "created_at": r[1], "work_dir": r[2], "status": r[3]} for r in rows]
+        return [{"id": r[0], "created_at": r[1], "work_dir": r[2], "status": r[3], "task_name": r[4] or "", "project_path": r[5] or ""} for r in rows]
+
+    def create_task(self, task_id: str, project_path: str, task_name: str) -> str:
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        now = time.time()
+        c.execute(
+            "INSERT INTO tasks (id, project_path, task_name, created_at, updated_at, status) VALUES (?, ?, ?, ?, ?, ?)",
+            (task_id, project_path, task_name, now, now, "active"),
+        )
+        conn.commit()
+        conn.close()
+        logger.info(f"创建任务: {task_id} - {task_name}")
+        return task_id
+
+    def list_tasks(self, project_path: str = "") -> list:
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        if project_path:
+            c.execute(
+                "SELECT id, project_path, task_name, created_at, updated_at, status, blackboard FROM tasks WHERE project_path = ? AND status = 'active' ORDER BY updated_at DESC",
+                (project_path,),
+            )
+        else:
+            c.execute("SELECT id, project_path, task_name, created_at, updated_at, status, blackboard FROM tasks WHERE status = 'active' ORDER BY updated_at DESC")
+        rows = c.fetchall()
+        conn.close()
+        result = []
+        for r in rows:
+            bb = {}
+            try:
+                bb = json.loads(r[6]) if r[6] else {}
+            except (json.JSONDecodeError, TypeError):
+                pass
+            result.append({
+                "id": r[0],
+                "project_path": r[1],
+                "task_name": r[2],
+                "created_at": r[3],
+                "updated_at": r[4],
+                "status": r[5],
+                "blackboard": bb,
+            })
+        return result
+
+    def get_task(self, task_id: str) -> Optional[dict]:
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        c.execute("SELECT id, project_path, task_name, created_at, updated_at, status, blackboard FROM tasks WHERE id = ?", (task_id,))
+        row = c.fetchone()
+        conn.close()
+        if not row:
+            return None
+        bb = {}
+        try:
+            bb = json.loads(row[6]) if row[6] else {}
+        except (json.JSONDecodeError, TypeError):
+            pass
+        return {
+            "id": row[0],
+            "project_path": row[1],
+            "task_name": row[2],
+            "created_at": row[3],
+            "updated_at": row[4],
+            "status": row[5],
+            "blackboard": bb,
+        }
+
+    def update_task_blackboard(self, task_id: str, blackboard: dict):
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        c.execute(
+            "UPDATE tasks SET blackboard = ?, updated_at = ? WHERE id = ?",
+            (json.dumps(blackboard, ensure_ascii=False), time.time(), task_id),
+        )
+        conn.commit()
+        conn.close()
+
+    def update_task_status(self, task_id: str, status: str):
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        c.execute(
+            "UPDATE tasks SET status = ?, updated_at = ? WHERE id = ?",
+            (status, time.time(), task_id),
+        )
+        conn.commit()
+        conn.close()
+
+    def get_task_messages(self, task_id: str) -> list:
+        return self.get_session_messages(task_id)
+
+    def save_task_message(self, task_id: str, turn: int, role: str, content: str, tool_calls: str = None):
+        self.save_message(task_id, turn, role, content, tool_calls)
 
 
 # 全局单例

@@ -1,0 +1,19 @@
+{
+  "task_id": "298a28b4",
+  "task_name": "重构绘图引擎",
+  "project_path": "/home/xmy/testscode",
+  "messages": [],
+  "active_files": [],
+  "blackboard": {
+    "current_goal": "",
+    "active_files": [],
+    "key_decisions": [],
+    "error_history": [],
+    "work_dir": "/home/xmy/testscode"
+  },
+  "latest_checkpoint_id": null,
+  "current_turn": 0,
+  "created_at": 1777120489.2819986,
+  "updated_at": 1777125878.1976545,
+  "status": "deleted"
+}

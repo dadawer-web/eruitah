@@ -26,6 +26,12 @@ Eruitah 智能编程沙盒 - AskUser 工具 (Human-in-the-Loop)
 │    2. Future.set_result(answer)                                      │
 │    3. Agent 循环恢复，将回答返回给大模型                               │
 │    4. 大模型基于用户回答继续执行                                      │
+│         │                                                            │
+│         ▼                                                            │
+│  交互式权限拦截（新增）:                                              │
+│    危险命令（rm -rf /）→ 发送 require_confirm → 前端弹窗确认          │
+│    → 用户确认 → 后端恢复执行                                         │
+│    → 用户拒绝 → 后端取消命令                                         │
 └─────────────────────────────────────────────────────────────────────┘
 
 参考源码: claude-code-rev/src/tools/AskUserQuestionTool/
@@ -33,25 +39,24 @@ Eruitah 智能编程沙盒 - AskUser 工具 (Human-in-the-Loop)
 
 import asyncio
 import logging
+import uuid
+import re
 from typing import Optional
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
-# ============================================================================
-# 全局等待表 - 存储所有等待用户回答的 Future
-# ============================================================================
-
 _pending_questions: dict[str, asyncio.Future] = {}
+
+_pending_confirmations: dict[str, asyncio.Future] = {}
 
 
 def register_question(question_id: str, future: asyncio.Future):
-    """注册一个等待用户回答的问题"""
     _pending_questions[question_id] = future
     logger.info(f"注册等待问题: {question_id}")
 
 
 def resolve_question(question_id: str, answer: str):
-    """用户回答了问题，解除阻塞"""
     future = _pending_questions.pop(question_id, None)
     if future and not future.done():
         future.set_result(answer)
@@ -60,17 +65,197 @@ def resolve_question(question_id: str, answer: str):
         logger.warning(f"未找到等待中的问题: {question_id}")
 
 
+def register_confirmation(confirm_id: str, future: asyncio.Future):
+    _pending_confirmations[confirm_id] = future
+    logger.info(f"注册等待确认: {confirm_id}")
+
+
+def resolve_confirmation(confirm_id: str, approved: bool, reason: str = ""):
+    future = _pending_confirmations.pop(confirm_id, None)
+    if future and not future.done():
+        future.set_result({"approved": approved, "reason": reason})
+        logger.info(f"用户确认: {confirm_id} -> {'批准' if approved else '拒绝'}")
+    else:
+        logger.warning(f"未找到等待中的确认: {confirm_id}")
+
+
 def cancel_all_questions():
-    """取消所有等待中的问题"""
     for qid, future in _pending_questions.items():
         if not future.done():
             future.set_result("[用户未回答，已取消]")
     _pending_questions.clear()
 
+    for cid, future in _pending_confirmations.items():
+        if not future.done():
+            future.set_result({"approved": False, "reason": "已取消"})
+    _pending_confirmations.clear()
+
+
+async def ask_user_async(question_id: str, question: str, timeout: float = 300) -> Optional[str]:
+    """
+    异步等待用户回答
+    
+    用法:
+        answer = await ask_user_async("q123", "是否继续？")
+        if answer == "yes":
+            ...
+    """
+    loop = asyncio.get_event_loop()
+    future = loop.create_future()
+    register_question(question_id, future)
+    
+    try:
+        answer = await asyncio.wait_for(future, timeout=timeout)
+        return answer
+    except asyncio.TimeoutError:
+        _pending_questions.pop(question_id, None)
+        logger.warning(f"等待用户回答超时: {question_id}")
+        return None
+    except Exception as e:
+        _pending_questions.pop(question_id, None)
+        logger.error(f"等待用户回答异常: {e}")
+        return None
+
+
+async def ask_confirmation_async(confirm_id: str, command: str, reason: str, timeout: float = 300) -> dict:
+    """
+    异步等待用户确认命令
+    
+    返回: {"approved": bool, "reason": str}
+    """
+    loop = asyncio.get_event_loop()
+    future = loop.create_future()
+    register_confirmation(confirm_id, future)
+    
+    try:
+        result = await asyncio.wait_for(future, timeout=timeout)
+        return result
+    except asyncio.TimeoutError:
+        _pending_confirmations.pop(confirm_id, None)
+        logger.warning(f"等待用户确认超时: {confirm_id}")
+        return {"approved": False, "reason": "超时"}
+    except Exception as e:
+        _pending_confirmations.pop(confirm_id, None)
+        logger.error(f"等待用户确认异常: {e}")
+        return {"approved": False, "reason": str(e)}
+
 
 # ============================================================================
-# AskUser 工具定义
+# 多级危险命令拦截 - 静态黑名单 + 动态风险评估
 # ============================================================================
+
+@dataclass
+class CommandRisk:
+    level: str  # "safe", "warning", "danger", "critical"
+    reason: str
+    requires_confirmation: bool = False
+    auto_block: bool = False
+
+
+DANGEROUS_PATTERNS = [
+    (r"\brm\s+-rf\s+/", "递归删除根目录", "critical"),
+    (r"\brm\s+-rf\s+~", "递归删除用户目录", "critical"),
+    (r"\brm\s+-rf\s+\*", "递归删除所有文件", "critical"),
+    (r"\brm\s+-rf\s+/home", "递归删除用户主目录", "critical"),
+    (r"\brm\s+-rf\s+/etc", "递归删除系统配置", "critical"),
+    (r"\brm\s+-rf\s+/var", "递归删除系统数据", "critical"),
+    (r"\bchmod\s+777\s+/", "设置根目录危险权限", "danger"),
+    (r"\bchmod\s+777", "设置危险权限 777", "warning"),
+    (r"\bchown\s+.*\s+/", "修改根目录所有者", "danger"),
+    (r"\bdd\s+if=", "磁盘写入操作", "critical"),
+    (r"\bmkfs\.", "格式化文件系统", "critical"),
+    (r"\bformat\s+[A-Z]:", "格式化磁盘", "critical"),
+    (r"\breboot", "重启系统", "danger"),
+    (r"\bshutdown", "关闭系统", "danger"),
+    (r"\binit\s+[06]", "切换运行级别", "danger"),
+    (r"\b:\(\)\{\s*:\|\:&\s*\}", "Fork 炸弹", "critical"),
+    (r"\bwget\s+.*\|\s*sh", "下载并执行脚本", "danger"),
+    (r"\bcurl\s+.*\|\s*sh", "下载并执行脚本", "danger"),
+    (r"\bcurl\s+.*\|\s*bash", "下载并执行脚本", "danger"),
+    (r"\bsudo\s+rm", "超级用户删除", "danger"),
+    (r"\bapt\s+remove", "卸载系统包", "warning"),
+    (r"\byum\s+remove", "卸载系统包", "warning"),
+    (r"\bsystemctl\s+stop", "停止系统服务", "warning"),
+    (r"\biptables\s+-F", "清空防火墙规则", "danger"),
+    (r"\bsudo\s+chmod", "超级用户修改权限", "warning"),
+    (r"\bkill\s+-9\s+1", "杀死 init 进程", "danger"),
+    (r"\bmv\s+.*\s+/dev/null", "移动到黑洞设备", "danger"),
+    (r"\b>\s*/dev/sd", "直接写入磁盘设备", "critical"),
+]
+
+WARNING_PATTERNS = [
+    (r"\brm\s+-rf\s+", "递归删除操作", "warning"),
+    (r"\bsudo\s+", "超级用户权限", "warning"),
+    (r"\bgit\s+push\s+--force", "强制推送", "warning"),
+    (r"\bgit\s+reset\s+--hard", "硬重置", "warning"),
+    (r"\bdocker\s+rm", "删除容器", "warning"),
+    (r"\bdocker\s+rmi", "删除镜像", "warning"),
+    (r"\bpip\s+uninstall", "卸载 Python 包", "warning"),
+    (r"\bnpm\s+uninstall", "卸载 Node 包", "warning"),
+]
+
+
+def assess_command_risk(command: str) -> CommandRisk:
+    """
+    多级风险评估：评估命令的危险等级
+
+    返回:
+        CommandRisk:
+            level: "safe" | "warning" | "danger" | "critical"
+            requires_confirmation: 是否需要用户确认
+            auto_block: 是否自动拦截
+    """
+    for pattern, reason, level in DANGEROUS_PATTERNS:
+        if re.search(pattern, command, re.IGNORECASE):
+            if level == "critical":
+                return CommandRisk(
+                    level="critical",
+                    reason=reason,
+                    requires_confirmation=True,
+                    auto_block=True,
+                )
+            elif level == "danger":
+                return CommandRisk(
+                    level="danger",
+                    reason=reason,
+                    requires_confirmation=True,
+                    auto_block=False,
+                )
+            elif level == "warning":
+                return CommandRisk(
+                    level="warning",
+                    reason=reason,
+                    requires_confirmation=True,
+                    auto_block=False,
+                )
+
+    for pattern, reason, level in WARNING_PATTERNS:
+        if re.search(pattern, command, re.IGNORECASE):
+            return CommandRisk(
+                level="warning",
+                reason=reason,
+                requires_confirmation=True,
+                auto_block=False,
+            )
+
+    return CommandRisk(level="safe", reason="", requires_confirmation=False, auto_block=False)
+
+
+def check_dangerous_command(command: str) -> Optional[str]:
+    """
+    检查命令是否危险（向后兼容接口）
+
+    Args:
+        command: 要检查的命令
+
+    Returns:
+        str: 危险原因，如果安全则返回 None
+    """
+    risk = assess_command_risk(command)
+    if risk.level in ("danger", "critical"):
+        return risk.reason
+    return None
+
 
 ASK_USER_TOOL_DEFINITION_OPENAI = {
     "type": "function",
@@ -112,47 +297,3 @@ ASK_USER_TOOL_DEFINITION_ANTHROPIC = {
         "required": ["question"]
     }
 }
-
-
-# ============================================================================
-# 安全拦截 - 危险命令黑名单
-# ============================================================================
-
-DANGEROUS_PATTERNS = [
-    (r"\brm\s+-rf\s+/", "递归删除根目录"),
-    (r"\brm\s+-rf\s+~", "递归删除用户目录"),
-    (r"\brm\s+-rf\s+\*", "递归删除所有文件"),
-    (r"\bchmod\s+777", "设置危险权限 777"),
-    (r"\bchown\s+.*\s+/", "修改根目录所有者"),
-    (r"\bdd\s+if=", "磁盘写入操作"),
-    (r"\bmkfs\.", "格式化文件系统"),
-    (r"\bformat\s+[A-Z]:", "格式化磁盘"),
-    (r"\breboot", "重启系统"),
-    (r"\bshutdown", "关闭系统"),
-    (r"\binit\s+[06]", "切换运行级别"),
-    (r"\b:\(\)\{\s*:\|\:&\s*\}", "Fork 炸弹"),
-    (r"\bwget\s+.*\|\s*sh", "下载并执行脚本"),
-    (r"\bcurl\s+.*\|\s*sh", "下载并执行脚本"),
-    (r"\bsudo\s+rm", "超级用户删除"),
-    (r"\bapt\s+remove", "卸载系统包"),
-    (r"\byum\s+remove", "卸载系统包"),
-    (r"\bsystemctl\s+stop", "停止系统服务"),
-    (r"\biptables\s+-F", "清空防火墙规则"),
-]
-
-import re
-
-def check_dangerous_command(command: str) -> Optional[str]:
-    """
-    检查命令是否危险
-    
-    Args:
-        command: 要检查的命令
-    
-    Returns:
-        str: 危险原因，如果安全则返回 None
-    """
-    for pattern, reason in DANGEROUS_PATTERNS:
-        if re.search(pattern, command, re.IGNORECASE):
-            return reason
-    return None

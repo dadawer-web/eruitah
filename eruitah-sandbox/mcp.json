@@ -1,0 +1,69 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "${ERUITAH_SANDBOX_DIR}"],
+      "env": {},
+      "description": "文件系统服务 - 安全的文件系统访问"
+    },
+    "everything": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-everything"],
+      "env": {},
+      "description": "全能服务 - 包含示例工具、资源和提示"
+    },
+    "pdf": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-pdf"],
+      "env": {},
+      "description": "PDF 服务 - 读取和处理 PDF 文件"
+    },
+    "brave-search": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+      "env": {
+        "BRAVE_API_KEY": ""
+      },
+      "description": "Brave 搜索服务 - 网络搜索（需要 BRAVE_API_KEY）"
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": ""
+      },
+      "description": "GitHub 服务 - 管理 Issues, PR, 代码搜索（需要 GITHUB_TOKEN）"
+    },
+    "puppeteer": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-puppeteer"],
+      "env": {},
+      "description": "Puppeteer 服务 - 浏览器自动化"
+    },
+    "slack": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-slack"],
+      "env": {
+        "SLACK_BOT_TOKEN": "",
+        "SLACK_TEAM_ID": ""
+      },
+      "description": "Slack 服务 - 发送和读取 Slack 消息（需要 SLACK_BOT_TOKEN）"
+    },
+    "google-maps": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-google-maps"],
+      "env": {
+        "GOOGLE_MAPS_API_KEY": ""
+      },
+      "description": "Google Maps 服务 - 地理位置和路线（需要 GOOGLE_MAPS_API_KEY）"
+    },
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres"],
+      "env": {
+        "DATABASE_URL": ""
+      },
+      "description": "PostgreSQL 服务 - 查询和管理 PostgreSQL 数据库（需要 DATABASE_URL）"
+    }
+  }
+}

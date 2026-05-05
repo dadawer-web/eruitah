@@ -1,0 +1,15 @@
+{
+  "task_id": "task_446fb699",
+  "summary": "项目里面有一个大富豪项目，需要继续完善",
+  "work_dir": "/home/xmy/testscode",
+  "snapshot_path": "",
+  "messages_before": [],
+  "messages": [],
+  "created_at": 1777814893.382038,
+  "status": "active",
+  "current_turn": 0,
+  "base_checkpoint_id": "task/task_446fb699",
+  "worktree_dir": "/home/xmy/agent-worktrees/task_446fb699",
+  "base_task_id": "",
+  "merge_commit_hash": ""
+}

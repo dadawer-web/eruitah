@@ -93,7 +93,7 @@ function formatTime(timestamp) {
         </div>
       </div>
       <div v-if="!store.messages.length" class="text-geek-text-dim text-xs italic py-4 text-center">
-        发送任务给 AI Agent 开始编程...
+        {{ store.activeTaskId ? '在当前任务下继续追问...' : '发送任务给 AI Agent 开始编程...' }}
       </div>
     </div>
 
@@ -101,12 +101,12 @@ function formatTime(timestamp) {
       <div class="text-[10px] text-geek-text-dim mb-1 truncate" v-if="pendingQuestions.length">
         ⚠️ 有 {{ pendingQuestions.length }} 个问题等待回答
       </div>
-      <div class="flex gap-2">
+      <div class="flex gap-2 items-center">
         <input
           v-model="inputText"
           @keydown="handleKeydown"
           type="text"
-          :placeholder="pendingQuestions.length ? '回答问题...' : '描述你想要的功能...'"
+          :placeholder="pendingQuestions.length ? '回答问题...' : (store.activeTaskId ? '在当前任务下追问...' : '描述你想要的功能，开启新任务...')"
           class="flex-1 bg-geek-bg border border-geek-border rounded px-3 py-1.5 text-xs text-geek-text placeholder-geek-text-dim focus:outline-none focus:border-geek-accent transition-colors"
           :disabled="store.isRunning && !pendingQuestions.length"
         />
@@ -116,6 +116,16 @@ function formatTime(timestamp) {
           class="px-3 py-1.5 bg-geek-accent/10 text-geek-accent border border-geek-accent/30 rounded text-xs font-bold hover:bg-geek-accent/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {{ pendingQuestions.length ? '回答' : '发送' }}
+        </button>
+        <button
+          @click="store.autoApprove = !store.autoApprove"
+          class="px-2 py-1.5 rounded text-xs font-bold border transition-colors whitespace-nowrap"
+          :class="store.autoApprove
+            ? 'bg-red-900/30 text-red-400 border-red-500/40 hover:bg-red-900/50'
+            : 'bg-green-900/20 text-green-400 border-green-500/30 hover:bg-green-900/40'"
+          :title="store.autoApprove ? '自动执行模式：危险命令将自动放行' : '安全模式：危险命令需人工确认'"
+        >
+          {{ store.autoApprove ? '🚀 免确认' : '🛡️ 需确认' }}
         </button>
       </div>
     </div>

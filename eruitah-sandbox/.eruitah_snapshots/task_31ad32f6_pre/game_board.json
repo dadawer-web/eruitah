@@ -1,0 +1,162 @@
+[
+  {
+    "id": 0,
+    "name": "起点",
+    "cell_type": "start",
+    "price": 0,
+    "base_rent": 0,
+    "upgrade_cost": 0,
+    "upgraded_rent": 0,
+    "event_data": null
+  },
+  {
+    "id": 1,
+    "name": "北京路",
+    "cell_type": "empty",
+    "price": 200,
+    "base_rent": 20,
+    "upgrade_cost": 100,
+    "upgraded_rent": 50,
+    "event_data": null
+  },
+  {
+    "id": 2,
+    "name": "幸运转盘",
+    "cell_type": "lucky",
+    "price": 0,
+    "base_rent": 0,
+    "upgrade_cost": 0,
+    "upgraded_rent": 0,
+    "event_data": {
+      "type": "reward",
+      "amount": 100
+    }
+  },
+  {
+    "id": 3,
+    "name": "上海路",
+    "cell_type": "empty",
+    "price": 250,
+    "base_rent": 25,
+    "upgrade_cost": 120,
+    "upgraded_rent": 60,
+    "event_data": null
+  },
+  {
+    "id": 4,
+    "name": "税务局",
+    "cell_type": "tax_office",
+    "price": 0,
+    "base_rent": 0,
+    "upgrade_cost": 0,
+    "upgraded_rent": 0,
+    "event_data": null
+  },
+  {
+    "id": 5,
+    "name": "广州路",
+    "cell_type": "empty",
+    "price": 180,
+    "base_rent": 18,
+    "upgrade_cost": 90,
+    "upgraded_rent": 45,
+    "event_data": null
+  },
+  {
+    "id": 6,
+    "name": "不幸事件",
+    "cell_type": "unlucky",
+    "price": 0,
+    "base_rent": 0,
+    "upgrade_cost": 0,
+    "upgraded_rent": 0,
+    "event_data": {
+      "type": "penalty",
+      "amount": 50
+    }
+  },
+  {
+    "id": 7,
+    "name": "深圳路",
+    "cell_type": "empty",
+    "price": 300,
+    "base_rent": 30,
+    "upgrade_cost": 150,
+    "upgraded_rent": 75,
+    "event_data": null
+  },
+  {
+    "id": 8,
+    "name": "医院",
+    "cell_type": "hospital",
+    "price": 0,
+    "base_rent": 0,
+    "upgrade_cost": 0,
+    "upgraded_rent": 0,
+    "event_data": null
+  },
+  {
+    "id": 9,
+    "name": "杭州路",
+    "cell_type": "empty",
+    "price": 220,
+    "base_rent": 22,
+    "upgrade_cost": 110,
+    "upgraded_rent": 55,
+    "event_data": null
+  },
+  {
+    "id": 10,
+    "name": "监狱",
+    "cell_type": "jail",
+    "price": 0,
+    "base_rent": 0,
+    "upgrade_cost": 0,
+    "upgraded_rent": 0,
+    "event_data": null
+  },
+  {
+    "id": 11,
+    "name": "南京路",
+    "cell_type": "empty",
+    "price": 280,
+    "base_rent": 28,
+    "upgrade_cost": 140,
+    "upgraded_rent": 70,
+    "event_data": null
+  },
+  {
+    "id": 12,
+    "name": "幸运抽奖",
+    "cell_type": "lucky",
+    "price": 0,
+    "base_rent": 0,
+    "upgrade_cost": 0,
+    "upgraded_rent": 0,
+    "event_data": {
+      "type": "extra_turn"
+    }
+  },
+  {
+    "id": 13,
+    "name": "成都路",
+    "cell_type": "empty",
+    "price": 240,
+    "base_rent": 24,
+    "upgrade_cost": 120,
+    "upgraded_rent": 60,
+    "event_data": null
+  },
+  {
+    "id": 14,
+    "name": "不幸罚款",
+    "cell_type": "unlucky",
+    "price": 0,
+    "base_rent": 0,
+    "upgrade_cost": 0,
+    "upgraded_rent": 0,
+    "event_data": {
+      "type": "go_to_jail"
+    }
+  }
+]
