@@ -227,18 +227,26 @@ class SessionManager:
             if session.status == "rolled_back":
                 return {"success": False, "error": f"任务 {task_id} 已被回退过"}
 
-            if self._is_passthrough(session):
-                return {"success": False, "error": "直通模式下不支持 Git 回退，请手动撤销更改"}
-
             work_dir = session.work_dir
             logger.info(f"⏪ 物理回退任务 {task_id}: {session.summary[:50]}")
 
             try:
-                sandbox = self._get_sandbox(work_dir)
-                result = sandbox.rollback_to_task_start(task_id)
+                from rewind_system import get_rewind_system
+                rewind = get_rewind_system()
 
-                if not result.get("success"):
-                    return result
+                rewind_result = rewind.rewind(
+                    session_id=task_id,
+                    to_turn=0,
+                    work_dir=session.worktree_dir or work_dir,
+                )
+
+                if not rewind_result.get("success"):
+                    sandbox = self._get_sandbox(work_dir)
+                    result = sandbox.rollback_to_task_start(task_id)
+                    if not result.get("success"):
+                        return result
+                else:
+                    result = rewind_result
 
                 session.status = "rolled_back"
                 session.messages = []
@@ -253,6 +261,12 @@ class SessionManager:
                     "summary": session.summary,
                     "messages_before": session.messages_before,
                     "work_dir": work_dir,
+                    "reverted_files": result.get("reverted_files", []),
+                    "changed_files_raw": result.get("changed_files_raw", ""),
+                    "stat_summary": result.get("stat_summary", ""),
+                    "detailed_diff": result.get("detailed_diff", ""),
+                    "commits_being_reverted": result.get("commits_being_reverted", ""),
+                    "untracked_files": result.get("untracked_files", ""),
                 }
 
             except Exception as e:
@@ -263,7 +277,7 @@ class SessionManager:
         self,
         new_task_id: str,
         current_messages: Optional[List[Dict[str, Any]]] = None,
-        current_turn: int = 0,
+        current_turn: Optional[int] = None,
     ) -> Dict[str, Any]:
         with self._lock:
             if self.current_task_id and self.current_task_id in self._sessions:
@@ -271,7 +285,8 @@ class SessionManager:
                 if current_messages is not None:
                     old_session.messages = current_messages
                 old_session.messages = old_session.messages or []
-                old_session.current_turn = current_turn
+                if current_turn is not None:
+                    old_session.current_turn = current_turn
                 self._save_session(old_session)
                 logger.info(f"💾 已保存当前任务 {self.current_task_id}: {len(old_session.messages)} 条消息")
 
@@ -560,8 +575,38 @@ class SessionManager:
             if session.status not in ("active",):
                 return {"success": False, "error": f"任务 {task_id} 状态为 {session.status}，无法回退步骤"}
 
-            if self._is_passthrough(session):
-                return {"success": False, "error": "直通模式下不支持 Git 步骤回退，请手动撤销更改"}
+            work_dir = session.worktree_dir or session.work_dir
+
+            try:
+                from rewind_system import get_rewind_system
+                rewind = get_rewind_system()
+
+                rewind_result = rewind.rewind(
+                    session_id=task_id,
+                    steps=steps,
+                    work_dir=work_dir,
+                )
+
+                if rewind_result.get("success"):
+                    restored_messages = rewind_result.get("messages", [])
+                    session.messages = restored_messages
+                    session.current_turn = rewind_result.get("target_turn", 0)
+                    self._save_session(session)
+
+                    logger.info(f"⏪ 任务 {task_id} 回退 {steps} 步 (Hybrid Pointer), target_turn={session.current_turn}")
+
+                    return {
+                        "success": True,
+                        "steps_rolled_back": steps,
+                        "target_turn": session.current_turn,
+                        "reverted_files": rewind_result.get("reverted_files", []),
+                        "changed_files_raw": rewind_result.get("changed_files_raw", ""),
+                        "stat_summary": rewind_result.get("stat_summary", ""),
+                        "detailed_diff": rewind_result.get("detailed_diff", ""),
+                        "commits_being_reverted": rewind_result.get("commits_being_reverted", ""),
+                    }
+            except Exception as e:
+                logger.warning(f"rewind_system 步骤回退失败，降级到 sandbox_manager: {e}")
 
             sandbox = self._get_sandbox(session.work_dir)
             result = sandbox.rollback_task_step(task_id, steps=steps)

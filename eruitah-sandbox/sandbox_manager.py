@@ -446,11 +446,11 @@ class GitSandboxManager:
 
         return self.create_task_workspace(task_id)
 
-    def commit_agent_changes(self, task_id: str, summary: str = "Agent auto-update", model_name: str = "unknown") -> bool:
+    def commit_agent_changes(self, task_id: str, summary: str = "Agent auto-update", model_name: str = "unknown") -> str:
         task_dir = self._worktrees.get(task_id) or self._get_worktree_dir(task_id)
         if not os.path.exists(task_dir):
             logger.warning(f"任务 {task_id} 的 worktree 不存在，跳过提交")
-            return False
+            return ""
 
         add_result = self._run_git("add", ".", cwd=task_dir)
         if add_result.returncode != 0:
@@ -458,7 +458,8 @@ class GitSandboxManager:
 
         status = self._run_git("status", "--porcelain", cwd=task_dir)
         if not status.stdout.strip():
-            return True
+            rev_result = self._run_git("rev-parse", "HEAD", cwd=task_dir)
+            return rev_result.stdout.strip() if rev_result.returncode == 0 else ""
 
         commit_message = (
             f"feat(agent): {summary}\n\n"
@@ -469,15 +470,17 @@ class GitSandboxManager:
 
         commit_result = self._run_git("commit", "-m", commit_message, cwd=task_dir)
         if commit_result.returncode == 0:
-            logger.info(f"💾 任务 {task_id} 已物理存档: {summary[:50]}")
-            return True
+            rev_result = self._run_git("rev-parse", "HEAD", cwd=task_dir)
+            commit_hash = rev_result.stdout.strip() if rev_result.returncode == 0 else ""
+            logger.info(f"💾 任务 {task_id} 已物理存档: {summary[:50]} commit={commit_hash[:8]}")
+            return commit_hash
         else:
             logger.error(
                 f"❌ 任务 {task_id} auto-commit 失败!\n"
                 f"  cwd: {task_dir}\n"
                 f"  stderr: {commit_result.stderr.strip()[:200]}"
             )
-            return False
+            return ""
 
     def _verify_rollback_dir(self, task_id: str) -> Optional[str]:
         task_dir = self._worktrees.get(task_id) or self._get_worktree_dir(task_id)

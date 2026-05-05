@@ -829,18 +829,48 @@ def _auto_commit_worktree(
     summary: str,
     model: Optional[str] = None,
     main_repo_dir: Optional[str] = None,
-):
+    current_turn: int = 0,
+) -> str:
     try:
-        from sandbox_manager import get_sandbox, _sandboxes
-        repo_dir = main_repo_dir or work_dir
-        abs_repo = os.path.abspath(repo_dir)
-        if abs_repo not in _sandboxes:
-            logger.debug(f"直通模式: 跳过 auto-commit (目录 {abs_repo} 不在 sandbox 管理中)")
-            return
-        sandbox = get_sandbox(repo_dir)
-        sandbox.commit_agent_changes(session_id, summary, model_name=model or "unknown")
+        commit_hash = ""
+
+        git_dir = os.path.join(work_dir, ".git")
+        if os.path.exists(git_dir):
+            import subprocess
+            status_result = subprocess.run(
+                ["git", "status", "--porcelain"],
+                capture_output=True, text=True, timeout=5, cwd=work_dir,
+            )
+            if status_result.stdout.strip():
+                commit_msg = f"turn {current_turn}: {summary[:80]}" if current_turn > 0 else summary[:80]
+                subprocess.run(
+                    ["git", "add", "-A"],
+                    capture_output=True, timeout=5, cwd=work_dir,
+                )
+                subprocess.run(
+                    ["git", "commit", "-m", commit_msg],
+                    capture_output=True, timeout=10, cwd=work_dir,
+                )
+                rev_result = subprocess.run(
+                    ["git", "rev-parse", "HEAD"],
+                    capture_output=True, text=True, timeout=5, cwd=work_dir,
+                )
+                if rev_result.returncode == 0:
+                    commit_hash = rev_result.stdout.strip()
+                    logger.debug(f"auto-commit worktree: {commit_hash[:8]} in {work_dir}")
+
+        if not commit_hash:
+            from sandbox_manager import get_sandbox, _sandboxes
+            repo_dir = main_repo_dir or work_dir
+            abs_repo = os.path.abspath(repo_dir)
+            if abs_repo in _sandboxes:
+                sandbox = get_sandbox(repo_dir)
+                commit_hash = sandbox.commit_agent_changes(session_id, summary, model_name=model or "unknown")
+
+        return commit_hash or ""
     except Exception as e:
         logger.warning(f"Git auto-commit 失败: {e}")
+        return ""
 
 
 def _execute_tool_local(
@@ -853,6 +883,7 @@ def _execute_tool_local(
     base_url: Optional[str] = None,
     main_repo_dir: Optional[str] = None,
     auto_approve: bool = False,
+    current_turn: int = 0,
 ) -> tuple[str, bool, dict]:
     """本地执行工具"""
     meta = {}
@@ -929,7 +960,7 @@ def _execute_tool_local(
                 cmd_lower = command.strip().lower()
                 should_commit = any(kw in cmd_lower for kw in file_modifying_cmds)
                 if should_commit:
-                    _auto_commit_worktree(work_dir, session_id, f"bash: {command[:80]}", model, main_repo_dir)
+                    _auto_commit_worktree(work_dir, session_id, f"bash: {command[:80]}", model, main_repo_dir, current_turn=current_turn)
 
             return result, is_error, meta
 
@@ -944,7 +975,7 @@ def _execute_tool_local(
             result, is_error = execute_file_edit(file_path, search_text, replace_text, work_dir)
 
             if not is_error and session_id:
-                _auto_commit_worktree(work_dir, session_id, f"file_edit: {file_path}", model, main_repo_dir)
+                _auto_commit_worktree(work_dir, session_id, f"file_edit: {file_path}", model, main_repo_dir, current_turn=current_turn)
 
             return result, is_error, meta
 
@@ -1265,8 +1296,6 @@ def run_agent(
                 },
             }
 
-        rewind_system.create_checkpoint(session_id, turn, messages, f"第 {turn} 轮")
-
         blackboard.update_from_messages(messages, work_dir)
         injected_messages = blackboard.inject_anchor(messages, provider)
 
@@ -1406,34 +1435,83 @@ def run_agent(
 
             # 🚨 关键修复：如果 Markdown 降级成功写入文件，构造 tool_result 并继续循环
             if markdown_files_written:
-                _auto_commit_worktree(work_dir, session_id, "markdown auto-write", model, main_repo_dir)
-                # 将 assistant 消息加入 messages
+                _auto_commit_worktree(work_dir, session_id, "markdown auto-write", model, main_repo_dir, current_turn=turn)
                 messages.append({"role": "assistant", "content": text})
-                # 加入一个 tool_result 告诉 LLM 文件已写入
                 messages.append({
                     "role": "user",
                     "content": f"✅ 已通过 Markdown 降级模式写入文件。请继续执行任务，如果还有更多文件需要创建或修改，请继续。"
                 })
+                _cp_desc = f"第 {turn} 轮 (Markdown写入)"
+                try:
+                    from rewind_system import get_rewind_system as _get_rewind
+                    _rewind = _get_rewind()
+                    _cp = _rewind.create_checkpoint(session_id, turn, messages, _cp_desc, work_dir=work_dir)
+                    if _cp:
+                        yield {
+                            "type": "checkpoint_created",
+                            "session_id": session_id,
+                            "turn": turn,
+                            "description": _cp_desc,
+                            "code_diff": _cp.code_diff or "",
+                            "diff_stat": _cp.diff_stat or "",
+                            "git_commit": _cp.git_commit or "",
+                        }
+                except Exception:
+                    pass
                 logger.info("🔄 Markdown 降级成功，继续下一轮循环...")
                 continue
 
             if not tool_calls:
-                # 🚨 检查文本中是否包含代码块或工具调用关键字，但格式不正确
                 if text and ('file_edit' in text or '```' in text or 'def ' in text or 'class ' in text):
                     logger.warning("⚠️ 检测到文本中可能包含代码或工具调用，但格式不正确")
-                    messages.append({"role": "assistant", "content": text[:2000]})  # 截断避免太长
+                    messages.append({"role": "assistant", "content": text[:2000]})
                     messages.append({
                         "role": "user",
                         "content": "⚠️ 你的回复中似乎包含代码或工具调用，但格式不正确。请使用以下格式之一：\n1. 使用 file_edit 工具：file_edit(file_path=\"文件名\", search_text=\"\", replace_text=\"内容\")\n2. 使用 Markdown 代码块：```python\\n# 代码\\n```\n请重新格式化你的回复并继续执行任务。"
                     })
+                    _cp_desc = f"第 {turn} 轮 (格式错误重试)"
+                    try:
+                        from rewind_system import get_rewind_system as _get_rewind
+                        _rewind = _get_rewind()
+                        _cp = _rewind.create_checkpoint(session_id, turn, messages, _cp_desc, work_dir=work_dir)
+                        if _cp:
+                            yield {
+                                "type": "checkpoint_created",
+                                "session_id": session_id,
+                                "turn": turn,
+                                "description": _cp_desc,
+                                "code_diff": _cp.code_diff or "",
+                                "diff_stat": _cp.diff_stat or "",
+                                "git_commit": _cp.git_commit or "",
+                            }
+                    except Exception:
+                        pass
                     continue
-                
+
+                _cp_desc = f"第 {turn} 轮 (完成)"
+                try:
+                    from rewind_system import get_rewind_system as _get_rewind
+                    _rewind = _get_rewind()
+                    _cp = _rewind.create_checkpoint(session_id, turn, messages, _cp_desc, work_dir=work_dir)
+                    if _cp:
+                        yield {
+                            "type": "checkpoint_created",
+                            "session_id": session_id,
+                            "turn": turn,
+                            "description": _cp_desc,
+                            "code_diff": _cp.code_diff or "",
+                            "diff_stat": _cp.diff_stat or "",
+                            "git_commit": _cp.git_commit or "",
+                        }
+                except Exception:
+                    pass
                 yield {"type": "finish", "data": text or "任务完成"}
                 break
 
             tool_results_for_api = []
             any_error = False
             error_logs = []
+            turn_tool_summary = []
 
             for tc in tool_calls:
                 name = tc.get("name", "unknown")
@@ -1480,6 +1558,7 @@ def run_agent(
                             base_url=base_url,
                             main_repo_dir=main_repo_dir,
                             auto_approve=auto_approve,
+                            current_turn=turn,
                         )
                         
                         yield {
@@ -1574,6 +1653,7 @@ def run_agent(
                     base_url=base_url,
                     main_repo_dir=main_repo_dir,
                     auto_approve=auto_approve,
+                    current_turn=turn,
                 )
 
                 yield {
@@ -1582,6 +1662,18 @@ def run_agent(
                     "result": result_str,
                     "is_error": is_error,
                 }
+
+                if not is_error:
+                    tool_desc = name
+                    if name == "file_edit" and args.get("file_path"):
+                        tool_desc = f"file_edit: {args['file_path']}"
+                    elif name == "bash" and args.get("command"):
+                        tool_desc = f"bash: {args['command'][:60]}"
+                    elif name == "file_read" and args.get("file_path"):
+                        tool_desc = f"file_read: {args['file_path']}"
+                    elif name == "grep" and args.get("pattern"):
+                        tool_desc = f"grep: {args['pattern'][:40]}"
+                    turn_tool_summary.append(tool_desc)
 
                 if name == "file_edit" and not is_error:
                     file_path = args.get("file_path", "")
@@ -1700,6 +1792,31 @@ def run_agent(
                 # 添加工具结果
                 messages.extend(tool_results_for_api)
 
+            checkpoint_desc = " | ".join(turn_tool_summary[:5]) if turn_tool_summary else f"第 {turn} 轮 (思考)"
+            _cp_code_diff = ""
+            _cp_diff_stat = ""
+            _cp_git_commit = ""
+            try:
+                from rewind_system import get_rewind_system as _get_rewind
+                _rewind = _get_rewind()
+                _cp = _rewind.create_checkpoint(session_id, turn, messages, checkpoint_desc, work_dir=work_dir)
+                if _cp:
+                    _cp_code_diff = _cp.code_diff or ""
+                    _cp_diff_stat = _cp.diff_stat or ""
+                    _cp_git_commit = _cp.git_commit or ""
+            except Exception as e:
+                logger.debug(f"创建轮次检查点失败: {e}")
+
+            yield {
+                "type": "checkpoint_created",
+                "session_id": session_id,
+                "turn": turn,
+                "description": checkpoint_desc,
+                "code_diff": _cp_code_diff,
+                "diff_stat": _cp_diff_stat,
+                "git_commit": _cp_git_commit,
+            }
+
             if any_error:
                 consecutive_errors += 1
                 error_summary = "\n".join(error_logs)
@@ -1752,7 +1869,17 @@ def run_agent(
 
     yield {"type": "status", "data": f"Agent 任务完成 (共 {turn-1} 轮)"}
     yield {"type": "agent_status", "status": "DONE"}
-    yield {"type": "finish", "data": f"任务已完成 (共 {turn-1} 轮)"}
+
+    final_checkpoints = []
+    try:
+        final_checkpoints = rewind_system.list_checkpoints(session_id)
+    except Exception:
+        pass
+    yield {
+        "type": "finish",
+        "data": f"任务已完成 (共 {turn-1} 轮)",
+        "checkpoints": final_checkpoints,
+    }
 
 def _call_anthropic(
     messages: list[dict],

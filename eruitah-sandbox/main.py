@@ -279,6 +279,17 @@ async def _handle_system_command(websocket, data: dict, safe_send):
                     "diff_audit": diff_audit,
                     "detailed_diff": detailed_diff,
                 })
+                try:
+                    from rewind_system import get_rewind_system
+                    rewind = get_rewind_system()
+                    remaining_cps = rewind.list_checkpoints(target_task_id)
+                    await safe_send({
+                        "type": "checkpoints_updated",
+                        "task_id": target_task_id,
+                        "checkpoints": remaining_cps,
+                    })
+                except Exception:
+                    pass
                 await safe_send({
                     "type": "system_msg",
                     "content": f"⏪ 任务「{target_task_id}」已回退 {result.get('steps_rolled_back', steps)} 步\n{diff_audit}",
@@ -305,6 +316,97 @@ async def _handle_system_command(websocket, data: dict, safe_send):
             })
         return
 
+    elif action == "preview_rollback":
+        target_task_id = data.get("target_task_id") or task_id
+        if not target_task_id:
+            await safe_send({"type": "system_msg", "content": "❌ 未指定要预览回退的任务 ID"})
+            return
+
+        steps = data.get("steps", 1)
+        to_turn = data.get("to_turn")
+
+        session = sm.get_session(target_task_id)
+        if not session:
+            await safe_send({"type": "system_msg", "content": f"❌ 任务 {target_task_id} 不存在"})
+            return
+
+        work_dir = session.worktree_dir or session.work_dir
+
+        from rewind_system import get_rewind_system
+        rewind = get_rewind_system()
+        preview = rewind.preview_rollback(
+            session_id=target_task_id,
+            steps=steps,
+            to_turn=to_turn,
+            work_dir=work_dir,
+        )
+
+        if preview.get("success"):
+            await safe_send({
+                "type": "rollback_preview",
+                "task_id": target_task_id,
+                "target_turn": preview.get("target_turn", 0),
+                "target_description": preview.get("target_description", ""),
+                "target_git_commit": preview.get("target_git_commit", ""),
+                "removed_turns": preview.get("removed_turns", []),
+                "removed_descriptions": preview.get("removed_descriptions", []),
+                "reverted_files": preview.get("reverted_files", []),
+                "stat_summary": preview.get("stat_summary", ""),
+                "detailed_diff": preview.get("detailed_diff", ""),
+                "diff_report": preview.get("diff_report", ""),
+                "diff_lines": preview.get("diff_lines", []),
+                "commits_being_reverted": preview.get("commits_being_reverted", ""),
+            })
+        else:
+            await safe_send({
+                "type": "system_msg",
+                "content": f"❌ 预览失败: {preview.get('error', '未知错误')}",
+            })
+        return
+
+    elif action == "view_checkpoint":
+        target_task_id = data.get("target_task_id") or task_id
+        view_turn = data.get("turn")
+        if not target_task_id or view_turn is None:
+            await safe_send({"type": "system_msg", "content": "❌ 缺少参数: target_task_id 或 turn"})
+            return
+
+        session = sm.get_session(target_task_id)
+        if not session:
+            await safe_send({"type": "system_msg", "content": f"❌ 任务 {target_task_id} 不存在"})
+            return
+
+        work_dir = session.worktree_dir or session.work_dir
+
+        from rewind_system import get_rewind_system
+        rewind = get_rewind_system()
+        view = rewind.view_checkpoint(
+            session_id=target_task_id,
+            turn=view_turn,
+            work_dir=work_dir,
+        )
+
+        if view.get("success"):
+            await safe_send({
+                "type": "checkpoint_view",
+                "task_id": target_task_id,
+                "turn": view.get("turn", 0),
+                "timestamp": view.get("timestamp", 0),
+                "description": view.get("description", ""),
+                "git_commit": view.get("git_commit", ""),
+                "diff_stat": view.get("diff_stat", ""),
+                "changed_files": view.get("changed_files", []),
+                "detailed_diff": view.get("detailed_diff", ""),
+                "diff_lines": view.get("diff_lines", []),
+                "code_diff": view.get("code_diff", ""),
+            })
+        else:
+            await safe_send({
+                "type": "system_msg",
+                "content": f"❌ 查看失败: {view.get('error', '未知错误')}",
+            })
+        return
+
     elif action == "stop_agent":
         session_id = task_id or "default"
         set_stop_flag(session_id, True)
@@ -323,12 +425,20 @@ async def _handle_system_command(websocket, data: dict, safe_send):
 
         result = sm.switch_session(target_task_id)
         if result.get("success"):
+            checkpoints = []
+            try:
+                from rewind_system import get_rewind_system
+                rewind = get_rewind_system()
+                checkpoints = rewind.list_checkpoints(target_task_id)
+            except Exception:
+                pass
             await safe_send({"type": "refresh_tree"})
             await safe_send({
                 "type": "task_switched",
                 "task_id": target_task_id,
                 "summary": result.get("summary", ""),
                 "work_dir": result.get("work_dir", ""),
+                "checkpoints": checkpoints,
             })
             await safe_send({
                 "type": "system_msg",
@@ -730,9 +840,32 @@ async def websocket_coding(websocket: WebSocket):
                 async for event in _run_agent_async(**agent_params):
                     if event.get("type") == "task_started":
                         event["work_dir"] = work_dir
+                        try:
+                            from rewind_system import get_rewind_system
+                            rewind = get_rewind_system()
+                            cps = rewind.list_checkpoints(event.get("task_id", task_id or ""))
+                            event["checkpoints"] = cps
+                        except Exception:
+                            pass
 
                     if not await safe_send(event):
                         return
+
+                    if event.get("type") == "tool_end" and not event.get("is_error"):
+                        tool_name = event.get("tool_name", "")
+                        if tool_name and ("file_edit" in tool_name or "file_write" in tool_name or "bash" in tool_name):
+                            try:
+                                from rewind_system import get_rewind_system
+                                rewind = get_rewind_system()
+                                cps = rewind.list_checkpoints(task_id or "")
+                                if cps:
+                                    await safe_send({
+                                        "type": "checkpoints_updated",
+                                        "task_id": task_id,
+                                        "checkpoints": cps,
+                                    })
+                            except Exception:
+                                pass
 
                     if event.get("type") == "ask_user":
                         question_id = event.get("data", {}).get("question_id", "")
@@ -814,12 +947,7 @@ async def websocket_coding(websocket: WebSocket):
                     await asyncio.sleep(0.01)
 
             if task_id:
-                try:
-                    msgs = agent_params.get("initial_messages") or []
-                    sm.update_session_messages(task_id, msgs)
-                    logger.info(f"💾 任务 {task_id} 消息已保存到 session")
-                except Exception as e:
-                    logger.warning(f"保存任务消息失败: {e}")
+                logger.info(f"💾 任务 {task_id} Agent 循环结束 (消息已由 run_agent 内部每轮保存)")
 
             task_id = None
 
@@ -833,14 +961,7 @@ async def websocket_coding(websocket: WebSocket):
         from ask_user_tool import cancel_all_questions
         cancel_all_questions()
         if task_id:
-            try:
-                from task_manager import get_session_manager
-                sm = get_session_manager()
-                msgs = agent_params.get("initial_messages") or []
-                sm.update_session_messages(task_id, msgs)
-                logger.info(f"💾 任务 {task_id} 消息已保存到 session (finally)")
-            except Exception as e:
-                logger.warning(f"保存任务消息失败: {e}")
+            logger.info(f"💾 任务 {task_id} Agent 循环结束 (finally, 消息已由 run_agent 内部保存)")
         try:
             await websocket.close()
         except Exception:

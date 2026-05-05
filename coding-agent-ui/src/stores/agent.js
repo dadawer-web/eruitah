@@ -43,6 +43,10 @@ export const useAgentStore = defineStore('agent', () => {
   const activeTaskId = ref(null)
   const autoApprove = ref(false)
 
+  const historyStates = ref([])
+  const rollbackPreview = ref(null)
+  const checkpointView = ref(null)
+
   let rafId = null
   let editorInstance = null
   let wsRetryCount = 0
@@ -165,6 +169,20 @@ export const useAgentStore = defineStore('agent', () => {
 
         messages.value = taskMessages.value[realTaskId] || []
         fetchFileTree()
+        if (data.checkpoints) {
+          historyStates.value = data.checkpoints.map(cp => ({
+            turn: cp.turn,
+            task_id: realTaskId,
+            tool: cp.description || '',
+            summary: cp.description || `第 ${cp.turn} 轮`,
+            diff_stat: cp.diff_stat || '',
+            code_diff: cp.code_diff || '',
+            timestamp: cp.timestamp * 1000,
+            git_commit: cp.git_commit || '',
+          }))
+        } else {
+          historyStates.value = []
+        }
         console.log('[WS] Task started:', realTaskId, realTaskName, 'worktree:', realWorkDir)
         break
 
@@ -176,6 +194,7 @@ export const useAgentStore = defineStore('agent', () => {
         if (activeTaskId.value === data.task_id) {
           currentTaskName.value = ''
           currentTaskId.value = ''
+          historyStates.value = []
         }
         if (data.diff_audit) {
           addSystemMessage(`⚠️ 已成功触发物理回退 (Time Travel)\n${data.diff_audit}`)
@@ -216,6 +235,20 @@ export const useAgentStore = defineStore('agent', () => {
           taskMessages.value[data.task_id] = []
         }
         messages.value = taskMessages.value[data.task_id]
+        if (data.checkpoints) {
+          historyStates.value = data.checkpoints.map(cp => ({
+            turn: cp.turn,
+            task_id: data.task_id,
+            tool: cp.description || '',
+            summary: cp.description || `第 ${cp.turn} 轮`,
+            diff_stat: cp.diff_stat || '',
+            code_diff: cp.code_diff || '',
+            timestamp: cp.timestamp * 1000,
+            git_commit: cp.git_commit || '',
+          }))
+        } else {
+          historyStates.value = []
+        }
         window.__xterm_write?.(`\x1b[36m[任务切换] ${data.summary || ''}\x1b[0m\n`)
         fetchFileTree()
         break
@@ -319,6 +352,18 @@ export const useAgentStore = defineStore('agent', () => {
             finishedTask.status = 'completed'
           }
         }
+        if (data.checkpoints && activeTaskId.value) {
+          historyStates.value = data.checkpoints.map(cp => ({
+            turn: cp.turn,
+            task_id: activeTaskId.value,
+            tool: cp.description || '',
+            summary: cp.description || `第 ${cp.turn} 轮`,
+            diff_stat: cp.diff_stat || '',
+            code_diff: cp.code_diff || '',
+            timestamp: cp.timestamp * 1000,
+            git_commit: cp.git_commit || '',
+          }))
+        }
         activeTaskId.value = null
         currentTaskId.value = null
         currentTaskName.value = ''
@@ -413,6 +458,78 @@ export const useAgentStore = defineStore('agent', () => {
 
       case 'checkpoint_list':
         checkpointList.value = data.data || []
+        break
+
+      case 'checkpoints_updated':
+        if (data.task_id === activeTaskId.value && data.checkpoints) {
+          historyStates.value = data.checkpoints.map(cp => ({
+            turn: cp.turn,
+            task_id: data.task_id,
+            tool: cp.description || '',
+            summary: cp.description || `第 ${cp.turn} 轮`,
+            diff_stat: cp.diff_stat || '',
+            code_diff: cp.code_diff || '',
+            timestamp: cp.timestamp * 1000,
+            git_commit: cp.git_commit || '',
+          }))
+        }
+        break
+
+      case 'checkpoint_created':
+        if (data.session_id && data.session_id === activeTaskId.value) {
+          const existing = historyStates.value.findIndex(h => h.turn === data.turn)
+          if (existing === -1) {
+            historyStates.value.push({
+              turn: data.turn,
+              task_id: data.session_id,
+              tool: data.description || '',
+              summary: data.description || `第 ${data.turn} 轮`,
+              diff_stat: data.diff_stat || '',
+              code_diff: data.code_diff || '',
+              timestamp: Date.now(),
+              git_commit: data.git_commit || '',
+            })
+          } else {
+            const entry = historyStates.value[existing]
+            entry.tool = data.description || entry.tool
+            entry.summary = data.description || entry.summary
+            if (data.diff_stat) entry.diff_stat = data.diff_stat
+            if (data.code_diff) entry.code_diff = data.code_diff
+            if (data.git_commit) entry.git_commit = data.git_commit
+          }
+        }
+        break
+
+      case 'rollback_preview':
+        rollbackPreview.value = {
+          task_id: data.task_id,
+          target_turn: data.target_turn,
+          target_description: data.target_description,
+          target_git_commit: data.target_git_commit,
+          removed_turns: data.removed_turns || [],
+          removed_descriptions: data.removed_descriptions || [],
+          reverted_files: data.reverted_files || [],
+          stat_summary: data.stat_summary || '',
+          detailed_diff: data.detailed_diff || '',
+          diff_report: data.diff_report || '',
+          diff_lines: data.diff_lines || [],
+          commits_being_reverted: data.commits_being_reverted || '',
+        }
+        break
+
+      case 'checkpoint_view':
+        checkpointView.value = {
+          task_id: data.task_id,
+          turn: data.turn,
+          timestamp: data.timestamp,
+          description: data.description,
+          git_commit: data.git_commit,
+          diff_stat: data.diff_stat,
+          changed_files: data.changed_files || [],
+          detailed_diff: data.detailed_diff || '',
+          diff_lines: data.diff_lines || [],
+          code_diff: data.code_diff || '',
+        }
         break
 
       case 'system_msg':
@@ -772,6 +889,33 @@ export const useAgentStore = defineStore('agent', () => {
     return sendSystemCommand('rollback_task', { target_task_id: taskId, steps })
   }
 
+  function previewRollback(taskId, steps = 1, toTurn = null) {
+    if (!taskId) return false
+    const params = { target_task_id: taskId, steps }
+    if (toTurn !== null) {
+      params.to_turn = toTurn
+    }
+    return sendSystemCommand('preview_rollback', params)
+  }
+
+  function confirmRollback(taskId, steps = 1) {
+    rollbackPreview.value = null
+    return rollbackStep(taskId, steps)
+  }
+
+  function dismissRollbackPreview() {
+    rollbackPreview.value = null
+  }
+
+  function viewCheckpoint(taskId, turn) {
+    if (!taskId) return false
+    return sendSystemCommand('view_checkpoint', { target_task_id: taskId, turn })
+  }
+
+  function dismissCheckpointView() {
+    checkpointView.value = null
+  }
+
   function revertMergedTask(taskId) {
     if (!taskId) return false
     return sendSystemCommand('revert_merged_task', { target_task_id: taskId })
@@ -901,6 +1045,9 @@ export const useAgentStore = defineStore('agent', () => {
     taskMessages,
     activeTaskId,
     autoApprove,
+    historyStates,
+    rollbackPreview,
+    checkpointView,
     connect,
     disconnect,
     sendTask,
@@ -909,6 +1056,11 @@ export const useAgentStore = defineStore('agent', () => {
     deleteTask,
     mergeTask,
     rollbackStep,
+    previewRollback,
+    confirmRollback,
+    dismissRollbackPreview,
+    viewCheckpoint,
+    dismissCheckpointView,
     revertMergedTask,
     listMcpServices,
     switchTask,
