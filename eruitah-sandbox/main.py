@@ -489,13 +489,14 @@ async def _handle_system_command(websocket, data: dict, safe_send):
 
     elif action == "merge_task":
         target_task_id = data.get("target_task_id") or task_id or sm.current_task_id
+        force_merge = data.get("force", False)
         if not target_task_id:
             await safe_send({"type": "system_msg", "content": "❌ 未指定要合并的任务 ID"})
             return
 
-        logger.info(f"🔀 尝试合并任务 {target_task_id} 到主干")
+        logger.info(f"🔀 尝试合并任务 {target_task_id} 到主干 (force={force_merge})")
 
-        result = sm.merge_session(target_task_id)
+        result = sm.merge_session(target_task_id, force=force_merge)
 
         if result.get("status") == "success":
             await safe_send({"type": "refresh_tree"})
@@ -745,7 +746,7 @@ async def websocket_coding(websocket: WebSocket):
 
             original_work_dir = work_dir
 
-            use_worktree = os.path.abspath(work_dir) == os.path.abspath(SANDBOX_DIR)
+            use_worktree = True
 
             from task_manager import get_session_manager
             sm = get_session_manager()

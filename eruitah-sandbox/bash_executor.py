@@ -46,39 +46,51 @@ TRUNCATION_NOTICE = "\n... [输出已截断，共 {total} 字符，仅显示前 
 
 # 绝对禁止执行的命令模式（匹配即拦截，不进入权限询问流程）
 BLOCKED_PATTERNS: list[re.Pattern] = [
-    # rm -rf / 或 rm -rf /* 等递归删除根目录的操作
     re.compile(r'\brm\s+(-[a-zA-Z]*f[a-zA-Z]*\s+)?-r[a-zA-Z]*\s+(/|\*\s*$)', re.IGNORECASE),
     re.compile(r'\brm\s+-r[a-zA-Z]*\s+(-[a-zA-Z]*f[a-zA-Z]*\s+)?(/|\*\s*$)', re.IGNORECASE),
-    # mkfs - 格式化文件系统
+    re.compile(r'\brm\s+-rf\s+~', re.IGNORECASE),
+    re.compile(r'\brm\s+-rf\s+/home', re.IGNORECASE),
+    re.compile(r'\brm\s+-rf\s+/etc', re.IGNORECASE),
+    re.compile(r'\brm\s+-rf\s+/var', re.IGNORECASE),
     re.compile(r'\bmkfs\b'),
-    # dd 写入磁盘设备
     re.compile(r'\bdd\s+.*of=/dev/'),
-    # :(){ :|:& };: - Fork 炸弹
+    re.compile(r'>\s*/dev/sd[a-z]', re.IGNORECASE),
+    re.compile(r'>\s*/dev/sda\b', re.IGNORECASE),
     re.compile(r':\(\)\{\s*:\|:&\s*\};\s*:'),
-    # chmod 777 / 或关键系统目录
     re.compile(r'\bchmod\s+777\s+(/|/etc|/usr|/bin|/sbin|/root)\b'),
-    # 覆盖关键系统文件
     re.compile(r'>\s*/etc/passwd\b'),
     re.compile(r'>\s*/etc/shadow\b'),
     re.compile(r'>\s*/etc/sudoers\b'),
+    re.compile(r'\breboot\b'),
+    re.compile(r'\bshutdown\b'),
+    re.compile(r'\binit\s+[06]\b'),
+    re.compile(r'\bgit\s+push\s+--force\b'),
+    re.compile(r'\bgit\s+push\s+-f\b'),
+    re.compile(r'\biptables\s+-F\b'),
+    re.compile(r'\bkill\s+-9\s+1\b'),
+    re.compile(r'\bmv\s+.*\s+/dev/null\b'),
+    re.compile(r'\bformat\s+[A-Z]:', re.IGNORECASE),
 ]
 
 # 需要警告但可由调用方决定是否放行的命令模式
 # 对应 TS 源码中 behavior: 'ask' 的安全检查
 WARNED_PATTERNS: list[tuple[re.Pattern, str]] = [
-    # 命令替换 - 对应 validateDangerousPatterns
     (re.compile(r'\$\('), '命令包含 $() 命令替换，可能执行任意代码'),
     (re.compile(r'`'), '命令包含反引号命令替换，可能执行任意代码'),
     (re.compile(r'\$\{'), '命令包含 ${} 参数替换，可能绕过安全检查'),
-    # IFS 注入 - 对应 validateIFSInjection
     (re.compile(r'\$IFS|\$\{[^}]*IFS'), '命令包含 IFS 变量，可能绕过安全校验'),
-    # /proc 环境变量读取 - 对应 validateProcEnvironAccess
     (re.compile(r'/proc/.*?/environ'), '命令尝试读取 /proc/*/environ，可能泄露环境变量中的密钥'),
-    # 危险重定向 - 对应 validateRedirections
     (re.compile(r'<(?!<)'), '命令包含输入重定向 (<)，可能读取敏感文件'),
-    # curl/wget 管道到 shell
     (re.compile(r'curl\s+.*\|\s*(bash|sh|zsh)'), '命令将网络下载内容管道到 shell 执行，极度危险'),
     (re.compile(r'wget\s+.*\|\s*(bash|sh|zsh)'), '命令将网络下载内容管道到 shell 执行，极度危险'),
+    (re.compile(r'\bsudo\s+'), '使用超级用户权限执行命令'),
+    (re.compile(r'\brm\s+-rf\s+'), '递归删除操作'),
+    (re.compile(r'\bgit\s+reset\s+--hard\b'), 'Git 硬重置，可能丢失未提交的代码'),
+    (re.compile(r'\bdocker\s+rm\b'), '删除 Docker 容器'),
+    (re.compile(r'\bdocker\s+rmi\b'), '删除 Docker 镜像'),
+    (re.compile(r'\bpip\s+uninstall\b'), '卸载 Python 包'),
+    (re.compile(r'\bnpm\s+uninstall\b'), '卸载 Node 包'),
+    (re.compile(r'\bchmod\s+777\b'), '设置危险权限 777'),
 ]
 
 # Zsh 危险命令 - 对应 ZSH_DANGEROUS_COMMANDS
@@ -317,10 +329,10 @@ def execute_bash(
     security_result = check_command_security(command, work_dir)
 
     if security_result.behavior == 'deny':
-        logger.warning(f"命令被安全策略拦截: {command} -> {security_result.message}")
+        logger.warning(f"🚫 命令被安全策略拦截: {command} -> {security_result.message}")
         return BashResult(
             blocked=True,
-            block_reason=security_result.message,
+            block_reason=f"[Security Alert] 尝试执行毁灭性命令，系统已强行拦截！原因: {security_result.message}",
             exit_code=-1,
         )
 

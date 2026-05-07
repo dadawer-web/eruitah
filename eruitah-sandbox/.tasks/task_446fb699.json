@@ -6,10 +6,10 @@
   "messages_before": [],
   "messages": [],
   "created_at": 1777814893.382038,
-  "status": "active",
+  "status": "merged",
   "current_turn": 0,
   "base_checkpoint_id": "task/task_446fb699",
   "worktree_dir": "/home/xmy/agent-worktrees/task_446fb699",
   "base_task_id": "",
-  "merge_commit_hash": ""
+  "merge_commit_hash": "0af245ee58f4"
 }

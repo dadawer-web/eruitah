@@ -116,6 +116,7 @@ class GitSandboxManager:
                                 ".checkpoints/",
                                 ".eruitah_cache/",
                                 ".tasks/",
+                                "agent-worktrees/",
                             ]
                         )
                         + "\n"
@@ -137,6 +138,19 @@ class GitSandboxManager:
         else:
             self._run_git("config", "user.email", "eruitah@sandbox.local")
             self._run_git("config", "user.name", "Eruitah Sandbox")
+
+            gitignore_path = os.path.join(self.workspace_dir, ".gitignore")
+            if os.path.exists(gitignore_path):
+                try:
+                    with open(gitignore_path, "r", encoding="utf-8") as f:
+                        content = f.read()
+                    if "agent-worktrees/" not in content:
+                        with open(gitignore_path, "a", encoding="utf-8") as f:
+                            f.write("\nagent-worktrees/\n")
+                        logger.info("📝 已追加 agent-worktrees/ 到 .gitignore")
+                except Exception as e:
+                    logger.warning(f"⚠️ 更新 .gitignore 失败: {e}")
+
             logger.info(
                 f"Git 仓库已存在，当前分支: {self._get_current_branch()}"
             )
@@ -812,7 +826,7 @@ class GitSandboxManager:
             logger.error(f"♻️ 回收沙盒异常: {e}")
             return False
 
-    def merge_task_to_main(self, task_id: str) -> Dict[str, Any]:
+    def merge_task_to_main(self, task_id: str, force: bool = False) -> Dict[str, Any]:
         safe_branch = f"{TASK_BRANCH_PREFIX}{task_id}"
 
         if not self._branch_exists(safe_branch):
@@ -833,20 +847,37 @@ class GitSandboxManager:
                 "commit",
                 "-m",
                 "Auto-save before merge",
-                "--allow-empty",
                 cwd=self.workspace_dir,
             )
 
         main_branch = self._get_current_branch()
         self._run_git("checkout", main_branch, cwd=self.workspace_dir)
 
-        result = self._run_git("merge", safe_branch, cwd=self.workspace_dir)
+        if force:
+            result = self._run_git(
+                "merge", safe_branch, "-X", "theirs", "-m",
+                f"Merge task {task_id} (force: accept task changes)",
+                cwd=self.workspace_dir,
+            )
+        else:
+            result = self._run_git("merge", safe_branch, cwd=self.workspace_dir)
 
         if result.returncode == 0:
             head_result = self._run_git("rev-parse", "HEAD", cwd=self.workspace_dir)
             merge_commit_hash = head_result.stdout.strip()[:12] if head_result.returncode == 0 else ""
 
             logger.info(f"✅ 任务 {task_id} 完美合入主干 {main_branch}！merge_commit={merge_commit_hash}")
+
+            task_dir = self._worktrees.get(task_id) or self._get_worktree_dir(task_id)
+            if task_dir and os.path.exists(task_dir):
+                self._run_git_ok("worktree", "remove", task_dir, "--force")
+                logger.info(f"🗑️ 已清理任务 {task_id} 的 worktree: {task_dir}")
+            if self._branch_exists(safe_branch):
+                self._run_git_ok("branch", "-d", safe_branch)
+                logger.info(f"🗑️ 已删除任务分支: {safe_branch}")
+            self._worktrees.pop(task_id, None)
+            self._run_git_ok("worktree", "prune")
+
             return {
                 "status": "success",
                 "message": f"任务「{task_id}」已成功合入主干",
@@ -855,17 +886,32 @@ class GitSandboxManager:
                 "merge_commit_hash": merge_commit_hash,
             }
         else:
-            self._run_git("merge", "--abort", cwd=self.workspace_dir)
-            logger.warning(f"⚠️ 任务 {task_id} 与主干发生冲突，已撤销合并操作")
+            if force:
+                self._run_git("merge", "--abort", cwd=self.workspace_dir)
+                logger.error(f"❌ 强制合并也失败了: {result.stderr[:200]}")
+                return {
+                    "status": "error",
+                    "message": f"强制合并失败: {result.stderr[:200]}",
+                    "task_id": task_id,
+                }
 
             conflict_files = self._run_git(
                 "diff", "--name-only", "--diff-filter=U", cwd=self.workspace_dir
             )
             conflict_list = conflict_files.stdout.strip().split("\n") if conflict_files.stdout.strip() else []
 
+            conflict_detail = self._run_git(
+                "diff", "--name-only", safe_branch, cwd=self.workspace_dir
+            )
+            if not conflict_list and conflict_detail.stdout.strip():
+                conflict_list = conflict_detail.stdout.strip().split("\n")
+
+            self._run_git("merge", "--abort", cwd=self.workspace_dir)
+            logger.warning(f"⚠️ 任务 {task_id} 与主干发生冲突，已撤销合并操作。冲突文件: {conflict_list}")
+
             return {
                 "status": "conflict",
-                "message": "文件存在冲突，需要人工合并或让 Agent 重新同步主干代码",
+                "message": f"文件存在冲突（{len(conflict_list)} 个文件），可以选择强制合并（以任务分支为准）或放弃合并",
                 "task_id": task_id,
                 "conflict_files": conflict_list,
                 "details": result.stdout + result.stderr,

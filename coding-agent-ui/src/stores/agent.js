@@ -556,10 +556,10 @@ export const useAgentStore = defineStore('agent', () => {
         break
 
       case 'task_merged':
-        mergedTaskId = data.task_id
-        taskEntry = taskList.value.find(t => t.id === mergedTaskId)
-        if (taskEntry) {
-          taskEntry.status = 'merged'
+        const mergedTaskId = data.task_id
+        const mergedEntry = taskList.value.find(t => t.id === mergedTaskId)
+        if (mergedEntry) {
+          mergedEntry.status = 'merged'
         }
         if (activeTaskId.value === mergedTaskId) {
           basePath.value = originalBasePath.value
@@ -569,10 +569,11 @@ export const useAgentStore = defineStore('agent', () => {
         break
 
       case 'task_conflict':
-        conflictTaskId = data.task_id
-        conflictEntry = taskList.value.find(t => t.id === conflictTaskId)
+        const conflictTaskId = data.task_id
+        const conflictEntry = taskList.value.find(t => t.id === conflictTaskId)
         if (conflictEntry) {
           conflictEntry.status = 'conflict'
+          conflictEntry.conflictFiles = data.conflict_files || []
         }
         console.warn('[WS] Task has merge conflicts:', conflictTaskId, data.conflict_files)
         break
@@ -605,8 +606,8 @@ export const useAgentStore = defineStore('agent', () => {
         break
 
       case 'task_reverted':
-        revertedTaskId = data.task_id
-        revertedEntry = taskList.value.find(t => t.id === revertedTaskId)
+        const revertedTaskId = data.task_id
+        const revertedEntry = taskList.value.find(t => t.id === revertedTaskId)
         if (revertedEntry) {
           revertedEntry.status = 'reverted'
         }
@@ -879,9 +880,9 @@ export const useAgentStore = defineStore('agent', () => {
     return sendSystemCommand('delete_task', { target_task_id: taskId })
   }
 
-  function mergeTask(taskId) {
+  function mergeTask(taskId, force = false) {
     if (!taskId) return false
-    return sendSystemCommand('merge_task', { target_task_id: taskId })
+    return sendSystemCommand('merge_task', { target_task_id: taskId, force })
   }
 
   function rollbackStep(taskId, steps = 1) {

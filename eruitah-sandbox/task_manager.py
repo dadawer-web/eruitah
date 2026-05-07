@@ -296,13 +296,17 @@ class SessionManager:
             self.current_task_id = new_task_id
             target = self._sessions[new_task_id]
 
-            sandbox = self._get_sandbox(target.work_dir)
-            worktree_dir = sandbox.switch_to_task(new_task_id)
-            if worktree_dir and not target.worktree_dir:
-                target.worktree_dir = worktree_dir
-                self._save_session(target)
-
-            logger.info(f"🔄 切换到任务 {new_task_id}: {target.summary[:50]}")
+            if target.status in ("merged", "reverted"):
+                effective_work_dir = target.work_dir
+                logger.info(f"🔄 切换到已{'合并' if target.status == 'merged' else 'revert'}任务 {new_task_id}，重定向到主干: {effective_work_dir}")
+            else:
+                sandbox = self._get_sandbox(target.work_dir)
+                worktree_dir = sandbox.switch_to_task(new_task_id)
+                if worktree_dir and not target.worktree_dir:
+                    target.worktree_dir = worktree_dir
+                    self._save_session(target)
+                effective_work_dir = target.worktree_dir or target.work_dir
+                logger.info(f"🔄 切换到任务 {new_task_id}: {target.summary[:50]}")
 
             return {
                 "success": True,
@@ -311,7 +315,7 @@ class SessionManager:
                 "messages": target.messages,
                 "messages_before": target.messages_before,
                 "current_turn": target.current_turn,
-                "work_dir": target.worktree_dir or target.work_dir,
+                "work_dir": effective_work_dir,
             }
 
     def update_session_messages(
@@ -535,7 +539,7 @@ class SessionManager:
                 del self._sessions[task_id]
                 logger.info(f"已删除任务: {task_id}")
 
-    def merge_session(self, task_id: str) -> Dict[str, Any]:
+    def merge_session(self, task_id: str, force: bool = False) -> Dict[str, Any]:
         with self._lock:
             if task_id not in self._sessions:
                 return {"status": "error", "message": f"任务 {task_id} 不存在"}
@@ -551,7 +555,7 @@ class SessionManager:
                 return {"status": "success", "message": "直通模式下文件已在原目录，无需合并", "task_id": task_id}
 
             sandbox = self._get_sandbox(session.work_dir)
-            result = sandbox.merge_task_to_main(task_id)
+            result = sandbox.merge_task_to_main(task_id, force=force)
 
             if result.get("status") == "success":
                 session.status = "merged"

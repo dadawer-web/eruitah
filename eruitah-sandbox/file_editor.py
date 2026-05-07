@@ -722,14 +722,14 @@ def edit_file(
     )
 
 
-def execute_file_edit(file_path: str, search_text: str, replace_text: str, work_dir: str = ".") -> tuple[str, bool]:
+def execute_file_edit(file_path: str, old_string: str, new_string: str, work_dir: str = ".") -> tuple[str, bool]:
     """执行文件编辑（供 agent_runner 调用）"""
     try:
         original_dir = os.getcwd()
         os.chdir(work_dir)
 
         cached = _file_cache.get(file_path)
-        result = edit_file(file_path, search_text, replace_text)
+        result = edit_file(file_path, old_string, new_string)
 
         os.chdir(original_dir)
 
@@ -738,7 +738,9 @@ def execute_file_edit(file_path: str, search_text: str, replace_text: str, work_
             if result.is_new_file:
                 return f"文件创建成功: {result.file_path}", False
             else:
-                return f"文件编辑成功: {result.file_path}\n\n{result.diff_patch}", False
+                old_lines = old_string.count('\n') + 1 if old_string else 0
+                new_lines = new_string.count('\n') + 1 if new_string else 0
+                return f"文件编辑成功: {result.file_path} (删除 {old_lines} 行, 新增 {new_lines} 行)\n\n{result.diff_patch}", False
         else:
             if result.self_healing_hint:
                 return result.self_healing_hint, True

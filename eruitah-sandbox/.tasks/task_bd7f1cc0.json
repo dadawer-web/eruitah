@@ -331,7 +331,7 @@
     }
   ],
   "created_at": 1777944135.743787,
-  "status": "active",
+  "status": "merged",
   "current_turn": 10,
   "base_checkpoint_id": "task/task_bd7f1cc0",
   "worktree_dir": "/home/xmy/testscode",

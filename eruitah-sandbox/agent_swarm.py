@@ -868,11 +868,30 @@ async def run_single_subagent(
                             except Exception:
                                 pass
 
-                system_prompt = (
-                    "你是一个专业的编程助手子智能体。你的任务是：根据主智能体的请求，"
-                    "进行代码分析、方案生成、代码审查或问题诊断。"
-                    "请给出简洁、专业、可操作的回答。"
-                )
+                is_explore = any(kw in prompt.lower() for kw in [
+                    "搜索", "查找", "分析", "阅读", "理解", "解释", "review",
+                    "search", "find", "analyze", "read", "understand", "explain",
+                    "grep", "inspect", "explore",
+                ])
+
+                if is_explore:
+                    system_prompt = (
+                        "你是一个只读探索型子智能体（Explore Agent）。你的任务是：\n"
+                        "1. 搜索、阅读、分析代码和文档\n"
+                        "2. 你**没有**文件写入权限，只能阅读和分析\n"
+                        "3. 完成后，你必须返回一段**精简的摘要报告**，格式如下：\n"
+                        "   - 📋 发现摘要：[核心发现的 1-3 句话]\n"
+                        "   - 📂 相关文件：[涉及的文件列表]\n"
+                        "   - 💡 建议：[对主智能体的操作建议]\n\n"
+                        "绝对不要返回大段源码，只返回摘要和关键信息！"
+                    )
+                else:
+                    system_prompt = (
+                        "你是一个专业的编程助手子智能体。你的任务是：根据主智能体的请求，"
+                        "进行代码生成、方案设计或问题修复。"
+                        "请给出简洁、专业、可操作的回答。"
+                    )
+
                 if context_content:
                     system_prompt += f"\n\n以下是相关的代码文件内容：{context_content[:6000]}"
 
@@ -896,7 +915,7 @@ async def run_single_subagent(
                 result.elapsed_seconds = time.time() - start_time
                 logger.info(
                     f"🧠 Subagent-{task_id} LLM 完成 "
-                    f"({result.elapsed_seconds:.1f}s, {len(llm_output)} 字符)"
+                    f"({'探索' if is_explore else '决策'}, {result.elapsed_seconds:.1f}s, {len(llm_output)} 字符)"
                 )
                 return result
 

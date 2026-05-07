@@ -53,8 +53,20 @@ function deleteTask(taskId) {
   store.deleteTask(taskId)
 }
 
-function mergeTask(taskId) {
-  store.mergeTask(taskId)
+function mergeTask(taskId, force = false) {
+  store.mergeTask(taskId, force)
+}
+
+function forceMergeTask(taskId) {
+  store.mergeTask(taskId, true)
+}
+
+function abortMerge(taskId) {
+  const task = store.taskList.find(t => t.id === taskId)
+  if (task) {
+    task.status = 'active'
+    task.conflictFiles = []
+  }
 }
 
 function revertMergedTask(taskId) {
@@ -131,6 +143,25 @@ onMounted(fetchTasks)
             </div>
           </div>
 
+          <span v-if="task.status === 'merged'" class="text-xs px-2 py-0.5 rounded-full bg-emerald-900/30 text-emerald-400 border border-emerald-800/50 flex-shrink-0">已合入主干</span>
+          <span v-else-if="task.status === 'conflict'" class="text-xs px-2 py-0.5 rounded-full bg-yellow-900/30 text-yellow-400 border border-yellow-800/50 flex-shrink-0">冲突待解决</span>
+          <span v-else-if="task.status === 'reverted'" class="text-xs px-2 py-0.5 rounded-full bg-orange-900/30 text-orange-400 border border-orange-800/50 flex-shrink-0">已 revert</span>
+          <span v-else-if="task.status === 'rolled_back'" class="text-xs px-2 py-0.5 rounded-full bg-gray-900/30 text-gray-400 border border-gray-800/50 flex-shrink-0">已撤销</span>
+          <span v-else-if="store.activeTaskId === task.id" class="text-xs px-2 py-0.5 rounded-full bg-purple-900/30 text-purple-400 border border-purple-800/50 flex-shrink-0">当前</span>
+          <span v-else class="text-xs px-2 py-0.5 rounded-full bg-blue-900/30 text-blue-400 border border-blue-800/50 flex-shrink-0">待处理</span>
+
+          <button
+            v-if="task.status === 'conflict'"
+            @click.stop="forceMergeTask(task.id)"
+            class="text-yellow-400 hover:text-green-400 transition-all text-[10px] px-0.5"
+            title="强制合并（以任务分支为准）"
+          >⚡</button>
+          <button
+            v-if="task.status === 'conflict'"
+            @click.stop="abortMerge(task.id)"
+            class="text-yellow-400 hover:text-red-400 transition-all text-[10px] px-0.5"
+            title="放弃合并"
+          >✕</button>
           <button
             v-if="task.status === 'active'"
             @click.stop="rollbackStep(task.id, 1)"
@@ -170,6 +201,36 @@ onMounted(fetchTasks)
         </div>
 
         <div
+          v-if="task.status === 'conflict'"
+          class="ml-5 mr-1 mt-0.5 mb-1 border-l-2 border-yellow-700 pl-2 py-1 space-y-0.5"
+        >
+          <template v-if="task.conflictFiles && task.conflictFiles.length">
+            <div class="text-[10px] text-yellow-400 font-bold mb-0.5">冲突文件:</div>
+            <div
+              v-for="file in task.conflictFiles"
+              :key="file"
+              class="flex items-center gap-1 text-[10px] text-yellow-300/80"
+            >
+              <span>⚡</span>
+              <span class="truncate">{{ file }}</span>
+            </div>
+          </template>
+          <template v-else>
+            <div class="text-[10px] text-yellow-400/70 italic">合并时检测到冲突，请选择处理方式</div>
+          </template>
+          <div class="flex gap-2 mt-1">
+            <button
+              @click.stop="forceMergeTask(task.id)"
+              class="text-[10px] px-1.5 py-0.5 rounded bg-yellow-900/40 text-yellow-300 hover:bg-yellow-800/60 border border-yellow-700/50 transition-colors"
+            >⚡ 强制合并（以任务为准）</button>
+            <button
+              @click.stop="abortMerge(task.id)"
+              class="text-[10px] px-1.5 py-0.5 rounded bg-gray-800/40 text-gray-400 hover:bg-gray-700/60 border border-gray-700/50 transition-colors"
+            >✕ 放弃合并</button>
+          </div>
+        </div>
+
+        <div
           v-if="expandedTaskId === task.id"
           class="ml-5 mr-1 mt-0.5 mb-1 border-l-2 border-geek-border pl-2 py-1 space-y-0.5"
         >
@@ -187,13 +248,6 @@ onMounted(fetchTasks)
           </div>
         </div>
 
-        <div class="flex items-center gap-1 px-2 mt-0" v-if="task.status !== 'deleted'">
-          <span v-if="task.status === 'rolled_back'" class="text-[10px] text-geek-text-dim">已撤销</span>
-          <span v-else-if="task.status === 'merged'" class="text-[10px] text-green-400">已合入主干</span>
-          <span v-else-if="task.status === 'conflict'" class="text-[10px] text-yellow-400">⚠️ 冲突待解决</span>
-          <span v-else-if="task.status === 'reverted'" class="text-[10px] text-orange-400">已 revert</span>
-          <span v-else-if="store.activeTaskId === task.id" class="text-[10px] text-purple-400">当前</span>
-        </div>
       </div>
       <div v-if="!activeTasks.length" class="px-3 py-4 text-geek-text-dim text-xs italic text-center">
         暂无任务，输入指令开始

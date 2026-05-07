@@ -209,6 +209,15 @@ class RewindSystem:
         try:
             import subprocess
 
+            subprocess.run(
+                ["git", "config", "user.name", "AI Agent"],
+                capture_output=True, timeout=5, cwd=work_dir,
+            )
+            subprocess.run(
+                ["git", "config", "user.email", "agent@eruitah.com"],
+                capture_output=True, timeout=5, cwd=work_dir,
+            )
+
             prev_commit = ""
             rev_before = subprocess.run(
                 ["git", "rev-parse", "HEAD"],
@@ -222,24 +231,22 @@ class RewindSystem:
                 capture_output=True, text=True, timeout=5, cwd=work_dir,
             )
 
-            commit_msg = f"checkpoint: turn {turn}"
-            if description:
-                commit_msg += f" - {description[:60]}"
+            has_changes = bool(status_result.stdout.strip())
 
-            if status_result.stdout.strip():
+            if has_changes:
                 subprocess.run(
                     ["git", "add", "-A"],
                     capture_output=True, timeout=5, cwd=work_dir,
                 )
-                subprocess.run(
+                commit_msg = f"checkpoint: turn {turn}"
+                if description:
+                    commit_msg += f" - {description[:60]}"
+                commit_result = subprocess.run(
                     ["git", "commit", "-m", commit_msg],
-                    capture_output=True, timeout=10, cwd=work_dir,
+                    capture_output=True, text=True, timeout=10, cwd=work_dir,
                 )
-            else:
-                subprocess.run(
-                    ["git", "commit", "--allow-empty", "-m", commit_msg],
-                    capture_output=True, timeout=10, cwd=work_dir,
-                )
+                if commit_result.returncode != 0:
+                    logger.warning(f"Git commit 失败: {commit_result.stderr.strip()[:200]}")
 
             rev_result = subprocess.run(
                 ["git", "rev-parse", "HEAD"],
@@ -248,7 +255,10 @@ class RewindSystem:
             if rev_result.returncode == 0:
                 git_commit = rev_result.stdout.strip()
 
-            if prev_commit and git_commit != prev_commit:
+            if not has_changes:
+                return git_commit, "", ""
+
+            if prev_commit and git_commit and git_commit != prev_commit:
                 stat_result = subprocess.run(
                     ["git", "diff", "--stat", prev_commit, git_commit],
                     capture_output=True, text=True, timeout=10, cwd=work_dir,
@@ -260,24 +270,6 @@ class RewindSystem:
                     capture_output=True, text=True, timeout=15, cwd=work_dir,
                 )
                 code_diff = diff_result.stdout[:16000] if diff_result.returncode == 0 else ""
-            elif git_commit:
-                parent_result = subprocess.run(
-                    ["git", "rev-parse", "HEAD~1"],
-                    capture_output=True, text=True, timeout=5, cwd=work_dir,
-                )
-                if parent_result.returncode == 0:
-                    parent_hash = parent_result.stdout.strip()
-                    stat_result = subprocess.run(
-                        ["git", "diff", "--stat", parent_hash, git_commit],
-                        capture_output=True, text=True, timeout=10, cwd=work_dir,
-                    )
-                    diff_stat = stat_result.stdout.strip() if stat_result.returncode == 0 else ""
-
-                    diff_result = subprocess.run(
-                        ["git", "diff", parent_hash, git_commit],
-                        capture_output=True, text=True, timeout=15, cwd=work_dir,
-                    )
-                    code_diff = diff_result.stdout[:16000] if diff_result.returncode == 0 else ""
 
         except Exception as e:
             logger.debug(f"捕获 Git diff 失败: {e}")
@@ -294,12 +286,15 @@ class RewindSystem:
         diff_stat: str = "",
         work_dir: str = "",
     ) -> Checkpoint:
+        import copy
+        frozen_messages = copy.deepcopy(messages)
+
         if work_dir and not git_commit:
             git_commit, diff_stat, code_diff = self._capture_git_diff(work_dir, turn=turn, description=description)
         else:
             code_diff = ""
 
-        sanitized_messages = self._sanitize_messages(messages)
+        sanitized_messages = self._sanitize_messages(frozen_messages)
 
         checkpoint = Checkpoint(
             session_id=session_id,
@@ -428,11 +423,19 @@ class RewindSystem:
             result["detailed_diff"] = checkpoint.code_diff
             result["diff_lines"] = self._parse_diff_to_lines(checkpoint.code_diff)
 
-        if checkpoint.git_commit and work_dir and os.path.exists(work_dir):
+        if not checkpoint.code_diff and checkpoint.git_commit and work_dir and os.path.exists(work_dir):
             git_dir = os.path.join(work_dir, ".git")
             if os.path.exists(git_dir):
                 try:
                     import subprocess
+
+                    rev_check = subprocess.run(
+                        ["git", "cat-file", "-t", checkpoint.git_commit],
+                        capture_output=True, text=True, timeout=5, cwd=work_dir,
+                    )
+                    if rev_check.returncode != 0:
+                        result["changed_files"] = self._parse_changed_files(checkpoint.diff_stat)
+                        return result
 
                     parent_result = subprocess.run(
                         ["git", "rev-parse", f"{checkpoint.git_commit}~1"],

@@ -291,14 +291,15 @@ dispatch_subtasks(subtasks=[
 
 ## 5. 基本操作规则
 - 必须使用 file_edit 工具来创建/修改文件，不要只在回复中输出代码！
-- 创建新文件时，search_text 设为空字符串即可
+- 创建新文件时，old_string 设为空字符串即可
+- 编辑文件时，old_string 必须精确匹配文件中的原代码片段，且在文件中唯一
 - 先理解需求，再动手编码
 - 修改文件前先读取文件内容
 - 每次只做一步操作，逐步推进任务
 
 示例用法：
-- 创建新文件 main.py: file_edit(file_path="main.py", search_text="", replace_text="# Python code...")
-- 修改文件: file_edit(file_path="main.py", search_text="old code", replace_text="new code")
+- 创建新文件 main.py: file_edit(file_path="main.py", old_string="", new_string="# Python code...")
+- 修改文件: file_edit(file_path="main.py", old_string="old code", new_string="new code")
 - 递归搜索文件: glob(pattern="src/**/*.py") 或 glob(pattern="monopoly_game/**/*.*")
 
 📝 备用方案：如果工具调用失败，你也可以直接在回复中使用 Markdown 代码块：
@@ -389,7 +390,7 @@ def parse_pseudo_tool_calls(text: str) -> list[dict]:
     
     例如：
     ```python
-    file_edit(file_path="player.py", search_text="", replace_text="class Player:...")
+    file_edit(file_path="player.py", old_string="", new_string="class Player:...")
     ```
     
     Returns:
@@ -398,23 +399,22 @@ def parse_pseudo_tool_calls(text: str) -> list[dict]:
     import re
     results = []
     
-    # 匹配 file_edit(file_path="xxx", search_text="xxx", replace_text="xxx")
-    file_edit_pattern = r'file_edit\s*\(\s*file_path\s*=\s*["\']([^"\']+)["\']\s*,\s*search_text\s*=\s*["\']([^"\']*)["\']\s*,\s*replace_text\s*=\s*["\'](.+?)["\']\s*\)'
+    # 匹配 file_edit(file_path="xxx", old_string="xxx", new_string="xxx")
+    file_edit_pattern = r'file_edit\s*\(\s*file_path\s*=\s*["\']([^"\']+)["\']\s*,\s*(?:old_string|search_text)\s*=\s*["\']([^"\']*)["\']\s*,\s*(?:new_string|replace_text)\s*=\s*["\'](.+?)["\']\s*\)'
     
     for match in re.finditer(file_edit_pattern, text, re.DOTALL):
         file_path = match.group(1)
-        search_text = match.group(2)
-        replace_text = match.group(3)
+        old_string = match.group(2)
+        new_string = match.group(3)
         
-        # 处理转义字符
-        replace_text = replace_text.replace('\\n', '\n').replace('\\t', '\t').replace('\\"', '"')
+        new_string = new_string.replace('\\n', '\n').replace('\\t', '\t').replace('\\"', '"')
         
         results.append({
             "name": "file_edit",
             "args": {
                 "file_path": file_path,
-                "search_text": search_text,
-                "replace_text": replace_text,
+                "old_string": old_string,
+                "new_string": new_string,
             }
         })
         logger.info(f"🔍 解析伪工具调用: file_edit(file_path={file_path})")
@@ -484,18 +484,28 @@ def build_system_prompt(workspace_dir: str) -> str:
         except Exception:
             pass
 
-    claude_md_path = os.path.join(workspace_dir, "CLAUDE.md")
-    custom_instructions = ""
-    if os.path.exists(claude_md_path):
+    project_manual = ""
+    manual_file = None
+    for candidate in [".eruitah.md", "CLAUDE.md"]:
+        candidate_path = os.path.join(workspace_dir, candidate)
+        if os.path.exists(candidate_path):
+            manual_file = candidate
+            break
+
+    if manual_file:
         try:
-            with open(claude_md_path, 'r', encoding='utf-8') as f:
+            with open(os.path.join(workspace_dir, manual_file), 'r', encoding='utf-8') as f:
                 content = f.read()
                 if content.strip():
-                    custom_instructions = f"\n\n=== 本项目的专属架构约束 (CLAUDE.md) ===\n{content}\n===================\n\n"
+                    project_manual = (
+                        f"\n\n<project_manual>\n{content}\n</project_manual>\n"
+                        "请在接下来的任务中，严格遵守上述 <project_manual> 中的项目架构与编码规范。\n"
+                    )
+                    logger.info(f"📖 成功加载项目专属说明书：{manual_file}")
         except Exception:
             pass
 
-    return project_rules + custom_instructions + memory_section + base_prompt
+    return project_rules + project_manual + memory_section + base_prompt
 
 def _get_tools_definition(provider: str = "openai") -> list[dict]:
     """获取工具定义（根据不同提供商）"""
@@ -518,11 +528,12 @@ def _get_tools_definition(provider: str = "openai") -> list[dict]:
             {
                 "name": "file_edit",
                 "description": (
-                    "创建或编辑文件。【重要】必须提供 file_path 参数！\n"
+                    "创建或编辑文件（精准 Diff 替换模式）。\n"
                     "使用方法：\n"
-                    "1. 创建新文件：file_path='文件名', search_text='', replace_text='文件内容'\n"
-                    "2. 编辑文件：file_path='文件名', search_text='旧内容', replace_text='新内容'\n"
-                    "示例：file_edit(file_path='hello.py', search_text='', replace_text='print(1)')"
+                    "1. 创建新文件：file_path='文件名', old_string='', new_string='文件内容'\n"
+                    "2. 编辑文件：file_path='文件名', old_string='要被替换的原代码片段（必须精确匹配）', new_string='新的代码片段'\n"
+                    "规则：old_string 必须在文件中唯一匹配（出现 0 次报错，出现 >1 次需提供更多上下文）。\n"
+                    "示例：file_edit(file_path='hello.py', old_string='print(1)', new_string='print(2)')"
                 ),
                 "input_schema": {
                     "type": "object",
@@ -531,16 +542,16 @@ def _get_tools_definition(provider: str = "openai") -> list[dict]:
                             "type": "string",
                             "description": "【必需】文件路径，如 'main.py' 或 'src/app.js'",
                         },
-                        "search_text": {
+                        "old_string": {
                             "type": "string",
-                            "description": "要查找的文本。创建新文件时必须设为空字符串 ''",
+                            "description": "要被替换的原代码片段，必须精确匹配文件中的内容。创建新文件时设为空字符串 ''",
                         },
-                        "replace_text": {
+                        "new_string": {
                             "type": "string",
-                            "description": "【必需】要写入的新内容",
+                            "description": "【必需】替换后的新代码片段",
                         },
                     },
-                    "required": ["file_path", "replace_text"],
+                    "required": ["file_path", "new_string"],
                 },
             },
             {
@@ -674,11 +685,12 @@ def _get_tools_definition(provider: str = "openai") -> list[dict]:
                 "function": {
                     "name": "file_edit",
                     "description": (
-                        "创建或编辑文件。【重要】必须提供 file_path 参数！\n"
+                        "创建或编辑文件（精准 Diff 替换模式）。\n"
                         "使用方法：\n"
-                        "1. 创建新文件：file_path='文件名', search_text='', replace_text='文件内容'\n"
-                        "2. 编辑文件：file_path='文件名', search_text='旧内容', replace_text='新内容'\n"
-                        "示例：file_edit(file_path='hello.py', search_text='', replace_text='print(1)')"
+                        "1. 创建新文件：file_path='文件名', old_string='', new_string='文件内容'\n"
+                        "2. 编辑文件：file_path='文件名', old_string='要被替换的原代码片段（必须精确匹配）', new_string='新的代码片段'\n"
+                        "规则：old_string 必须在文件中唯一匹配（出现 0 次报错，出现 >1 次需提供更多上下文）。\n"
+                        "示例：file_edit(file_path='hello.py', old_string='print(1)', new_string='print(2)')"
                     ),
                     "parameters": {
                         "type": "object",
@@ -687,16 +699,16 @@ def _get_tools_definition(provider: str = "openai") -> list[dict]:
                                 "type": "string",
                                 "description": "【必需】文件路径，如 'main.py' 或 'src/app.js'",
                             },
-                            "search_text": {
+                            "old_string": {
                                 "type": "string",
-                                "description": "要查找的文本。创建新文件时必须设为空字符串 ''",
+                                "description": "要被替换的原代码片段，必须精确匹配文件中的内容。创建新文件时设为空字符串 ''",
                             },
-                            "replace_text": {
+                            "new_string": {
                                 "type": "string",
-                                "description": "【必需】要写入的新内容",
+                                "description": "【必需】替换后的新代码片段",
                             },
                         },
-                        "required": ["file_path", "replace_text"],
+                        "required": ["file_path", "new_string"],
                     },
                 },
             },
@@ -918,10 +930,6 @@ def _execute_tool_local(
             if not command:
                 return "命令不能为空", True, meta
 
-            is_dangerous = check_dangerous_command(command)
-            if is_dangerous and not auto_approve:
-                return f"危险命令，需要用户确认: {command}", True, meta
-
             bash_result = execute_bash(command, work_dir, allow_warnings=auto_approve)
             
             if bash_result.needs_confirmation and not auto_approve:
@@ -950,32 +958,19 @@ def _execute_tool_local(
                 meta["truncated"] = True
 
             if not is_error and session_id:
-                file_modifying_cmds = (
-                    "sed", "awk", "cat >", "cat >>", "echo >", "echo >>",
-                    "tee", "cp ", "mv ", "install ", "pip install",
-                    "npm install", "curl -o", "wget -o",
-                    "python -c", "python3 -c", "node -e",
-                    "mkdir", "touch", "chmod", "chown",
-                )
-                cmd_lower = command.strip().lower()
-                should_commit = any(kw in cmd_lower for kw in file_modifying_cmds)
-                if should_commit:
-                    _auto_commit_worktree(work_dir, session_id, f"bash: {command[:80]}", model, main_repo_dir, current_turn=current_turn)
+                pass
 
             return result, is_error, meta
 
         elif name == "file_edit":
             file_path = args.get("file_path", "")
-            search_text = args.get("search_text", "")
-            replace_text = args.get("replace_text", "")
+            old_string = args.get("old_string", args.get("search_text", ""))
+            new_string = args.get("new_string", args.get("replace_text", ""))
 
             if not file_path:
                 return "文件路径不能为空", True, meta
 
-            result, is_error = execute_file_edit(file_path, search_text, replace_text, work_dir)
-
-            if not is_error and session_id:
-                _auto_commit_worktree(work_dir, session_id, f"file_edit: {file_path}", model, main_repo_dir, current_turn=current_turn)
+            result, is_error = execute_file_edit(file_path, old_string, new_string, work_dir)
 
             return result, is_error, meta
 
@@ -1243,6 +1238,11 @@ def run_agent(
     )
     task_id = session.id
     task_name = session.summary
+
+    if session.worktree_dir and os.path.isdir(session.worktree_dir):
+        work_dir = os.path.abspath(session.worktree_dir)
+        logger.info(f"🔒 路径强制重定向: work_dir → worktree {work_dir}")
+
     logger.info(f"📦 任务 {task_id} 已注册，物理快照已创建: {work_dir}")
 
     yield {"type": "task_started", "task_id": task_id, "task_name": task_name}
@@ -1435,7 +1435,6 @@ def run_agent(
 
             # 🚨 关键修复：如果 Markdown 降级成功写入文件，构造 tool_result 并继续循环
             if markdown_files_written:
-                _auto_commit_worktree(work_dir, session_id, "markdown auto-write", model, main_repo_dir, current_turn=turn)
                 messages.append({"role": "assistant", "content": text})
                 messages.append({
                     "role": "user",
@@ -1467,7 +1466,7 @@ def run_agent(
                     messages.append({"role": "assistant", "content": text[:2000]})
                     messages.append({
                         "role": "user",
-                        "content": "⚠️ 你的回复中似乎包含代码或工具调用，但格式不正确。请使用以下格式之一：\n1. 使用 file_edit 工具：file_edit(file_path=\"文件名\", search_text=\"\", replace_text=\"内容\")\n2. 使用 Markdown 代码块：```python\\n# 代码\\n```\n请重新格式化你的回复并继续执行任务。"
+                        "content": "⚠️ 你的回复中似乎包含代码或工具调用，但格式不正确。请使用以下格式之一：\n1. 使用 file_edit 工具：file_edit(file_path=\"文件名\", old_string=\"\", new_string=\"内容\")\n2. 使用 Markdown 代码块：```python\n# 代码\n```\n请重新格式化你的回复并继续执行任务。"
                     })
                     _cp_desc = f"第 {turn} 轮 (格式错误重试)"
                     try:
@@ -1538,8 +1537,8 @@ def run_agent(
                         logger.info(f"🔄 Markdown 降级调用成功: 从文本中提取到文件 {markdown_file['file_path']}")
                         args = {
                             "file_path": markdown_file["file_path"],
-                            "search_text": "",
-                            "replace_text": markdown_file["content"],
+                            "old_string": "",
+                            "new_string": markdown_file["content"],
                         }
                         
                         yield {
@@ -1594,8 +1593,8 @@ def run_agent(
                         "```json\n"
                         "{\n"
                         '  "file_path": "文件名.py",\n'
-                        '  "search_text": "",\n'
-                        '  "replace_text": "你的代码内容"\n'
+                        '  "old_string": "",\n'
+                        '  "new_string": "你的代码内容"\n'
                         "}\n"
                         "```\n\n"
                         "或者使用 Markdown 格式：\n"
@@ -2119,7 +2118,7 @@ def _call_openai(
                         if "command" in args_dict:
                             tc_name = "bash"
                             logger.info(f"🔄 根据参数推断工具名: bash")
-                        elif "file_path" in args_dict and ("content" in args_dict or "replace_text" in args_dict):
+                        elif "file_path" in args_dict and ("content" in args_dict or "new_string" in args_dict or "replace_text" in args_dict):
                             tc_name = "file_edit"
                             logger.info(f"🔄 根据参数推断工具名: file_edit")
                         elif "file_path" in args_dict:
