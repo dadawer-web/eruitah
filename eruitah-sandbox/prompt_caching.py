@@ -43,6 +43,29 @@ logger = logging.getLogger(__name__)
 
 CACHE_CONTROL_EPHEMERAL = {"cache_control": {"type": "ephemeral"}}
 
+SUPPORTED_CACHING_MODELS = [
+    "claude-3-5-sonnet-20240620",
+    "claude-3-5-sonnet-20241022",
+    "claude-3-5-haiku-20241022",
+    "claude-3-haiku-20240307",
+    "claude-sonnet-4-20250514",
+    "claude-opus-4-20250514",
+    "claude-3-opus-20240229",
+]
+
+
+def supports_caching(model_name: str) -> bool:
+    """能力探针：判断当前模型是否支持显式缓存标记"""
+    if not model_name:
+        return False
+    model_lower = model_name.lower()
+    for supported in SUPPORTED_CACHING_MODELS:
+        if supported in model_lower or model_lower in supported:
+            return True
+    if "claude" in model_lower:
+        return True
+    return False
+
 
 @dataclass
 class CacheBreakReport:
@@ -193,9 +216,17 @@ def build_anthropic_cached_request(
     system_prompt: str,
     tools: list[dict],
     messages: list[dict],
+    model: str = "",
 ) -> dict:
-    cached_system = build_anthropic_cached_system(system_prompt)
-    cached_tools = build_anthropic_cached_tools(tools)
+    use_cache = supports_caching(model)
+
+    if use_cache:
+        cached_system = build_anthropic_cached_system(system_prompt)
+        cached_tools = build_anthropic_cached_tools(tools)
+    else:
+        cached_system = [{"type": "text", "text": system_prompt}]
+        cached_tools = tools
+        logger.debug(f"模型 '{model}' 不支持缓存，走降级路径")
 
     ordered_messages = reorder_messages_for_cache(messages)
 
@@ -206,7 +237,7 @@ def build_anthropic_cached_request(
 
     if report.has_break:
         logger.warning(f"缓存断层检测: {report.reason}, 位置: {report.break_position}")
-    else:
+    elif use_cache:
         logger.debug(
             f"缓存前缀完整, 预估节省 {report.cache_savings_estimate:.0f} tokens, "
             f"动态消息数: {report.dynamic_suffix_count}"
@@ -224,20 +255,29 @@ def build_openai_cached_request(
     system_prompt: str,
     tools: list[dict],
     messages: list[dict],
+    model: str = "",
 ) -> dict:
-    cached_tools = []
-    for i, tool in enumerate(tools):
-        t = dict(tool)
-        if i == len(tools) - 1:
-            func = dict(t.get("function", {}))
-            params = dict(func.get("parameters", {}))
-            params.update(CACHE_CONTROL_EPHEMERAL)
-            func["parameters"] = params
-            t["function"] = func
-        cached_tools.append(t)
+    use_cache = supports_caching(model)
 
-    ordered_messages = build_openai_cached_messages(system_prompt, messages)
-    ordered_messages = reorder_messages_for_cache(ordered_messages)
+    if use_cache:
+        cached_tools = []
+        for i, tool in enumerate(tools):
+            t = dict(tool)
+            if i == len(tools) - 1:
+                func = dict(t.get("function", {}))
+                params = dict(func.get("parameters", {}))
+                params.update(CACHE_CONTROL_EPHEMERAL)
+                func["parameters"] = params
+                t["function"] = func
+            cached_tools.append(t)
+
+        ordered_messages = build_openai_cached_messages(system_prompt, messages)
+        ordered_messages = reorder_messages_for_cache(ordered_messages)
+    else:
+        cached_tools = tools
+        system_msg = {"role": "system", "content": system_prompt}
+        ordered_messages = [system_msg] + list(messages)
+        logger.debug(f"模型 '{model}' 不支持缓存，走 OpenAI 降级路径")
 
     static_hash = compute_content_hash(system_prompt) + compute_content_hash(tools)
     report = detect_cache_break(ordered_messages, static_hash)
@@ -368,6 +408,89 @@ def _update_stats(report: CacheBreakReport, messages: list[dict]):
         _cache_stats.tokens_saved += int(report.cache_savings_estimate)
         _cache_stats.money_saved += report.cache_savings_estimate * 3.0 / 1_000_000 * 0.9
         _cache_stats.last_cache_hit_time = time.time()
+
+
+def estimate_token_count(messages: list[dict]) -> int:
+    """粗略估算消息列表的 Token 数量（1 Token ≈ 3.5 字符）"""
+    total_chars = 0
+    for msg in messages:
+        content = msg.get("content", "")
+        if isinstance(content, str):
+            total_chars += len(content)
+        elif isinstance(content, list):
+            for block in content:
+                if isinstance(block, dict):
+                    total_chars += len(json.dumps(block, ensure_ascii=False))
+        name = msg.get("name", "")
+        if name:
+            total_chars += len(name)
+        tool_calls = msg.get("tool_calls", [])
+        if tool_calls:
+            total_chars += len(json.dumps(tool_calls, ensure_ascii=False))
+    return total_chars // 3
+
+
+def truncate_messages_with_budget(
+    messages: list[dict],
+    max_tokens: int = 100000,
+    keep_recent: int = 6,
+) -> list[dict]:
+    """
+    Token 预算截断策略
+
+    当总 Token 超过 max_tokens 时，触发强制冷压缩：
+    - 保留第一条消息（通常是用户原始任务）
+    - 保留最后 keep_recent 条消息（最近的对话上下文）
+    - 中间轮次被丢弃，并插入一条压缩摘要提示
+
+    Args:
+        messages: 原始消息列表
+        max_tokens: Token 预算上限（默认 100K）
+        keep_recent: 保留最近 N 条消息（默认 6）
+
+    Returns:
+        截断后的消息列表
+    """
+    if not messages:
+        return messages
+
+    current_tokens = estimate_token_count(messages)
+
+    if current_tokens <= max_tokens:
+        logger.debug(f"Token 预算充足: {current_tokens} <= {max_tokens}")
+        return messages
+
+    logger.warning(
+        f"⚠️ Token 预算超限: {current_tokens} > {max_tokens}, 触发冷压缩"
+    )
+
+    if len(messages) <= keep_recent + 1:
+        logger.warning("消息数太少，无法截断，原样返回")
+        return messages
+
+    first_msg = messages[0]
+    recent_msgs = messages[-keep_recent:]
+    dropped_count = len(messages) - 1 - keep_recent
+
+    compression_notice = {
+        "role": "user",
+        "content": (
+            f"[系统: 以下是对话历史的摘要压缩。为节省 Token 预算，"
+            f"中间 {dropped_count} 轮对话已被省略。"
+            f"原始 Token 数: {current_tokens}，预算上限: {max_tokens}。"
+            f"请基于最近的上下文继续执行任务。]"
+        ),
+    }
+
+    truncated = [first_msg, compression_notice] + recent_msgs
+    new_tokens = estimate_token_count(truncated)
+    logger.info(
+        f"✅ 冷压缩完成: {current_tokens} → {new_tokens} tokens "
+        f"(节省 {current_tokens - new_tokens}), "
+        f"消息数: {len(messages)} → {len(truncated)}"
+    )
+
+    return truncated
 
 
 if __name__ == "__main__":

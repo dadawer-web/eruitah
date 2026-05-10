@@ -23,6 +23,7 @@ export const useAgentStore = defineStore('agent', () => {
   const currentFile = ref(null)
   const currentIsDir = ref(false)
   const currentCode = ref('')
+  const diagnostics = ref([])
   const typingQueue = ref([])
   const isTyping = ref(false)
   const isRunning = ref(false)
@@ -290,6 +291,11 @@ export const useAgentStore = defineStore('agent', () => {
         if (data.tool_name && (data.tool_name === 'file_edit' || data.tool_name === 'file_write' || data.tool_name.startsWith('file_edit'))) {
           fetchFileTree()
         }
+        if (data.diagnostics && data.diagnostics.length > 0) {
+          diagnostics.value = data.diagnostics
+        } else if (data.is_error) {
+          diagnostics.value = []
+        }
         break
 
       case 'typing':
@@ -417,6 +423,14 @@ export const useAgentStore = defineStore('agent', () => {
 
       case 'refresh_tree':
         fetchFileTree()
+        break
+
+      case 'diagnostics':
+        if (data.diagnostics && data.diagnostics.length > 0) {
+          diagnostics.value = data.diagnostics
+        } else {
+          diagnostics.value = []
+        }
         break
 
       case 'ask_user':
@@ -644,6 +658,7 @@ export const useAgentStore = defineStore('agent', () => {
   function setCurrentItem(path, isDir = false) {
     currentFile.value = path
     currentIsDir.value = isDir
+    diagnostics.value = []
     if (!isDir) {
       fetchFileContent(path)
     }
@@ -1029,6 +1044,7 @@ export const useAgentStore = defineStore('agent', () => {
     currentFile,
     currentIsDir,
     currentCode,
+    diagnostics,
     typingQueue,
     isTyping,
     isRunning,

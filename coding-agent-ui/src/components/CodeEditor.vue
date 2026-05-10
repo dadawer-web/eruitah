@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useAgentStore } from '../stores/agent'
 
 const store = useAgentStore()
@@ -146,6 +146,62 @@ watch(() => store.currentFile, (newFile) => {
   }
 })
 
+function updateMarkers() {
+  if (!editor || !monacoInstance) return
+  const model = editor.getModel()
+  if (!model) return
+
+  const diags = store.diagnostics
+  if (!diags || diags.length === 0) {
+    monacoInstance.editor.setModelMarkers(model, 'lsp', [])
+    return
+  }
+
+  const currentFilePath = store.currentFile
+  const basePath = store.basePath || ''
+
+  const markers = []
+  for (const d of diags) {
+    let matchesCurrentFile = false
+    if (d.file) {
+      const diagFile = d.file.replace(/\\/g, '/')
+      const normalizedCurrent = (basePath + '/' + currentFilePath).replace(/\\/g, '/')
+      const normalizedCurrent2 = currentFilePath.replace(/\\/g, '/')
+      if (diagFile.endsWith(normalizedCurrent) || diagFile.endsWith(normalizedCurrent2) || diagFile === normalizedCurrent) {
+        matchesCurrentFile = true
+      }
+    } else {
+      matchesCurrentFile = true
+    }
+
+    if (!matchesCurrentFile) continue
+
+    let severity = monacoInstance.MarkerSeverity.Info
+    if (d.severity === 'error') severity = monacoInstance.MarkerSeverity.Error
+    else if (d.severity === 'warning') severity = monacoInstance.MarkerSeverity.Warning
+
+    markers.push({
+      startLineNumber: d.line || 1,
+      startColumn: d.column || 1,
+      endLineNumber: d.endLine || d.line || 1,
+      endColumn: d.endColumn || (d.column || 1) + 10,
+      message: d.message || '',
+      severity: severity,
+      source: 'LSP',
+    })
+  }
+
+  monacoInstance.editor.setModelMarkers(model, 'lsp', markers)
+}
+
+watch(() => store.diagnostics, () => {
+  nextTick(() => updateMarkers())
+}, { deep: true })
+
+watch(() => store.currentFile, () => {
+  nextTick(() => updateMarkers())
+})
+
 onBeforeUnmount(() => {
   store.unregisterEditor()
   if (editor) {
@@ -162,6 +218,10 @@ onBeforeUnmount(() => {
         <span class="text-geek-accent text-xs">◈</span>
         <span class="text-geek-text-dim text-xs">{{ store.currentFile || 'untitled' }}</span>
         <span v-if="store.isTyping" class="ml-2 text-geek-accent animate-pulse text-[10px]">● STREAMING</span>
+        <span v-if="store.diagnostics && store.diagnostics.length > 0" class="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-red-900/30 text-red-400 border border-red-800/50">
+          {{ store.diagnostics.filter(d => d.severity === 'error').length }} 错误
+          {{ store.diagnostics.filter(d => d.severity === 'warning').length > 0 ? ' / ' + store.diagnostics.filter(d => d.severity === 'warning').length + ' 警告' : '' }}
+        </span>
       </div>
       <div class="flex items-center gap-2">
         <button

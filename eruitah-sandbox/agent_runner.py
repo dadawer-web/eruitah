@@ -33,6 +33,9 @@ from semantic_search_tool import (
     format_semantic_results,
     SEMANTIC_SEARCH_TOOL_DEFINITION_OPENAI,
     SEMANTIC_SEARCH_TOOL_DEFINITION_ANTHROPIC,
+    semantic_search_code,
+    SEMANTIC_SEARCH_CODE_TOOL_DEFINITION_OPENAI,
+    SEMANTIC_SEARCH_CODE_TOOL_DEFINITION_ANTHROPIC,
 )
 from computer_use_tool import (
     execute_computer_use,
@@ -101,11 +104,15 @@ from mcp_client import (
     execute_mcp_manager,
     MCP_TOOL_DEFINITION_OPENAI,
     MCP_TOOL_DEFINITION_ANTHROPIC,
+    get_mcp_client,
 )
 from auto_test_tool import (
     execute_auto_test,
     AUTO_TEST_TOOL_DEFINITION_OPENAI,
     AUTO_TEST_TOOL_DEFINITION_ANTHROPIC,
+    execute_run_auto_test,
+    RUN_AUTO_TEST_TOOL_DEFINITION_OPENAI,
+    RUN_AUTO_TEST_TOOL_DEFINITION_ANTHROPIC,
 )
 from memory_store import (
     search_memory as memory_search,
@@ -113,10 +120,52 @@ from memory_store import (
     init_memory_store,
     load_all_memory_files,
 )
+from ast_tool import (
+    execute_get_code_structure,
+    execute_get_function_definition,
+    AST_CODE_STRUCTURE_TOOL_DEFINITION_OPENAI,
+    AST_CODE_STRUCTURE_TOOL_DEFINITION_ANTHROPIC,
+    AST_FUNCTION_DEFINITION_TOOL_DEFINITION_OPENAI,
+    AST_FUNCTION_DEFINITION_TOOL_DEFINITION_ANTHROPIC,
+)
 
 logger = logging.getLogger(__name__)
 
 MAX_TURNS = 30
+
+
+def sanitize_llm_args(args):
+    """全局智能洗白中间件：递归遍历字典，纠正大模型乱加双引号的坏毛病
+
+    大模型经常把 JSON 中的数字和布尔值加上引号变成字符串：
+      {"totalThoughts": "2"} → {"totalThoughts": 2}
+      {"nextThoughtNeeded": "False"} → {"nextThoughtNeeded": false}
+      {"count": "3", "staged": "true"} → {"count": 3, "staged": true}
+
+    此函数递归遍历整个参数树，自动修正类型漂移。
+    安全机制：只转换"纯数字字符串"和"纯布尔字符串"，
+    不会误伤文件路径 ("/home/test.py") 等合法字符串。
+    """
+    if isinstance(args, dict):
+        for k, v in args.items():
+            args[k] = sanitize_llm_args(v)
+        return args
+    elif isinstance(args, list):
+        return [sanitize_llm_args(item) for item in args]
+    elif isinstance(args, str):
+        lower_val = args.lower()
+        if lower_val == "true":
+            return True
+        if lower_val == "false":
+            return False
+        if args.isdigit() or (args.startswith('-') and len(args) > 1 and args[1:].isdigit()):
+            return int(args)
+        try:
+            if '.' in args and args.replace('.', '', 1).lstrip('-').isdigit():
+                return float(args)
+        except ValueError:
+            pass
+    return args
 
 
 class StateBlackboard:
@@ -232,20 +281,66 @@ class StateBlackboard:
 BASE_SYSTEM_PROMPT = """你是一个受限沙盒中的「任务型 AI 编码智能体」，名为 Eruitah。
 你的生命周期严格绑定于用户当前下发的【单一任务】。你没有系统级的上下文管理权限。
 
+🚨🚨🚨 【绝对铁律 #0 - 禁止盲目行动，必须先问人！】🚨🚨🚨
+你拥有 ask_user 工具。这是你最重要的工具，没有之一。
+当用户的指令模糊不清时，你**绝对禁止**自己猜测意图并直接动手写代码！
+你必须**第一时间**调用 ask_user 工具向用户提问，明确需求后再行动。
+
+**必须调用 ask_user 的典型场景（举例）：**
+- 用户说"重构一下" → 你必须问："重构哪个文件？重构目标是什么？"
+- 用户说"优化" → 你必须问："优化性能还是代码结构？针对哪个模块？"
+- 用户说"修个bug" → 你必须问："什么bug？报错信息是什么？哪个文件出的问题？"
+- 用户说"加个功能" → 你必须问："具体什么功能？加在哪个文件？有什么交互要求？"
+- 用户说"改一下" → 你必须问："改什么？改成什么样？"
+- 项目中有多个文件，用户没有指定操作哪个 → 你必须问清楚具体文件
+- 你准备执行 rm -rf、git push --force、覆盖核心逻辑等高危操作 → 你必须请求确认
+- 你的代码连续报错超过 3 次 → 你必须向人类求助，不要盲目试错
+
+**判断标准：如果你无法 100% 确定用户想要什么，就调用 ask_user！宁可多问一句，也不要做错方向！**
+调用 ask_user 后，静静等待人类回答，不要自己乱猜。人类的回答会作为工具返回值传回给你。
+
+⚠️ 【最高执行军规 - 角色设定隔离】
+你是一个在全自动隔离沙盒中运行的高级 AI 智能体，你 **不是** 普通的聊天助手！
+当你需要写代码、创建文件、运行命令时，**必须且只能**通过发起 tool_calls（比如调用 bash 或 file_edit 工具）来完成。
+**绝对禁止**在普通的 content 文本回复中直接输出几千行的代码段！这会导致系统崩溃！
+如果任务代码非常长，请分步骤调用 file_edit 工具将代码写入硬盘，每次写入一个文件或一个函数。
+**你的每一次回复，要么调用工具，要么简短汇报进度。绝不允许输出超过 500 字的纯文本！**
+
+# 🧠 最高执行法则：强制深度思考
+
+你现在已经装配了 `sequentialthinking` 工具（通过 MCP 加载，工具名格式为 `mcp_sequential-thinking_*`）。
+在面对任何复杂的 Bug 修复、架构设计或多文件修改任务时，你**绝对禁止**直接调用 `file_edit` 或 `bash` 工具！
+你必须首先调用 `sequentialthinking` 工具，输出你的思维链。
+你的思考过程必须包含：
+1. **现状分析**（目前的报错是什么，系统结构是怎样的）
+2. **假设与验证方案**（我猜哪里出了问题，我需要搜什么文件来验证）
+3. **行动计划**（确认原因后，我将分几步修改哪几个文件）
+
+只有当你的思考过程足够清晰后，你才能开始执行实际的文件修改。
+简单任务（如创建单文件、修改一行代码）可以跳过深度思考，直接执行。
+
 # 🛠️ 可用工具
 
+0. 🚨 **ask_user** - 【最重要！】向用户提问！当指令模糊、需求不清、操作高危、连续失败时，必须先调用此工具问清楚再动手！
 1. file_edit - 创建或编辑文件（必须使用此工具来写代码文件！）
 2. bash - 执行 shell 命令（编译、运行、测试等）
 3. file_read - 读取文件内容（支持行号范围）
 4. glob - 文件模式匹配搜索（用 ** 递归搜索子目录，如 'src/**/*.py'）
 5. grep - 正则表达式代码搜索
-6. semantic_search - 语义代码搜索（基于 AST，比 grep 更精准）
-7. lsp_tool - LSP 语言服务器（查找定义、引用、文件大纲）
-8. git_tool - Git 版本控制（查看状态、差异、日志、提交）
-9. auto_test - 自动化测试（scan_and_test 可递归扫描目录下所有代码文件）
+6. **get_code_structure** - 🔭 AST 代码结构透视（获取文件的类名、函数签名、行号）
+7. **get_function_definition** - 🎯 AST 函数精准定位（直接获取函数完整代码块）
+8. semantic_search - 语义代码搜索（基于 AST，比 grep 更精准）
+15. **semantic_search_code** - 🔍 Codebase RAG 语义搜索（用自然语言描述功能，返回最相关的代码片段！不确定功能在哪个文件时优先使用）
+9. lsp_tool - LSP 语言服务器（查找定义、引用、文件大纲）
+10. git_tool - Git 版本控制（查看状态、差异、日志、提交）
+11. auto_test - 自动化测试（scan_and_test 可递归扫描目录下所有代码文件）
+14. **run_auto_test** - 🧪 TDD 自愈测试引擎（修改代码后必须调用！自动运行测试，报错则自己修复，直到全绿）
 10. read_project_memory - 搜索项目记忆库（查找以前踩过的坑和解决方案）
 11. record_learning - 记录经验教训（成功修复 Bug 后，用一句话总结经验写入记忆库）
 12. dispatch_subtasks - 🚀 子任务并发派发（多智能体协同！将任务拆分为多个子任务并发执行）
+13. mcp_manager - 🔌 MCP 服务管理（动态加载第三方 MCP Server，如 GitHub、数据库、浏览器自动化等）
+
+**MCP 动态工具**: 当你通过 mcp_manager 动态加载了一个 MCP Server 后，该 Server 提供的所有工具会自动出现在你的工具列表中，工具名格式为 `mcp_{server}_{tool}`（如 `mcp_github_list_issues`）。你可以像调用本地工具一样直接调用它们。
 
 # 🚀 多智能体协同 (dispatch_subtasks)
 
@@ -281,6 +376,25 @@ dispatch_subtasks(subtasks=[
 - 仅当修改核心复杂算法逻辑（如红黑树插入、复杂正则匹配），或用户明确要求时，才使用 pytest 框架。
 - 如果 pytest 连续两次执行失败，立刻退回到使用 print() 进行快速验证。绝对不要在测试框架本身上浪费超过 2 轮迭代。
 
+## 4. 【最高安全与协同指令】Human-in-the-Loop (人机协同) — 铁律重申！
+这条规则在系统提示词开头已经强调过，这里再次重申：你**绝对禁止**在需求不明确时自己猜测并动手！
+遇到以下情况，你**必须**调用 `ask_user` 工具，**没有任何例外**：
+
+1. **需求模糊**：用户的指令不够具体，你无法 100% 确定该做什么、改哪个文件、改成什么样。
+2. **高危操作**：你准备执行删除大量文件、覆盖核心架构逻辑、修改数据库 Schema、提交 Git 等不可逆操作。
+3. **连续失败**：你的测试代码反复报错超过 3 次，你无法理解为什么，陷入了盲目试错的循环。
+4. **权限不足**：需要用户提供密码、API Key、数据库连接串等敏感信息。
+5. **方向分歧**：存在两种以上截然不同的技术方案，需要人类做决策。
+
+**违反此规则的后果：你会浪费大量 Token 做错误的事情，用户会非常不满意。每次动手前，先问自己："我 100% 确定用户想要什么吗？"如果不确定，就调用 ask_user！**
+
+## 3.5 🧪 TDD 自愈闭环（最高优先级死命令！）
+- **在执行修改代码的任务后，绝对不要立刻告诉我任务完成！你必须先调用 `run_auto_test` 工具运行测试。**
+- 如果 `run_auto_test` 返回 `[Test Failed]`，你必须自己阅读报错信息，分析原因，然后调用 `file_edit` 修改代码，再次调用 `run_auto_test`，直到返回 `[Test Passed]`。
+- 自愈循环最多 3 轮。如果 3 轮后测试仍然失败，请停止并报告错误给用户。
+- 如果项目中没有现成的测试文件，你可以用 `bash` 工具直接运行代码来验证（如 `python3 main.py`），或用 `auto_test(action='generate_and_run')` 自动生成测试。
+- **只有当 `run_auto_test` 返回 `[Test Passed]`，或者你用 bash 直接运行代码验证通过后，你才能宣布任务完成。**
+
 ## 4. 自愈机制 (Auto-Healing)
 - 如果终端执行报错，允许你在当前任务上下文中进行最多 3 次的尝试修改。超过 3 次请停止尝试并报告错误。
 
@@ -288,6 +402,26 @@ dispatch_subtasks(subtasks=[
 - 遇到 Bug 时，先调用 read_project_memory 搜索是否有类似的历史经验。
 - 成功修复 Bug 并验证通过后，必须调用 record_learning 记录经验，格式：record_learning(category="Bug修复", lesson="一句话总结", related_files=["相关文件路径"])
 - 记忆会自动写入 .agent_memory/learnings.md 并 Git 提交，永久保存。
+
+## 6. AST 代码透视优先策略 (AST-First Strategy)
+- **当你想了解一个文件的结构（有哪些类、函数、方法）时，绝对优先使用 `get_code_structure`，而不是 grep。**
+  - grep "class" 会匹配注释、字符串、模板参数，产生大量垃圾结果。
+  - get_code_structure 基于 AST 语法树，只返回真正的代码结构，精准率提升 100 倍。
+- **当你想查看某个函数/方法的具体实现时，绝对优先使用 `get_function_definition`，而不是 grep + file_read 手动拼凑。**
+  - get_function_definition 直接返回函数完整代码块，包含行号和签名。
+  - 如果存在多个同名函数（重载/多类同名），会列出所有匹配项供你选择。
+- **典型使用流程**：
+  1. 先用 `get_code_structure(file_path)` 鸟瞰文件结构
+  2. 再用 `get_function_definition(file_path, function_name)` 精准定位感兴趣的函数
+  3. 只有在 AST 工具无法覆盖的场景（如搜索变量名、字符串常量）才回退到 grep
+
+## 6.5 🔍 Codebase RAG 语义搜索优先策略
+- **当你不确定某个功能在哪个文件，或者需要理解业务逻辑时，优先使用 `semantic_search_code`。**
+  - 示例：semantic_search_code(query="数据库连接初始化")
+  - 示例：semantic_search_code(query="用户认证逻辑")
+  - 它会返回最相关的代码片段（含文件路径、行号、签名和源码）
+- **如果你知道极其确切的函数名或变量名，使用 `grep` 进行精准搜索。**
+- **搜索策略优先级**：semantic_search_code（不确定在哪）> get_code_structure（已知文件）> get_function_definition（已知函数名）> grep（已知确切字符串）
 
 ## 5. 基本操作规则
 - 必须使用 file_edit 工具来创建/修改文件，不要只在回复中输出代码！
@@ -307,6 +441,13 @@ dispatch_subtasks(subtasks=[
 # 你的代码
 ```
 系统会自动识别并写入文件。
+
+⚠️ 工具调用格式警告：你当前拥有 40+ 个工具。请必须严格按照 JSON 格式发起 tool_calls。绝不要把命令直接写在回复的文本内容里！不要在文本中输出类似 bash("xxx") 或 file_edit(...) 的伪调用，必须使用标准的 function call 格式！
+
+⚠️ 【JSON 数据类型强制警告】调用工具时，必须严格遵守参数的 JSON 数据类型！
+- 数字参数（如 thoughtNumber, totalThoughts, count, line）必须是整数，绝不能加引号！正确: {"totalThoughts": 2}  错误: {"totalThoughts": "2"}
+- 布尔参数（如 nextThoughtNeeded, staged）必须是原生 true/false，绝不能输出字符串！正确: {"nextThoughtNeeded": false}  错误: {"nextThoughtNeeded": "False"}
+- 违反类型会导致 MCP Server 校验失败，工具调用被拒绝！
 """
 
 # ============================================================================
@@ -611,6 +752,7 @@ def _get_tools_definition(provider: str = "openai") -> list[dict]:
             ASK_USER_TOOL_DEFINITION_ANTHROPIC,
             COMPUTER_USE_TOOL_DEFINITION_ANTHROPIC,
             SEMANTIC_SEARCH_TOOL_DEFINITION_ANTHROPIC,
+            SEMANTIC_SEARCH_CODE_TOOL_DEFINITION_ANTHROPIC,
             META_TOOL_DEFINITION_ANTHROPIC,
             SPECULATIVE_TOOL_DEFINITION_ANTHROPIC,
             SWARM_TOOL_DEFINITION_ANTHROPIC,
@@ -623,6 +765,9 @@ def _get_tools_definition(provider: str = "openai") -> list[dict]:
             NOTEBOOK_TOOL_DEFINITION_ANTHROPIC,
             MCP_TOOL_DEFINITION_ANTHROPIC,
             AUTO_TEST_TOOL_DEFINITION_ANTHROPIC,
+            RUN_AUTO_TEST_TOOL_DEFINITION_ANTHROPIC,
+            AST_CODE_STRUCTURE_TOOL_DEFINITION_ANTHROPIC,
+            AST_FUNCTION_DEFINITION_TOOL_DEFINITION_ANTHROPIC,
             {
                 "name": "read_project_memory",
                 "description": "搜索项目记忆库，查找以前踩过的坑和解决方案。遇到 Bug 时先查记忆，避免重复踩坑。",
@@ -778,6 +923,7 @@ def _get_tools_definition(provider: str = "openai") -> list[dict]:
             ASK_USER_TOOL_DEFINITION_OPENAI,
             COMPUTER_USE_TOOL_DEFINITION_OPENAI,
             SEMANTIC_SEARCH_TOOL_DEFINITION_OPENAI,
+            SEMANTIC_SEARCH_CODE_TOOL_DEFINITION_OPENAI,
             META_TOOL_DEFINITION_OPENAI,
             SPECULATIVE_TOOL_DEFINITION_OPENAI,
             SWARM_TOOL_DEFINITION_OPENAI,
@@ -790,6 +936,9 @@ def _get_tools_definition(provider: str = "openai") -> list[dict]:
             NOTEBOOK_TOOL_DEFINITION_OPENAI,
             MCP_TOOL_DEFINITION_OPENAI,
             AUTO_TEST_TOOL_DEFINITION_OPENAI,
+            RUN_AUTO_TEST_TOOL_DEFINITION_OPENAI,
+            AST_CODE_STRUCTURE_TOOL_DEFINITION_OPENAI,
+            AST_FUNCTION_DEFINITION_TOOL_DEFINITION_OPENAI,
             {
                 "type": "function",
                 "function": {
@@ -834,6 +983,46 @@ def _get_tools_definition(provider: str = "openai") -> list[dict]:
                 },
             },
         ] + get_dynamic_tool_schemas("openai")
+
+
+def _get_mcp_tools(provider: str = "openai") -> list[dict]:
+    client = get_mcp_client()
+    if not client.servers:
+        return []
+    try:
+        if provider == "anthropic":
+            return client.get_anthropic_tools()
+        else:
+            return client.get_openai_tools()
+    except Exception as e:
+        logger.warning(f"获取 MCP 工具列表失败: {e}")
+        return []
+
+
+def _build_tools_with_mcp(provider: str = "openai") -> list[dict]:
+    base_tools = _get_tools_definition(provider)
+    mcp_tools = _get_mcp_tools(provider)
+    if mcp_tools:
+        logger.info(f"🔀 合并 {len(mcp_tools)} 个 MCP 外部工具到 {provider} 工具列表")
+        base_tools.extend(mcp_tools)
+
+    if provider == "openai":
+        for tool_def in base_tools:
+            func = tool_def.get("function", {})
+            if "strict" not in func:
+                func["strict"] = True
+            params = func.get("parameters", {})
+            if isinstance(params, dict):
+                if "additionalProperties" not in params:
+                    params["additionalProperties"] = False
+                if "properties" in params and "required" not in params:
+                    params["required"] = list(params["properties"].keys())
+                for prop_schema in params.get("properties", {}).values():
+                    if isinstance(prop_schema, dict) and prop_schema.get("type") == "object":
+                        if "additionalProperties" not in prop_schema:
+                            prop_schema["additionalProperties"] = False
+
+    return base_tools
 
 def _auto_commit_worktree(
     work_dir: str,
@@ -883,6 +1072,69 @@ def _auto_commit_worktree(
     except Exception as e:
         logger.warning(f"Git auto-commit 失败: {e}")
         return ""
+
+
+def _safe_run_async(coro):
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor() as pool:
+                future = pool.submit(asyncio.run, coro)
+                return future.result(timeout=60)
+        else:
+            return loop.run_until_complete(coro)
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            return loop.run_until_complete(coro)
+        finally:
+            pass
+
+
+def _run_lsp_check(file_path: str, work_dir: str) -> tuple:
+    try:
+        from lsp_client import get_lsp_client
+        client = get_lsp_client()
+
+        abs_path = file_path
+        if work_dir and not os.path.isabs(file_path):
+            abs_path = os.path.join(work_dir, file_path)
+        abs_path = os.path.abspath(abs_path)
+
+        if not os.path.isfile(abs_path):
+            return "", []
+
+        diagnostics = client.get_diagnostics(abs_path, work_dir)
+        if not diagnostics:
+            return "", []
+
+        errors = [d for d in diagnostics if d.get("severity") == "error"]
+        warnings = [d for d in diagnostics if d.get("severity") == "warning"]
+
+        if not errors and not warnings:
+            return "", []
+
+        lines = []
+        if errors:
+            lines.append(f"⚠️ LSP 静态分析检测到 {len(errors)} 个错误，请立即修复：")
+            for e in errors[:8]:
+                lines.append(f"  - Line {e['line']}: {e['message']}")
+            if len(errors) > 8:
+                lines.append(f"  ... 还有 {len(errors) - 8} 个错误")
+        if warnings:
+            lines.append(f"⚡ LSP 检测到 {len(warnings)} 个警告：")
+            for w in warnings[:4]:
+                lines.append(f"  - Line {w['line']}: {w['message']}")
+            if len(warnings) > 4:
+                lines.append(f"  ... 还有 {len(warnings) - 4} 个警告")
+
+        return "\n".join(lines), diagnostics
+
+    except Exception as e:
+        logger.debug(f"LSP 检查跳过: {e}")
+        return "", []
 
 
 def _execute_tool_local(
@@ -957,6 +1209,12 @@ def _execute_tool_local(
             if truncated:
                 meta["truncated"] = True
 
+            if is_error and bash_result.stderr:
+                from bash_executor import parse_compiler_errors
+                diagnostics = parse_compiler_errors(bash_result.stderr, work_dir)
+                if diagnostics:
+                    meta["diagnostics"] = diagnostics
+
             if not is_error and session_id:
                 pass
 
@@ -971,6 +1229,13 @@ def _execute_tool_local(
                 return "文件路径不能为空", True, meta
 
             result, is_error = execute_file_edit(file_path, old_string, new_string, work_dir)
+
+            if not is_error:
+                lsp_diag_text, lsp_diagnostics = _run_lsp_check(file_path, work_dir)
+                if lsp_diag_text:
+                    result = result + "\n\n" + lsp_diag_text
+                if lsp_diagnostics:
+                    meta["diagnostics"] = lsp_diagnostics
 
             return result, is_error, meta
 
@@ -1061,6 +1326,13 @@ def _execute_tool_local(
             is_err = not result.success
             return formatted, is_err, meta
 
+        elif name == "semantic_search_code":
+            query = args.get("query", "")
+            top_k = args.get("top_k", 3)
+            project_dir = args.get("project_dir", work_dir)
+            result_str, is_err = semantic_search_code(query, top_k, project_dir)
+            return result_str, is_err, meta
+
         elif name == "meta_tool":
             action = args.get("action", "list")
             tool_name = args.get("tool_name", "")
@@ -1130,12 +1402,34 @@ def _execute_tool_local(
             result_str, is_error = execute_mcp_manager(action, server_name, env_overrides)
             return result_str, is_error, meta
 
+        elif name.startswith("mcp_") and name != "mcp_manager":
+            try:
+                client = get_mcp_client()
+                if not client.is_mcp_tool(name):
+                    return f"未知的 MCP 工具: {name}", True, meta
+
+                try:
+                    result_str = client.sync_call_tool(name, args)
+                except Exception as e:
+                    result_str = f"MCP 工具调用失败: {e}"
+
+                is_error = result_str.startswith("错误:")
+                return result_str, is_error, meta
+            except Exception as e:
+                return f"MCP 路由异常: {e}", True, meta
+
         elif name == "auto_test":
             action = args.get("action", "run")
             test_file = args.get("test_file", "")
             source_file = args.get("source_file", "")
             directory = args.get("directory", "")
             result_str, is_error = execute_auto_test(action, test_file, source_file, directory, work_dir)
+            return result_str, is_error, meta
+
+        elif name == "run_auto_test":
+            test_command = args.get("test_command", "")
+            test_file = args.get("test_file", "")
+            result_str, is_error = execute_run_auto_test(test_command, test_file, work_dir)
             return result_str, is_error, meta
 
         elif name == "read_project_memory":
@@ -1153,6 +1447,23 @@ def _execute_tool_local(
                 return "经验内容不能为空", True, meta
             result_str = memory_record(category, lesson, work_dir, related_files)
             return result_str, False, meta
+
+        elif name == "get_code_structure":
+            file_path = args.get("file_path", "")
+            if not file_path:
+                return "文件路径不能为空", True, meta
+            result_str, is_error = execute_get_code_structure(file_path, work_dir)
+            return result_str, is_error, meta
+
+        elif name == "get_function_definition":
+            file_path = args.get("file_path", "")
+            function_name = args.get("function_name", "")
+            if not file_path:
+                return "文件路径不能为空", True, meta
+            if not function_name:
+                return "函数名不能为空", True, meta
+            result_str, is_error = execute_get_function_definition(file_path, function_name, work_dir)
+            return result_str, is_error, meta
 
         elif is_dynamic_tool(name):
             result_str, is_error = execute_dynamic_tool(name, args)
@@ -1245,6 +1556,65 @@ def run_agent(
 
     logger.info(f"📦 任务 {task_id} 已注册，物理快照已创建: {work_dir}")
 
+    mcp_client = get_mcp_client()
+    if not mcp_client.servers:
+        mcp_config = os.path.join(work_dir, "mcp.json")
+        if not os.path.exists(mcp_config):
+            mcp_config = MCP_CONFIG_PATH if 'MCP_CONFIG_PATH' in dir() else os.path.join(os.path.dirname(os.path.abspath(__file__)), "mcp.json")
+        mcp_client.config_path = mcp_config
+        if mcp_client.load_config():
+            import threading
+            def _mcp_bg_init():
+                try:
+                    mcp_client.sync_start_all()
+                    if mcp_client.all_tools:
+                        logger.info(f"🔌 MCP 后台加载完成: {len(mcp_client.all_tools)} 个外部工具")
+                except Exception as e:
+                    logger.warning(f"MCP 后台初始化失败（不影响核心功能）: {e}")
+            t = threading.Thread(target=_mcp_bg_init, daemon=True)
+            t.start()
+            logger.info(f"🔌 MCP 后台初始化已启动（不阻塞 Agent）")
+
+    _lsp_languages_for_workdir = set()
+    try:
+        from lsp_client import get_lsp_client
+        lsp_client = get_lsp_client()
+
+        lsp_indicators = {
+            'cpp': ['CMakeLists.txt', 'compile_commands.json', 'Makefile', '.clang-format'],
+            'python': ['requirements.txt', 'setup.py', 'pyproject.toml', 'Pipfile'],
+            'typescript': ['tsconfig.json', 'package.json'],
+            'javascript': ['package.json', '.eslintrc.js'],
+            'go': ['go.mod', 'go.sum'],
+            'rust': ['Cargo.toml', 'Cargo.lock'],
+            'java': ['pom.xml', 'build.gradle', 'build.gradle.kts'],
+        }
+
+        for lang, indicators in lsp_indicators.items():
+            for indicator in indicators:
+                if os.path.exists(os.path.join(work_dir, indicator)):
+                    _lsp_languages_for_workdir.add(lang)
+                    break
+
+        ext_map = {'.cpp': 'cpp', '.cc': 'cpp', '.h': 'cpp', '.hpp': 'cpp', '.c': 'cpp',
+                   '.py': 'python', '.js': 'javascript', '.ts': 'typescript',
+                   '.rs': 'rust', '.go': 'go', '.java': 'java'}
+        for f in os.listdir(work_dir):
+            ext = os.path.splitext(f)[1].lower()
+            if ext in ext_map:
+                _lsp_languages_for_workdir.add(ext_map[ext])
+
+        if _lsp_languages_for_workdir:
+            for lang in _lsp_languages_for_workdir:
+                try:
+                    conn = lsp_client.get_connection(lang, work_dir)
+                    if conn:
+                        logger.info(f"🔬 LSP 预初始化成功: {lang}")
+                except Exception as e:
+                    logger.debug(f"LSP {lang} 预初始化跳过: {e}")
+    except Exception as e:
+        logger.debug(f"LSP 预初始化跳过: {e}")
+
     yield {"type": "task_started", "task_id": task_id, "task_name": task_name}
 
     summary_base_url = base_url if base_url else os.environ.get("OPENAI_BASE_URL")
@@ -1263,6 +1633,7 @@ def run_agent(
 
     consecutive_errors = 0
     MAX_CONSECUTIVE_ERRORS = 5
+    format_error_count = 0
 
     for turn in range(start_turn, max_turns + 1):
         try:
@@ -1299,7 +1670,14 @@ def run_agent(
         blackboard.update_from_messages(messages, work_dir)
         injected_messages = blackboard.inject_anchor(messages, provider)
 
-        tools = _get_tools_definition(provider)
+        from prompt_caching import truncate_messages_with_budget
+        injected_messages = truncate_messages_with_budget(
+            injected_messages,
+            max_tokens=100000,
+            keep_recent=6,
+        )
+
+        tools = _build_tools_with_mcp(provider)
 
         try:
             if provider == "anthropic":
@@ -1325,6 +1703,7 @@ def run_agent(
                     model=model,
                     base_url=base_url,
                     system_prompt=anchor_system,
+                    force_tool_call=format_error_count >= 2,
                 )
             else:
                 text, tool_calls = _call_openai(
@@ -1333,6 +1712,7 @@ def run_agent(
                     api_key=api_key,
                     model=model,
                     base_url=base_url,
+                    force_tool_call=format_error_count >= 2,
                 )
 
             logger.info(f"🤖 LLM 返回: text 长度={len(text) if text else 0}, tool_calls 数量={len(tool_calls)}")
@@ -1461,12 +1841,60 @@ def run_agent(
                 continue
 
             if not tool_calls:
+                format_error_count += 1
+                if text and len(text) > 2000:
+                    logger.warning(f"🚨 [系统拦截] 模型输出了 {len(text)} 字符的纯文本，无工具调用！强制截断！")
+                    truncated_text = text[:500] + f"\n\n... [系统截断：原文 {len(text)} 字符被丢弃]"
+                    messages.append({"role": "assistant", "content": truncated_text})
+                    messages.append({
+                        "role": "user",
+                        "content": (
+                            "🚨 [系统拦截] 你刚刚试图在聊天回复中直接输出大量代码！\n\n"
+                            "重复一遍：**严禁在文本中直接写代码！**\n"
+                            "你必须调用 `file_edit` 工具将代码写入文件系统！\n"
+                            "如果代码很长，请分多次调用 file_edit，每次写入一个文件或一个函数。\n\n"
+                            "正确做法示例：\n"
+                            '```json\n'
+                            '{"name": "file_edit", "arguments": {"file_path": "main.py", "old_string": "", "new_string": "def hello():\\n    print(\\"hello\\")"}}\n'
+                            '```\n\n'
+                            "请立即重新执行你的操作，这次必须使用标准工具调用格式！"
+                        )
+                    })
+                    _cp_desc = f"第 {turn} 轮 (长文本拦截)"
+                    try:
+                        from rewind_system import get_rewind_system as _get_rewind
+                        _rewind = _get_rewind()
+                        _cp = _rewind.create_checkpoint(session_id, turn, messages, _cp_desc, work_dir=work_dir)
+                        if _cp:
+                            yield {
+                                "type": "checkpoint_created",
+                                "session_id": session_id,
+                                "turn": turn,
+                                "description": _cp_desc,
+                                "code_diff": _cp.code_diff or "",
+                                "diff_stat": _cp.diff_stat or "",
+                                "git_commit": _cp.git_commit or "",
+                            }
+                    except Exception:
+                        pass
+                    continue
+
                 if text and ('file_edit' in text or '```' in text or 'def ' in text or 'class ' in text):
                     logger.warning("⚠️ 检测到文本中可能包含代码或工具调用，但格式不正确")
                     messages.append({"role": "assistant", "content": text[:2000]})
                     messages.append({
                         "role": "user",
-                        "content": "⚠️ 你的回复中似乎包含代码或工具调用，但格式不正确。请使用以下格式之一：\n1. 使用 file_edit 工具：file_edit(file_path=\"文件名\", old_string=\"\", new_string=\"内容\")\n2. 使用 Markdown 代码块：```python\n# 代码\n```\n请重新格式化你的回复并继续执行任务。"
+                        "content": (
+                            "⚠️ 严重格式错误！你刚才的回复中包含了代码或工具调用，"
+                            "但你没有使用标准的 function call 格式！\n\n"
+                            "你当前拥有 40+ 个工具。你必须严格按照 JSON 格式发起 tool_calls，"
+                            "绝不要把命令直接写在回复的文本内容里！\n\n"
+                            "正确做法：\n"
+                            "- 写代码 → 必须调用 file_edit 工具\n"
+                            "- 执行命令 → 必须调用 bash 工具\n"
+                            "- 读取文件 → 必须调用 file_read 工具\n\n"
+                            "请立即重新执行你的操作，这次必须使用标准工具调用格式！"
+                        )
                     })
                     _cp_desc = f"第 {turn} 轮 (格式错误重试)"
                     try:
@@ -1511,6 +1939,7 @@ def run_agent(
             any_error = False
             error_logs = []
             turn_tool_summary = []
+            format_error_count = 0
 
             for tc in tool_calls:
                 name = tc.get("name", "unknown")
@@ -1520,6 +1949,16 @@ def run_agent(
                 if not isinstance(args, dict):
                     logger.warning(f"⚠️ 工具 {name} 的 args 不是字典: {type(args)}, 值: {args}")
                     args = {}
+                
+                # ==========================================================
+                # 🔄 全局参数类型洗白 (Global Type Sanitizer)
+                # 大模型经常把 JSON 中的数字和布尔值加上引号变成字符串，
+                # 导致 MCP Server 的 Zod/JSON Schema 校验失败。
+                # sanitize_llm_args 递归遍历整个参数树，自动修正类型漂移：
+                #   "2" → 2, "False" → false, "3.14" → 3.14
+                # 安全：不会误伤文件路径等合法字符串
+                # ==========================================================
+                args = sanitize_llm_args(args)
                 
                 # ==========================================================
                 # 🛡️ 终极防线：提示词补偿机制 (Prompt Compensation)
@@ -1655,12 +2094,17 @@ def run_agent(
                     current_turn=turn,
                 )
 
-                yield {
+                tool_end_event = {
                     "type": "tool_end",
                     "tool_name": name,
                     "result": result_str,
                     "is_error": is_error,
                 }
+                if tool_meta.get("diagnostics"):
+                    tool_end_event["diagnostics"] = tool_meta["diagnostics"]
+
+                if "ask_user" not in tool_meta:
+                    yield tool_end_event
 
                 if not is_error:
                     tool_desc = name
@@ -1700,12 +2144,63 @@ def run_agent(
                     yield {"type": "agent_status", "status": "ERROR"}
 
                 if "ask_user" in tool_meta:
+                    if provider != "anthropic":
+                        assistant_msg = {
+                            "role": "assistant",
+                            "content": text if text else None,
+                            "tool_calls": [
+                                {
+                                    "id": tc_item["id"],
+                                    "type": "function",
+                                    "function": {
+                                        "name": tc_item["name"],
+                                        "arguments": json.dumps(tc_item["args"], ensure_ascii=False)
+                                    }
+                                }
+                                for tc_item in tool_calls
+                            ]
+                        }
+                        messages.append(assistant_msg)
+                    else:
+                        assistant_msg = {
+                            "role": "assistant",
+                            "content": text if text else "",
+                        }
+                        if tool_calls:
+                            assistant_msg["tool_calls"] = [
+                                {
+                                    "id": tc_item["id"],
+                                    "type": "function",
+                                    "function": {
+                                        "name": tc_item["name"],
+                                        "arguments": json.dumps(tc_item["args"], ensure_ascii=False)
+                                    }
+                                }
+                                for tc_item in tool_calls
+                            ]
+                        messages.append(assistant_msg)
+
+                    if task_id:
+                        try:
+                            from task_manager import get_task_manager
+                            tm = get_task_manager()
+                            tm.update_session_messages(
+                                task_id=task_id,
+                                messages=messages,
+                                current_turn=turn,
+                            )
+                        except Exception as e:
+                            logger.debug(f"保存 ask_user 挂起状态失败: {e}")
+
                     yield {
                         "type": "ask_user",
                         "data": {
                             "question_id": tool_meta["ask_user"]["question_id"],
                             "question": tool_meta["ask_user"]["question"],
                             "context": tool_meta["ask_user"]["context"],
+                            "tool_call_id": tc_id,
+                            "task_id": task_id,
+                            "provider": provider,
                         },
                     }
                     return
@@ -1869,6 +2364,20 @@ def run_agent(
     yield {"type": "status", "data": f"Agent 任务完成 (共 {turn-1} 轮)"}
     yield {"type": "agent_status", "status": "DONE"}
 
+    try:
+        from self_distill import auto_distill
+        distill_work_dir = main_repo_dir or work_dir
+        distill_result = auto_distill(
+            messages=messages,
+            work_dir=distill_work_dir,
+            task_id=task_id or session_id,
+            task_description=user_input[:100] if user_input else "",
+        )
+        if distill_result:
+            yield {"type": "distill", "data": f"🧠 经验已自动蒸馏并记录:\n{distill_result}"}
+    except Exception as e:
+        logger.debug(f"自动蒸馏失败（不影响任务结果）: {e}")
+
     final_checkpoints = []
     try:
         final_checkpoints = rewind_system.list_checkpoints(session_id)
@@ -1883,10 +2392,11 @@ def run_agent(
 def _call_anthropic(
     messages: list[dict],
     tools: list[dict],
-    api_key: Optional[str],
-    model: Optional[str],
-    base_url: Optional[str],
+    api_key: str | None,
+    model: str | None,
+    base_url: str | None,
     system_prompt: str = "",
+    force_tool_call: bool = False,
 ) -> tuple[str, list[dict]]:
     """调用 Anthropic Claude API"""
     import anthropic
@@ -1904,6 +2414,7 @@ def _call_anthropic(
         system_prompt=system_prompt,
         tools=tools,
         messages=messages,
+        model=model or "claude-sonnet-4-20250514",
     )
 
     cache_report = cached_request.pop("_cache_report", None)
@@ -1914,12 +2425,18 @@ def _call_anthropic(
             f"💰 缓存前缀完整, 预估节省 {cache_report.cache_savings_estimate:.0f} tokens"
         )
 
+    tool_choice_val = {"type": "auto"}
+    if force_tool_call and tools:
+        tool_choice_val = {"type": "any"}
+        logger.warning("🔒 强制工具调用模式已激活 (连续格式错误 ≥ 2)")
+
     response = client.messages.create(
         model=model or "claude-sonnet-4-20250514",
         max_tokens=4096,
         system=cached_request["system"],
         tools=cached_request["tools"],
         messages=cached_request["messages"],
+        tool_choice=tool_choice_val,
     )
 
     if hasattr(response, 'usage') and response.usage:
@@ -1952,6 +2469,7 @@ def _call_openai(
     model: str | None,
     base_url: str | None,
     max_retries: int = 3,
+    force_tool_call: bool = False,
 ) -> tuple[str, list[dict]]:
     """
     调用 OpenAI 兼容 API (带主备双活 + 指数退避重试 + DashScope 终极防幻觉解析)
@@ -1971,12 +2489,21 @@ def _call_openai(
 
     def _make_request(client, model_name, attempt_label="主节点"):
         """内部请求函数"""
-        return client.chat.completions.create(
-            model=model_name,
-            messages=messages,
-            tools=tools,
-            max_tokens=4096,
-        )
+        request_kwargs = {
+            "model": model_name,
+            "messages": messages,
+            "tools": tools,
+            "max_tokens": 4096,
+        }
+
+        if tools:
+            if force_tool_call:
+                request_kwargs["tool_choice"] = "required"
+                logger.warning(f"🔒 强制工具调用模式已激活 (连续格式错误 ≥ 2)")
+            else:
+                request_kwargs["tool_choice"] = "auto"
+
+        return client.chat.completions.create(**request_kwargs)
 
     def _parse_response(response):
         """解析响应"""
@@ -2095,17 +2622,24 @@ def _call_openai(
                     "query_memory": "read_project_memory",
                     "save_learning": "record_learning",
                     "write_learning": "record_learning",
+                    "code_structure": "get_code_structure",
+                    "get_structure": "get_code_structure",
+                    "file_structure": "get_code_structure",
+                    "function_def": "get_function_definition",
+                    "get_function": "get_function_definition",
+                    "find_function": "get_function_definition",
                 }
 
                 VALID_TOOLS = {
                     "file_edit", "file_read", "bash", "glob", "grep",
-                    "ask_user", "semantic_search", "meta_tool",
+                    "ask_user", "semantic_search", "semantic_search_code", "meta_tool",
                     "speculative_execute", "swarm_communicate", "dispatch_subtasks",
                     "self_distill",
                     "theseus_rewrite", "compute_autonomy", "lsp_tool",
                     "git_tool", "notebook_tool", "mcp_tool",
-                    "auto_test", "computer_use",
+                    "auto_test", "run_auto_test", "computer_use",
                     "read_project_memory", "record_learning",
+                    "get_code_structure", "get_function_definition",
                 }
 
                 if tc_name not in VALID_TOOLS:
@@ -2113,6 +2647,8 @@ def _call_openai(
                         original_name = tc_name
                         tc_name = TOOL_NAME_ALIASES[tc_name]
                         logger.info(f"🔄 工具名映射: {original_name} → {tc_name}")
+                    elif tc_name.startswith("mcp_"):
+                        pass
                     else:
                         logger.warning(f"⚠️ 无效的工具名: {tc_name}, 尝试从参数推断...")
                         if "command" in args_dict:

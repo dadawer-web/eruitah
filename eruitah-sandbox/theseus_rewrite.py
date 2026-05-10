@@ -490,6 +490,262 @@ class TheseusEngine:
             "performance": self.monitor.run_benchmark(),
         }
 
+    def self_audit(self, target_file: str = "", focus: str = "") -> dict:
+        """自我审查：读取自己的源码，让小模型分析问题并生成补丁建议
+
+        Args:
+            target_file: 要审查的源码文件名（如 agent_runner.py, mcp_client.py）
+            focus: 审查焦点（如 "异常处理", "event loop", "并发安全"）
+
+        Returns:
+            dict: {source_code, audit_prompt, file_path}
+        """
+        sandbox_dir = os.path.dirname(os.path.abspath(__file__))
+        src_mount_dir = os.environ.get("ERUITAH_SRC_MOUNT_DIR", sandbox_dir)
+
+        if target_file:
+            candidates = [
+                os.path.join(src_mount_dir, target_file),
+                os.path.join(sandbox_dir, target_file),
+            ]
+        else:
+            candidates = [sandbox_dir]
+
+        source_code = ""
+        actual_path = ""
+
+        for candidate in candidates:
+            if os.path.isfile(candidate):
+                try:
+                    with open(candidate, "r", encoding="utf-8", errors="replace") as f:
+                        source_code = f.read()
+                    actual_path = candidate
+                    break
+                except Exception as e:
+                    logger.error(f"读取源码失败: {e}")
+                    continue
+
+        if not source_code and os.path.isdir(candidates[0]):
+            file_list = []
+            for f in sorted(os.listdir(candidates[0])):
+                if f.endswith(".py") and not f.startswith("__"):
+                    file_list.append(f)
+            return {
+                "source_code": "",
+                "audit_prompt": "",
+                "file_path": "",
+                "available_files": file_list,
+                "message": f"请指定 target_file 参数。可用文件: {', '.join(file_list[:20])}",
+            }
+
+        if not source_code:
+            return {
+                "source_code": "",
+                "audit_prompt": "",
+                "file_path": "",
+                "message": f"未找到文件: {target_file}",
+            }
+
+        focus_text = f"重点关注: {focus}" if focus else "重点关注: 异常处理、并发安全、资源泄漏、边界条件"
+
+        audit_prompt = f"""你是 Eruitah 智能编程沙盒的架构师。现在你需要审查自己的源码并找出问题。
+
+## 审查目标
+文件: {os.path.basename(actual_path)}
+{focus_text}
+
+## 源码
+```python
+{source_code[:12000]}
+```
+
+{'(源码过长，仅展示前 12000 字符)' if len(source_code) > 12000 else ''}
+
+## 任务
+请仔细审查这段源码，找出以下问题：
+1. **异常处理不严谨**：哪些地方缺少 try/except？哪些 except 太宽泛？
+2. **并发安全问题**：有没有竞态条件？有没有 event loop 绑定问题？
+3. **资源泄漏**：有没有未关闭的连接、文件、子进程？
+4. **边界条件**：空值、None、空列表等是否正确处理？
+
+## 输出格式
+对每个发现的问题，请按以下格式输出：
+
+### 问题 N: <问题标题>
+- **位置**: <函数名或行号>
+- **严重程度**: 高/中/低
+- **问题描述**: <一句话描述>
+- **修复建议**: <具体的代码修改建议，给出修改前后的代码片段>
+
+只输出真正有问题的，不要输出无关内容。如果没有发现问题，输出"未发现明显问题"。
+"""
+
+        return {
+            "source_code": source_code,
+            "audit_prompt": audit_prompt,
+            "file_path": actual_path,
+            "file_size": len(source_code),
+        }
+
+    def shadow_test(self, target_file: str, patched_code: str) -> dict:
+        """影子测试：在隔离环境中运行修改后的代码，验证不会崩溃
+
+        Args:
+            target_file: 目标文件名
+            patched_code: 修改后的代码
+
+        Returns:
+            dict: {passed, syntax_ok, import_ok, errors, backup_path}
+        """
+        sandbox_dir = os.path.dirname(os.path.abspath(__file__))
+        src_mount_dir = os.environ.get("ERUITAH_SRC_MOUNT_DIR", sandbox_dir)
+
+        original_path = os.path.join(src_mount_dir, target_file)
+        if not os.path.exists(original_path):
+            original_path = os.path.join(sandbox_dir, target_file)
+
+        if not os.path.exists(original_path):
+            return {"passed": False, "errors": [f"文件不存在: {target_file}"]}
+
+        backup_path = self._backup_file(original_path)
+        if not backup_path:
+            return {"passed": False, "errors": ["无法备份原文件，中止影子测试"]}
+
+        shadow_dir = os.path.join(self.rewrite_dir, f"shadow_{int(time.time())}")
+        os.makedirs(shadow_dir, exist_ok=True)
+
+        shadow_file = os.path.join(shadow_dir, target_file)
+        try:
+            with open(shadow_file, "w", encoding="utf-8") as f:
+                f.write(patched_code)
+        except Exception as e:
+            return {"passed": False, "errors": [f"写入影子文件失败: {e}"], "backup_path": backup_path}
+
+        results = {"passed": True, "errors": [], "backup_path": backup_path, "shadow_dir": shadow_dir}
+
+        syntax_result = subprocess.run(
+            ["python3", "-c", f"import py_compile; py_compile.compile('{shadow_file}', doraise=True)"],
+            capture_output=True, text=True, timeout=10,
+        )
+        if syntax_result.returncode != 0:
+            results["passed"] = False
+            results["errors"].append(f"语法检查失败: {syntax_result.stderr[:500]}")
+            return results
+
+        results["syntax_ok"] = True
+
+        module_name = target_file.replace(".py", "").replace(".", "_").replace("/", "_")
+        import_result = subprocess.run(
+            ["python3", "-c", f"import sys; sys.path.insert(0, '{shadow_dir}'); import {module_name}"],
+            capture_output=True, text=True, timeout=30,
+            cwd=shadow_dir,
+        )
+        if import_result.returncode != 0:
+            stderr = import_result.stderr
+            allowed_patterns = ["ModuleNotFoundError", "ImportError", "No module named"]
+            is_import_dep_error = any(p in stderr for p in allowed_patterns)
+            if is_import_dep_error:
+                results["import_ok"] = "partial"
+                results["errors"].append(f"导入部分依赖缺失（可接受）: {stderr[:300]}")
+            else:
+                results["passed"] = False
+                results["errors"].append(f"导入测试失败: {stderr[:500]}")
+                return results
+        else:
+            results["import_ok"] = True
+
+        return results
+
+    def safe_apply(self, target_file: str, patched_code: str, backup_path: str = "") -> dict:
+        """安全应用：验证通过后覆盖源码+备份+重启提示
+
+        Args:
+            target_file: 目标文件名
+            patched_code: 修改后的代码
+            backup_path: 之前的备份路径（如果有）
+
+        Returns:
+            dict: {success, message, backup_path, needs_restart}
+        """
+        sandbox_dir = os.path.dirname(os.path.abspath(__file__))
+        src_mount_dir = os.environ.get("ERUITAH_SRC_MOUNT_DIR", sandbox_dir)
+
+        original_path = os.path.join(src_mount_dir, target_file)
+        if not os.path.exists(original_path):
+            original_path = os.path.join(sandbox_dir, target_file)
+
+        if not os.path.exists(original_path):
+            return {"success": False, "message": f"文件不存在: {target_file}"}
+
+        if not backup_path or not os.path.exists(backup_path):
+            backup_path = self._backup_file(original_path)
+            if not backup_path:
+                return {"success": False, "message": "无法备份原文件，中止应用"}
+
+        try:
+            diff = self._generate_diff(original_path, patched_code)
+        except Exception:
+            diff = "(无法生成 diff)"
+
+        try:
+            with open(original_path, "w", encoding="utf-8") as f:
+                f.write(patched_code)
+        except Exception as e:
+            if backup_path and os.path.exists(backup_path):
+                shutil.copy2(backup_path, original_path)
+            return {"success": False, "message": f"写入失败已自动回滚: {e}"}
+
+        try:
+            git_dir = os.path.dirname(original_path)
+            subprocess.run(
+                ["git", "add", target_file],
+                capture_output=True, cwd=git_dir, timeout=5,
+            )
+            subprocess.run(
+                ["git", "commit", "-m", f"theseus: self-patch {target_file}"],
+                capture_output=True, cwd=git_dir, timeout=10,
+            )
+        except Exception:
+            pass
+
+        return {
+            "success": True,
+            "message": f"✅ 补丁已安全应用到 {target_file}",
+            "backup_path": backup_path,
+            "diff": diff,
+            "needs_restart": True,
+            "restart_hint": "⚠️ 修改了运行中的源码，需要重启服务才能生效。请执行: sudo systemctl restart eruitah-sandbox",
+        }
+
+    def _backup_file(self, filepath: str) -> Optional[str]:
+        """备份单个文件"""
+        if not os.path.exists(filepath):
+            return None
+        basename = os.path.basename(filepath)
+        backup = os.path.join(self.backup_dir, f"{basename}.{int(time.time())}.bak")
+        try:
+            os.makedirs(self.backup_dir, exist_ok=True)
+            shutil.copy2(filepath, backup)
+            logger.info(f"📦 已备份: {filepath} → {backup}")
+            return backup
+        except Exception as e:
+            logger.error(f"备份失败: {e}")
+            return None
+
+    def _generate_diff(self, original_path: str, new_content: str) -> str:
+        """生成 diff"""
+        import difflib
+        with open(original_path, "r", encoding="utf-8", errors="replace") as f:
+            old_lines = f.readlines()
+        new_lines = new_content.splitlines(keepends=True)
+        diff = difflib.unified_diff(
+            old_lines, new_lines,
+            fromfile=f"a/{os.path.basename(original_path)}",
+            tofile=f"b/{os.path.basename(original_path)}",
+            n=3,
+        )
+        return "".join(diff)
+
 
 _theseus: Optional[TheseusEngine] = None
 
@@ -504,7 +760,10 @@ def get_theseus_engine() -> TheseusEngine:
 THESEUS_TOOL_DEFINITION_ANTHROPIC = {
     "name": "theseus_rewrite",
     "description": (
-        "忒修斯之船工具 - 核心自重构引擎。允许 Agent 重写自己的核心模块。"
+        "忒修斯之船工具 - 核心自重构引擎。允许 Agent 审查、修改和优化自己的源码。"
+        "action='self_audit': 自我审查源码，生成审查提示词（让大模型分析问题）"
+        "action='shadow_test': 影子测试，在隔离环境中验证修改后的代码不会崩溃"
+        "action='safe_apply': 安全应用补丁，覆盖源码+备份+重启提示"
         "action='benchmark': 运行性能基准测试"
         "action='plan': 创建重写计划（将 Python 模块重写为 C++）"
         "action='generate': 生成 C++ 重写代码"
@@ -518,12 +777,28 @@ THESEUS_TOOL_DEFINITION_ANTHROPIC = {
         "properties": {
             "action": {
                 "type": "string",
-                "enum": ["benchmark", "plan", "generate", "compile", "hot_swap", "rollback", "status"],
+                "enum": ["self_audit", "shadow_test", "safe_apply", "benchmark", "plan", "generate", "compile", "hot_swap", "rollback", "status"],
                 "description": "操作类型",
             },
             "module": {
                 "type": "string",
                 "description": "目标模块名（如 agent_runner）",
+            },
+            "target_file": {
+                "type": "string",
+                "description": "目标文件名（如 mcp_client.py, agent_runner.py）",
+            },
+            "focus": {
+                "type": "string",
+                "description": "审查焦点（如 '异常处理', 'event loop', '并发安全'）",
+            },
+            "patched_code": {
+                "type": "string",
+                "description": "修改后的完整代码（shadow_test 和 safe_apply 时使用）",
+            },
+            "backup_path": {
+                "type": "string",
+                "description": "备份文件路径（safe_apply 时使用，来自 shadow_test 的返回值）",
             },
             "language": {
                 "type": "string",
@@ -548,18 +823,24 @@ THESEUS_TOOL_DEFINITION_OPENAI = {
     "function": {
         "name": "theseus_rewrite",
         "description": (
-            "忒修斯之船工具 - 核心自重构引擎。允许 Agent 重写自己的核心模块，"
-            "从 Python 热切换到 C++ 等高性能语言。"
+            "忒修斯之船工具 - 核心自重构引擎。允许 Agent 审查、修改和优化自己的源码。"
+            "self_audit: 读取自己的源码并生成审查提示词；"
+            "shadow_test: 在隔离环境中验证修改后的代码；"
+            "safe_apply: 安全应用补丁到源码（自动备份+回滚能力）。"
         ),
         "parameters": {
             "type": "object",
             "properties": {
                 "action": {
                     "type": "string",
-                    "enum": ["benchmark", "plan", "generate", "compile", "hot_swap", "rollback", "status"],
+                    "enum": ["self_audit", "shadow_test", "safe_apply", "benchmark", "plan", "generate", "compile", "hot_swap", "rollback", "status"],
                     "description": "操作类型",
                 },
                 "module": {"type": "string", "description": "目标模块名"},
+                "target_file": {"type": "string", "description": "目标文件名"},
+                "focus": {"type": "string", "description": "审查焦点"},
+                "patched_code": {"type": "string", "description": "修改后的代码"},
+                "backup_path": {"type": "string", "description": "备份路径"},
                 "language": {"type": "string", "description": "目标语言"},
                 "reason": {"type": "string", "description": "重写原因"},
                 "plan_id": {"type": "string", "description": "计划 ID"},
@@ -574,7 +855,103 @@ def execute_theseus_tool(**kwargs) -> tuple[str, bool]:
     action = kwargs.get("action", "status")
     engine = get_theseus_engine()
 
-    if action == "benchmark":
+    if action == "self_audit":
+        target_file = kwargs.get("target_file", "")
+        focus = kwargs.get("focus", "")
+        result = engine.self_audit(target_file, focus)
+
+        if result.get("message") and not result.get("source_code"):
+            return result["message"], True
+
+        if result.get("available_files"):
+            return (
+                f"📋 可审查的源码文件:\n"
+                + "\n".join(f"  - {f}" for f in result["available_files"])
+                + "\n\n请使用 theseus_rewrite(action='self_audit', target_file='文件名') 指定要审查的文件",
+                False,
+            )
+
+        lines = [
+            f"🔍 自我审查: {os.path.basename(result.get('file_path', target_file))}",
+            f"  文件大小: {result.get('file_size', 0)} 字符",
+            f"  审查焦点: {focus or '异常处理、并发安全、资源泄漏、边界条件'}",
+            "",
+            "📝 审查提示词已生成，请将以下提示词发送给大模型进行分析：",
+            "---",
+            result.get("audit_prompt", ""),
+        ]
+        return "\n".join(lines), False
+
+    elif action == "shadow_test":
+        target_file = kwargs.get("target_file", "")
+        patched_code = kwargs.get("patched_code", "")
+        if not target_file:
+            return "需要提供 target_file 参数", True
+        if not patched_code:
+            return "需要提供 patched_code 参数（修改后的完整代码）", True
+
+        result = engine.shadow_test(target_file, patched_code)
+
+        lines = [
+            f"🧪 影子测试: {target_file}",
+            f"  语法检查: {'✅ 通过' if result.get('syntax_ok') else '❌ 失败'}",
+            f"  导入测试: {'✅ 通过' if result.get('import_ok') == True else '⚠️ 部分通过' if result.get('import_ok') == 'partial' else '❌ 失败'}",
+            f"  总体结果: {'✅ 通过' if result.get('passed') else '❌ 未通过'}",
+        ]
+
+        if result.get("errors"):
+            lines.append("  错误信息:")
+            for err in result["errors"]:
+                lines.append(f"    - {err}")
+
+        if result.get("backup_path"):
+            lines.append(f"  备份路径: {result['backup_path']}")
+
+        if result.get("passed"):
+            lines.append("")
+            lines.append(f"✅ 影子测试通过！可以安全应用补丁。")
+            lines.append(f"下一步: theseus_rewrite(action='safe_apply', target_file='{target_file}', patched_code=..., backup_path='{result.get('backup_path', '')}')")
+        else:
+            lines.append("")
+            lines.append("❌ 影子测试未通过，请修复错误后重试。")
+
+        return "\n".join(lines), not result.get("passed", True)
+
+    elif action == "safe_apply":
+        target_file = kwargs.get("target_file", "")
+        patched_code = kwargs.get("patched_code", "")
+        backup_path = kwargs.get("backup_path", "")
+        if not target_file:
+            return "需要提供 target_file 参数", True
+        if not patched_code:
+            return "需要提供 patched_code 参数", True
+
+        result = engine.safe_apply(target_file, patched_code, backup_path)
+
+        lines = [
+            result.get("message", ""),
+        ]
+
+        if result.get("success"):
+            if result.get("diff"):
+                lines.append("")
+                lines.append("📊 变更 Diff:")
+                diff_lines = result["diff"].split("\n")
+                lines.extend(diff_lines[:50])
+                if len(diff_lines) > 50:
+                    lines.append(f"  ... (共 {len(diff_lines)} 行 diff)")
+            if result.get("backup_path"):
+                lines.append(f"📦 备份: {result['backup_path']}")
+            if result.get("needs_restart"):
+                lines.append("")
+                lines.append(result.get("restart_hint", "⚠️ 需要重启服务才能生效"))
+        else:
+            if result.get("message"):
+                return result["message"], True
+
+        return "\n".join(lines), not result.get("success", True)
+
+    elif action == "benchmark":
         bench = engine.monitor.run_benchmark()
         msg = bench["message_processing"]
         tool = bench["tool_execution"]

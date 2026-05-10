@@ -453,3 +453,160 @@ def execute_auto_test(action: str, test_file: str = "", source_file: str = "", d
 
     else:
         return f"未知操作: {action}", True
+
+
+RUN_AUTO_TEST_TOOL_DEFINITION_OPENAI = {
+    "type": "function",
+    "function": {
+        "name": "run_auto_test",
+        "description": (
+            "TDD 自愈测试引擎 - 修改代码后立即运行测试，报错则自动修复，直到全绿。"
+            "这是你修改代码后必须调用的工具！不要在修改完代码后直接告诉用户任务完成，"
+            "必须先调用此工具验证代码正确性。\n"
+            "test_command 示例：\n"
+            "- Python: 'pytest' 或 'python3 -m pytest test_xxx.py'\n"
+            "- C/C++: 'make test' 或 './run_tests'\n"
+            "- Node.js: 'npm test' 或 'npx jest'\n"
+            "- 通用: 'make test' 或任何构建系统的测试命令"
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "test_command": {
+                    "type": "string",
+                    "description": "测试命令，如 'pytest'、'make test'、'npm test'。如果不填，系统会自动检测。",
+                },
+                "test_file": {
+                    "type": "string",
+                    "description": "指定测试文件路径（可选），如 'tests/test_main.py'。不填则运行所有测试。",
+                },
+            },
+            "required": [],
+        },
+    },
+}
+
+RUN_AUTO_TEST_TOOL_DEFINITION_ANTHROPIC = {
+    "name": "run_auto_test",
+    "description": (
+        "TDD 自愈测试引擎 - 修改代码后立即运行测试，报错则自动修复，直到全绿。"
+        "这是你修改代码后必须调用的工具！不要在修改完代码后直接告诉用户任务完成，"
+        "必须先调用此工具验证代码正确性。"
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "test_command": {
+                "type": "string",
+                "description": "测试命令，如 'pytest'、'make test'、'npm test'。如果不填，系统会自动检测。",
+            },
+            "test_file": {
+                "type": "string",
+                "description": "指定测试文件路径（可选）。不填则运行所有测试。",
+            },
+        },
+        "required": [],
+    },
+}
+
+
+def execute_run_auto_test(
+    test_command: str = "",
+    test_file: str = "",
+    work_dir: str = ".",
+) -> tuple[str, bool]:
+    """
+    TDD 自愈引擎核心 - 运行测试并返回结构化结果
+
+    返回格式:
+    - 测试通过: [Test Passed] 所有测试用例通过！
+    - 测试失败: [Test Failed] 自动测试失败，请根据以下报错信息分析原因并调用 file_edit 进行修复：
+                  {error_logs}
+    """
+    if not test_command:
+        framework = detect_test_framework(work_dir)
+        if framework == "pytest":
+            if test_file:
+                test_command = f"python3 -m pytest {test_file} -v --tb=short"
+            else:
+                test_command = "python3 -m pytest -v --tb=short"
+        elif framework == "jest":
+            if test_file:
+                test_command = f"npx jest {test_file} --no-coverage --verbose"
+            else:
+                test_command = "npx jest --no-coverage"
+        elif framework == "vitest":
+            test_command = "npx vitest run"
+        elif framework == "mocha":
+            test_command = "npx mocha"
+        elif framework == "junit":
+            test_command = "mvn test"
+        else:
+            if test_file:
+                test_command = f"python3 -m pytest {test_file} -v --tb=short"
+            else:
+                test_command = "python3 -m pytest -v --tb=short"
+
+    logger.info(f"🧪 TDD 自愈引擎启动: {test_command} (cwd={work_dir})")
+
+    try:
+        proc = subprocess.run(
+            test_command,
+            shell=True,
+            capture_output=True,
+            text=True,
+            timeout=120,
+            cwd=work_dir,
+        )
+
+        full_output = proc.stdout + proc.stderr
+
+        if proc.returncode == 0:
+            summary_lines = full_output.strip().split("\n")[-5:]
+            summary = "\n".join(summary_lines)
+            return (
+                f"[Test Passed] ✅ 所有测试用例通过！\n\n"
+                f"测试命令: {test_command}\n"
+                f"退出码: {proc.returncode}\n\n"
+                f"测试摘要:\n{summary}",
+                False,
+            )
+        else:
+            all_lines = full_output.strip().split("\n")
+            error_tail = "\n".join(all_lines[-50:])
+
+            failed_tests = []
+            for line in all_lines:
+                stripped = line.strip()
+                if "FAILED" in stripped or "FAIL:" in stripped:
+                    failed_tests.append(stripped)
+                elif "AssertionError" in stripped or "AssertionError" in stripped:
+                    failed_tests.append(stripped)
+                elif "Error:" in stripped and "0 errors" not in stripped:
+                    failed_tests.append(stripped)
+
+            failed_summary = ""
+            if failed_tests:
+                failed_summary = "\n失败的测试:\n" + "\n".join(failed_tests[:10])
+
+            return (
+                f"[Test Failed] ❌ 自动测试失败，请根据以下报错信息分析原因并调用 file_edit 进行修复：\n\n"
+                f"测试命令: {test_command}\n"
+                f"退出码: {proc.returncode}\n"
+                f"{failed_summary}\n\n"
+                f"详细报错（最后 50 行）:\n{error_tail}",
+                True,
+            )
+
+    except subprocess.TimeoutExpired:
+        return (
+            "[Test Failed] ❌ 测试执行超时（120秒）。\n"
+            "可能原因：测试中存在死循环或等待输入。请检查代码逻辑。",
+            True,
+        )
+    except Exception as e:
+        return (
+            f"[Test Failed] ❌ 测试执行异常: {str(e)}\n"
+            f"请检查测试命令是否正确: {test_command}",
+            True,
+        )

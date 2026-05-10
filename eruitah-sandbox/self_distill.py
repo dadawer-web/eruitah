@@ -588,6 +588,211 @@ def get_model_switcher() -> ModelSwitcher:
     return _switcher
 
 
+DISTILL_PROMPT = """你是一个经验提炼专家。你的任务是从 AI Agent 的任务执行历史中，提炼出精炼的经验教训。
+
+## 输入
+下面是一段 AI Agent 执行编程任务的完整对话历史（包含大模型的思考、工具调用、报错、重试等）。
+
+## 任务
+请分析这段对话历史，过滤掉无用的尝试和啰嗦的中间过程，提炼出以下三点：
+
+1. **核心问题**：这次任务遇到的最关键的报错/困难是什么？（一句话）
+2. **关键修复**：最终解决问题的核心代码/命令/方法是什么？（一到两行）
+3. **避坑指南**：下次遇到同类问题应注意什么？（一到两句话）
+
+## 输出格式
+请严格按照以下格式输出，不要添加任何多余的解释：
+
+核心问题: <一句话概括>
+关键修复: <核心代码或方法>
+避坑指南: <下次注意的事项>
+
+## 对话历史
+{history}"""
+
+
+def auto_distill(
+    messages: list[dict],
+    work_dir: str,
+    task_id: str = "",
+    task_description: str = "",
+) -> Optional[str]:
+    """任务完成时自动蒸馏：把"经验"从"废话"中提炼出来
+
+    核心逻辑：
+    1. 将本轮任务的 history_messages 喂给小模型
+    2. 小模型过滤无用尝试，提炼出核心问题、关键修复、避坑指南
+    3. 将提炼出的精华通过 memory_store.record_learning 持久化
+    4. 下次 Agent 启动时，memory_store 会加载作为 System Prompt 的一部分
+
+    Args:
+        messages: 本轮任务的完整对话历史
+        work_dir: 工作目录
+        task_id: 任务 ID
+        task_description: 任务描述
+
+    Returns:
+        提炼出的经验摘要，如果蒸馏失败返回 None
+    """
+    if not messages or len(messages) < 3:
+        logger.debug("消息太少，跳过自动蒸馏")
+        return None
+
+    has_error_and_fix = False
+    for msg in messages:
+        content = msg.get("content", "") or ""
+        if isinstance(content, str):
+            if any(kw in content.lower() for kw in ["error", "失败", "报错", "exception", "traceback"]):
+                has_error_and_fix = True
+                break
+        tool_results = []
+        if msg.get("role") == "tool":
+            tool_results.append(content)
+        for tr in tool_results:
+            if isinstance(tr, str) and any(kw in tr.lower() for kw in ["error", "失败", "报错"]):
+                has_error_and_fix = True
+                break
+
+    if not has_error_and_fix:
+        logger.debug("任务中没有遇到错误和修复，跳过自动蒸馏（没有值得提炼的经验）")
+        return None
+
+    history_parts = []
+    for msg in messages:
+        role = msg.get("role", "")
+        content = msg.get("content", "") or ""
+
+        if role == "system":
+            continue
+
+        if role == "user":
+            history_parts.append(f"[用户] {content[:500]}")
+        elif role == "assistant":
+            tool_calls = msg.get("tool_calls", [])
+            if tool_calls:
+                for tc in tool_calls:
+                    fn = tc.get("function", {})
+                    name = fn.get("name", "") if isinstance(fn, dict) else ""
+                    args = fn.get("arguments", "") if isinstance(fn, dict) else ""
+                    if name:
+                        history_parts.append(f"[Agent 调用工具: {name}] {str(args)[:300]}")
+            if content:
+                history_parts.append(f"[Agent] {content[:500]}")
+        elif role == "tool":
+            name = msg.get("name", "")
+            history_parts.append(f"[工具结果: {name}] {content[:500]}")
+
+    history = "\n".join(history_parts)
+
+    if len(history) < 100:
+        logger.debug("对话历史太短，跳过自动蒸馏")
+        return None
+
+    if len(history) > 8000:
+        history = history[:4000] + "\n... (中间省略) ...\n" + history[-4000:]
+
+    prompt = DISTILL_PROMPT.format(history=history)
+
+    distill_result = _call_distill_model(prompt)
+
+    if not distill_result:
+        logger.warning("自动蒸馏：小模型调用失败，跳过")
+        return None
+
+    distill_result = distill_result.strip()
+
+    if len(distill_result) < 10:
+        logger.debug("蒸馏结果太短，跳过")
+        return None
+
+    related_files = _extract_related_files(messages)
+
+    try:
+        from memory_store import record_learning
+        category = "自动蒸馏"
+        lesson = f"[任务: {task_description[:50] or task_id}]\n{distill_result}"
+        result = record_learning(category, lesson, work_dir, related_files)
+        logger.info(f"🧠 自动蒸馏完成并持久化: {result}")
+        return distill_result
+    except Exception as e:
+        logger.error(f"自动蒸馏持久化失败: {e}")
+        return distill_result
+
+
+def _call_distill_model(prompt: str) -> Optional[str]:
+    """调用小模型进行经验蒸馏
+
+    优先使用备用模型（硅基流动 Qwen），因为蒸馏不需要最强模型。
+    """
+    api_key = os.environ.get("FALLBACK_API_KEY", "") or os.environ.get("OPENAI_API_KEY", "")
+    base_url = os.environ.get("FALLBACK_BASE_URL", "") or os.environ.get("OPENAI_BASE_URL", "")
+    model = os.environ.get("FALLBACK_MODEL", "") or os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
+
+    if not api_key or not base_url:
+        logger.warning("自动蒸馏：未配置 API Key 或 Base URL")
+        return None
+
+    if not base_url.endswith("/v1"):
+        base_url = base_url.rstrip("/") + "/v1"
+
+    try:
+        import requests
+        resp = requests.post(
+            f"{base_url}/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": "你是一个经验提炼专家。请严格按照指定格式输出，不要添加任何多余内容。"},
+                    {"role": "user", "content": prompt},
+                ],
+                "temperature": 0.3,
+                "max_tokens": 500,
+            },
+            timeout=30,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        content = data["choices"][0]["message"]["content"]
+        logger.info(f"🧠 蒸馏模型返回 ({len(content)} chars)")
+        return content
+    except Exception as e:
+        logger.error(f"蒸馏模型调用失败: {e}")
+        return None
+
+
+def _extract_related_files(messages: list[dict]) -> list[str]:
+    """从对话历史中提取涉及的文件路径"""
+    files = set()
+    for msg in messages:
+        content = msg.get("content", "") or ""
+        if isinstance(content, str):
+            import re
+            for match in re.finditer(r'[\w/.-]+\.(py|js|ts|cpp|c|h|java|go|rs|rb|json|yaml|yml|toml|md|txt|sh|sql|html|css)', content):
+                filepath = match.group(0)
+                if not filepath.startswith("http") and len(filepath) < 200:
+                    files.add(filepath)
+
+        tool_calls = msg.get("tool_calls", [])
+        for tc in tool_calls:
+            fn = tc.get("function", {})
+            if isinstance(fn, dict):
+                args_str = fn.get("arguments", "")
+                try:
+                    args = json.loads(args_str) if isinstance(args_str, str) else args_str
+                    if isinstance(args, dict):
+                        for key in ("file_path", "path", "filename", "directory"):
+                            if key in args and isinstance(args[key], str):
+                                files.add(args[key])
+                except (json.JSONDecodeError, TypeError):
+                    pass
+
+    return list(files)[:10]
+
+
 DISTILL_TOOL_DEFINITION_ANTHROPIC = {
     "name": "self_distill",
     "description": (

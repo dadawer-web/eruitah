@@ -787,6 +787,29 @@ async def websocket_coding(websocket: WebSocket):
                     work_dir = session.worktree_dir or work_dir
                     logger.info(f"🔄 继续任务 {task_id}: {len(session.messages)} 条任务消息, start_turn={start_turn}")
 
+                    if initial_messages and user_input:
+                        last_msg = initial_messages[-1] if initial_messages else None
+                        if last_msg and last_msg.get("role") == "assistant" and last_msg.get("tool_calls"):
+                            for tc in last_msg["tool_calls"]:
+                                fn = tc.get("function", tc) if isinstance(tc.get("function"), dict) else {}
+                                tc_name = fn.get("name", "") if isinstance(fn, dict) else ""
+                                if tc_name == "ask_user":
+                                    tc_id = tc.get("id", "")
+                                    has_response = any(
+                                        m.get("role") == "tool" and m.get("tool_call_id") == tc_id
+                                        for m in initial_messages
+                                    )
+                                    if not has_response:
+                                        logger.info(f"🔧 检测到未配对的 ask_user tool_call (id={tc_id}), 注入用户回答作为 tool response")
+                                        initial_messages.append({
+                                            "role": "tool",
+                                            "tool_call_id": tc_id,
+                                            "name": "ask_user",
+                                            "content": user_input,
+                                        })
+                                        user_input = ""
+                                        break
+
                 elif task_id:
                     session = sm.get_or_create_session(
                         task_id=task_id,
@@ -800,6 +823,29 @@ async def websocket_coding(websocket: WebSocket):
                         initial_messages = session.messages_before or None
                     start_turn = 1
                     work_dir = session.worktree_dir or work_dir
+
+                    if initial_messages and user_input:
+                        last_msg = initial_messages[-1] if initial_messages else None
+                        if last_msg and last_msg.get("role") == "assistant" and last_msg.get("tool_calls"):
+                            for tc in last_msg["tool_calls"]:
+                                fn = tc.get("function", tc) if isinstance(tc.get("function"), dict) else {}
+                                tc_name = fn.get("name", "") if isinstance(fn, dict) else ""
+                                if tc_name == "ask_user":
+                                    tc_id = tc.get("id", "")
+                                    has_response = any(
+                                        m.get("role") == "tool" and m.get("tool_call_id") == tc_id
+                                        for m in initial_messages
+                                    )
+                                    if not has_response:
+                                        logger.info(f"🔧 检测到未配对的 ask_user tool_call (id={tc_id}), 注入用户回答作为 tool response")
+                                        initial_messages.append({
+                                            "role": "tool",
+                                            "tool_call_id": tc_id,
+                                            "name": "ask_user",
+                                            "content": user_input,
+                                        })
+                                        user_input = ""
+                                        break
                 else:
                     session = sm.get_or_create_session(
                         task_id=None,
@@ -869,20 +915,64 @@ async def websocket_coding(websocket: WebSocket):
                                 pass
 
                     if event.get("type") == "ask_user":
-                        question_id = event.get("data", {}).get("question_id", "")
+                        event_data = event.get("data", {})
+                        question_id = event_data.get("question_id", "")
+                        tool_call_id = event_data.get("tool_call_id", "")
+                        ask_task_id = event_data.get("task_id", task_id or "")
+                        ask_provider = event_data.get("provider", "openai")
+
+                        if not await safe_send(event):
+                            return
 
                         while True:
                             try:
                                 msg = await asyncio.wait_for(client_message_queue.get(), timeout=300)
                                 if msg is None:
                                     return
+
+                                if msg.get("type") == "system_command" and msg.get("action") == "stop_agent":
+                                    logger.info(f"🛑 用户在 ask_user 等待期间请求停止 Agent")
+                                    await safe_send({"type": "agent_status", "status": "IDLE"})
+                                    await safe_send({"type": "stopped", "data": "用户已停止 Agent 执行"})
+                                    return
+
                                 if msg.get("type") == "user_answer" and msg.get("question_id") == question_id:
-                                    from ask_user_tool import resolve_question
-                                    resolve_question(question_id, msg.get("answer", ""))
+                                    user_answer = msg.get("answer", "")
+
+                                    if ask_task_id:
+                                        try:
+                                            from task_manager import get_task_manager
+                                            tm = get_task_manager()
+                                            session = tm.get_session(ask_task_id)
+                                            if session and session.messages:
+                                                history = session.messages_before + session.messages if session.messages_before else session.messages
+                                                history.append({
+                                                    "role": "tool",
+                                                    "tool_call_id": tool_call_id,
+                                                    "name": "ask_user",
+                                                    "content": user_answer,
+                                                })
+                                                tm.update_session_messages(
+                                                    task_id=ask_task_id,
+                                                    messages=session.messages,
+                                                    current_turn=session.current_turn,
+                                                )
+                                                agent_params["initial_messages"] = history
+                                                agent_params["start_turn"] = 1
+                                                agent_params["user_input"] = ""
+                                        except Exception as e:
+                                            logger.error(f"注入 ask_user 工具回复失败: {e}")
+                                            agent_params["user_input"] = f"用户回答: {user_answer}\n请继续执行任务。"
+                                    else:
+                                        agent_params["user_input"] = f"用户回答: {user_answer}\n请继续执行任务。"
+
                                     break
                             except asyncio.TimeoutError:
                                 await safe_send({"type": "error", "data": "等待用户回答超时"})
                                 return
+
+                        agent_needs_restart = True
+                        break
 
                     if event.get("type") == "command_confirmation":
                         event_data = event.get("data", {})
@@ -900,6 +990,13 @@ async def websocket_coding(websocket: WebSocket):
                                 msg = await asyncio.wait_for(client_message_queue.get(), timeout=300)
                                 if msg is None:
                                     return
+
+                                if msg.get("type") == "system_command" and msg.get("action") == "stop_agent":
+                                    logger.info(f"🛑 用户在 command_confirmation 等待期间请求停止 Agent")
+                                    await safe_send({"type": "agent_status", "status": "IDLE"})
+                                    await safe_send({"type": "stopped", "data": "用户已停止 Agent 执行"})
+                                    return
+
                                 if msg.get("type") == "command_confirm" and msg.get("confirmation_id") == confirm_id:
                                     from bash_executor import execute_bash
                                     command = event_data.get("command", "")
@@ -914,6 +1011,15 @@ async def websocket_coding(websocket: WebSocket):
                                             if result.stderr:
                                                 output += f"\n[stderr]\n{result.stderr}"
                                             is_error = result.exit_code != 0
+
+                                            if is_error and result.stderr:
+                                                from bash_executor import parse_compiler_errors
+                                                diagnostics = parse_compiler_errors(result.stderr, work_dir)
+                                                if diagnostics:
+                                                    await safe_send({
+                                                        "type": "diagnostics",
+                                                        "diagnostics": diagnostics,
+                                                    })
                                     else:
                                         output = "用户拒绝执行此命令"
                                         is_error = True

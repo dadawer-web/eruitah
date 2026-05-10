@@ -261,17 +261,25 @@ ASK_USER_TOOL_DEFINITION_OPENAI = {
     "type": "function",
     "function": {
         "name": "ask_user",
-        "description": "向用户提问以获取必要信息。当遇到无法独立解决的逻辑问题、需要用户提供密码/前置条件、或连续失败需要人类指导时使用此工具。",
+        "description": (
+            "向用户提问以获取必要信息或授权。"
+            "【必须调用的场景】1.用户需求极其模糊，你不知道该在哪几个文件中下手；"
+            "2.准备执行删除大量文件、覆盖核心架构逻辑、修改数据库Schema等高危操作；"
+            "3.测试代码反复报错超过3次，你无法理解为什么；"
+            "4.需要用户提供密码、API Key等敏感信息；"
+            "5.存在两种以上截然不同的技术方案，需要人类做决策。"
+            "调用后静静等待人类指令，不要自己乱猜。"
+        ),
         "parameters": {
             "type": "object",
             "properties": {
                 "question": {
                     "type": "string",
-                    "description": "向用户提出的问题"
+                    "description": "向用户提出的问题或确认信息（必须具体、明确，不能含糊）"
                 },
                 "context": {
                     "type": "string",
-                    "description": "问题的背景信息（为什么需要问用户）"
+                    "description": "问题的背景信息（为什么需要问用户，你目前遇到了什么困难）"
                 }
             },
             "required": ["question"]
@@ -281,17 +289,25 @@ ASK_USER_TOOL_DEFINITION_OPENAI = {
 
 ASK_USER_TOOL_DEFINITION_ANTHROPIC = {
     "name": "ask_user",
-    "description": "向用户提问以获取必要信息。当遇到无法独立解决的逻辑问题、需要用户提供密码/前置条件、或连续失败需要人类指导时使用此工具。",
+    "description": (
+        "向用户提问以获取必要信息或授权。"
+        "【必须调用的场景】1.用户需求极其模糊，你不知道该在哪几个文件中下手；"
+        "2.准备执行删除大量文件、覆盖核心架构逻辑、修改数据库Schema等高危操作；"
+        "3.测试代码反复报错超过3次，你无法理解为什么；"
+        "4.需要用户提供密码、API Key等敏感信息；"
+        "5.存在两种以上截然不同的技术方案，需要人类做决策。"
+        "调用后静静等待人类指令，不要自己乱猜。"
+    ),
     "input_schema": {
         "type": "object",
         "properties": {
             "question": {
                 "type": "string",
-                "description": "向用户提出的问题"
+                "description": "向用户提出的问题或确认信息（必须具体、明确，不能含糊）"
             },
             "context": {
                 "type": "string",
-                "description": "问题的背景信息（为什么需要问用户）"
+                "description": "问题的背景信息（为什么需要问用户，你目前遇到了什么困难）"
             }
         },
         "required": ["question"]

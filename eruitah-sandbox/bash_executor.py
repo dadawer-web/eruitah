@@ -482,3 +482,63 @@ def execute_bash(
         truncated=stdout_truncated or stderr_truncated,
         elapsed_seconds=elapsed,
     )
+
+
+_COMPILER_ERROR_PATTERNS = [
+    re.compile(r'^(.+?):(\d+):(\d+):\s*(?:error|fatal\s+error):\s*(.+)$', re.MULTILINE),
+    re.compile(r'^(.+?):(\d+):(\d+):\s*warning:\s*(.+)$', re.MULTILINE),
+    re.compile(r'^(.+?):(\d+):(\d+):\s*note:\s*(.+)$', re.MULTILINE),
+    re.compile(r'^(.+?):(\d+):\s*(?:error|fatal\s+error):\s*(.+)$', re.MULTILINE),
+    re.compile(r'^\s*File\s+"(.+?)",\s*line\s+(\d+)', re.MULTILINE),
+    re.compile(r'^(.+?):(\d+):(\d+)\s*-\s*error\s+(.+)$', re.MULTILINE),
+    re.compile(r'^(.+?)\((\d+),(\d+)\):\s*error\s+(.+)$', re.MULTILINE),
+]
+
+
+def parse_compiler_errors(stderr: str, work_dir: str = "") -> list:
+    if not stderr:
+        return []
+
+    diagnostics = []
+    seen = set()
+
+    for pattern in _COMPILER_ERROR_PATTERNS:
+        for match in pattern.finditer(stderr):
+            groups = match.groups()
+            file_path = groups[0].strip()
+            line_num = int(groups[1])
+
+            col_num = 1
+            message = ""
+            if len(groups) >= 4 and isinstance(groups[2], str) and groups[2].isdigit():
+                col_num = int(groups[2])
+                message = groups[3].strip()
+            elif len(groups) >= 3:
+                message = groups[-1].strip()
+
+            raw = match.group(0).lower()
+            if "warning" in raw:
+                severity = "warning"
+            elif "note" in raw:
+                severity = "info"
+            else:
+                severity = "error"
+
+            if not os.path.isabs(file_path) and work_dir:
+                file_path = os.path.join(work_dir, file_path)
+            file_path = os.path.abspath(file_path)
+
+            key = f"{file_path}:{line_num}:{col_num}"
+            if key not in seen:
+                seen.add(key)
+                diagnostics.append({
+                    "file": file_path,
+                    "line": line_num,
+                    "column": col_num,
+                    "endLine": line_num,
+                    "endColumn": col_num + 10,
+                    "message": message,
+                    "severity": severity,
+                })
+
+    return diagnostics

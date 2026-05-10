@@ -570,7 +570,7 @@ DISPATCH_SUBTASKS_TOOL_DEFINITION_ANTHROPIC = {
         "- bash: 执行任意 bash 命令（在独立沙盒中执行）\n"
         "- llm: 调用子智能体（mimo-v2.5-pro）分析问题、生成方案、审查代码\n\n"
         "系统会自动为需要沙盒的子任务分配独立工作区（WarmPool 预热池），"
-        "并发执行并汇总结果。每个子任务有 30 秒超时保护。"
+        "并发执行并汇总结果。子任务超时保护：bash 120s，compile/test 180s，llm 300s。"
     ),
     "input_schema": {
         "type": "object",
@@ -622,7 +622,7 @@ DISPATCH_SUBTASKS_TOOL_DEFINITION_OPENAI = {
         "description": (
             "子任务并发派发工具 - 将复杂任务拆分为多个子任务并发执行。"
             "例如：同时搜索文档 + 编译代码 + 运行测试 + 让子智能体分析代码。"
-            "系统自动分配独立沙盒工作区，30秒超时保护。"
+            "系统自动分配独立沙盒工作区，超时保护：bash 120s，compile/test 180s，llm 300s。"
             "llm 类型会调用 mimo-v2.5-pro 子智能体进行代码分析、方案生成等。"
         ),
         "parameters": {
@@ -776,15 +776,20 @@ async def run_single_subagent(
             )
 
             try:
+                task_timeout = 120.0
+                if task_type == "llm":
+                    task_timeout = 300.0
+                elif task_type in ("compile", "test"):
+                    task_timeout = 180.0
                 stdout_bytes, stderr_bytes = await asyncio.wait_for(
                     proc.communicate(),
-                    timeout=30.0,
+                    timeout=task_timeout,
                 )
             except asyncio.TimeoutError:
                 proc.kill()
                 await proc.wait()
                 result.status = "timeout"
-                result.error = f"子进程超时被斩断 (30s)"
+                result.error = f"子进程超时被斩断 ({task_timeout:.0f}s)"
                 result.elapsed_seconds = time.time() - start_time
                 logger.warning(
                     f"🚨 Subagent-{task_id} 子进程超时被斩断!"
@@ -953,9 +958,19 @@ async def dispatch_and_gather(
     tasks: list,
     work_dir: str,
     main_repo_dir: str = "",
-    global_timeout: float = 30.0,
+    global_timeout: float = 0,
 ) -> list:
-    logger.info(f"🚀 并发派发了 {len(tasks)} 个子任务...")
+    if global_timeout <= 0:
+        max_task_timeout = 120.0
+        for t in tasks:
+            tt = t.get("type", "bash")
+            if tt == "llm":
+                max_task_timeout = max(max_task_timeout, 300.0)
+            elif tt in ("compile", "test"):
+                max_task_timeout = max(max_task_timeout, 180.0)
+        global_timeout = max_task_timeout + 30.0
+
+    logger.info(f"🚀 并发派发了 {len(tasks)} 个子任务（全局超时: {global_timeout:.0f}s）...")
 
     coroutines = [
         run_single_subagent(t, work_dir, main_repo_dir)
@@ -1027,7 +1042,7 @@ def execute_dispatch_subtasks(
     subtasks: list,
     work_dir: str = ".",
     main_repo_dir: str = "",
-    timeout_per_task: float = 30.0,
+    timeout_per_task: float = 120.0,
 ) -> tuple[str, bool]:
     if not subtasks:
         return "❌ 子任务列表不能为空", True

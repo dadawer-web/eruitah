@@ -1,0 +1,13 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.git/
+.checkpoints/
+.eruitah_cache/
+.eruitah_snapshots/
+.code_index.db
+*.db
+node_modules/
+.env
+*.log

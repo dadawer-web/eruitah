@@ -23,12 +23,12 @@ class LSPConnection:
         self._initialized = False
         self._lock = threading.Lock()
 
-    def initialize(self, root_uri: str = "") -> bool:
+    def initialize(self, root_uri: str = "", init_options: dict = None) -> bool:
         """执行 LSP 初始化握手"""
         root_path = root_uri or os.getcwd()
         uri = f"file://{root_path}"
 
-        result = self.send_request("initialize", {
+        init_params = {
             "processId": os.getpid(),
             "rootUri": uri,
             "rootPath": root_path,
@@ -47,7 +47,12 @@ class LSPConnection:
                     "symbol": {"dynamicRegistration": False},
                 },
             },
-        })
+        }
+
+        if init_options:
+            init_params["initializationOptions"] = init_options
+
+        result = self.send_request("initialize", init_params)
 
         if result is None:
             logger.error(f"LSP 初始化失败: {self.language}")
@@ -228,55 +233,281 @@ class LSPClient:
 
             conn = self._start_server(language)
             if conn:
-                if conn.initialize(root_uri):
+                init_opts = self.LSP_INIT_OPTIONS.get(language)
+                server_init_opts = None
+                if init_opts:
+                    for server_name, opts in init_opts.items():
+                        server_init_opts = opts
+                        break
+
+                if conn.initialize(root_uri, init_options=server_init_opts):
                     self.connections[language] = conn
                     return conn
                 else:
                     conn.close()
             return None
 
-    def _start_server(self, language: str) -> Optional[LSPConnection]:
-        """启动语言服务器"""
-        commands = {
-            'cpp': ['clangd'],
-            'python': ['pyright-langserver', '--stdio'],
-            'javascript': ['typescript-language-server', '--stdio'],
-            'typescript': ['typescript-language-server', '--stdio'],
-            'java': ['jdtls'],
-            'rust': ['rust-analyzer'],
-            'go': ['gopls'],
-        }
+    LSP_SERVERS = {
+        'python': [
+            ['pyright-langserver', '--stdio'],
+            ['pylsp'],
+            ['pyls'],
+            ['basedpyright-langserver', '--stdio'],
+        ],
+        'cpp': [
+            ['clangd', '--log=verbose'],
+            ['clangd-18', '--log=verbose'],
+            ['clangd-17', '--log=verbose'],
+            ['clangd-16', '--log=verbose'],
+            ['clangd-15', '--log=verbose'],
+            ['clangd-14', '--log=verbose'],
+            ['ccls'],
+        ],
+        'javascript': [
+            ['typescript-language-server', '--stdio'],
+            ['vscode-json-language-server', '--stdio'],
+        ],
+        'typescript': [
+            ['typescript-language-server', '--stdio'],
+        ],
+        'java': [
+            ['__jdtls__'],
+        ],
+        'rust': [
+            ['rust-analyzer'],
+        ],
+        'go': [
+            ['gopls'],
+        ],
+    }
 
-        cmd = commands.get(language)
-        if not cmd:
+    LSP_INIT_OPTIONS = {
+        'cpp': {
+            'clangd': {
+                'fallbackFlags': ['-std=c++17'],
+                'completion': {'allScopes': True},
+            },
+        },
+    }
+
+    LSP_AUTO_INSTALL = {
+        'python': {
+            'check': ['pyright-langserver', '--version'],
+            'install': ['npm', 'install', '-g', 'pyright'],
+            'name': 'pyright',
+        },
+        'typescript': {
+            'check': ['typescript-language-server', '--version'],
+            'install': ['npm', 'install', '-g', 'typescript-language-server', 'typescript'],
+            'name': 'typescript-language-server',
+        },
+        'javascript': {
+            'check': ['typescript-language-server', '--version'],
+            'install': ['npm', 'install', '-g', 'typescript-language-server', 'typescript'],
+            'name': 'typescript-language-server',
+        },
+        'cpp': {
+            'check': ['clangd', '--version'],
+            'install': ['apt-get', 'install', '-y', 'clangd'],
+            'name': 'clangd',
+        },
+        'rust': {
+            'check': ['rust-analyzer', '--version'],
+            'install': ['bash', '-c', 'curl -L https://github.com/rust-lang/rust-analyzer/releases/latest/download/rust-analyzer-x86_64-unknown-linux-gnu.gz | gunzip -c > /usr/local/bin/rust-analyzer && chmod +x /usr/local/bin/rust-analyzer'],
+            'name': 'rust-analyzer',
+        },
+        'go': {
+            'check': ['gopls', 'version'],
+            'install': ['bash', '-c', 'go install golang.org/x/tools/gopls@latest && mv ~/go/bin/gopls /usr/local/bin/'],
+            'name': 'gopls',
+        },
+    }
+
+    def _start_server(self, language: str) -> Optional[LSPConnection]:
+        if language == 'java':
+            return self._start_jdtls()
+
+        commands_list = self.LSP_SERVERS.get(language, [])
+
+        if not commands_list:
+            return None
+
+        for cmd in commands_list:
+            try:
+                sock1, sock2 = socket.socketpair()
+
+                init_opts = self.LSP_INIT_OPTIONS.get(language, {})
+
+                server_process = subprocess.Popen(
+                    cmd,
+                    stdin=sock2,
+                    stdout=sock2,
+                    stderr=subprocess.PIPE,
+                    text=False,
+                )
+                sock2.close()
+
+                time.sleep(0.3)
+
+                if server_process.poll() is not None:
+                    sock1.close()
+                    stderr_output = ""
+                    try:
+                        stderr_output = server_process.stderr.read(500).decode('utf-8', errors='replace')
+                    except Exception:
+                        pass
+                    logger.debug(f"LSP 服务器 {cmd[0]} 启动失败 (exit={server_process.returncode}): {stderr_output[:200]}")
+                    continue
+
+                logger.info(f"✅ LSP 服务器启动成功: {language} → {cmd[0]}")
+                return LSPConnection(server_process, sock1, language)
+            except FileNotFoundError:
+                logger.debug(f"LSP 服务器未安装: {cmd[0]}，尝试下一个后备方案...")
+                continue
+            except Exception as e:
+                logger.debug(f"启动 LSP 服务器 {cmd[0]} 失败: {e}")
+                continue
+
+        install_info = self.LSP_AUTO_INSTALL.get(language)
+        if install_info:
+            logger.info(f"🔧 尝试自动安装 LSP 服务器: {install_info['name']}...")
+            try:
+                result = subprocess.run(
+                    install_info['install'],
+                    capture_output=True, text=True, timeout=120,
+                )
+                if result.returncode == 0:
+                    logger.info(f"✅ LSP 服务器 {install_info['name']} 安装成功，重新启动...")
+                    for cmd in commands_list:
+                        try:
+                            sock1, sock2 = socket.socketpair()
+                            server_process = subprocess.Popen(
+                                cmd,
+                                stdin=sock2,
+                                stdout=sock2,
+                                stderr=subprocess.PIPE,
+                                text=False,
+                            )
+                            sock2.close()
+                            time.sleep(0.3)
+                            if server_process.poll() is not None:
+                                sock1.close()
+                                continue
+                            logger.info(f"✅ LSP 服务器自动安装后启动成功: {language} → {cmd[0]}")
+                            return LSPConnection(server_process, sock1, language)
+                        except Exception:
+                            continue
+                else:
+                    logger.warning(f"LSP 自动安装失败: {result.stderr[:200]}")
+            except Exception as e:
+                logger.warning(f"LSP 自动安装异常: {e}")
+
+        logger.warning(f"⚠️ 所有 LSP 后备方案均失败: {language}")
+        return None
+
+    def _start_jdtls(self) -> Optional[LSPConnection]:
+        """启动 Eclipse JDT Language Server (Java LSP)
+
+        jdtls 的启动比较特殊，需要：
+        1. 找到 jdtls 的安装路径（/opt/jdtls 或 PATH 中）
+        2. 设置 JAVA_HOME
+        3. 构建包含多个 JAR 的 classpath
+        4. 使用特定的启动参数
+        """
+        jdtls_home = os.environ.get("JDTLS_HOME", "/opt/jdtls")
+        java_home = os.environ.get("JAVA_HOME", "/usr/lib/jvm/default-java")
+
+        jdtls_cmd = self._build_jdtls_command(jdtls_home, java_home)
+        if not jdtls_cmd:
+            logger.warning("⚠️ 未找到 jdtls 安装，Java LSP 不可用")
+            logger.info("提示: 安装 jdtls: 下载 https://download.eclipse.org/jdtls/snapshots/ 解压到 /opt/jdtls")
             return None
 
         try:
             sock1, sock2 = socket.socketpair()
+            env = os.environ.copy()
+            env["JAVA_HOME"] = java_home
 
             server_process = subprocess.Popen(
-                cmd,
+                jdtls_cmd,
                 stdin=sock2,
                 stdout=sock2,
                 stderr=subprocess.PIPE,
                 text=False,
+                env=env,
             )
             sock2.close()
 
-            time.sleep(0.3)
+            time.sleep(1.0)
 
             if server_process.poll() is not None:
                 sock1.close()
-                logger.error(f"LSP 服务器启动失败: {language}")
+                stderr_output = ""
+                try:
+                    stderr_output = server_process.stderr.read(1000).decode('utf-8', errors='replace')
+                except Exception:
+                    pass
+                logger.error(f"jdtls 启动失败 (exit={server_process.returncode}): {stderr_output[:500]}")
                 return None
 
-            return LSPConnection(server_process, sock1, language)
-        except FileNotFoundError:
-            logger.warning(f"LSP 服务器未安装: {language} ({cmd[0]})")
-            return None
+            logger.info(f"✅ LSP 服务器启动成功: java → jdtls ({jdtls_home})")
+            return LSPConnection(server_process, sock1, 'java')
         except Exception as e:
-            logger.error(f"启动 LSP 服务器失败: {e}")
+            logger.error(f"启动 jdtls 失败: {e}")
             return None
+
+    def _build_jdtls_command(self, jdtls_home: str, java_home: str) -> Optional[list]:
+        """构建 jdtls 启动命令"""
+        jdtls_script = os.path.join(jdtls_home, "bin", "jdtls")
+        if os.path.isfile(jdtls_script) and os.access(jdtls_script, os.X_OK):
+            return [jdtls_script]
+
+        plugins_dir = os.path.join(jdtls_home, "plugins")
+        config_dir = os.path.join(jdtls_home, "config_linux")
+
+        if not os.path.isdir(plugins_dir):
+            return None
+
+        java_bin = os.path.join(java_home, "bin", "java")
+        if not os.path.isfile(java_bin):
+            java_bin = "java"
+
+        launcher_jar = None
+        for f in sorted(os.listdir(plugins_dir)):
+            if f.startswith("org.eclipse.equinox.launcher_") and f.endswith(".jar"):
+                launcher_jar = os.path.join(plugins_dir, f)
+                break
+
+        if not launcher_jar:
+            return None
+
+        config_dir = config_dir if os.path.isdir(config_dir) else os.path.join(jdtls_home, "config_ss_linux")
+        if not os.path.isdir(config_dir):
+            config_dir = ""
+
+        cmd = [
+            java_bin,
+            "-Declipse.application=org.eclipse.jdt.ls.core.id1",
+            "-Dosgi.bundles.defaultStartLevel=4",
+            "-Declipse.product=org.eclipse.jdt.ls.core.product",
+            "-Dlog.level=ALL",
+            "-Xmx1G",
+            f"-javaagent:{launcher_jar}",
+        ]
+
+        if config_dir:
+            cmd.extend([
+                "--add-modules=ALL-SYSTEM",
+                "--add-opens", "java.base/java.util=ALL-UNNAMED",
+                "--add-opens", "java.base/java.lang=ALL-UNNAMED",
+                "-jar", launcher_jar,
+                "-configuration", config_dir,
+                "-data", os.path.join(jdtls_home, "data"),
+            ])
+        else:
+            cmd.extend(["-jar", launcher_jar])
+
+        return cmd
 
     def _get_language(self, file_path: str) -> str:
         ext = os.path.splitext(file_path)[1].lower()
@@ -508,6 +739,119 @@ class LSPClient:
             25: "Operator", 26: "TypeParameter"
         }
         return kinds.get(kind, "Unknown")
+
+    def get_diagnostics(self, file_path: str, root_uri: str = "") -> List[Dict[str, Any]]:
+        language = self._get_language(file_path)
+        if not language:
+            return []
+
+        conn = self.get_connection(language, root_uri)
+        if not conn:
+            return []
+
+        self._ensure_file_open(file_path, conn)
+
+        try:
+            abs_path = os.path.abspath(file_path)
+            uri = f"file://{abs_path}"
+
+            with open(abs_path, 'r', encoding='utf-8', errors='replace') as f:
+                content = f.read()
+            conn.did_change(abs_path, content, version=2)
+
+            import time
+            time.sleep(0.5)
+
+            pushed_diags = self._try_read_pushed_diagnostics(conn, uri)
+            if pushed_diags is not None:
+                return pushed_diags
+
+            result = conn.send_request("textDocument/diagnostic", {
+                "textDocument": {"uri": uri}
+            })
+
+            diagnostics = []
+            if result and "items" in result:
+                for item in result["items"]:
+                    diag = self._lsp_diag_to_json(item)
+                    if diag:
+                        diagnostics.append(diag)
+            elif result and "relatedDocuments" in result:
+                for doc_uri, doc_diags in result["relatedDocuments"].items():
+                    if isinstance(doc_diags, list):
+                        for item in doc_diags:
+                            diag = self._lsp_diag_to_json(item)
+                            if diag:
+                                diagnostics.append(diag)
+
+            return diagnostics
+        except Exception as e:
+            logger.error(f"获取 LSP 诊断失败: {e}")
+            return []
+
+    def _try_read_pushed_diagnostics(self, conn: LSPConnection, uri: str) -> Optional[List[Dict[str, Any]]]:
+        try:
+            if not conn.sock:
+                return None
+            conn.sock.settimeout(0.1)
+            data = conn.sock.recv(65536)
+            if not data:
+                return None
+            conn.buffer += data
+
+            while True:
+                header_end = conn.buffer.find(b'\r\n\r\n')
+                if header_end == -1:
+                    break
+                header = conn.buffer[:header_end].decode('utf-8')
+                content_length = 0
+                for line in header.split('\r\n'):
+                    if line.startswith('Content-Length:'):
+                        content_length = int(line.split(':')[1].strip())
+                        break
+                if content_length == 0:
+                    break
+                total_length = header_end + 4 + content_length
+                if len(conn.buffer) < total_length:
+                    break
+                body = conn.buffer[header_end + 4:total_length]
+                conn.buffer = conn.buffer[total_length:]
+                try:
+                    msg = json.loads(body.decode('utf-8'))
+                    if msg.get("method") == "textDocument/publishDiagnostics":
+                        params = msg.get("params", {})
+                        msg_uri = params.get("uri", "")
+                        if msg_uri == uri or msg_uri.endswith(uri.replace("file://", "")):
+                            diagnostics = []
+                            for item in params.get("diagnostics", []):
+                                diag = self._lsp_diag_to_json(item)
+                                if diag:
+                                    diagnostics.append(diag)
+                            return diagnostics
+                except json.JSONDecodeError:
+                    pass
+        except socket.timeout:
+            pass
+        except Exception:
+            pass
+        return None
+
+    def _lsp_diag_to_json(self, item: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        if not isinstance(item, dict):
+            return None
+        range_info = item.get("range", {})
+        start = range_info.get("start", {})
+        end = range_info.get("end", {})
+        severity = item.get("severity", 3)
+        severity_map = {1: "error", 2: "warning", 3: "info", 4: "hint"}
+        return {
+            "line": start.get("line", 0) + 1,
+            "column": start.get("character", 0) + 1,
+            "endLine": end.get("line", 0) + 1,
+            "endColumn": end.get("character", 0) + 1,
+            "message": item.get("message", ""),
+            "severity": severity_map.get(severity, "info"),
+        }
 
     def close_all(self):
         """关闭所有连接"""
