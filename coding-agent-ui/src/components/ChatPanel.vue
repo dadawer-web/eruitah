@@ -6,6 +6,8 @@ const store = useAgentStore()
 const inputText = ref('')
 const chatContainer = ref(null)
 const showHistory = ref(true)
+const expandedThoughts = ref({})
+const useSwarm = ref(false)
 
 const pendingQuestions = computed(() => {
   return store.messages.filter(m => m.isQuestion && !m.answered)
@@ -25,7 +27,7 @@ function handleSend() {
   if (pendingQuestion) {
     store.answerQuestion(pendingQuestion.questionId, text)
   } else {
-    store.sendTask(text)
+    store.sendTask(text, { use_swarm: useSwarm.value })
   }
   inputText.value = ''
 }
@@ -46,6 +48,21 @@ function formatTime(timestamp) {
 
 function handleUndoToTurn(turn, taskId) {
   store.previewRollback(taskId, 1, turn)
+}
+
+function toggleThought(idx) {
+  expandedThoughts.value[idx] = !expandedThoughts.value[idx]
+}
+
+function getMsgType(msg) {
+  if (msg.msgType === 'agent_state') return 'agent_state'
+  if (msg.msgType === 'system_alert') return 'system_alert'
+  if (msg.msgType === 'context_update') return 'context_update'
+  if (msg.isChat) return 'chat'
+  if (msg.isError) return 'error'
+  if (msg.isFinish) return 'finish'
+  if (msg.isQuestion) return 'question'
+  return 'default'
 }
 </script>
 
@@ -74,52 +91,145 @@ function handleUndoToTurn(turn, taskId) {
 
       <!-- Chat 消息区 -->
       <div ref="chatContainer" class="flex-1 overflow-y-auto px-4 py-3 space-y-3">
-        <div
-          v-for="(msg, idx) in store.messages"
-          :key="idx"
-          class="text-xs leading-relaxed group"
-          :class="{
-            'text-geek-accent': msg.role === 'user',
-            'text-geek-text': msg.role === 'agent' && !msg.isError,
-            'text-red-400': msg.isError,
-            'text-green-400': msg.isFinish,
-          }"
-        >
-          <div class="flex items-center gap-2 mb-1">
-            <span
-              class="font-bold text-[11px]"
-              :class="{
-                'text-geek-accent': msg.role === 'user',
-                'text-blue-400': msg.role === 'agent' && !msg.isError && !msg.isFinish,
-                'text-red-400': msg.isError,
-                'text-green-400': msg.isFinish,
-              }"
-            >
-              {{ msg.role === 'user' ? '▸ You' : '▸ Agent' }}
-            </span>
-            <span class="text-geek-text-dim text-[10px]">{{ formatTime(msg.timestamp) }}</span>
-            <span v-if="msg.isFinish" class="text-[10px] bg-green-900/50 text-green-400 px-1.5 py-0.5 rounded">完成</span>
-            <span v-if="msg.isError" class="text-[10px] bg-red-900/50 text-red-400 px-1.5 py-0.5 rounded">错误</span>
-            <span v-if="msg.isQuestion && !msg.answered" class="text-[10px] bg-yellow-900/50 text-yellow-400 px-1.5 py-0.5 rounded">待回答</span>
+        <template v-for="(msg, idx) in store.messages" :key="idx">
+
+          <!-- ═══ agent_state: thinking 深度推理折叠面板 ═══ -->
+          <div v-if="getMsgType(msg) === 'agent_state' && msg.agentStatus === 'thinking'" class="thinking-panel">
             <button
-              v-if="msg.role === 'agent' && !msg.isError && !msg.isFinish && store.activeTaskId && idx > 0"
-              @click="handleUndoToTurn(Math.ceil(idx / 2), store.activeTaskId)"
-              class="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-[10px] px-2 py-0.5 rounded bg-red-900/30 text-red-400 border border-red-500/30 hover:bg-red-900/50 hover:border-red-500/50"
-              title="撤销至此消息之前的状态"
+              @click="toggleThought(idx)"
+              class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg bg-blue-950/40 border border-blue-500/20 hover:border-blue-500/40 transition-all group"
             >
-              ⏪ 撤销至此
+              <span class="text-sm breathing-icon">🧠</span>
+              <span class="text-[11px] font-medium text-blue-300/90 flex-1 text-left truncate">
+                {{ expandedThoughts[idx] ? '🧠 Agent 推理过程' : '🧠 Agent 正在推演逻辑...' }}
+              </span>
+              <svg
+                class="w-3.5 h-3.5 text-blue-400/60 transition-transform duration-200"
+                :class="{ 'rotate-180': expandedThoughts[idx] }"
+                fill="none" viewBox="0 0 24 24" stroke="currentColor"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
             </button>
+            <Transition name="expand">
+              <div v-if="expandedThoughts[idx]" class="mt-1.5 px-3 py-2.5 rounded-lg bg-geek-bg/60 border border-blue-500/10 backdrop-blur-sm">
+                <div class="text-[10px] text-blue-200/50 leading-relaxed whitespace-pre-wrap">{{ msg.content }}</div>
+              </div>
+            </Transition>
           </div>
-          <div class="whitespace-pre-wrap break-words pl-4 border-l-2 border-geek-border/50">
-            {{ msg.content }}
+
+          <!-- ═══ agent_state: searching 搜索徽章 ═══ -->
+          <div v-else-if="getMsgType(msg) === 'agent_state' && msg.agentStatus === 'searching'" class="flex items-center gap-2 py-1">
+            <div class="search-badge">
+              <span class="text-xs animate-pulse">🔍</span>
+              <span class="text-[10px] font-medium text-cyan-300/90 truncate max-w-[200px]">{{ msg.content }}</span>
+            </div>
           </div>
-          <div v-if="msg.isQuestion && !msg.answered" class="mt-1 pl-4 text-yellow-400 text-[10px]">
-            ↑ 请在下方输入框回答此问题
+
+          <!-- ═══ system_alert 系统拦截卡片 ═══ -->
+          <div v-else-if="getMsgType(msg) === 'system_alert'" class="alert-card">
+            <div class="flex items-start gap-2.5 px-3 py-2.5 rounded-lg bg-amber-950/30 border border-amber-500/25 backdrop-blur-sm">
+              <span class="text-sm mt-0.5 shrink-0">🛡️</span>
+              <div class="flex-1 min-w-0">
+                <div class="text-[10px] font-bold text-amber-400/80 mb-0.5">系统自愈</div>
+                <div class="text-[10px] text-amber-200/60 leading-relaxed">{{ msg.content }}</div>
+              </div>
+            </div>
           </div>
-          <div v-if="msg.answered" class="mt-1 pl-4 text-green-400 text-[10px]">
-            已回答: {{ msg.answer }}
+
+          <!-- ═══ context_update 活跃文件徽章 ═══ -->
+          <div v-else-if="getMsgType(msg) === 'context_update'" class="flex items-center gap-1.5 flex-wrap py-0.5">
+            <span class="text-[10px] text-geek-text-dim">📂</span>
+            <span
+              v-for="f in (msg.files || [])"
+              :key="f"
+              class="context-file-tag"
+            >{{ f }}</span>
           </div>
-        </div>
+
+          <!-- ═══ chat 结构化回复 ═══ -->
+          <div v-else-if="getMsgType(msg) === 'chat'" class="text-xs leading-relaxed group">
+            <div class="flex items-center gap-2 mb-1.5">
+              <span class="font-bold text-[11px] text-emerald-400">▸ Agent</span>
+              <span class="text-geek-text-dim text-[10px]">{{ formatTime(msg.timestamp) }}</span>
+              <span class="text-[10px] bg-emerald-900/40 text-emerald-400/80 px-1.5 py-0.5 rounded">回复</span>
+            </div>
+            <div class="chat-content-block pl-4 border-l-2 border-emerald-500/30 whitespace-pre-wrap break-words text-geek-text/90">
+              {{ msg.content }}
+            </div>
+          </div>
+
+          <!-- ═══ error 错误消息 ═══ -->
+          <div v-else-if="getMsgType(msg) === 'error'" class="text-xs leading-relaxed group">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="font-bold text-[11px] text-red-400">▸ Agent</span>
+              <span class="text-geek-text-dim text-[10px]">{{ formatTime(msg.timestamp) }}</span>
+              <span class="text-[10px] bg-red-900/50 text-red-400 px-1.5 py-0.5 rounded">错误</span>
+              <button
+                v-if="store.activeTaskId && idx > 0"
+                @click="handleUndoToTurn(Math.ceil(idx / 2), store.activeTaskId)"
+                class="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-[10px] px-2 py-0.5 rounded bg-red-900/30 text-red-400 border border-red-500/30 hover:bg-red-900/50 hover:border-red-500/50"
+                title="撤销至此消息之前的状态"
+              >⏪ 撤销至此</button>
+            </div>
+            <div class="pl-4 border-l-2 border-red-500/30 whitespace-pre-wrap break-words text-red-300/80">
+              {{ msg.content }}
+            </div>
+          </div>
+
+          <!-- ═══ finish 完成消息 ═══ -->
+          <div v-else-if="getMsgType(msg) === 'finish'" class="text-xs leading-relaxed">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="font-bold text-[11px] text-green-400">▸ Agent</span>
+              <span class="text-geek-text-dim text-[10px]">{{ formatTime(msg.timestamp) }}</span>
+              <span class="text-[10px] bg-green-900/50 text-green-400 px-1.5 py-0.5 rounded">完成</span>
+            </div>
+            <div class="pl-4 border-l-2 border-green-500/30 whitespace-pre-wrap break-words text-green-300/80">
+              {{ msg.content }}
+            </div>
+          </div>
+
+          <!-- ═══ question 待回答消息 ═══ -->
+          <div v-else-if="getMsgType(msg) === 'question'" class="text-xs leading-relaxed">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="font-bold text-[11px] text-yellow-400">▸ Agent</span>
+              <span class="text-geek-text-dim text-[10px]">{{ formatTime(msg.timestamp) }}</span>
+              <span v-if="!msg.answered" class="text-[10px] bg-yellow-900/50 text-yellow-400 px-1.5 py-0.5 rounded animate-pulse">待回答</span>
+            </div>
+            <div class="pl-4 border-l-2 border-yellow-500/30 whitespace-pre-wrap break-words text-geek-text">
+              {{ msg.content }}
+            </div>
+            <div v-if="!msg.answered" class="mt-1 pl-4 text-yellow-400 text-[10px]">
+              ↑ 请在下方输入框回答此问题
+            </div>
+            <div v-if="msg.answered" class="mt-1 pl-4 text-green-400 text-[10px]">
+              已回答: {{ msg.answer }}
+            </div>
+          </div>
+
+          <!-- ═══ default: 用户消息 & 普通Agent消息 ═══ -->
+          <div v-else class="text-xs leading-relaxed group" :class="{ 'text-geek-accent': msg.role === 'user' }">
+            <div class="flex items-center gap-2 mb-1">
+              <span
+                class="font-bold text-[11px]"
+                :class="msg.role === 'user' ? 'text-geek-accent' : 'text-blue-400'"
+              >
+                {{ msg.role === 'user' ? '▸ You' : '▸ Agent' }}
+              </span>
+              <span class="text-geek-text-dim text-[10px]">{{ formatTime(msg.timestamp) }}</span>
+              <button
+                v-if="msg.role === 'agent' && store.activeTaskId && idx > 0"
+                @click="handleUndoToTurn(Math.ceil(idx / 2), store.activeTaskId)"
+                class="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-[10px] px-2 py-0.5 rounded bg-red-900/30 text-red-400 border border-red-500/30 hover:bg-red-900/50 hover:border-red-500/50"
+                title="撤销至此消息之前的状态"
+              >⏪ 撤销至此</button>
+            </div>
+            <div class="whitespace-pre-wrap break-words pl-4 border-l-2 border-geek-border/50 text-geek-text">
+              {{ msg.content }}
+            </div>
+          </div>
+
+        </template>
         <div v-if="!store.messages.length" class="text-geek-text-dim text-xs italic py-8 text-center">
           {{ store.activeTaskId ? '在当前任务下继续追问...' : '发送任务给 AI Agent 开始编程...' }}
         </div>
@@ -145,6 +255,16 @@ function handleUndoToTurn(turn, taskId) {
             class="px-4 py-2 bg-geek-accent/10 text-geek-accent border border-geek-accent/30 rounded text-xs font-bold hover:bg-geek-accent/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {{ pendingQuestions.length ? '回答' : '发送' }}
+          </button>
+          <button
+            @click="useSwarm = !useSwarm"
+            class="px-2.5 py-2 rounded text-xs font-bold border transition-colors whitespace-nowrap"
+            :class="useSwarm
+              ? 'bg-purple-900/30 text-purple-400 border-purple-500/40 hover:bg-purple-900/50'
+              : 'bg-geek-bg/50 text-geek-text-dim border-geek-border hover:text-geek-text hover:border-geek-accent/30'"
+            :title="useSwarm ? '🧠 深度研发模式：Coder-Reviewer 对抗博弈，代码经过严格审查' : '⚡ 闪电模式：单体 Agent 极速响应'"
+          >
+            {{ useSwarm ? '🧠 深度' : '⚡ 极速' }}
           </button>
           <button
             @click="store.autoApprove = !store.autoApprove"
@@ -497,5 +617,70 @@ function handleUndoToTurn(turn, taskId) {
   width: 0;
   padding: 0;
   overflow: hidden;
+}
+
+.expand-enter-active,
+.expand-leave-active {
+  transition: all 0.25s ease;
+  overflow: hidden;
+}
+.expand-enter-from,
+.expand-leave-to {
+  opacity: 0;
+  max-height: 0;
+  margin-top: 0;
+}
+.expand-enter-to,
+.expand-leave-from {
+  opacity: 1;
+  max-height: 500px;
+}
+
+.breathing-icon {
+  animation: breathe 2s ease-in-out infinite;
+}
+@keyframes breathe {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+.thinking-panel {
+  margin: 4px 0;
+}
+
+.search-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  background: rgba(6, 182, 212, 0.08);
+  border: 1px solid rgba(6, 182, 212, 0.2);
+  backdrop-filter: blur(4px);
+}
+
+.alert-card {
+  margin: 4px 0;
+}
+
+.context-file-tag {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-family: 'JetBrains Mono', monospace;
+  background: rgba(0, 255, 136, 0.06);
+  border: 1px solid rgba(0, 255, 136, 0.15);
+  color: rgba(0, 255, 136, 0.7);
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-content-block {
+  background: rgba(16, 185, 129, 0.03);
+  border-radius: 0 6px 6px 0;
+  padding: 6px 10px;
 }
 </style>

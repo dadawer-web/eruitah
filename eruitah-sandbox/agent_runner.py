@@ -64,6 +64,9 @@ from agent_swarm import (
     execute_dispatch_subtasks,
     DISPATCH_SUBTASKS_TOOL_DEFINITION_OPENAI,
     DISPATCH_SUBTASKS_TOOL_DEFINITION_ANTHROPIC,
+    execute_coder_reviewer_swarm,
+    SWARM_REVIEW_TOOL_DEFINITION_OPENAI,
+    SWARM_REVIEW_TOOL_DEFINITION_ANTHROPIC,
 )
 from self_distill import (
     execute_distill_tool,
@@ -127,6 +130,10 @@ from ast_tool import (
     AST_CODE_STRUCTURE_TOOL_DEFINITION_ANTHROPIC,
     AST_FUNCTION_DEFINITION_TOOL_DEFINITION_OPENAI,
     AST_FUNCTION_DEFINITION_TOOL_DEFINITION_ANTHROPIC,
+)
+from interactive_terminal import (
+    execute_bg_service_tool,
+    BG_SERVICE_TOOL_DEFINITIONS,
 )
 
 logger = logging.getLogger(__name__)
@@ -339,6 +346,10 @@ BASE_SYSTEM_PROMPT = """你是一个受限沙盒中的「任务型 AI 编码智�
 11. record_learning - 记录经验教训（成功修复 Bug 后，用一句话总结经验写入记忆库）
 12. dispatch_subtasks - 🚀 子任务并发派发（多智能体协同！将任务拆分为多个子任务并发执行）
 13. mcp_manager - 🔌 MCP 服务管理（动态加载第三方 MCP Server，如 GitHub、数据库、浏览器自动化等）
+14. **coder_reviewer_swarm** - ⚔️ Coder-Reviewer 对抗博弈（双智能体代码审查闭环！Coder写代码→Reviewer审查→打回/LGTM）
+16. **start_background_service** - 🚀 后台启动长驻服务（Web Server、数据库等，不阻塞 Agent！返回 PID）
+17. **read_service_logs** - 📋 读取后台服务日志（查看服务端输出，排查启动错误）
+18. **kill_service** - 🛑 关闭后台服务（测试完成后必须调用，释放端口和资源）
 
 **MCP 动态工具**: 当你通过 mcp_manager 动态加载了一个 MCP Server 后，该 Server 提供的所有工具会自动出现在你的工具列表中，工具名格式为 `mcp_{server}_{tool}`（如 `mcp_github_list_issues`）。你可以像调用本地工具一样直接调用它们。
 
@@ -359,6 +370,23 @@ dispatch_subtasks(subtasks=[
 
 系统会自动为需要沙盒的子任务分配独立工作区（WarmPool 预热池），并发执行并汇总结果。
 每个子任务有 30 秒超时保护，卡死的子任务会被自动斩断。
+
+# 🚀 后台服务管理 (长驻进程联调)
+
+当你需要测试自己写的服务端代码（如 Web Server、数据库、消息队列）时，**绝对不能**直接用 `bash` 运行，因为那会阻塞 Agent！
+你必须使用后台服务管理工具：
+
+**典型流程：**
+1. `start_background_service(command="python3 server.py")` → 后台启动服务，返回 PID
+2. `bash(command="curl http://localhost:8080/health")` → 模拟客户端发请求测试
+3. `read_service_logs(pid=返回的PID)` → 查看服务端日志，验证请求是否被正确处理
+4. `kill_service(pid=返回的PID)` → 测试完毕，关闭服务释放端口
+
+**重要规则：**
+- 启动服务后，等待 1-2 秒再发请求（服务需要初始化时间）
+- 测试完成后**必须**调用 `kill_service` 关闭服务，否则端口会被占用
+- 最多同时运行 10 个后台服务
+- 如果服务启动后立即退出，`start_background_service` 会返回错误日志，请根据日志排查
 
 # ⚠️ 任务执行与边界规范（严格遵守）
 
@@ -757,6 +785,7 @@ def _get_tools_definition(provider: str = "openai") -> list[dict]:
             SPECULATIVE_TOOL_DEFINITION_ANTHROPIC,
             SWARM_TOOL_DEFINITION_ANTHROPIC,
             DISPATCH_SUBTASKS_TOOL_DEFINITION_ANTHROPIC,
+            SWARM_REVIEW_TOOL_DEFINITION_ANTHROPIC,
             DISTILL_TOOL_DEFINITION_ANTHROPIC,
             THESEUS_TOOL_DEFINITION_ANTHROPIC,
             COMPUTE_TOOL_DEFINITION_ANTHROPIC,
@@ -805,7 +834,7 @@ def _get_tools_definition(provider: str = "openai") -> list[dict]:
                     "required": ["category", "lesson"],
                 },
             },
-        ] + get_dynamic_tool_schemas("anthropic")
+        ] + BG_SERVICE_TOOL_DEFINITIONS["anthropic"] + get_dynamic_tool_schemas("anthropic")
     else:
         return [
             {
@@ -928,6 +957,7 @@ def _get_tools_definition(provider: str = "openai") -> list[dict]:
             SPECULATIVE_TOOL_DEFINITION_OPENAI,
             SWARM_TOOL_DEFINITION_OPENAI,
             DISPATCH_SUBTASKS_TOOL_DEFINITION_OPENAI,
+            SWARM_REVIEW_TOOL_DEFINITION_OPENAI,
             DISTILL_TOOL_DEFINITION_OPENAI,
             THESEUS_TOOL_DEFINITION_OPENAI,
             COMPUTE_TOOL_DEFINITION_OPENAI,
@@ -982,7 +1012,7 @@ def _get_tools_definition(provider: str = "openai") -> list[dict]:
                     },
                 },
             },
-        ] + get_dynamic_tool_schemas("openai")
+        ] + BG_SERVICE_TOOL_DEFINITIONS["openai"] + get_dynamic_tool_schemas("openai")
 
 
 def _get_mcp_tools(provider: str = "openai") -> list[dict]:
@@ -1291,8 +1321,8 @@ def _execute_tool_local(
             return f"[等待用户回答] {question}", False, meta
 
         elif name == "computer_use":
-            action = args.get("action", "screenshot")
-            cu_result = execute_computer_use(action, **args)
+            cu_args = {k: v for k, v in args.items() if k != 'action'}
+            cu_result = execute_computer_use(args.get("action", "screenshot"), **cu_args)
 
             if cu_result.success and cu_result.image_base64:
                 meta["computer_use_image"] = {
@@ -1365,6 +1395,23 @@ def _execute_tool_local(
             result_str, is_error = execute_dispatch_subtasks(
                 subtasks=subtasks,
                 work_dir=work_dir,
+                main_repo_dir=main_repo_dir,
+            )
+            return result_str, is_error, meta
+
+        elif name == "coder_reviewer_swarm":
+            task_desc = args.get("task_description", "")
+            max_loops = args.get("max_loops", 5)
+            if not task_desc:
+                return "❌ task_description 不能为空", True, meta
+            result_str, is_error = execute_coder_reviewer_swarm(
+                task_description=task_desc,
+                work_dir=work_dir,
+                provider=provider,
+                api_key=api_key,
+                model=model,
+                base_url=base_url,
+                max_loops=int(max_loops),
                 main_repo_dir=main_repo_dir,
             )
             return result_str, is_error, meta
@@ -1463,6 +1510,10 @@ def _execute_tool_local(
             if not function_name:
                 return "函数名不能为空", True, meta
             result_str, is_error = execute_get_function_definition(file_path, function_name, work_dir)
+            return result_str, is_error, meta
+
+        elif name in ("start_background_service", "read_service_logs", "kill_service"):
+            result_str, is_error = execute_bg_service_tool(name, **args)
             return result_str, is_error, meta
 
         elif is_dynamic_tool(name):
@@ -1719,7 +1770,32 @@ def run_agent(
             if tool_calls:
                 logger.info(f"🔧 工具调用: {[tc.get('name', 'unknown') for tc in tool_calls]}")
                 file_related = any(tc.get('name', '') in ('file_edit', 'file_write', 'bash', 'theseus_rewrite') for tc in tool_calls)
-                yield {"type": "agent_status", "status": "WRITING" if file_related else "THINKING"}
+                search_tools = ('semantic_search_code', 'semantic_search', 'glob', 'file_read', 'grep', 'lsp_tool', 'get_code_structure', 'get_function_definition')
+                thinking_tools = ('mcp_sequential-thinking_sequentialthinking', 'mcp_sequential-thinking', 'ask_user')
+                is_searching = any(tc.get('name', '') in search_tools or tc.get('name', '').startswith('mcp_sequential') for tc in tool_calls)
+                is_deep_thinking = any(tc.get('name', '') in thinking_tools or 'sequential' in tc.get('name', '').lower() or 'thinking' in tc.get('name', '').lower() for tc in tool_calls)
+                if is_deep_thinking:
+                    yield {"type": "agent_state", "status": "thinking", "data": "深度推理中..."}
+                    yield {"type": "agent_status", "status": "THINKING"}
+                elif is_searching:
+                    search_desc = "正在检索代码库..."
+                    for tc in tool_calls:
+                        tc_name = tc.get('name', '')
+                        tc_args = tc.get('args', {})
+                        if tc_name == 'semantic_search_code' and tc_args.get('query'):
+                            search_desc = f"语义搜索: {tc_args['query'][:60]}"
+                        elif tc_name == 'grep' and tc_args.get('pattern'):
+                            search_desc = f"正则搜索: {tc_args['pattern'][:60]}"
+                        elif tc_name == 'glob' and tc_args.get('pattern'):
+                            search_desc = f"文件匹配: {tc_args['pattern'][:60]}"
+                        elif tc_name == 'file_read' and tc_args.get('file_path'):
+                            search_desc = f"读取文件: {tc_args['file_path'][:60]}"
+                    yield {"type": "agent_state", "status": "searching", "data": search_desc}
+                    yield {"type": "agent_status", "status": "THINKING"}
+                elif file_related:
+                    yield {"type": "agent_status", "status": "WRITING"}
+                else:
+                    yield {"type": "agent_status", "status": "THINKING"}
 
             # 🚨 检测乱码：如果文本主要是空格和引号，可能是模型崩溃
             if text and len(text) > 100:
@@ -1844,6 +1920,7 @@ def run_agent(
                 format_error_count += 1
                 if text and len(text) > 2000:
                     logger.warning(f"🚨 [系统拦截] 模型输出了 {len(text)} 字符的纯文本，无工具调用！强制截断！")
+                    yield {"type": "system_alert", "content": "检测到模型输出大量纯文本（无工具调用），正在自动拦截并重试..."}
                     truncated_text = text[:500] + f"\n\n... [系统截断：原文 {len(text)} 字符被丢弃]"
                     messages.append({"role": "assistant", "content": truncated_text})
                     messages.append({
@@ -1881,6 +1958,7 @@ def run_agent(
 
                 if text and ('file_edit' in text or '```' in text or 'def ' in text or 'class ' in text):
                     logger.warning("⚠️ 检测到文本中可能包含代码或工具调用，但格式不正确")
+                    yield {"type": "system_alert", "content": "检测到格式错误（代码混入文本），正在自动修正并重试..."}
                     messages.append({"role": "assistant", "content": text[:2000]})
                     messages.append({
                         "role": "user",
@@ -2121,6 +2199,7 @@ def run_agent(
                 if name == "file_edit" and not is_error:
                     file_path = args.get("file_path", "")
                     if file_path:
+                        yield {"type": "context_update", "files": [file_path]}
                         try:
                             full_path = os.path.join(work_dir, file_path)
                             if os.path.exists(full_path):
@@ -2134,6 +2213,32 @@ def run_agent(
                                 }
                         except Exception as e:
                             logger.error(f"读取更新后的文件失败: {e}")
+
+                if not is_error:
+                    active_files_from_tool = []
+                    if name == "file_read" and args.get("file_path"):
+                        active_files_from_tool.append(args.get("file_path"))
+                    elif name in ("semantic_search_code", "semantic_search") and result_str:
+                        import re as _re
+                        _found = _re.findall(r'(?:^|\n)\s*[\w./-]+\.(?:py|js|ts|vue|go|rs|java|cpp|c|h|hpp|rb|php|jsx|tsx|css|html|sql|sh|yaml|yml|toml|json|md)\b', result_str[:2000])
+                        for _f in _found:
+                            _f = _f.strip()
+                            if _f and len(_f) < 200:
+                                active_files_from_tool.append(_f)
+                    elif name == "grep" and args.get("file_path"):
+                        active_files_from_tool.append(args.get("file_path"))
+                    elif name == "glob" and result_str:
+                        import re as _re
+                        _found = _re.findall(r'[\w./-]+\.(?:py|js|ts|vue|go|rs|java|cpp|c|h|hpp|rb|php|jsx|tsx|css|html|sql|sh|yaml|yml|toml|json|md)\b', result_str[:1000])
+                        for _f in _found[:5]:
+                            if _f and len(_f) < 200:
+                                active_files_from_tool.append(_f)
+                    elif name == "get_code_structure" and args.get("file_path"):
+                        active_files_from_tool.append(args.get("file_path"))
+                    elif name == "get_function_definition" and args.get("file_path"):
+                        active_files_from_tool.append(args.get("file_path"))
+                    if active_files_from_tool:
+                        yield {"type": "context_update", "files": active_files_from_tool}
 
                 tokens = estimate_tokens(result_str)
                 consume_tokens(session_id, tokens)
@@ -2329,6 +2434,7 @@ def run_agent(
                     f"请分析以上错误原因，更换策略或修复参数后重试。"
                     f" 不要重复相同的操作。"
                 )
+                yield {"type": "system_alert", "content": f"检测到执行错误，正在自动重试... (第 {consecutive_errors}/{MAX_CONSECUTIVE_ERRORS} 次)"}
                 messages.append({"role": "user", "content": healing_message})
                 yield {"type": "agent_status", "status": "THINKING"}
             else:
@@ -2628,6 +2734,16 @@ def _call_openai(
                     "function_def": "get_function_definition",
                     "get_function": "get_function_definition",
                     "find_function": "get_function_definition",
+                    "start_service": "start_background_service",
+                    "background_service": "start_background_service",
+                    "start_bg_service": "start_background_service",
+                    "read_logs": "read_service_logs",
+                    "service_logs": "read_service_logs",
+                    "kill_bg_service": "kill_service",
+                    "stop_service": "kill_service",
+                    "swarm_review": "coder_reviewer_swarm",
+                    "code_review": "coder_reviewer_swarm",
+                    "review_code": "coder_reviewer_swarm",
                 }
 
                 VALID_TOOLS = {
@@ -2640,6 +2756,8 @@ def _call_openai(
                     "auto_test", "run_auto_test", "computer_use",
                     "read_project_memory", "record_learning",
                     "get_code_structure", "get_function_definition",
+                    "start_background_service", "read_service_logs", "kill_service",
+                    "coder_reviewer_swarm",
                 }
 
                 if tc_name not in VALID_TOOLS:

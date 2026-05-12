@@ -1,38 +1,28 @@
 """
-Eruitah 智能编程沙盒 - P2P 智能体网络 (Agent Swarm)
+Eruitah 智能编程沙盒 - 多智能体协同系统 (Agent Swarm)
 
-核心思想（对接 C++ Muduo 海量并发网络）:
+三大核心能力:
 ┌─────────────────────────────────────────────────────────────────────┐
-│  低级: 多个 Agent 在一个 Python 进程里通过函数调用交流              │
-│  高级: 每个 Agent 是独立的 TCP 节点，通过消息总线协同               │
+│  1. P2P 智能体网络 - TCP 消息总线协同                               │
+│  2. Subagent 编排 - 异步父子进程并发调度                            │
+│  3. Coder-Reviewer 对抗博弈 - RBAC 权限隔离的代码审查闭环           │
 │                                                                     │
-│  架构:                                                              │
-│    ┌─────────────────────────────────────────────────────┐          │
-│    │  C++ Muduo 聊天网关 (或 Python 消息总线)             │          │
-│    │    端口: 9000                                       │          │
-│    └──────┬──────────┬──────────┬──────────┬────────────┘          │
-│           │          │          │          │                        │
-│    ┌──────┴───┐ ┌────┴────┐ ┌──┴──────┐ ┌─┴────────┐              │
-│    │ C++ Agent │ │ Web Agent│ │ DB Agent │ │ DevOps   │              │
-│    │ 擅长C++   │ │ 擅长前端 │ │ 擅长SQL  │ │ 擅长运维 │              │
-│    │ Port:9001 │ │ Port:9002│ │ Port:9003│ │ Port:9004│              │
-│    └──────────┘ └─────────┘ └─────────┘ └──────────┘              │
+│  Coder-Reviewer 工作流:                                             │
+│    ┌──────────┐    提交审查     ┌──────────┐                        │
+│    │  Coder   │ ──────────────→ │ Reviewer │                        │
+│    │ (全权限) │                  │ (只读)   │                        │
+│    └──────────┘ ←────────────── └──────────┘                        │
+│                  打回重写 / LGTM                                     │
 │                                                                     │
-│  协同场景:                                                          │
-│    C++ Agent: "@DB_Agent 我需要用户表的结构，请求支援！"             │
-│    DB Agent: 收到消息 → 查询数据库 → 发回表结构                     │
-│    C++ Agent: 收到表结构 → 继续写代码                                │
-│                                                                     │
-│  消息协议:                                                          │
-│    {"type": "register", "agent_id": "cpp_agent", "capabilities": []}│
-│    {"type": "broadcast", "from": "cpp_agent", "message": "..."}     │
-│    {"type": "direct", "from": "cpp_agent", "to": "db_agent", ...}  │
-│    {"type": "help_request", "from": "cpp_agent", "task": "..."}     │
-│    {"type": "help_response", "from": "db_agent", "to": "cpp_agent"}│
+│  状态机:                                                            │
+│    CODING → SUBMITTED → REVIEWING → LGTM (终态)                    │
+│                                  → REJECTED → CODING (循环)         │
+│                                  → MAX_LOOPS (终态)                 │
 └─────────────────────────────────────────────────────────────────────┘
 """
 
 import os
+import re
 import json
 import time
 import uuid
@@ -1207,6 +1197,1207 @@ def execute_swarm_communicate(
 
     else:
         return f"未知动作: {action}", True
+
+
+# ============================================================================
+# Coder-Reviewer 对抗博弈系统 - RBAC 权限隔离 + 状态机闭环
+# ============================================================================
+
+CODER_TOOLS = {
+    "file_edit", "file_read", "bash", "glob", "grep",
+    "ask_user", "semantic_search", "semantic_search_code",
+    "get_code_structure", "get_function_definition",
+    "lsp_tool", "git_tool", "auto_test", "run_auto_test",
+    "start_background_service", "read_service_logs", "kill_service",
+    "read_project_memory", "record_learning",
+    "meta_tool",
+}
+
+REVIEWER_TOOLS = {
+    "file_read", "glob", "grep",
+    "semantic_search", "semantic_search_code",
+    "get_code_structure", "get_function_definition",
+    "lsp_tool", "git_tool",
+    "bash",
+    "read_project_memory",
+}
+
+REVIEWER_BASH_WHITELIST = {
+    "pytest", "python3 -m pytest", "python -m pytest",
+    "make test", "cargo test", "go test", "npm test",
+    "cat ", "head ", "tail ", "wc ", "find ", "ls ",
+    "grep ", "rg ", "fd ", "which ", "type ",
+    "git status", "git diff", "git log", "git show",
+    "python3 -c ", "python -c ",
+    "echo ", "stat ", "file ",
+}
+
+CODER_PROMPT = """你是资深的研发工程师（Coder）。你的任务是编写和修改代码以完成用户需求。
+
+⚠️ 重要规则：
+1. 你的代码写完后，会交由一位极其严苛的架构师（Reviewer）进行审查。
+2. 请使用工具完成开发，当你认为全部写完且测试通过后，请回复：【提交审查】+ 你的修改总结。
+3. 如果 Reviewer 打回你的代码，你必须根据 Reviewer 的意见修复问题，然后再次提交审查。
+4. 每次修复时，请仔细阅读 Reviewer 的每一条意见，逐一修复，不要遗漏。
+5. 你拥有完整的文件编辑和命令执行权限，请善用这些工具写出高质量代码。
+
+【强制输出规范】当你要编写或修改代码时，绝对禁止直接在回复文本中输出大段的完整代码！
+你必须且只能通过调用 file_edit 工具将代码写入文件。如果你在回复文本中直接贴代码，
+你的回答将被系统直接截断并判定为失败。回复文本只用于说明你的思路和修改总结。
+
+【交接纪律】你有充足的时间完成任务（35轮工具调用）。请自主使用工具写代码并跑测试。
+只有当你确信功能已全部实现且测试无误时，才停止调用工具，并在回复的最后明确写上
+【提交审查】四个字。绝对不要在代码还没写完时就提前停止！
+
+代码质量要求：
+- 所有异常必须被正确处理，不能有裸 except
+- 资源（文件、连接）必须使用 with 语句或 try/finally 确保释放
+- 并发代码必须考虑死锁和竞态条件
+- 函数必须有清晰的类型注释和文档字符串
+- 测试必须覆盖核心逻辑路径
+"""
+
+REVIEWER_PROMPT = """你是铁面无私的架构师代码审查员（Reviewer）。你不能直接修改代码。
+
+你的任务是：检查 Coder 刚刚提交的代码，给出审查意见。
+
+🚨 绝对禁止：
+- 你**不能**调用 file_edit 修改代码！
+- 你**不能**调用 start_background_service 启动服务！
+- 你**只能**使用只读工具（file_read, grep, glob, get_code_structure 等）查看代码
+
+🚫 测试纪律：
+- 你**不能**手动使用 bash 运行 pytest、make test 等测试命令！
+- 系统中的 TDD 自愈引擎（auto_test_tool）已经跑过测试了，请直接信任其结果。
+- 你**只能**用 bash 执行纯只读命令（cat, ls, grep, git diff, git log, git status 等）。
+
+⚡ 效率铁律（必须严格遵守）：
+1.【禁止自行搜集背景】Coder 修改的文件和 Git Diff 已经附在下方了！绝对禁止你使用 ls、git status、find、pwd 等命令去摸索环境！直接阅读下方提供的 Diff 和代码！
+2.【禁止过度检查】不要去搜 TODO、FIXME、HACK 注释！不要检查无关文件！只要核心逻辑能跑通即可！你的审查范围仅限于 Diff 中涉及的文件。
+3.【强制提交报告】在你完成所有代码阅读和检查后，你**必须**在回复的最后使用 XML 标签输出纯文本结论！绝对禁止使用 Markdown 代码块符号（```）！系统只从 XML 标签中提取你的裁决！
+
+📋 审查报告格式（必须严格遵守）：
+在你回复的最后，必须输出如下格式的纯文本（绝对禁止使用 ``` 符号！）：
+
+<DECISION>APPROVE</DECISION>
+<FEEDBACK>LGTM: 代码质量良好，核心逻辑正确。</FEEDBACK>
+
+或：
+
+<DECISION>REJECT</DECISION>
+<FEEDBACK>第 42 行存在空指针异常风险，请添加 None 检查。</FEEDBACK>
+
+标签说明：
+- <DECISION>：只能填 APPROVE 或 REJECT
+- <FEEDBACK>：APPROVE 时写 LGTM 及理由；REJECT 时必须详细指出错误位置和修改建议
+- 绝对禁止使用 Markdown 代码块符号 ``` 包裹！直接写纯文本标签即可！
+
+审查标准（按严重程度排序）：
+1. 🔴 致命问题：并发死锁、内存泄漏、资源未释放、SQL 注入等安全漏洞
+2. 🟠 严重问题：未处理的异常、错误的逻辑、缺失的错误处理
+3. 🟡 一般问题：代码风格不佳、缺少类型注释、命名不规范
+4. 🟢 建议改进：性能优化、可读性提升
+
+审查流程：
+1. 直接阅读下方提供的 Git Diff 和 Coder 提交说明（不需要再 git diff！）
+2. 如需深入了解，用 file_read 查看修改的文件完整内容（只看 Diff 涉及的文件！）
+3. 逐个检查上述审查标准
+4. 在回复末尾使用 <DECISION> 和 <FEEDBACK> 标签提交最终结论
+
+【审查尺度动态调整】在审查前，你必须先阅读用户的原始需求。如果用户的需求包含"简单"、"示例"、"Demo"、"快速"、"测试"等词汇，绝对禁止过度工程化！只要代码能跑通且没有毁灭性 Bug 就必须 APPROVE。不要强求完整的异常处理、极端的内存优化或企业级设计模式。
+
+【最终决断】如果你觉得代码基本满足要求，没有致命 Bug，请立即输出 <DECISION>APPROVE</DECISION>。不要过度审查！
+
+【再次强调】你必须在回复的最后输出 <DECISION> 和 <FEEDBACK> 标签！系统只从这些标签中提取你的最终意见！没有标签 = 审查失败 = 系统兜底放行！绝对禁止使用 Markdown 代码块符号 ```！
+"""
+
+
+class SwarmState:
+    CODING = "CODING"
+    SUBMITTED = "SUBMITTED"
+    REVIEWING = "REVIEWING"
+    LGTM = "LGTM"
+    REJECTED = "REJECTED"
+    MAX_LOOPS = "MAX_LOOPS"
+
+
+@dataclass
+class SwarmResult:
+    status: str
+    loops: int = 0
+    coder_output: str = ""
+    reviewer_output: str = ""
+    final_code_diff: str = ""
+    error: str = ""
+
+
+def _get_tools_for_role(role: str, provider: str = "openai") -> list[dict]:
+    from agent_runner import _get_tools_definition
+
+    all_tools = _get_tools_definition(provider)
+    allowed = CODER_TOOLS if role == "coder" else REVIEWER_TOOLS
+
+    filtered = []
+    for tool in all_tools:
+        if provider == "anthropic":
+            name = tool.get("name", "")
+        else:
+            name = tool.get("function", {}).get("name", "")
+
+        if name in allowed:
+            filtered.append(tool)
+
+    return filtered
+
+
+def _extract_final_text(messages: list[dict]) -> str:
+    for msg in reversed(messages):
+        if msg.get("role") == "assistant":
+            content = msg.get("content", "")
+            if content and isinstance(content, str) and content.strip():
+                return content.strip()
+    return ""
+
+
+def _check_reviewer_bash_safety(command: str) -> tuple[bool, str]:
+    command_stripped = command.strip()
+
+    dangerous_patterns = [">", ">>", "|", "$(", "`",
+                          "rm ", "rmdir", "mv ", "cp ",
+                          "chmod", "chown", "pip install",
+                          "apt ", "yum ", "dnf ", "brew ",
+                          "curl ", "wget ", "nc ", "ncat ",
+                          "os.system", "subprocess",
+                          "pytest", "python3 -m pytest", "python -m pytest",
+                          "make test", "cargo test", "go test", "npm test",
+                          "run_auto_test"]
+    for pat in dangerous_patterns:
+        if pat in command_stripped:
+            return False, f"Reviewer 不允许执行包含 '{pat}' 的命令"
+
+    for prefix in ("cat ", "head ", "tail ", "wc ", "find ", "ls ",
+                   "grep ", "rg ", "which ", "type ",
+                   "git status", "git diff", "git log", "git show",
+                   "python3 -c ", "python -c ",
+                   "echo ", "stat ", "file "):
+        if command_stripped.startswith(prefix):
+            return True, ""
+
+    return True, ""
+
+
+def _run_role_agent(
+    role: str,
+    instruction: str,
+    work_dir: str,
+    provider: str = "openai",
+    api_key: str = None,
+    model: str = None,
+    base_url: str = None,
+    max_turns: int = 15,
+    main_repo_dir: str = "",
+    task_id: str = None,
+    session_id: str = None,
+    yield_events: bool = False,
+):
+    if yield_events:
+        yield from _run_role_agent_events(
+            role=role,
+            instruction=instruction,
+            work_dir=work_dir,
+            provider=provider,
+            api_key=api_key,
+            model=model,
+            base_url=base_url,
+            max_turns=max_turns,
+            main_repo_dir=main_repo_dir,
+            task_id=task_id,
+            session_id=session_id,
+        )
+        return
+
+    result_text = ""
+    for event in _run_role_agent_events(
+        role=role,
+        instruction=instruction,
+        work_dir=work_dir,
+        provider=provider,
+        api_key=api_key,
+        model=model,
+        base_url=base_url,
+        max_turns=max_turns,
+        main_repo_dir=main_repo_dir,
+        task_id=task_id,
+        session_id=session_id,
+    ):
+        if event.get("type") == "assistant":
+            result_text = event.get("data", result_text)
+        elif event.get("type") == "finish":
+            result_text = event.get("data", result_text)
+
+    return result_text, []
+
+
+def _extract_text_from_content(content) -> str:
+    if content is None:
+        return ""
+    if isinstance(content, str):
+        return content.strip()
+    if isinstance(content, list):
+        parts = []
+        for block in content:
+            if isinstance(block, dict):
+                if block.get("type") == "text":
+                    parts.append(block.get("text", ""))
+                elif "text" in block:
+                    parts.append(block["text"])
+            elif isinstance(block, str):
+                parts.append(block)
+        return "".join(parts).strip()
+    return str(content).strip()
+
+
+_THINKING_TOOL_NAMES = (
+    "mcp_sequential-thinking_sequentialthinking",
+    "mcp_sequential-thinking",
+    "sequentialthinking",
+    "sequential-thinking",
+)
+
+
+def _extract_thought_from_tool_calls(tool_calls: list) -> str:
+    if not tool_calls:
+        return ""
+    for tc in reversed(tool_calls):
+        fn = tc.get("function", {})
+        fn_name = fn.get("name", "")
+        if any(tn in fn_name for tn in _THINKING_TOOL_NAMES):
+            args_str = fn.get("arguments", "")
+            if not args_str:
+                continue
+            try:
+                args = json.loads(args_str) if isinstance(args_str, str) else args_str
+                thought = args.get("thought", "")
+                if thought and isinstance(thought, str) and thought.strip():
+                    return thought.strip()
+            except (json.JSONDecodeError, TypeError):
+                pass
+    return ""
+
+
+def _extract_review_from_text(text: str) -> tuple:
+    if not text or not isinstance(text, str):
+        return None, ""
+    decision_match = re.search(r'<DECISION>\s*(APPROVE|REJECT)\s*</DECISION>', text, re.DOTALL | re.IGNORECASE)
+    feedback_match = re.search(r'<FEEDBACK>\s*(.*?)\s*</FEEDBACK>', text, re.DOTALL | re.IGNORECASE)
+    if decision_match and feedback_match:
+        decision = decision_match.group(1).strip().upper()
+        feedback = feedback_match.group(1).strip()
+        if decision in ("APPROVE", "REJECT"):
+            return decision, feedback
+    json_patterns = [
+        r'```json\s*(\{[^`]*?"decision"\s*:\s*"(?:APPROVE|REJECT)"[^`]*?\})\s*```',
+        r'```\s*(\{[^`]*?"decision"\s*:\s*"(?:APPROVE|REJECT)"[^`]*?\})\s*```',
+        r'(\{[^{}]*?"decision"\s*:\s*"(?:APPROVE|REJECT)"[^{}]*?"feedback"\s*:\s*"[^"]*?"[^{}]*?\})',
+    ]
+    for pattern in json_patterns:
+        match = re.search(pattern, text, re.DOTALL | re.IGNORECASE)
+        if match:
+            json_str = match.group(1)
+            try:
+                data = json.loads(json_str)
+                decision = data.get("decision", "").upper()
+                feedback = data.get("feedback", data.get("detailed_feedback", ""))
+                if decision in ("APPROVE", "REJECT"):
+                    return decision, feedback
+            except (json.JSONDecodeError, TypeError):
+                continue
+    return None, ""
+
+
+def _get_last_assistant_text(task_id: str, session_id: str) -> str:
+    try:
+        from task_manager import get_task_manager
+        tm = get_task_manager()
+        session = tm.get_session(task_id)
+        if session:
+            all_messages = (session.messages_before or []) + session.messages
+            for msg in reversed(all_messages):
+                if msg.get("role") != "assistant":
+                    continue
+                text = _extract_text_from_content(msg.get("content"))
+                if text:
+                    decision, feedback = _extract_review_from_text(text)
+                    if decision:
+                        return f"【{decision}】\n{feedback}"
+                    return text
+                thought = _extract_thought_from_tool_calls(msg.get("tool_calls", []))
+                if thought:
+                    return thought
+    except Exception as e:
+        logger.debug(f"[Swarm] 从 task_manager 读取历史失败: {e}")
+
+    try:
+        from session_storage import SessionStorage
+        storage = SessionStorage()
+        db_messages = storage.get_session_messages(session_id)
+        for msg in reversed(db_messages):
+            if msg.get("role") != "assistant":
+                continue
+            text = _extract_text_from_content(msg.get("content"))
+            if text:
+                decision, feedback = _extract_review_from_text(text)
+                if decision:
+                    return f"【{decision}】\n{feedback}"
+                return text
+            thought = _extract_thought_from_tool_calls(msg.get("tool_calls", []))
+            if thought:
+                return thought
+    except Exception as e:
+        logger.debug(f"[Swarm] 从 session_storage 读取历史失败: {e}")
+
+    return ""
+
+
+_TERMINAL_SIGNALS = {"finish", "distill"}
+_TERMINAL_STATUSES = {"DONE", "IDLE", "ERROR"}
+
+
+_IMPLICIT_APPROVAL_PATTERNS = (
+    "LGTM",
+    "APPROVE",
+    "代码正确",
+    "没有引入新的问题",
+    "没有发现问题",
+    "没有致命",
+    "没有严重问题",
+    "代码质量达标",
+    "审查通过",
+    "代码符合规范",
+    "可以合并",
+    "没有发现任何问题",
+    "代码看起来没有问题",
+    "代码没有问题",
+    "逻辑正确",
+    "功能正常",
+    "代码是正确的",
+    "没有明显问题",
+    "没有重大问题",
+    "代码基本满足",
+    "looks good",
+    "no issues",
+    "approved",
+    "passed",
+)
+
+
+def _is_approval(text: str) -> bool:
+    if not text:
+        return False
+    upper = text.upper()
+    for pattern in _IMPLICIT_APPROVAL_PATTERNS:
+        if pattern.upper() in upper:
+            return True
+    return False
+
+
+def _is_terminal_signal(event: dict) -> bool:
+    event_type = event.get("type", "")
+    if event_type in _TERMINAL_SIGNALS:
+        return True
+    if event_type == "agent_status":
+        status = event.get("status", "")
+        if status in _TERMINAL_STATUSES:
+            return True
+    return False
+
+
+def _run_role_agent_events(
+    role: str,
+    instruction: str,
+    work_dir: str,
+    provider: str = "openai",
+    api_key: str = None,
+    model: str = None,
+    base_url: str = None,
+    max_turns: int = 15,
+    main_repo_dir: str = "",
+    task_id: str = None,
+    session_id: str = None,
+    auto_approve: bool = False,
+):
+    from agent_runner import run_agent as _run_agent
+
+    role_prompt = CODER_PROMPT if role == "coder" else REVIEWER_PROMPT
+    role_session_id = session_id or f"swarm_{role}_{uuid.uuid4().hex[:6]}"
+
+    if provider == "anthropic":
+        initial_messages = [
+            {"role": "user", "content": f"{role_prompt}\n\n---\n\n{instruction}"},
+        ]
+        user_input = instruction
+    else:
+        initial_messages = [
+            {"role": "system", "content": role_prompt},
+        ]
+        user_input = instruction
+
+    last_assistant_text = ""
+    last_thinking_thought = ""
+
+    for event in _run_agent(
+        user_input=user_input,
+        work_dir=work_dir,
+        api_key=api_key,
+        model=model,
+        base_url=base_url,
+        provider=provider,
+        max_turns=max_turns,
+        session_id=role_session_id,
+        task_id=task_id,
+        initial_messages=initial_messages if initial_messages else None,
+        main_repo_dir=main_repo_dir,
+        auto_approve=auto_approve,
+    ):
+        if _is_terminal_signal(event):
+            continue
+
+        event_type = event.get("type", "")
+
+        if event_type == "assistant":
+            text = event.get("data", "")
+            if text and isinstance(text, str) and text.strip():
+                last_assistant_text = text.strip()
+
+        if event_type == "tool_start":
+            tool_name = event.get("tool_name", "")
+            if any(tn in tool_name for tn in _THINKING_TOOL_NAMES):
+                args = event.get("args", {})
+                if isinstance(args, str):
+                    try:
+                        args = json.loads(args)
+                    except (json.JSONDecodeError, TypeError):
+                        args = {}
+                thought = args.get("thought", "") if isinstance(args, dict) else ""
+                if thought and isinstance(thought, str) and thought.strip():
+                    last_thinking_thought = thought.strip()
+
+        if role == "reviewer":
+            if event_type == "tool_start":
+                tool_name = event.get("tool_name", "")
+                if tool_name not in REVIEWER_TOOLS:
+                    event["data"] = f"🚫 权限拒绝: Reviewer 不能使用 {tool_name} 工具"
+                    event["is_error"] = True
+            elif event_type == "tool_end":
+                tool_name = event.get("tool_name", "")
+                if tool_name == "bash":
+                    tool_data = event.get("data", "")
+                    if tool_data:
+                        first_line = tool_data.split("\n")[0] if "\n" in tool_data else tool_data
+                        is_safe, reason = _check_reviewer_bash_safety(first_line)
+                        if not is_safe:
+                            event["data"] = f"🚫 权限拒绝: {reason}"
+                            event["is_error"] = True
+
+        event["swarm_role"] = role
+        yield event
+
+    review_decision, review_feedback = _extract_review_from_text(last_assistant_text)
+
+    if not review_decision and last_thinking_thought:
+        review_decision, review_feedback = _extract_review_from_text(last_thinking_thought)
+
+    if review_decision:
+        final_text = f"【{review_decision}】\n{review_feedback}"
+        logger.info(f"[Swarm] ✅ 从 JSON 代码块提取到审查结论: {review_decision}")
+    else:
+        final_text = last_assistant_text or last_thinking_thought or _get_last_assistant_text(task_id, role_session_id)
+
+    if not final_text and role == "reviewer":
+        logger.warning(f"[Swarm] Reviewer 文本提取全部失败（事件流+数据库均为空），触发兜底放行")
+        final_text = ""
+
+    yield {
+        "type": "role_finish",
+        "data": final_text,
+        "role": role,
+    }
+
+
+def run_swarm(
+    user_input: str = "",
+    task_description: str = "",
+    work_dir: str = ".",
+    max_turns: int = 30,
+    api_key: str = None,
+    model: str = None,
+    base_url: str = None,
+    provider: str = "openai",
+    initial_messages: list = None,
+    start_turn: int = 1,
+    task_id: str = None,
+    session_id: str = None,
+    main_repo_dir: str = "",
+    auto_approve: bool = False,
+    max_loops: int = 5,
+    yield_events: bool = False,
+):
+    task_desc = task_description or user_input or ""
+    if not task_desc:
+        if yield_events:
+            yield {"type": "error", "data": "任务描述不能为空"}
+            return
+        return SwarmResult(status=SwarmState.MAX_LOOPS, error="任务描述不能为空")
+
+    logger.info(f"\n[Swarm] 🚀 Swarm 接管任务: {task_id or 'N/A'}, desc=\"{task_desc[:60]}\"")
+
+    if yield_events:
+        yield from _run_swarm_events(
+            task_description=task_desc,
+            work_dir=work_dir,
+            provider=provider,
+            api_key=api_key,
+            model=model,
+            base_url=base_url,
+            max_loops=max_loops,
+            main_repo_dir=main_repo_dir,
+            task_id=task_id,
+            session_id=session_id,
+            auto_approve=auto_approve,
+        )
+        return
+
+    result = None
+    for event in _run_swarm_events(
+        task_description=task_desc,
+        work_dir=work_dir,
+        provider=provider,
+        api_key=api_key,
+        model=model,
+        base_url=base_url,
+        max_loops=max_loops,
+        main_repo_dir=main_repo_dir,
+        task_id=task_id,
+        session_id=session_id,
+        auto_approve=auto_approve,
+    ):
+        if event.get("type") == "swarm_result":
+            result = event.get("result")
+
+    if result is None:
+        result = SwarmResult(status=SwarmState.MAX_LOOPS, error="Swarm 未返回结果")
+
+    return result
+
+
+def _run_swarm_events(
+    task_description: str,
+    work_dir: str = ".",
+    provider: str = "openai",
+    api_key: str = None,
+    model: str = None,
+    base_url: str = None,
+    max_loops: int = 5,
+    main_repo_dir: str = "",
+    task_id: str = None,
+    session_id: str = None,
+    auto_approve: bool = False,
+):
+    loop_count = 0
+    coder_instruction = task_description
+    all_coder_output = ""
+    all_reviewer_output = ""
+    swarm_messages = []
+
+    logger.info(f"[Swarm] 🏁 Coder-Reviewer 对抗博弈启动: task=\"{task_description[:80]}\"")
+
+    swarm_messages.append({
+        "role": "system",
+        "content": f"Coder-Reviewer 对抗博弈启动，核心目标: {task_description[:200]}",
+    })
+
+    yield {
+        "type": "task_started",
+        "data": f"Coder-Reviewer 对抗博弈启动",
+        "task_description": task_description,
+    }
+
+    yield {
+        "type": "system_alert",
+        "content": f"⚔️ Coder-Reviewer 对抗博弈启动！核心目标: {task_description[:80]}",
+    }
+
+    while loop_count < max_loops:
+        loop_count += 1
+        logger.info(f"[Swarm] 🔄 第 {loop_count}/{max_loops} 轮: Coder 开始开发...")
+
+        yield {
+            "type": "swarm_loop_start",
+            "data": f"🔄 第 {loop_count}/{max_loops} 轮: Coder 开始开发...",
+            "loop": loop_count,
+            "role": "coder",
+        }
+
+        yield {
+            "type": "agent_status",
+            "status": "WRITING",
+        }
+
+        yield {
+            "type": "agent_state",
+            "status": "thinking",
+            "data": f"👨‍💻 Coder 开始第 {loop_count} 轮开发...",
+        }
+
+        yield {
+            "type": "system_alert",
+            "content": f"👨‍💻 Coder 开始第 {loop_count} 轮开发...",
+        }
+
+        coder_text = ""
+        for event in _run_role_agent_events(
+            role="coder",
+            instruction=coder_instruction,
+            work_dir=work_dir,
+            provider=provider,
+            api_key=api_key,
+            model=model,
+            base_url=base_url,
+            max_turns=35,
+            main_repo_dir=main_repo_dir,
+            task_id=task_id,
+            session_id=session_id,
+            auto_approve=auto_approve,
+        ):
+            if event.get("type") == "role_finish":
+                coder_text = event.get("data", "")
+
+            yield event
+
+        all_coder_output = coder_text
+
+        swarm_messages.append({
+            "role": "assistant",
+            "content": f"【👨‍💻 Coder 第{loop_count}轮】\n{coder_text[:2000]}",
+        })
+
+        if task_id:
+            try:
+                from task_manager import get_task_manager
+                tm = get_task_manager()
+                session = tm.get_session(task_id)
+                if session:
+                    session_messages = (session.messages_before or []) + session.messages
+                    session_messages.append({
+                        "role": "assistant",
+                        "content": f"【👨‍💻 Coder 第{loop_count}轮】\n{coder_text[:2000]}",
+                    })
+                    tm.update_session_messages(
+                        task_id=task_id,
+                        messages=session.messages,
+                        current_turn=session.current_turn + 1,
+                    )
+            except Exception as e:
+                logger.debug(f"[Swarm] Coder 消息持久化失败: {e}")
+
+        yield {
+            "type": "agent_status",
+            "status": "REVIEWING",
+        }
+
+        yield {
+            "type": "agent_state",
+            "status": "searching",
+            "data": f"🕵️‍♂️ Reviewer 开始审查代码（第 {loop_count} 轮）...",
+        }
+
+        yield {
+            "type": "system_alert",
+            "content": f"👨‍💻 Coder 已提交最新代码，等待 Reviewer 审查...",
+        }
+
+        yield {
+            "type": "swarm_phase_change",
+            "data": f"🕵️‍♂️ Coder 提交审查，Reviewer 开始审查...",
+            "role": "reviewer",
+        }
+
+        yield {
+            "type": "system_alert",
+            "content": f"🕵️‍♂️ Reviewer 开始审查代码...",
+        }
+
+        logger.info(f"[Swarm] 🕵️‍♂️ Reviewer 开始审查...")
+
+        diff_content = ""
+        changed_files = ""
+        untracked_files = ""
+        try:
+            result_stat = subprocess.run(
+                ["git", "diff", "--stat"],
+                capture_output=True, text=True, timeout=10, cwd=work_dir,
+            )
+            if result_stat.returncode == 0 and result_stat.stdout.strip():
+                changed_files = result_stat.stdout.strip()
+
+            result_diff = subprocess.run(
+                ["git", "diff"],
+                capture_output=True, text=True, timeout=15, cwd=work_dir,
+            )
+            if result_diff.returncode == 0 and result_diff.stdout.strip():
+                diff_content = result_diff.stdout.strip()[:8000]
+
+            result_untracked = subprocess.run(
+                ["git", "ls-files", "--others", "--exclude-standard"],
+                capture_output=True, text=True, timeout=10, cwd=work_dir,
+            )
+            if result_untracked.returncode == 0 and result_untracked.stdout.strip():
+                untracked_files = result_untracked.stdout.strip()
+        except Exception as e:
+            logger.debug(f"[Swarm] git diff 执行失败: {e}")
+
+        if "提交审查" in coder_text:
+            coder_status_prefix = "✅ Coder 已主动提交审查。\n\n"
+        else:
+            coder_status_prefix = (
+                "⚠️ 【系统警告】Coder 似乎遇到了困难，在未明确提交的情况下被系统强制中断"
+                "（可能是轮次耗尽或陷入死循环）。这是一个半成品代码，请重点检查代码完整性和逻辑断点。\n\n"
+            )
+
+        reviewer_instruction = (
+            f"{coder_status_prefix}"
+            f"=== 🎯 原始任务 ===\n{task_description}\n\n"
+            f"=== 👨‍💻 Coder 的提交说明 ===\n{coder_text}\n\n"
+        )
+
+        if changed_files:
+            reviewer_instruction += (
+                f"=== 📂 变更文件统计 ===\n{changed_files}\n\n"
+            )
+
+        if untracked_files:
+            reviewer_instruction += (
+                f"=== 🆕 新增文件（未追踪）===\n{untracked_files}\n\n"
+            )
+
+        if diff_content:
+            reviewer_instruction += (
+                f"=== 🔥 强制阅读：代码修改清单 (Git Diff) ===\n"
+                f"以下是 Coder 刚刚作出的代码修改。**绝对禁止你到处去 find 或 ls，请直接针对以下代码修改进行审查！**\n\n"
+                f"{diff_content}\n\n"
+            )
+        else:
+            reviewer_instruction += (
+                f"=== ⚠️ 未获取到 Git Diff ===\n"
+                f"可能是全新文件（未追踪），请查看上方「新增文件」列表，用 file_read 阅读这些文件。\n\n"
+            )
+
+        reviewer_instruction += (
+            f"请严格基于上述 Diff 和提交说明进行审查。"
+            f"如果需要深入了解某个文件，用 file_read 查看完整内容（只看 Diff 涉及的文件！）。"
+        )
+
+        reviewer_text = ""
+        for event in _run_role_agent_events(
+            role="reviewer",
+            instruction=reviewer_instruction,
+            work_dir=work_dir,
+            provider=provider,
+            api_key=api_key,
+            model=model,
+            base_url=base_url,
+            max_turns=10,
+            main_repo_dir=main_repo_dir,
+            task_id=task_id,
+            session_id=session_id,
+            auto_approve=auto_approve,
+        ):
+            if event.get("type") == "role_finish":
+                reviewer_text = event.get("data", "")
+
+            yield event
+
+        all_reviewer_output = reviewer_text
+
+        if not reviewer_text.strip():
+            logger.warning("[Swarm] ⚠️ Reviewer 返回了空意见或意外终止，自动放行。")
+
+            yield {
+                "type": "system_alert",
+                "content": "⚠️ Reviewer 审查超时或意外终止，系统已自动放行。",
+            }
+
+            yield {
+                "type": "assistant",
+                "data": "✅ **任务圆满完成！** (系统兜底放行 — Reviewer 未返回有效审查意见，系统判定代码通过)",
+                "swarm_role": "finale",
+            }
+
+            code_diff = ""
+            try:
+                result = subprocess.run(
+                    ["git", "diff", "--stat"],
+                    capture_output=True, text=True, timeout=5, cwd=work_dir,
+                )
+                if result.returncode == 0 and result.stdout.strip():
+                    code_diff = result.stdout.strip()
+            except Exception:
+                pass
+
+            swarm_result = SwarmResult(
+                status=SwarmState.LGTM,
+                loops=loop_count,
+                coder_output=all_coder_output,
+                reviewer_output="(系统兜底放行)",
+                final_code_diff=code_diff,
+            )
+
+            yield {
+                "type": "swarm_result",
+                "data": f"✅ 系统兜底放行（Reviewer 未返回有效意见），经过 {loop_count} 轮。",
+                "result": swarm_result,
+            }
+
+            try:
+                from self_distill import auto_distill
+                distill_work_dir = main_repo_dir or work_dir
+                distill_result = auto_distill(
+                    messages=swarm_messages,
+                    work_dir=distill_work_dir,
+                    task_id=task_id or session_id or "",
+                    task_description=task_description[:100],
+                )
+                if distill_result:
+                    yield {"type": "distill", "data": f"🧠 经验已自动蒸馏并记录:\n{distill_result}"}
+            except Exception as e:
+                logger.debug(f"[Swarm] 自动蒸馏失败（不影响任务结果）: {e}")
+
+            yield {
+                "type": "agent_status",
+                "status": "DONE",
+            }
+
+            yield {
+                "type": "finish",
+                "data": f"Coder-Reviewer 对抗博弈完成: 系统兜底放行 (第 {loop_count} 轮)",
+                "status": SwarmState.LGTM,
+            }
+
+            yield {
+                "type": "agent_status",
+                "status": "IDLE",
+            }
+            return
+
+        yield {
+            "type": "assistant",
+            "data": f"🕵️‍♂️ **Reviewer 审查意见（第{loop_count}轮）:**\n\n{reviewer_text[:3000]}",
+            "swarm_role": "reviewer_broadcast",
+        }
+
+        swarm_messages.append({
+            "role": "assistant",
+            "content": f"【🕵️‍♂️ Reviewer 第{loop_count}轮】\n{reviewer_text[:2000]}",
+        })
+
+        if task_id:
+            try:
+                from task_manager import get_task_manager
+                tm = get_task_manager()
+                session = tm.get_session(task_id)
+                if session:
+                    session_messages = (session.messages_before or []) + session.messages
+                    session_messages.append({
+                        "role": "assistant",
+                        "content": f"【🕵️‍♂️ Reviewer 第{loop_count}轮】\n{reviewer_text[:2000]}",
+                    })
+                    tm.update_session_messages(
+                        task_id=task_id,
+                        messages=session.messages,
+                        current_turn=session.current_turn + 1,
+                    )
+            except Exception as e:
+                logger.debug(f"[Swarm] Reviewer 消息持久化失败: {e}")
+
+        if _is_approval(reviewer_text):
+            logger.info(f"[Swarm] ✅ Reviewer 审核通过！意见: {reviewer_text[:80]}")
+
+            yield {
+                "type": "system_alert",
+                "content": f"🎉 Reviewer 审核通过！经过 {loop_count} 轮审查。",
+            }
+
+            yield {
+                "type": "assistant",
+                "data": f"✅ **任务圆满完成！** Reviewer 已确认代码符合规范，经过 {loop_count} 轮审查通过。",
+                "swarm_role": "finale",
+            }
+
+            code_diff = ""
+            try:
+                result = subprocess.run(
+                    ["git", "diff", "--stat"],
+                    capture_output=True, text=True, timeout=5, cwd=work_dir,
+                )
+                if result.returncode == 0 and result.stdout.strip():
+                    code_diff = result.stdout.strip()
+            except Exception:
+                pass
+
+            swarm_result = SwarmResult(
+                status=SwarmState.LGTM,
+                loops=loop_count,
+                coder_output=all_coder_output,
+                reviewer_output=all_reviewer_output,
+                final_code_diff=code_diff,
+            )
+
+            yield {
+                "type": "swarm_result",
+                "data": f"✅ Reviewer 审核通过！经过 {loop_count} 轮审查。",
+                "result": swarm_result,
+            }
+
+            try:
+                from self_distill import auto_distill
+                distill_work_dir = main_repo_dir or work_dir
+                distill_result = auto_distill(
+                    messages=swarm_messages,
+                    work_dir=distill_work_dir,
+                    task_id=task_id or session_id or "",
+                    task_description=task_description[:100],
+                )
+                if distill_result:
+                    yield {"type": "distill", "data": f"🧠 经验已自动蒸馏并记录:\n{distill_result}"}
+            except Exception as e:
+                logger.debug(f"[Swarm] 自动蒸馏失败（不影响任务结果）: {e}")
+
+            yield {
+                "type": "agent_status",
+                "status": "DONE",
+            }
+
+            yield {
+                "type": "finish",
+                "data": f"Coder-Reviewer 对抗博弈完成: LGTM (经过 {loop_count} 轮)",
+                "status": SwarmState.LGTM,
+            }
+
+            yield {
+                "type": "agent_status",
+                "status": "IDLE",
+            }
+            return
+        else:
+            logger.info(f"[Swarm] ❌ Reviewer 打回修改！")
+
+            yield {
+                "type": "agent_status",
+                "status": "WRITING",
+            }
+
+            yield {
+                "type": "agent_state",
+                "status": "thinking",
+                "data": f"❌ Reviewer 打回重写！Coder 准备修复...",
+            }
+
+            yield {
+                "type": "swarm_rejected",
+                "data": f"❌ Reviewer 打回修改！",
+                "loop": loop_count,
+                "reviewer_feedback": reviewer_text[:500],
+            }
+
+            yield {
+                "type": "system_alert",
+                "content": f"❌ Reviewer 打回重写！第 {loop_count} 轮未通过审查。",
+            }
+
+            coder_instruction = (
+                f"【终极目标】\n{task_description}\n\n"
+                f"【当前目录状态】\n"
+                f"目录中已经存在之前你或其他人编写的代码，请先阅读当前文件内容，"
+                f"**绝对不要从头重写整个项目**！只针对 Reviewer 指出的错误进行局部修改。\n\n"
+                f"【Reviewer 审查意见】\n{reviewer_text}\n\n"
+                f"⚠️ 【系统最高指令】⚠️\n"
+                f"1. 绝对禁止为你的错误道歉或解释！\n"
+                f"2. Talk is cheap, show me the code! 无论 Reviewer 提出了什么修改意见，你**必须立刻调用 file_edit 或 bash 工具**去真实修改文件！\n"
+                f"3. 如果你只回复了文本而没有调用任何工具，你将被判定为严重失职！\n"
+                f"4. 如果你认为代码已经完美或 Reviewer 没有提出具体修改点，请直接运行测试验证，并回复【提交审查】。"
+            )
+
+    logger.warning(f"[Swarm] ⚠️ 达到最大循环次数 ({max_loops})，请求人类仲裁...")
+
+    yield {
+        "type": "system_alert",
+        "content": f"⚠️ Coder 与 Reviewer 经过 {max_loops} 轮仍无法达成一致，请求人类介入仲裁...",
+    }
+
+    yield {
+        "type": "ask_user",
+        "question": (
+            f"⚠️ Coder 和 Reviewer 经过 {max_loops} 轮对抗仍无法达成一致！\n\n"
+            f"=== Coder 最后的输出 ===\n{all_coder_output[:1000]}\n\n"
+            f"=== Reviewer 最后的意见 ===\n{all_reviewer_output[:1000]}\n\n"
+            f"请做出最终裁决：\n"
+            f"1. 回复「通过」— 接受 Coder 的代码，忽略 Reviewer 意见\n"
+            f"2. 回复「打回」— 采纳 Reviewer 意见，继续修改\n"
+            f"3. 回复具体指示 — 你来决定下一步怎么做"
+        ),
+        "question_id": f"swarm_arbitration_{task_id or 'unknown'}",
+    }
+
+    yield {
+        "type": "assistant",
+        "data": f"⚠️ **任务挂起**：Coder 与 Reviewer 经过 {max_loops} 轮对抗仍无法达成一致，请人工介入裁决。",
+        "swarm_role": "finale",
+    }
+
+    swarm_result = SwarmResult(
+        status=SwarmState.MAX_LOOPS,
+        loops=loop_count,
+        coder_output=all_coder_output,
+        reviewer_output=all_reviewer_output,
+        error=f"达到最大循环次数 {max_loops}，Coder 和 Reviewer 未能达成一致",
+    )
+
+    yield {
+        "type": "swarm_result",
+        "data": f"⚠️ 达到最大循环次数 ({max_loops})，Coder 和 Reviewer 未能达成一致",
+        "result": swarm_result,
+    }
+
+    try:
+        from self_distill import auto_distill
+        distill_work_dir = main_repo_dir or work_dir
+        distill_result = auto_distill(
+            messages=swarm_messages,
+            work_dir=distill_work_dir,
+            task_id=task_id or session_id or "",
+            task_description=task_description[:100],
+        )
+        if distill_result:
+            yield {"type": "distill", "data": f"🧠 经验已自动蒸馏并记录:\n{distill_result}"}
+    except Exception as e:
+        logger.debug(f"[Swarm] 自动蒸馏失败（不影响任务结果）: {e}")
+
+    yield {
+        "type": "agent_status",
+        "status": "DONE",
+    }
+
+    yield {
+        "type": "finish",
+        "data": f"Coder-Reviewer 对抗博弈: 达到最大循环次数 ({max_loops})",
+        "status": SwarmState.MAX_LOOPS,
+    }
+
+    yield {
+        "type": "agent_status",
+        "status": "IDLE",
+    }
+    return
+
+
+SWARM_REVIEW_TOOL_DEFINITION_OPENAI = {
+    "type": "function",
+    "function": {
+        "name": "coder_reviewer_swarm",
+        "description": (
+            "Coder-Reviewer 对抗博弈工具 - 启动双智能体代码审查闭环。"
+            "Coder 写代码 → Reviewer 审查 → 打回/LGTM，最多循环 5 轮。"
+            "适用于需要高质量代码输出的场景，确保代码经过严格审查。"
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "task_description": {
+                    "type": "string",
+                    "description": "要完成的编程任务描述，如 '实现一个线程安全的LRU缓存'",
+                },
+                "max_loops": {
+                    "type": "integer",
+                    "description": "Coder-Reviewer 最大循环轮数（默认5，防止无限吵架）",
+                },
+            },
+            "required": ["task_description"],
+        },
+    },
+}
+
+SWARM_REVIEW_TOOL_DEFINITION_ANTHROPIC = {
+    "name": "coder_reviewer_swarm",
+    "description": (
+        "Coder-Reviewer 对抗博弈工具 - 启动双智能体代码审查闭环。"
+        "Coder 写代码 → Reviewer 审查 → 打回/LGTM，最多循环 5 轮。"
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "task_description": {
+                "type": "string",
+                "description": "要完成的编程任务描述",
+            },
+            "max_loops": {
+                "type": "integer",
+                "description": "最大循环轮数（默认5）",
+            },
+        },
+        "required": ["task_description"],
+    },
+}
+
+
+def execute_coder_reviewer_swarm(
+    task_description: str,
+    work_dir: str = ".",
+    provider: str = "openai",
+    api_key: str = None,
+    model: str = None,
+    base_url: str = None,
+    max_loops: int = 5,
+    main_repo_dir: str = "",
+) -> tuple[str, bool]:
+    if not task_description.strip():
+        return "❌ 任务描述不能为空", True
+
+    result = run_swarm(
+        task_description=task_description,
+        work_dir=work_dir,
+        provider=provider,
+        api_key=api_key,
+        model=model,
+        base_url=base_url,
+        max_loops=max_loops,
+        main_repo_dir=main_repo_dir,
+    )
+
+    lines = [
+        "=" * 60,
+        f"🏁 Coder-Reviewer 对抗博弈结果: {result.status}",
+        f"   循环轮数: {result.loops}/{max_loops}",
+        "=" * 60,
+    ]
+
+    if result.status == SwarmState.LGTM:
+        lines.append("\n✅ Reviewer 审核通过！代码质量达标。")
+        if result.final_code_diff:
+            lines.append(f"\n📊 代码变更统计:\n{result.final_code_diff}")
+        lines.append(f"\n📝 Coder 最终提交:\n{result.coder_output[:1000]}")
+        is_error = False
+    elif result.status == SwarmState.MAX_LOOPS:
+        lines.append(f"\n⚠️ 达到最大循环次数 ({max_loops})，Coder 和 Reviewer 未能达成一致。")
+        lines.append(f"\n📝 Coder 最后输出:\n{result.coder_output[:500]}")
+        lines.append(f"\n🕵️ Reviewer 最后意见:\n{result.reviewer_output[:500]}")
+        is_error = True
+    else:
+        lines.append(f"\n❌ 异常状态: {result.status}")
+        if result.error:
+            lines.append(f"   错误: {result.error}")
+        is_error = True
+
+    return "\n".join(lines), is_error
 
 
 if __name__ == "__main__":

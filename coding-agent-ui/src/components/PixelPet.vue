@@ -18,6 +18,8 @@ const SPRITE_H = FRAME_H * SCALE
 const ROW_MAP = {
   IDLE: 2,
   THINKING: 3,
+  SEARCHING: 0,
+  REVIEWING: 0,
   WRITING: 4,
   ERROR: 4,
   DONE: 0,
@@ -32,6 +34,8 @@ function getFrameSpeed(status) {
     case 'WRITING': return 100
     case 'ERROR': return 150
     case 'THINKING': return 350
+    case 'SEARCHING': return 250
+    case 'REVIEWING': return 300
     case 'DONE': return 200
     default: return 400
   }
@@ -108,6 +112,8 @@ const statusLabel = computed(() => {
   const map = {
     IDLE: '待命中',
     THINKING: '思考中...',
+    SEARCHING: '搜索中...',
+    REVIEWING: '审查中...',
     WRITING: '编码中...',
     ERROR: '出错了!',
     DONE: '完成!',
@@ -119,6 +125,8 @@ const statusEmoji = computed(() => {
   const map = {
     IDLE: '🐱',
     THINKING: '🤔',
+    SEARCHING: '🔍',
+    REVIEWING: '🕵️',
     WRITING: '⌨️',
     ERROR: '💥',
     DONE: '✅',
@@ -130,6 +138,8 @@ const statusColor = computed(() => {
   const map = {
     IDLE: '#4ade80',
     THINKING: '#60a5fa',
+    SEARCHING: '#22d3ee',
+    REVIEWING: '#c084fc',
     WRITING: '#f59e0b',
     ERROR: '#ef4444',
     DONE: '#a78bfa',
@@ -163,6 +173,15 @@ const isError = computed(() => petStatus.value === 'ERROR')
 
       <div class="effect-layer" v-if="petStatus === 'THINKING'">
         <span class="thought-bubble">💭</span>
+      </div>
+
+      <div class="effect-layer" v-if="petStatus === 'SEARCHING'">
+        <span class="search-magnifier">🔍</span>
+      </div>
+
+      <div class="effect-layer" v-if="petStatus === 'REVIEWING'">
+        <span class="review-magnifier">🕵️</span>
+        <span class="review-shield">🛡️</span>
       </div>
 
       <div class="effect-layer" v-if="petStatus === 'ERROR'">
@@ -220,6 +239,14 @@ const isError = computed(() => petStatus.value === 'ERROR')
   animation: thinking-sway 1.2s ease-in-out infinite;
 }
 
+.searching .sprite-canvas {
+  animation: searching-pace 0.6s ease-in-out infinite;
+}
+
+.reviewing .sprite-canvas {
+  animation: reviewing-scan 1s ease-in-out infinite;
+}
+
 .writing .sprite-canvas {
   animation: writing-bounce 0.25s ease-in-out infinite;
 }
@@ -246,6 +273,12 @@ const isError = computed(() => petStatus.value === 'ERROR')
   0%, 100% { transform: translateX(0) rotate(0deg); }
   25% { transform: translateX(-3px) rotate(-2deg); }
   75% { transform: translateX(3px) rotate(2deg); }
+}
+
+@keyframes searching-pace {
+  0%, 100% { transform: translateX(0); }
+  30% { transform: translateX(4px); }
+  60% { transform: translateX(-4px); }
 }
 
 @keyframes writing-bounce {
@@ -294,6 +327,54 @@ const isError = computed(() => petStatus.value === 'ERROR')
   right: -12px;
   font-size: 18px;
   animation: thought-pulse 1.2s ease-in-out infinite;
+}
+
+.search-magnifier {
+  position: absolute;
+  top: -16px;
+  right: -10px;
+  font-size: 16px;
+  animation: search-scan 1s ease-in-out infinite;
+}
+
+@keyframes search-scan {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  30% { transform: translate(6px, -4px) scale(1.1); }
+  60% { transform: translate(-4px, 2px) scale(0.9); }
+}
+
+@keyframes reviewing-scan {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  25% { transform: translateX(3px) rotate(1deg); }
+  50% { transform: translateX(-3px) rotate(-1deg); }
+  75% { transform: translateX(2px) rotate(0.5deg); }
+}
+
+.review-magnifier {
+  position: absolute;
+  top: -16px;
+  right: -10px;
+  font-size: 16px;
+  animation: review-inspect 1.2s ease-in-out infinite;
+}
+
+.review-shield {
+  position: absolute;
+  bottom: -4px;
+  left: -12px;
+  font-size: 12px;
+  animation: review-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes review-inspect {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  40% { transform: translate(-8px, 4px) scale(1.2); }
+  70% { transform: translate(4px, -2px) scale(0.9); }
+}
+
+@keyframes review-pulse {
+  0%, 100% { opacity: 0.6; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.1); }
 }
 
 @keyframes thought-pulse {

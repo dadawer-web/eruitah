@@ -722,11 +722,11 @@ def auto_distill(
 def _call_distill_model(prompt: str) -> Optional[str]:
     """调用小模型进行经验蒸馏
 
-    优先使用备用模型（硅基流动 Qwen），因为蒸馏不需要最强模型。
+    优先使用主模型（OPENAI_MODEL），主模型不可用时回退到 FALLBACK 模型。
     """
-    api_key = os.environ.get("FALLBACK_API_KEY", "") or os.environ.get("OPENAI_API_KEY", "")
-    base_url = os.environ.get("FALLBACK_BASE_URL", "") or os.environ.get("OPENAI_BASE_URL", "")
-    model = os.environ.get("FALLBACK_MODEL", "") or os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
+    api_key = os.environ.get("OPENAI_API_KEY", "") or os.environ.get("FALLBACK_API_KEY", "")
+    base_url = os.environ.get("OPENAI_BASE_URL", "") or os.environ.get("FALLBACK_BASE_URL", "")
+    model = os.environ.get("OPENAI_MODEL", "") or os.environ.get("FALLBACK_MODEL", "gpt-4o-mini")
 
     if not api_key or not base_url:
         logger.warning("自动蒸馏：未配置 API Key 或 Base URL")

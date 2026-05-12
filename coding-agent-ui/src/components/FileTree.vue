@@ -7,6 +7,18 @@ const store = useAgentStore()
 const showDirPicker = ref(false)
 const expandedMap = reactive({})
 
+function isActiveFile(nodePath) {
+  if (!store.activeContextFiles.length) return false
+  return store.activeContextFiles.some(f => {
+    if (f === nodePath) return true
+    if (f.endsWith(nodePath)) return true
+    if (nodePath.endsWith(f)) return true
+    const normF = f.startsWith('/') ? f.slice(1) : f
+    const normP = nodePath.startsWith('/') ? nodePath.slice(1) : nodePath
+    return normF === normP
+  })
+}
+
 const tree = computed(() => {
   const root = { name: '/', children: [], isDir: true }
   const files = store.files || []
@@ -111,13 +123,24 @@ const flatTree = computed(() => {
       <div
         v-for="item in flatTree"
         :key="item.node.path"
-        class="flex items-center gap-1.5 px-2 py-1 rounded cursor-pointer hover:bg-geek-border transition-colors"
-        :class="{ 'bg-geek-border': store.currentFile === item.node.path }"
+        class="flex items-center gap-1.5 px-2 py-1 rounded cursor-pointer transition-all duration-200"
+        :class="{
+          'bg-geek-border': store.currentFile === item.node.path,
+          'agent-active-file': isActiveFile(item.node.path) && store.currentFile !== item.node.path,
+        }"
         :style="{ paddingLeft: `${8 + item.depth * 12}px` }"
         @click="openFile(item.node)"
       >
-        <span class="text-xs">{{ getFileIcon(item.node) }}</span>
-        <span class="truncate" :class="item.node.isDir ? 'text-geek-text' : 'text-geek-text-dim'">{{ item.node.name }}</span>
+        <span v-if="isActiveFile(item.node.path) && !item.node.isDir" class="text-xs agent-eye">👁️</span>
+        <span v-else class="text-xs">{{ getFileIcon(item.node) }}</span>
+        <span
+          class="truncate"
+          :class="{
+            'text-geek-text': item.node.isDir,
+            'text-geek-text-dim': !item.node.isDir && !isActiveFile(item.node.path),
+            'agent-active-filename': isActiveFile(item.node.path),
+          }"
+        >{{ item.node.name }}</span>
       </div>
       <div v-if="!flatTree.length" class="px-3 py-4 text-geek-text-dim text-xs italic text-center">
         <div v-if="store.basePath">空目录或路径不存在</div>
@@ -132,3 +155,31 @@ const flatTree = computed(() => {
     />
   </div>
 </template>
+
+<style scoped>
+.agent-active-file {
+  background: rgba(0, 255, 136, 0.06);
+  border: 1px solid rgba(0, 255, 136, 0.15);
+  box-shadow: 0 0 8px rgba(0, 255, 136, 0.08), inset 0 0 6px rgba(0, 255, 136, 0.04);
+}
+
+.agent-active-file:hover {
+  background: rgba(0, 255, 136, 0.12);
+  border-color: rgba(0, 255, 136, 0.3);
+}
+
+.agent-active-filename {
+  color: #4ade80;
+  font-weight: 600;
+  text-shadow: 0 0 6px rgba(74, 222, 128, 0.3);
+}
+
+.agent-eye {
+  animation: eye-pulse 2s ease-in-out infinite;
+}
+
+@keyframes eye-pulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+</style>

@@ -37,6 +37,9 @@ export const useAgentStore = defineStore('agent', () => {
   const currentTaskId = ref(null)
   const currentTaskName = ref('')
   const petStatus = ref('IDLE')
+  const agentState = ref(null)
+  const activeContextFiles = ref([])
+  const systemAlerts = ref([])
   const checkpointList = ref([])
 
   const taskList = ref([])
@@ -117,6 +120,62 @@ export const useAgentStore = defineStore('agent', () => {
     switch (data.type) {
       case 'agent_status':
         petStatus.value = data.status || 'IDLE'
+        break
+
+      case 'agent_state':
+        agentState.value = { status: data.status || '', data: data.data || '' }
+        if (data.status === 'thinking') {
+          petStatus.value = 'THINKING'
+        } else if (data.status === 'searching') {
+          petStatus.value = 'SEARCHING'
+        }
+        messages.value.push({
+          role: 'agent',
+          content: data.data || '',
+          timestamp: Date.now(),
+          msgType: 'agent_state',
+          agentStatus: data.status || '',
+        })
+        break
+
+      case 'context_update':
+        if (data.files && Array.isArray(data.files)) {
+          const existing = new Set(activeContextFiles.value)
+          for (const f of data.files) {
+            if (f && !existing.has(f)) {
+              existing.add(f)
+            }
+          }
+          activeContextFiles.value = Array.from(existing).slice(-20)
+          messages.value.push({
+            role: 'agent',
+            content: '',
+            timestamp: Date.now(),
+            msgType: 'context_update',
+            files: data.files,
+          })
+        }
+        break
+
+      case 'chat':
+        break
+
+      case 'system_alert':
+        systemAlerts.value.push({
+          content: data.content || '',
+          timestamp: Date.now(),
+        })
+        messages.value.push({
+          role: 'agent',
+          content: data.content || '',
+          timestamp: Date.now(),
+          msgType: 'system_alert',
+        })
+        window.__xterm_write?.(`\x1b[33m[系统拦截] ${data.content}\x1b[0m\n`)
+        setTimeout(() => {
+          const idx = systemAlerts.value.findIndex(a => a.content === data.content && a.timestamp === Date.now())
+          if (idx !== -1) systemAlerts.value.splice(idx, 1)
+        }, 8000)
         break
 
       case 'status':
@@ -345,6 +404,9 @@ export const useAgentStore = defineStore('agent', () => {
         isRunning.value = false
         status.value = '任务完成'
         petStatus.value = 'DONE'
+        systemAlerts.value = []
+        agentState.value = null
+        activeContextFiles.value = []
         setTimeout(() => { petStatus.value = 'IDLE' }, 5000)
         pushMessage({
           role: 'agent',
@@ -380,6 +442,9 @@ export const useAgentStore = defineStore('agent', () => {
         isRunning.value = false
         status.value = '已停止'
         petStatus.value = 'IDLE'
+        systemAlerts.value = []
+        agentState.value = null
+        activeContextFiles.value = []
         pushMessage({
           role: 'agent',
           content: data.data || 'Agent 已停止',
@@ -402,7 +467,12 @@ export const useAgentStore = defineStore('agent', () => {
         isRunning.value = false
         status.value = '发生错误'
         petStatus.value = 'ERROR'
-        setTimeout(() => { petStatus.value = 'IDLE' }, 8000)
+        agentState.value = null
+        activeContextFiles.value = []
+        setTimeout(() => {
+          petStatus.value = 'IDLE'
+          systemAlerts.value = []
+        }, 8000)
         window.__xterm_write?.(`\x1b[31m[ERROR] ${data.data}\x1b[0m\n`)
         pushMessage({
           role: 'agent',
@@ -467,6 +537,7 @@ export const useAgentStore = defineStore('agent', () => {
           role: 'agent',
           content: data.data || '',
           timestamp: Date.now(),
+          isChat: true,
         })
         break
 
@@ -635,6 +706,54 @@ export const useAgentStore = defineStore('agent', () => {
       case 'mcp_services':
         mcpServices.value = data.data || ''
         console.log('[WS] MCP services listed')
+        break
+
+      case 'swarm_loop_start':
+        status.value = data.data || ''
+        if (data.role === 'coder') {
+          petStatus.value = 'WRITING'
+        } else if (data.role === 'reviewer') {
+          petStatus.value = 'REVIEWING'
+        }
+        messages.value.push({
+          role: 'agent',
+          content: data.data || '',
+          timestamp: Date.now(),
+          msgType: 'system_alert',
+        })
+        break
+
+      case 'swarm_phase_change':
+        status.value = data.data || ''
+        if (data.role === 'reviewer') {
+          petStatus.value = 'REVIEWING'
+        } else if (data.role === 'coder') {
+          petStatus.value = 'WRITING'
+        }
+        messages.value.push({
+          role: 'agent',
+          content: data.data || '',
+          timestamp: Date.now(),
+          msgType: 'system_alert',
+        })
+        break
+
+      case 'swarm_rejected':
+        status.value = data.data || ''
+        petStatus.value = 'WRITING'
+        messages.value.push({
+          role: 'agent',
+          content: `❌ Reviewer 打回重写！意见：${data.reviewer_feedback || ''}`,
+          timestamp: Date.now(),
+          msgType: 'system_alert',
+        })
+        break
+
+      case 'swarm_result':
+        if (data.result) {
+          const r = data.result
+          status.value = r.status || ''
+        }
         break
 
       default:
@@ -809,6 +928,7 @@ export const useAgentStore = defineStore('agent', () => {
         provider: options.provider,
         base_task_id: options.base_task_id || pendingBaseTaskId.value || '',
         auto_approve: autoApprove.value,
+        use_swarm: options.use_swarm || false,
       }
 
       pendingBaseTaskId.value = ''
@@ -839,6 +959,7 @@ export const useAgentStore = defineStore('agent', () => {
         base_url: options.baseUrl,
         provider: options.provider,
         auto_approve: autoApprove.value,
+        use_swarm: options.use_swarm || false,
       }
 
       Object.keys(payload).forEach(key => {
@@ -1057,6 +1178,9 @@ export const useAgentStore = defineStore('agent', () => {
     lastRollbackInfo,
     assistantText,
     petStatus,
+    agentState,
+    activeContextFiles,
+    systemAlerts,
     checkpointList,
     taskList,
     taskMessages,

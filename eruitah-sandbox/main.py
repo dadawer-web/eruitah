@@ -46,6 +46,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from agent_runner import run_agent, MAX_TURNS
+from agent_swarm import run_swarm
 
 logger = logging.getLogger(__name__)
 
@@ -146,44 +147,57 @@ async def _run_agent_async(
     task_id: Optional[str] = None,
     main_repo_dir: Optional[str] = None,
     auto_approve: bool = False,
+    use_swarm: bool = False,
 ):
     """
-    将同步生成器 run_agent() 包装为异步迭代器
+    双模引擎异步适配器
 
-    核心问题: run_agent() 是同步函数，内部调用 LLM API 会阻塞事件循环。
-    解决方案: 使用 asyncio.Queue + 线程池
+    use_swarm=False (默认): ⚡ 闪电模式 - 单体 Agent (run_agent)
+    use_swarm=True:         🧠 深度研发模式 - Coder-Reviewer 对抗博弈 (run_swarm)
 
-    ┌─────────────────┐         ┌──────────────────────┐
-    │  主线程 (async)  │         │  工作线程 (sync)      │
-    │                  │         │                      │
-    │  async for e:   │  ←Queue─  │  for e in run_agent: │
-    │    send_json(e) │         │    queue.put(e)      │
-    │                  │         │                      │
-    └─────────────────┘         └──────────────────────┘
-
-    这样 LLM API 的阻塞调用在工作线程中执行，
-    主线程的 WebSocket 心跳不会被卡住。
+    两种模式都通过 asyncio.Queue + 线程池包装为异步迭代器，
+    保证 WebSocket 心跳不被阻塞。
     """
     queue = asyncio.Queue()
     loop = asyncio.get_event_loop()
 
     def _sync_worker():
         try:
-            for event in run_agent(
-                user_input=user_input,
-                work_dir=work_dir,
-                max_turns=max_turns,
-                api_key=api_key,
-                model=model,
-                base_url=base_url,
-                provider=provider,
-                initial_messages=initial_messages,
-                start_turn=start_turn,
-                task_id=task_id,
-                main_repo_dir=main_repo_dir,
-                auto_approve=auto_approve,
-            ):
-                loop.call_soon_threadsafe(queue.put_nowait, event)
+            if use_swarm:
+                logger.info(f"🧠 [Gateway] 路由到: Swarm (多智能体) 模式, task_id={task_id}")
+                for event in run_swarm(
+                    user_input=user_input,
+                    work_dir=work_dir,
+                    max_turns=max_turns,
+                    api_key=api_key,
+                    model=model,
+                    base_url=base_url,
+                    provider=provider,
+                    initial_messages=initial_messages,
+                    start_turn=start_turn,
+                    task_id=task_id,
+                    main_repo_dir=main_repo_dir,
+                    auto_approve=auto_approve,
+                    yield_events=True,
+                ):
+                    loop.call_soon_threadsafe(queue.put_nowait, event)
+            else:
+                logger.info(f"⚡ [Gateway] 路由到: 单体 Agent 模式, task_id={task_id}")
+                for event in run_agent(
+                    user_input=user_input,
+                    work_dir=work_dir,
+                    max_turns=max_turns,
+                    api_key=api_key,
+                    model=model,
+                    base_url=base_url,
+                    provider=provider,
+                    initial_messages=initial_messages,
+                    start_turn=start_turn,
+                    task_id=task_id,
+                    main_repo_dir=main_repo_dir,
+                    auto_approve=auto_approve,
+                ):
+                    loop.call_soon_threadsafe(queue.put_nowait, event)
         except Exception as e:
             loop.call_soon_threadsafe(
                 queue.put_nowait,
@@ -198,6 +212,52 @@ async def _run_agent_async(
     loop.run_in_executor(executor, _sync_worker)
 
     # 从队列中消费事件
+    while True:
+        event = await queue.get()
+        if event is None:
+            break
+        yield event
+
+
+async def _run_swarm_async(
+    task_description: str,
+    work_dir: str = ".",
+    provider: str = "openai",
+    api_key: str = None,
+    model: str = None,
+    base_url: str = None,
+    max_loops: int = 5,
+    main_repo_dir: str = "",
+):
+    queue = asyncio.Queue()
+    loop = asyncio.get_event_loop()
+
+    def _sync_worker():
+        try:
+            for event in run_swarm(
+                task_description=task_description,
+                work_dir=work_dir,
+                provider=provider,
+                api_key=api_key,
+                model=model,
+                base_url=base_url,
+                max_loops=max_loops,
+                main_repo_dir=main_repo_dir,
+                yield_events=True,
+            ):
+                loop.call_soon_threadsafe(queue.put_nowait, event)
+        except Exception as e:
+            loop.call_soon_threadsafe(
+                queue.put_nowait,
+                {"type": "error", "data": f"Swarm 内部异常: {str(e)}"},
+            )
+        finally:
+            loop.call_soon_threadsafe(queue.put_nowait, None)
+
+    import concurrent.futures
+    executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+    loop.run_in_executor(executor, _sync_worker)
+
     while True:
         event = await queue.get()
         if event is None:
@@ -863,6 +923,7 @@ async def websocket_coding(websocket: WebSocket):
                 continue
 
             auto_approve = data.get("auto_approve", False)
+            use_swarm = data.get("use_swarm", False)
 
             agent_params = {
                 "user_input": user_input,
@@ -877,9 +938,11 @@ async def websocket_coding(websocket: WebSocket):
                 "initial_messages": initial_messages,
                 "start_turn": start_turn,
                 "auto_approve": auto_approve,
+                "use_swarm": use_swarm,
             }
 
-            logger.info(f"🚀 启动 Agent: task={task_id}, model={model}, work_dir={work_dir}, auto_approve={auto_approve}")
+            engine_name = "🧠 Swarm (多智能体)" if use_swarm else "⚡ 单体 Agent"
+            logger.info(f"{engine_name} 引擎启动: task={task_id}, model={model}, work_dir={work_dir}")
 
             agent_needs_restart = True
             while agent_needs_restart:
@@ -1221,6 +1284,10 @@ async def websocket_coding_persistent(websocket: WebSocket):
                 if task_id and not task_manager.current_task_id:
                     task_manager.current_task_id = task_id
 
+                use_swarm = data.get("use_swarm", False)
+                engine_name = "🧠 Swarm (多智能体)" if use_swarm else "⚡ 单体 Agent"
+                logger.info(f"{engine_name} [Persistent] 引擎启动: task={task_id}, model={model}")
+
                 async for event in _run_agent_async(
                     user_input=user_input,
                     work_dir=work_dir,
@@ -1230,6 +1297,7 @@ async def websocket_coding_persistent(websocket: WebSocket):
                     base_url=base_url,
                     provider=provider,
                     task_id=task_id,
+                    use_swarm=use_swarm,
                 ):
                     if not await safe_send(event):
                         break

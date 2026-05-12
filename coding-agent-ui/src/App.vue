@@ -87,6 +87,47 @@ onBeforeUnmount(() => {
         <div class="text-cyan-200/80">{{ store.contextCompact.reason }}</div>
         <div class="text-cyan-200/60 mt-1">剩余消息: {{ store.contextCompact.remaining_messages }} 条</div>
       </div>
+
+      <div
+        v-if="store.systemAlerts.length > 0"
+        class="fixed top-14 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 items-center"
+      >
+        <div
+          v-for="(alert, idx) in store.systemAlerts.slice(-3)"
+          :key="alert.timestamp + idx"
+          class="px-4 py-2 bg-amber-900/90 border border-amber-500/50 rounded-lg text-xs text-amber-300 shadow-xl max-w-[500px] animate-pulse"
+        >
+          🛡️ {{ alert.content }}
+        </div>
+      </div>
+
+      <div
+        v-if="store.agentState && store.isRunning"
+        class="fixed bottom-24 right-5 px-3 py-2 bg-geek-surface/95 border border-geek-border rounded-lg text-xs z-50 max-w-[280px] shadow-xl backdrop-blur-sm"
+      >
+        <div class="flex items-center gap-2 mb-1">
+          <span v-if="store.agentState.status === 'thinking'" class="text-blue-400">🤔</span>
+          <span v-else-if="store.agentState.status === 'searching'" class="text-cyan-400">🔍</span>
+          <span v-else class="text-geek-accent">◈</span>
+          <span class="text-geek-text-dim font-bold">{{ store.agentState.status === 'thinking' ? '深度推理' : store.agentState.status === 'searching' ? '代码检索' : store.agentState.status }}</span>
+        </div>
+        <div class="text-geek-text-dim truncate">{{ store.agentState.data }}</div>
+      </div>
+
+      <div
+        v-if="store.activeContextFiles.length > 0 && store.isRunning"
+        class="fixed bottom-24 right-[300px] px-3 py-2 bg-geek-surface/95 border border-geek-border rounded-lg text-xs z-50 max-w-[500px] shadow-xl backdrop-blur-sm"
+      >
+        <div class="text-geek-text-dim font-bold mb-1">📂 活跃文件</div>
+        <div class="flex flex-wrap gap-1">
+          <span
+            v-for="f in store.activeContextFiles.slice(-8)"
+            :key="f"
+            :title="f"
+            class="px-1.5 py-0.5 bg-geek-bg border border-geek-border rounded text-[10px] text-geek-accent whitespace-nowrap"
+          >{{ f }}</span>
+        </div>
+      </div>
     </Teleport>
 
     <PixelPet />
