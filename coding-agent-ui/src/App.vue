@@ -14,6 +14,7 @@ const store = useAgentStore()
 onMounted(() => {
   store.connect()
   store.fetchFileTree()
+  store.fetchTaskRegistry()
 })
 
 onBeforeUnmount(() => {

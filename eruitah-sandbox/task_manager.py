@@ -509,8 +509,10 @@ class SessionManager:
         with self._lock:
             sessions = []
             for session in self._sessions.values():
-                if work_dir and session.work_dir != work_dir:
-                    continue
+                if work_dir:
+                    sdir = session.work_dir or ""
+                    if sdir != work_dir and not sdir.startswith(work_dir) and not work_dir.startswith(sdir):
+                        continue
                 d = session.to_dict()
                 d["created_at_str"] = time.strftime("%H:%M:%S", time.localtime(session.created_at))
                 sessions.append(d)

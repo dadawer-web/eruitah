@@ -7,32 +7,7 @@ const expandedTaskId = ref(null)
 const taskCommits = ref({})
 
 async function fetchTasks() {
-  try {
-    const resp = await fetch(`http://localhost:8001/api/v1/task-registry?work_dir=${encodeURIComponent(store.basePath)}`)
-    if (resp.ok) {
-      const data = await resp.json()
-      for (const t of (data.tasks || [])) {
-        const existing = store.taskList.find(s => s.id === t.task_id)
-        if (!existing) {
-          store.taskList.push({
-            id: t.task_id,
-            title: t.summary || '未命名任务',
-            status: t.status || 'active',
-            created_at: (t.created_at || 0) * 1000,
-            baseTaskId: t.base_task_id || '',
-            mergeCommitHash: t.merge_commit_hash || '',
-          })
-        } else {
-          existing.status = t.status || existing.status
-          existing.title = t.summary || existing.title
-          existing.baseTaskId = t.base_task_id || existing.baseTaskId
-          existing.mergeCommitHash = t.merge_commit_hash || existing.mergeCommitHash
-        }
-      }
-    }
-  } catch (e) {
-    console.error('[TaskList] fetchTasks error:', e)
-  }
+  await store.fetchTaskRegistry()
 }
 
 function switchTask(task) {

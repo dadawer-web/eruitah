@@ -58,7 +58,6 @@ class KnowledgeGraphDialog;
 class RealtimeVoiceDialog;
 class DashboardDialog;
 class CompanionReadingDialog;
-class CodingAgentDialog;
 
 // 未处理消息结构体
 struct PendingMessage {
@@ -310,6 +309,13 @@ public slots:
 
 protected:
     void closeEvent(QCloseEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+
+private:
+    bool m_windowDragging = false;
+    QPoint m_windowDragPos;
 
 signals:
     void logout();

@@ -783,6 +783,103 @@ export const useAgentStore = defineStore('agent', () => {
     }
   }
 
+  async function fetchTaskRegistry() {
+    try {
+      const resp = await fetch('http://localhost:8001/api/v1/task-registry')
+      if (!resp.ok) {
+        console.warn('[API] fetchTaskRegistry HTTP error:', resp.status)
+        _loadTasksFromCache()
+        return
+      }
+      const data = await resp.json()
+      console.log('[API] fetchTaskRegistry response:', JSON.stringify(data).slice(0, 500))
+
+      let backendTasks = []
+      if (Array.isArray(data)) {
+        backendTasks = data
+      } else if (data && Array.isArray(data.tasks)) {
+        backendTasks = data.tasks
+      } else if (data && Array.isArray(data.data)) {
+        backendTasks = data.data
+      } else if (data && typeof data === 'object') {
+        const vals = Object.values(data)
+        if (vals.length > 0 && vals.every(v => typeof v === 'object' && v !== null)) {
+          backendTasks = vals.map((v, i) => {
+            if (!v.task_id && !v.id) {
+              v.task_id = Object.keys(data)[i]
+            }
+            return v
+          })
+        } else {
+          const possibleArray = vals.find(v => Array.isArray(v))
+          if (possibleArray) backendTasks = possibleArray
+        }
+      }
+
+      console.log('[API] fetchTaskRegistry extracted tasks count:', backendTasks.length)
+
+      if (backendTasks.length === 0) {
+        console.warn('[API] fetchTaskRegistry: 后端返回 0 个任务, work_dir=', basePath.value)
+        _loadTasksFromCache()
+        return
+      }
+
+      const existingMap = new Map(taskList.value.map(t => [t.id, t]))
+
+      for (const t of backendTasks) {
+        const taskId = t.task_id || t.id
+        if (!taskId) continue
+
+        const createdTs = t.created_at
+          ? (t.created_at > 1e12 ? t.created_at : t.created_at * 1000)
+          : Date.now()
+
+        if (existingMap.has(taskId)) {
+          const existing = existingMap.get(taskId)
+          existing.status = t.status || existing.status
+          existing.title = t.summary || existing.title
+          existing.baseTaskId = t.base_task_id || existing.baseTaskId
+          existing.mergeCommitHash = t.merge_commit_hash || existing.mergeCommitHash
+          existing.workDir = t.work_dir || existing.workDir
+        } else {
+          const newTask = {
+            id: taskId,
+            title: t.summary || '未命名任务',
+            status: t.status || 'active',
+            created_at: createdTs,
+            baseTaskId: t.base_task_id || '',
+            mergeCommitHash: t.merge_commit_hash || '',
+            workDir: t.work_dir || '',
+          }
+          taskList.value.push(newTask)
+          existingMap.set(taskId, newTask)
+        }
+      }
+
+      taskList.value.sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
+
+      try {
+        localStorage.setItem('eruitah_tasks', JSON.stringify(taskList.value))
+      } catch {}
+    } catch (e) {
+      console.error('[API] fetchTaskRegistry error:', e)
+      _loadTasksFromCache()
+    }
+  }
+
+  function _loadTasksFromCache() {
+    try {
+      const cached = localStorage.getItem('eruitah_tasks')
+      if (cached) {
+        const parsed = JSON.parse(cached)
+        if (Array.isArray(parsed) && parsed.length > 0 && taskList.value.length === 0) {
+          taskList.value = parsed
+          console.log('[Cache] 从 localStorage 恢复了', parsed.length, '个任务')
+        }
+      }
+    } catch {}
+  }
+
   async function fetchFileTree() {
     try {
       const resp = await fetch(`http://localhost:8001/api/v1/files?path=${encodeURIComponent(basePath.value)}`)
@@ -1070,7 +1167,7 @@ export const useAgentStore = defineStore('agent', () => {
     return sendSystemCommand('list_mcp_services')
   }
 
-  function switchTask(taskId) {
+  async function switchTask(taskId) {
     if (activeTaskId.value === taskId) return
     activeTaskId.value = taskId
     const task = taskList.value.find(t => t.id === taskId)
@@ -1080,6 +1177,20 @@ export const useAgentStore = defineStore('agent', () => {
     }
     if (!taskMessages.value[taskId]) {
       taskMessages.value[taskId] = []
+    }
+    if (taskMessages.value[taskId].length === 0) {
+      try {
+        const resp = await fetch(`http://localhost:8001/api/v1/tasks/${encodeURIComponent(taskId)}/messages`)
+        if (resp.ok) {
+          const data = await resp.json()
+          const backendMsgs = data.messages || []
+          if (backendMsgs.length > 0) {
+            taskMessages.value[taskId] = backendMsgs
+          }
+        }
+      } catch (e) {
+        console.error('[API] fetchTaskMessages error:', e)
+      }
     }
     messages.value = taskMessages.value[taskId]
     sendSystemCommand('switch_task', { target_task_id: taskId })
@@ -1213,6 +1324,7 @@ export const useAgentStore = defineStore('agent', () => {
     setCurrentItem,
     fetchFileTree,
     fetchFileContent,
+    fetchTaskRegistry,
     registerEditor,
     unregisterEditor,
   }

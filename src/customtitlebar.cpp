@@ -21,8 +21,8 @@ CustomTitleBar::CustomTitleBar(const QString &title, QWidget *parent)
     setCursor(Qt::SizeAllCursor);
     setMouseTracking(true);
     setAttribute(Qt::WA_StyledBackground, true);
-    setAttribute(Qt::WA_OpaquePaintEvent, true);
     setFocusPolicy(Qt::NoFocus);
+    setAttribute(Qt::WA_NoMousePropagation, false);
 }
 
 void CustomTitleBar::setupUI()

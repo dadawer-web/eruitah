@@ -32,11 +32,11 @@ spring:
           max-wait: -1ms
   ai:
     openai:
-      api-key: 
-      base-url: https://dashscope.aliyuncs.com/compatible-mode
+      api-key: tp-ce411zcvosr2s7vp50vwa01wj9eom20cxqrhn2nvl3ubi6zi
+      base-url: https://token-plan-cn.xiaomimimo.com/v1
       chat:
         options:
-          model: qwen3.5-flash-2026-02-23
+          model: mimo-v2.5-pro
           temperature: 0.7
       enabled: true
     vectorstore:
@@ -50,20 +50,20 @@ spring:
 
 multimodal:
   openai:
-    api-key: 
-    base-url: https://dashscope.aliyuncs.com/compatible-mode
-    model: qwen3.5-omni-flash-realtime
+    api-key: tp-ce411zcvosr2s7vp50vwa01wj9eom20cxqrhn2nvl3ubi6zi
+    base-url: https://token-plan-cn.xiaomimimo.com/v1
+    model: mimo-v2.5-pro
     temperature: 0.7
 
 embedding:
   siliconflow:
-    api-key: 
+    api-key: sk-bwvmxzyohxwbtthotzxczkabfgwmeapedijzkwzjtgcygsek
     base-url: https://api.siliconflow.cn
     model: BAAI/bge-m3
 
 reranker:
   siliconflow:
-    api-key: 
+    api-key: sk-bwvmxzyohxwbtthotzxczkabfgwmeapedijzkwzjtgcygsek
     base-url: https://api.siliconflow.cn
     model: BAAI/bge-reranker-v2-m3
     top-n: 3
@@ -89,9 +89,9 @@ serper:
 
 voice:
   dashscope:
-    api-key: 
+    api-key: tp-ce411zcvosr2s7vp50vwa01wj9eom20cxqrhn2nvl3ubi6zi
     asr-model: fun-asr-realtime-2026-02-28
-    tts-model: qwen3-tts-instruct-flash-realtime
+    tts-model: mimo-v2.5-tts
     tts-voice: Cherry
   storage:
     path: /tmp/audio

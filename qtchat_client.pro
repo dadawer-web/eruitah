@@ -1,4 +1,4 @@
-QT += core gui network webenginewidgets multimedia
+QT += core gui network webenginewidgets multimedia websockets
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -24,29 +24,56 @@ msvc:QMAKE_CXXFLAGS += /utf-8
 gcc:QMAKE_CXXFLAGS += -finput-charset=UTF-8 -fexec-charset=UTF-8
 
 
-# 源文件 - 只包含客户端相关文件
+# 源文件 - 客户端完整源文件
 SOURCES += \
     src/main.cpp \
     src/chatclient.cpp \
     src/chatwindow.cpp \
     src/loginwindow.cpp \
+    src/mainwindow.cpp \
     src/messagewidget.cpp \
-    src/customtitlebar.cpp
+    src/customtitlebar.cpp \
+    src/farmplotitem.cpp \
+    src/farmdialog.cpp \
+    src/dashboarddialog.cpp \
+    src/knowledgegraphdialog.cpp \
+    src/realtimevoicedialog.cpp \
+    src/companionreadingdialog.cpp \
+    src/codingagentdialog.cpp \
+    src/chatserver.cpp \
+    src/server/db/db.cpp \
+    src/server/model/usermodel.cpp \
+    src/server/model/friendmodel.cpp \
+    src/server/model/groupmodel.cpp \
+    src/server/model/offlinemessagemodel.cpp \
+    src/server/redis/redis.cpp
 
-# 头文件 - 只包含客户端相关文件
+# 头文件 - 客户端完整头文件
 HEADERS += \
     src/chatclient.h \
     src/chatwindow.h \
     src/loginwindow.h \
+    src/mainwindow.h \
     src/public.h \
     src/messagewidget.h \
-    src/customtitlebar.h
+    src/customtitlebar.h \
+    src/farmplotitem.h \
+    src/farmdialog.h \
+    src/dashboarddialog.h \
+    src/knowledgegraphdialog.h \
+    src/realtimevoicedialog.h \
+    src/companionreadingdialog.h \
+    src/codingagentdialog.h \
+    src/chatserver.h
 
 # 资源文件
 RESOURCES += src/qtchat.qrc
 
 # 包含目录
 INCLUDEPATH += $$PWD/src \
+               $$PWD/src/server/db \
+               $$PWD/src/server/model \
+               $$PWD/src/server/redis \
                $$PWD/thirdparty
 
 # 输出目录

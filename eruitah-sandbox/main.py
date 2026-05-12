@@ -129,6 +129,13 @@ STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 if os.path.isdir(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
+# 挂载 Vue 前端 dist 目录（优先级高于内置 IDE 页面）
+VUE_DIST_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "coding-agent-ui", "dist")
+_vue_dist_dir_resolved = os.path.realpath(VUE_DIST_DIR)
+if os.path.isdir(_vue_dist_dir_resolved) and os.path.isfile(os.path.join(_vue_dist_dir_resolved, "index.html")):
+    app.mount("/assets", StaticFiles(directory=os.path.join(_vue_dist_dir_resolved, "assets")), name="vue-assets")
+    logger.info(f"Vue 前端 dist 已挂载: {_vue_dist_dir_resolved}")
+
 
 # ============================================================================
 # 同步生成器 → 异步迭代器 适配器
@@ -1485,7 +1492,7 @@ async def list_tasks(project_path: str = ""):
 async def list_task_registry(work_dir: str = ""):
     from task_manager import get_session_manager
     sm = get_session_manager()
-    tasks = sm.list_sessions(work_dir=work_dir)
+    tasks = sm.list_sessions(work_dir="")
     return {"tasks": tasks}
 
 
@@ -1504,33 +1511,30 @@ async def create_task(request: dict):
 async def get_task(task_id: str):
     from task_manager import get_task_manager
     tm = get_task_manager()
-    task = tm.load_task(task_id)
-    if not task:
+    session = tm.get_session(task_id)
+    if not session:
         return {"error": "任务不存在"}
-    return task
+    return session.to_dict()
 
 
 @app.get("/api/v1/tasks/{task_id}/messages")
 async def get_task_messages(task_id: str):
     from task_manager import get_task_manager
     tm = get_task_manager()
-    task = tm.load_task(task_id)
-    if not task:
+    session = tm.get_session(task_id)
+    if not session:
         return {"messages": [], "count": 0}
-    messages = task.get("messages", [])
-    return {"messages": messages, "count": len(messages)}
+    all_messages = (session.messages_before or []) + (session.messages or [])
+    return {"messages": all_messages, "count": len(all_messages)}
 
 
 @app.put("/api/v1/tasks/{task_id}/status")
 async def update_task_status(task_id: str, request: dict):
     from task_manager import get_task_manager
     tm = get_task_manager()
-    task = tm.load_task(task_id)
-    if not task:
-        return {"error": "任务不存在"}
-    task["status"] = request.get("status", "active")
-    tm.save_task(task)
-    return {"task_id": task_id, "status": task["status"]}
+    tm.set_session_status(task_id, request.get("status", "active"))
+    session = tm.get_session(task_id)
+    return {"task_id": task_id, "status": session.status if session else "unknown"}
 
 
 @app.post("/api/v1/tasks/{task_id}/switch")
@@ -1599,12 +1603,14 @@ async def root():
 
 @app.get("/ide")
 async def ide_page():
-    """IDE 界面 - 返回 coding_lab.html"""
     from fastapi.responses import FileResponse
+    vue_index = os.path.join(_vue_dist_dir_resolved, "index.html") if os.path.isdir(_vue_dist_dir_resolved) else ""
+    if vue_index and os.path.isfile(vue_index):
+        return FileResponse(vue_index, media_type="text/html")
     html_path = os.path.join(STATIC_DIR, "coding_lab.html")
     if os.path.isfile(html_path):
         return FileResponse(html_path, media_type="text/html")
-    return {"error": "coding_lab.html not found", "hint": "请确保 static/coding_lab.html 存在"}
+    return {"error": "IDE page not found", "hint": "请确保 coding-agent-ui/dist 或 static/coding_lab.html 存在"}
 
 
 @app.websocket("/ws/terminal")

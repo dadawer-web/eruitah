@@ -1564,7 +1564,9 @@ def run_agent(
             try:
                 from task_manager import get_task_manager
                 tm = get_task_manager()
-                task_data = tm.load_task(task_id)
+                session = tm.get_session(task_id)
+                if session:
+                    task_data = session.to_dict()
             except Exception:
                 pass
             if task_data and task_data.get("blackboard"):
