@@ -8,8 +8,6 @@ hiyori_pro_en/
 *.md
 !README.md
 
-build/
-bin/
 lib/
 bulid/
 
@@ -27,7 +25,6 @@ CTestTestfile.cmake
 *.so
 *.dylib
 *.dll
-*.exe
 *.a
 *.lib
 
@@ -45,10 +42,6 @@ moc_*.cpp
 qrc_*.cpp
 ui_*.h
 timestamp
-
-target/
-*.jar
-*.war
 
 venv/
 __pycache__/

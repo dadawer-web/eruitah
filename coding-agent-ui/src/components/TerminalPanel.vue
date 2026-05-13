@@ -111,7 +111,8 @@ function connectTerminal(id) {
     return
   }
 
-  term.ws = new WebSocket('ws://localhost:8001/ws/terminal')
+  const wsProto = location.protocol === 'https:' ? 'wss:' : 'ws:'
+  term.ws = new WebSocket(`${wsProto}//${location.host}/ws/terminal`)
 
   term.ws.onopen = () => {
     term.connected = true

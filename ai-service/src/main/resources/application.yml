@@ -13,15 +13,15 @@ spring:
       max-request-size: 50MB
       file-size-threshold: 2KB
   neo4j:
-    uri: bolt://localhost:7687
+    uri: bolt://${SPRING_NEO4J_URI:neo4j:7687}
     authentication:
-      username: neo4j
-      password: 12345678
+      username: ${SPRING_NEO4J_AUTHENTICATION_USERNAME:neo4j}
+      password: ${SPRING_NEO4J_AUTHENTICATION_PASSWORD:12345678}
   data:
     redis:
-      host: localhost
-      port: 6379
-      password: 123456
+      host: ${SPRING_DATA_REDIS_HOST:redis}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      password: ${SPRING_DATA_REDIS_PASSWORD:123456}
       database: 0
       timeout: 10000ms
       lettuce:
@@ -32,11 +32,11 @@ spring:
           max-wait: -1ms
   ai:
     openai:
-      api-key: tp-ce411zcvosr2s7vp50vwa01wj9eom20cxqrhn2nvl3ubi6zi
-      base-url: https://token-plan-cn.xiaomimimo.com/v1
+      api-key: ${SPRING_AI_OPENAI_API_KEY:}
+      base-url: ${SPRING_AI_OPENAI_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode}
       chat:
         options:
-          model: mimo-v2.5-pro
+          model: ${SPRING_AI_OPENAI_CHAT_OPTIONS_MODEL:qwen3.5-plus}
           temperature: 0.7
       enabled: true
     vectorstore:
@@ -50,22 +50,22 @@ spring:
 
 multimodal:
   openai:
-    api-key: tp-ce411zcvosr2s7vp50vwa01wj9eom20cxqrhn2nvl3ubi6zi
-    base-url: https://token-plan-cn.xiaomimimo.com/v1
-    model: mimo-v2.5-pro
+    api-key: ${MULTIMODAL_OPENAI_API_KEY:}
+    base-url: ${MULTIMODAL_OPENAI_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode}
+    model: ${MULTIMODAL_OPENAI_MODEL:qwen3.5-omni-flash-2026-03-15}
     temperature: 0.7
 
 embedding:
   siliconflow:
-    api-key: sk-bwvmxzyohxwbtthotzxczkabfgwmeapedijzkwzjtgcygsek
-    base-url: https://api.siliconflow.cn
-    model: BAAI/bge-m3
+    api-key: ${EMBEDDING_SILICONFLOW_API_KEY:}
+    base-url: ${EMBEDDING_SILICONFLOW_BASE_URL:https://api.siliconflow.cn}
+    model: ${EMBEDDING_SILICONFLOW_MODEL:BAAI/bge-m3}
 
 reranker:
   siliconflow:
-    api-key: sk-bwvmxzyohxwbtthotzxczkabfgwmeapedijzkwzjtgcygsek
-    base-url: https://api.siliconflow.cn
-    model: BAAI/bge-reranker-v2-m3
+    api-key: ${RERANKER_SILICONFLOW_API_KEY:}
+    base-url: ${RERANKER_SILICONFLOW_BASE_URL:https://api.siliconflow.cn}
+    model: ${RERANKER_SILICONFLOW_MODEL:BAAI/bge-reranker-v2-m3}
     top-n: 3
 
 chat:
@@ -84,18 +84,18 @@ logging:
     org.springframework.ai: DEBUG
 
 serper:
-  api-key: 
-  base-url: https://google.serper.dev
+  api-key: ${SERPER_API_KEY:}
+  base-url: ${SERPER_BASE_URL:https://google.serper.dev}
 
 voice:
   dashscope:
-    api-key: tp-ce411zcvosr2s7vp50vwa01wj9eom20cxqrhn2nvl3ubi6zi
-    asr-model: fun-asr-realtime-2026-02-28
-    tts-model: mimo-v2.5-tts
-    tts-voice: Cherry
+    api-key: ${VOICE_DASHSCOPE_API_KEY:}
+    asr-model: ${VOICE_DASHSCOPE_ASR_MODEL:fun-asr-realtime-2026-02-28}
+    tts-model: ${VOICE_DASHSCOPE_TTS_MODEL:qwen3-tts-instruct-flash-realtime}
+    tts-voice: ${VOICE_DASHSCOPE_TTS_VOICE:Cherry}
   storage:
-    path: /tmp/audio
-    url-prefix: http://localhost:8081/audio
+    path: ${VOICE_STORAGE_PATH:/tmp/audio}
+    url-prefix: ${VOICE_STORAGE_URL_PREFIX:http://localhost/audio}
 
 app:
   ai:

@@ -74,7 +74,8 @@ export const useAgentStore = defineStore('agent', () => {
       return
     }
 
-    const socket = new WebSocket('ws://localhost:8001/ws/coding')
+    const wsProto = location.protocol === 'https:' ? 'wss:' : 'ws:'
+    const socket = new WebSocket(`${wsProto}//${location.host}/ws/coding`)
 
     socket.onopen = () => {
       connected.value = true
@@ -785,7 +786,7 @@ export const useAgentStore = defineStore('agent', () => {
 
   async function fetchTaskRegistry() {
     try {
-      const resp = await fetch('http://localhost:8001/api/v1/task-registry')
+      const resp = await fetch('/api/v1/task-registry')
       if (!resp.ok) {
         console.warn('[API] fetchTaskRegistry HTTP error:', resp.status)
         _loadTasksFromCache()
@@ -882,7 +883,7 @@ export const useAgentStore = defineStore('agent', () => {
 
   async function fetchFileTree() {
     try {
-      const resp = await fetch(`http://localhost:8001/api/v1/files?path=${encodeURIComponent(basePath.value)}`)
+      const resp = await fetch(`/api/v1/files?path=${encodeURIComponent(basePath.value)}`)
       if (resp.ok) {
         const data = await resp.json()
         files.value = data.files || []
@@ -895,7 +896,7 @@ export const useAgentStore = defineStore('agent', () => {
   async function fetchFileContent(relativePath) {
     try {
       const fullPath = basePath.value + '/' + relativePath
-      const resp = await fetch(`http://localhost:8001/api/v1/file?path=${encodeURIComponent(fullPath)}`)
+      const resp = await fetch(`/api/v1/file?path=${encodeURIComponent(fullPath)}`)
       if (resp.ok) {
         const data = await resp.json()
         currentFile.value = relativePath
@@ -1180,7 +1181,7 @@ export const useAgentStore = defineStore('agent', () => {
     }
     if (taskMessages.value[taskId].length === 0) {
       try {
-        const resp = await fetch(`http://localhost:8001/api/v1/tasks/${encodeURIComponent(taskId)}/messages`)
+        const resp = await fetch(`/api/v1/tasks/${encodeURIComponent(taskId)}/messages`)
         if (resp.ok) {
           const data = await resp.json()
           const backendMsgs = data.messages || []

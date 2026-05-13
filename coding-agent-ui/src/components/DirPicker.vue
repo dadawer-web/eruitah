@@ -19,7 +19,7 @@ async function browse(path) {
   loading.value = true
   error.value = ''
   try {
-    const resp = await fetch(`http://localhost:8001/api/v1/browse?path=${encodeURIComponent(path)}`)
+    const resp = await fetch(`/api/v1/browse?path=${encodeURIComponent(path)}`)
     if (resp.ok) {
       const data = await resp.json()
       folders.value = data.folders || []

@@ -1,51 +1,25 @@
 FROM python:3.11-slim
 
-WORKDIR /app
+RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources 2>/dev/null; \
+    sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list 2>/dev/null; \
+    true
+
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y \
-    git \
-    grep \
-    curl \
-    xvfb \
-    x11vnc \
-    xdotool \
-    scrot \
-    imagemagick \
-    libx11-6 \
-    libxext6 \
-    libxrender1 \
-    libxtst6 \
-    libxi6 \
-    libxrandr2 \
-    libglib2.0-0 \
-    libgl1 \
-    libgtk-3-0 \
-    libnotify4 \
-    libnss3 \
-    libnspr4 \
-    libxss1 \
-    libasound2 \
-    libgbm1 \
-    libatk1.0-0 \
-    libatk-bridge2.0-0 \
-    libcups2 \
-    libdrm2 \
-    libxkbcommon0 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxfixes3 \
-    fonts-noto-cjk \
-    fonts-ipafont-gothic \
-    fonts-wqy-zenhei \
-    fonts-thai-tlwg \
-    fonts-freefont-ttf \
-    clangd \
-    default-jdk \
+    git grep curl \
+    xvfb x11vnc xdotool scrot imagemagick \
+    libx11-6 libxext6 libxrender1 libxtst6 libxi6 libxrandr2 \
+    libglib2.0-0 libgl1 libgtk-3-0 libnotify4 libnss3 libnspr4 \
+    libxss1 libasound2 libgbm1 libatk1.0-0 libatk-bridge2.0-0 \
+    libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 \
+    fonts-noto-cjk fonts-wqy-zenhei \
+    clangd default-jdk \
     && rm -rf /var/lib/apt/lists/*
 
 RUN apt-get update && apt-get install -y \
-    chromium \
-    --no-install-recommends && rm -rf /var/lib/apt/lists/*
+    chromium --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
@@ -60,9 +34,7 @@ RUN npm install -g \
     @modelcontextprotocol/server-memory \
     @modelcontextprotocol/server-sequential-thinking \
     @modelcontextprotocol/server-postgres \
-    pyright \
-    typescript-language-server \
-    typescript
+    pyright typescript-language-server typescript
 
 RUN JDTLS_VERSION=1.38.0-202503271746 && \
     curl -fsSL "https://download.eclipse.org/jdtls/milestones/${JDTLS_VERSION}/jdt-language-server-${JDTLS_VERSION}.tar.gz" \
@@ -74,7 +46,6 @@ ENV JDTLS_HOME=/opt/jdtls
 ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 
 COPY requirements.txt .
-
 RUN pip install --no-cache-dir -r requirements.txt \
     -i https://pypi.tuna.tsinghua.edu.cn/simple
 

@@ -1,64 +1,33 @@
-FROM ubuntu:22.04 AS build
-
-ENV DEBIAN_FRONTEND=noninteractive
-
-RUN apt-get update && apt-get install -y \
-    build-essential cmake git \
-    qtbase5-dev qtchooser qt5-qmake \
-    libqt5svg5-dev \
-    libmysqlclient-dev \
-    libhiredis-dev \
-    libssl-dev \
-    libcurl4-openssl-dev \
-    protobuf-compiler libprotobuf-dev \
-    zlib1g-dev \
-    libboost-all-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN git clone https://github.com/chenshuo/muduo.git /tmp/muduo && \
-    cd /tmp/muduo && \
-    mkdir build && cd build && \
-    cmake .. -DCMAKE_BUILD_TYPE=Release && \
-    make -j$(nproc) && \
-    make install && \
-    ls /usr/local/lib/libmuduo* || true && \
-    ls /usr/local/include/muduo/ || true
-
-WORKDIR /app
-
-COPY CMakeLists.txt .
-COPY include/ include/
-COPY src/ src/
-COPY thirdparty/ thirdparty/
-
-RUN sed -i 's|set(MUDUO_ROOT_DIR "/home/xmy/muduo")|set(MUDUO_ROOT_DIR "/usr/local")|g' src/server/CMakeLists.txt && \
-    sed -i 's|include_directories(\${MUDUO_ROOT_DIR}/include)|include_directories(/usr/local/include)|g' src/server/CMakeLists.txt && \
-    sed -i 's|link_directories(\${MUDUO_ROOT_DIR}/build/lib)|link_directories(/usr/local/lib)|g' src/server/CMakeLists.txt && \
-    sed -i 's|add_subdirectory(server)|add_subdirectory(server)|g; s|add_subdirectory(client)|# add_subdirectory(client) - skipped for Docker|g' src/CMakeLists.txt && \
-    mkdir build && cd build && \
-    cmake .. && \
-    make ChatServer -j$(nproc) && \
-    find /app -name "ChatServer" -type f
-
 FROM ubuntu:22.04
+
+RUN sed -i 's/archive.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list && \
+    sed -i 's/security.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list
 
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y \
     libmysqlclient21 \
-    libhiredis0.14 \
     libssl3 \
     libcurl4 \
-    libprotobuf23 \
-    zlib1g \
     libqt5core5a \
     libqt5network5 \
     && rm -rf /var/lib/apt/lists/*
 
+RUN apt-get update && apt-get install -y \
+    git build-essential cmake \
+    && git clone https://github.com/redis/hiredis.git /tmp/hiredis && \
+    cd /tmp/hiredis && git checkout v1.3.0 && \
+    mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && \
+    make -j$(nproc) && make install && ldconfig && \
+    rm -rf /tmp/hiredis && \
+    apt-get purge -y git build-essential cmake && \
+    apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
-COPY --from=build /app/bin/ChatServer .
+COPY ./bin/ChatServer /app/ChatServer
+RUN chmod +x /app/ChatServer
 
 EXPOSE 6000
 
-ENTRYPOINT ["./ChatServer", "0.0.0.0", "6000"]
+CMD ["./ChatServer", "0.0.0.0", "6000"]
