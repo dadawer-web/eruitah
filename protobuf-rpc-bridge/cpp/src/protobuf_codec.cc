@@ -1,5 +1,5 @@
 #include "protobuf_codec.h"
-#include "chat.pb.h"
+#include "proto/chat.pb.h"
 #include <muduo/base/Logging.h>
 #include <google/protobuf/descriptor.h>
 #include <zlib.h>
@@ -167,6 +167,14 @@ std::shared_ptr<google::protobuf::Message> ProtobufCodec::parse(
         message = new bridge::SwarmNodeListResponse();
     } else if (typeName == "bridge.RpcMessage") {
         message = new bridge::RpcMessage();
+    } else if (typeName == "bridge.InternalForwardRequest") {
+        message = new bridge::InternalForwardRequest();
+    } else if (typeName == "bridge.InternalForwardResponse") {
+        message = new bridge::InternalForwardResponse();
+    } else if (typeName == "bridge.InternalPushRequest") {
+        message = new bridge::InternalPushRequest();
+    } else if (typeName == "bridge.InternalPushResponse") {
+        message = new bridge::InternalPushResponse();
     } else {
         *error = kUnknownMessageType;
         return nullptr;

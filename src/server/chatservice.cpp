@@ -144,6 +144,59 @@ ChatService::ChatService()
     }
 }
 
+void ChatService::initRpc(EventLoop* loop,
+                           const InetAddress& javaRpcAddr,
+                           const InetAddress& rpcListenAddr) {
+    _rpcClient = std::make_shared<InternalRpcClient>(loop, javaRpcAddr);
+    _rpcClient->connect();
+    LOG_INFO << "InternalRpcClient connecting to Java at " << javaRpcAddr.toIpPort();
+
+    _rpcServer = std::make_shared<InternalRpcServer>(loop, rpcListenAddr);
+    _rpcServer->setPushCallback(
+        std::bind(&ChatService::handleRpcPushMessage, this,
+                  std::placeholders::_1, std::placeholders::_2,
+                  std::placeholders::_3, std::placeholders::_4,
+                  std::placeholders::_5));
+    _rpcServer->start();
+    LOG_INFO << "InternalRpcServer started on " << rpcListenAddr.toIpPort();
+
+    _aiServiceClient.setRpcClient(_rpcClient);
+    LOG_INFO << "AiServiceClient bound to InternalRpcClient";
+}
+
+void ChatService::handleRpcPushMessage(int receiverId, int64_t groupId,
+                                        int msgType, const string& payloadJson,
+                                        bool broadcast) {
+    LOG_INFO << "[RPC Push] receiverId=" << receiverId
+             << " groupId=" << groupId
+             << " msgType=" << msgType
+             << " broadcast=" << broadcast;
+
+    if (broadcast) {
+        lock_guard<mutex> lock(_connMutex);
+        for (auto& pair : _userConnMap) {
+            pair.second->send(payloadJson);
+        }
+        LOG_INFO << "[RPC Push] Broadcast delivered to " << _userConnMap.size() << " users";
+        return;
+    }
+
+    if (groupId > 0) {
+        handleGroupDispatchMessage(payloadJson);
+        return;
+    }
+
+    lock_guard<mutex> lock(_connMutex);
+    auto it = _userConnMap.find(receiverId);
+    if (it != _userConnMap.end()) {
+        it->second->send(payloadJson);
+        LOG_INFO << "[RPC Push] Delivered to user " << receiverId;
+    } else {
+        LOG_WARN << "[RPC Push] User " << receiverId << " not online locally, storing offline";
+        _offlineMsgModel.insert(receiverId, payloadJson);
+    }
+}
+
 void ChatService::reset(){
     _userModel.resetState();
 }
@@ -827,12 +880,20 @@ void ChatService::groupChat(const TcpConnectionPtr& conn,json& js,Timestamp time
          aiGroupRequest["aiBotIds"] = aiBotIdsToRespond;
 
          string aiGroupRequestStr = aiGroupRequest.dump();
-         if (_redis.publish(9998, aiGroupRequestStr)) {
-             LOG_INFO << "AI group chat request published to Redis: groupId=" << groupid
-                      << ", aiBotIds count=" << aiBotIdsToRespond.size();
-         } else {
-             LOG_ERROR << "Failed to publish AI group chat request to Redis";
-         }
+        if (_rpcClient && _rpcClient->connected()) {
+            _rpcClient->forwardToJava(userid, 0, groupid,
+                2, aiGroupRequestStr, "grp_" + to_string(groupid),
+                [](const string& svc, const string& method, bool success, const string& error) {
+                    if (success) {
+                        LOG_INFO << "AI group chat request forwarded via RPC";
+                    } else {
+                        LOG_ERROR << "AI group chat RPC failed: " << error;
+                    }
+                });
+        } else {
+            _redis.publish(9998, aiGroupRequestStr);
+            LOG_WARN << "RPC not available, fallback to Redis for AI group chat";
+        }
      }
 
      // ==================== 正常群聊消息分发 ====================
@@ -1216,8 +1277,8 @@ void ChatService::fileTransferComplete(const TcpConnectionPtr& conn, json& js, T
 
 void ChatService::handleRedisSubscribeMessage(long long channel, string msg)
 {
-    LOG_INFO << "Received message from Redis on channel " << channel;
-    LOG_INFO << "Message content: " << msg;
+    LOG_INFO << "Received message from Redis on channel " << channel
+             << " (cross-node C++ message)";
 
     try {
         json js = json::parse(msg);
@@ -1230,82 +1291,16 @@ void ChatService::handleRedisSubscribeMessage(long long channel, string msg)
         return;
     }
 
-    if (channel == GROUP_DISPATCH_CHANNEL) {
-        handleGroupDispatchMessage(msg);
+    if (channel == GROUP_DISPATCH_CHANNEL || channel == 9996) {
+        LOG_INFO << "Redis channel " << channel << " message now handled by RPC, ignoring Redis copy";
         return;
-    }
-
-    if (channel == 9996) {
-        json js = json::parse(msg);
-        int msgid = js["msgid"].get<int>();
-        if (msgid == FARM_ANSWER_MSG_ACK) {
-            int userid = js.contains("userid") ? js["userid"].get<int>() : -1;
-            int ownerid = js.contains("ownerid") ? js["ownerid"].get<int>() : -1;
-            bool canHarvest = js["canHarvest"].get<bool>();
-            int score = js["score"].get<int>();
-            string feedback = js["feedback"].get<string>();
-            int plotid = js["plotid"].get<int>();
-
-            if (userid > 0) {
-                lock_guard<mutex> lock(_connMutex);
-                auto it = _userConnMap.find(userid);
-                if (it != _userConnMap.end()) {
-                    it->second->send(msg);
-                    LOG_INFO << "Farm answer ACK forwarded to user " << userid;
-                } else {
-                    _offlineMsgModel.insert(userid, msg);
-                }
-            }
-
-            if (canHarvest && ownerid > 0) {
-                _farmModel.answerPlot(ownerid, plotid, userid, "", score, feedback);
-                _farmModel.updateFarmUserExp(ownerid, 10);
-                _farmModel.updateFarmUserCoins(userid, 50);
-
-                json ownerNotify;
-                ownerNotify["msgid"] = FARM_PLOT_HARVESTED_NOTIFY;
-                ownerNotify["plotid"] = plotid;
-                ownerNotify["ownerid"] = ownerid;
-                ownerNotify["harvesterid"] = userid;
-                ownerNotify["score"] = score;
-                ownerNotify["feedback"] = feedback;
-                string ownerNotifyStr = ownerNotify.dump();
-
-                {
-                    lock_guard<mutex> lock(_connMutex);
-                    auto ownerIt = _userConnMap.find(ownerid);
-                    if (ownerIt != _userConnMap.end()) {
-                        ownerIt->second->send(ownerNotifyStr);
-                        LOG_INFO << "Notified owner " << ownerid << " about plot " << plotid << " harvested (local)";
-                    } else {
-                        User ownerUser = _userModel.query(ownerid);
-                        if (ownerUser.getState() == "online") {
-                            _redis.publish(ownerid, ownerNotifyStr);
-                            LOG_INFO << "Notified owner " << ownerid << " about plot " << plotid << " harvested (via Redis)";
-                        } else {
-                            _offlineMsgModel.insert(ownerid, ownerNotifyStr);
-                            LOG_INFO << "Stored offline notification for owner " << ownerid << " about plot " << plotid << " harvested";
-                        }
-                    }
-                }
-            }
-            return;
-        }
-
-        if (msgid == FARM_BROADCAST_MSG) {
-            lock_guard<mutex> lock(_connMutex);
-            for (auto &pair : _userConnMap) {
-                pair.second->send(msg);
-            }
-            return;
-        }
     }
 
     lock_guard<mutex> lock(_connMutex);
     auto it = _userConnMap.find(static_cast<int>(channel));
     if (it != _userConnMap.end())
     {
-        LOG_INFO << "Found user " << channel << " in connection map";
+        LOG_INFO << "Found user " << channel << " in connection map (cross-node)";
         it->second->send(msg);
         LOG_INFO << "Message forwarded to user " << channel;
         return;
@@ -1752,7 +1747,20 @@ void ChatService::farmAnswer(const TcpConnectionPtr& conn, json& js, Timestamp t
     aiRequest["question"] = question;
     aiRequest["answer"] = answer;
 
-    _redis.publish(9995, aiRequest.dump());
+    if (_rpcClient && _rpcClient->connected()) {
+        _rpcClient->forwardToJava(userid, 0, 0,
+            5, aiRequest.dump(), "farm_" + to_string(plotid),
+            [](const string& svc, const string& method, bool success, const string& error) {
+                if (success) {
+                    LOG_INFO << "Farm answer request forwarded via RPC";
+                } else {
+                    LOG_ERROR << "Farm answer RPC failed: " << error;
+                }
+            });
+    } else {
+        _redis.publish(9995, aiRequest.dump());
+        LOG_WARN << "RPC not available, fallback to Redis for farm answer";
+    }
 
     LOG_INFO << "Farm answer request sent to AI service for user " << userid << " plot " << plotid;
 }

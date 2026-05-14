@@ -16,6 +16,8 @@ using namespace muduo::net;
 class RpcChannel {
 public:
     typedef std::function<void(std::shared_ptr<google::protobuf::Message>)> ResponseCallback;
+    typedef std::function<void(std::shared_ptr<google::protobuf::Message>)> StreamChunkCallback;
+    typedef std::function<void()> StreamEndCallback;
 
     RpcChannel(EventLoop* loop, const InetAddress& serverAddr);
     ~RpcChannel();
@@ -25,6 +27,14 @@ public:
                     const google::protobuf::Message& request,
                     std::shared_ptr<google::protobuf::Message> response,
                     ResponseCallback done);
+
+    void callStreamMethod(const std::string& serviceName,
+                          const std::string& methodName,
+                          const google::protobuf::Message& request,
+                          std::shared_ptr<google::protobuf::Message> streamChunk,
+                          StreamChunkCallback onChunk,
+                          StreamEndCallback onEnd,
+                          ResponseCallback onError);
 
     void connect();
     void disconnect();
@@ -40,10 +50,18 @@ private:
         ResponseCallback done;
     };
 
+    struct OutstandingStream {
+        std::shared_ptr<google::protobuf::Message> streamChunk;
+        StreamChunkCallback onChunk;
+        StreamEndCallback onEnd;
+        ResponseCallback onError;
+    };
+
     TcpClient client_;
     TcpConnectionPtr conn_;
-    std::mutex mutex_;
+    mutable std::mutex mutex_;
     std::map<int64_t, OutstandingCall> outstandingCalls_;
+    std::map<int64_t, OutstandingStream> outstandingStreams_;
     int64_t id_;
 };
 

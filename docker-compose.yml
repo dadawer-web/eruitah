@@ -64,6 +64,7 @@ services:
     restart: always
     ports:
       - "6000:6000"
+      - "8888:8888"
     environment:
       MYSQL_HOST: mysql
       MYSQL_USER: root
@@ -74,6 +75,8 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD:-123456}
       AI_SERVICE_URL: http://ai-service:8081/api/ai/chat
       AI_SERVICE_BASE_URL: http://ai-service:8081
+      JAVA_RPC_HOST: ai-service
+      JAVA_RPC_PORT: 9999
     depends_on:
       mysql:
         condition: service_healthy
@@ -117,6 +120,7 @@ services:
     restart: always
     ports:
       - "8081:8081"
+      - "9999:9999"
     environment:
       JAVA_OPTS: -Xms256m -Xmx512m
       SPRING_PROFILES_ACTIVE: prod
@@ -146,6 +150,11 @@ services:
       VOICE_DASHSCOPE_TTS_VOICE: ${VOICE_TTS_VOICE:-Cherry}
       VOICE_STORAGE_PATH: /tmp/audio
       VOICE_STORAGE_URL_PREFIX: http://localhost/audio
+      RPC_CPP_HOST: chatserver
+      RPC_CPP_PORT: 8888
+      RPC_PYTHON_HOST: chat-sandbox
+      RPC_PYTHON_PORT: 9997
+      RPC_INTERNAL_PORT: 9999
     depends_on:
       mysql:
         condition: service_healthy

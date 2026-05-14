@@ -8,7 +8,6 @@ hiyori_pro_en/
 *.md
 !README.md
 
-lib/
 bulid/
 
 CMakeCache.txt
@@ -23,6 +22,7 @@ CTestTestfile.cmake
 *.o
 *.obj
 *.so
+!lib/libhiredis.so.1.3.0
 *.dylib
 *.dll
 *.a

@@ -32,11 +32,11 @@ spring:
           max-wait: -1ms
   ai:
     openai:
-      api-key: ${SPRING_AI_OPENAI_API_KEY:}
-      base-url: ${SPRING_AI_OPENAI_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode}
+      api-key: ${OPENAI_API_KEY:}
+      base-url: ${OPENAI_BASE_URL:https://token-plan-cn.xiaomimimo.com}
       chat:
         options:
-          model: ${SPRING_AI_OPENAI_CHAT_OPTIONS_MODEL:qwen3.5-plus}
+          model: ${OPENAI_MODEL:mimo-v2.5-pro}
           temperature: 0.7
       enabled: true
     vectorstore:
@@ -50,22 +50,22 @@ spring:
 
 multimodal:
   openai:
-    api-key: ${MULTIMODAL_OPENAI_API_KEY:}
-    base-url: ${MULTIMODAL_OPENAI_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode}
-    model: ${MULTIMODAL_OPENAI_MODEL:qwen3.5-omni-flash-2026-03-15}
+    api-key: ${MULTIMODAL_API_KEY:}
+    base-url: ${MULTIMODAL_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode}
+    model: ${MULTIMODAL_MODEL:qwen3.5-omni-flash-2026-03-15}
     temperature: 0.7
 
 embedding:
   siliconflow:
-    api-key: ${EMBEDDING_SILICONFLOW_API_KEY:}
-    base-url: ${EMBEDDING_SILICONFLOW_BASE_URL:https://api.siliconflow.cn}
-    model: ${EMBEDDING_SILICONFLOW_MODEL:BAAI/bge-m3}
+    api-key: ${EMBEDDING_API_KEY:}
+    base-url: ${EMBEDDING_BASE_URL:https://api.siliconflow.cn}
+    model: ${EMBEDDING_MODEL:BAAI/bge-m3}
 
 reranker:
   siliconflow:
-    api-key: ${RERANKER_SILICONFLOW_API_KEY:}
-    base-url: ${RERANKER_SILICONFLOW_BASE_URL:https://api.siliconflow.cn}
-    model: ${RERANKER_SILICONFLOW_MODEL:BAAI/bge-reranker-v2-m3}
+    api-key: ${RERANKER_API_KEY:}
+    base-url: ${RERANKER_BASE_URL:https://api.siliconflow.cn}
+    model: ${RERANKER_MODEL:BAAI/bge-reranker-v2-m3}
     top-n: 3
 
 chat:
@@ -89,13 +89,13 @@ serper:
 
 voice:
   dashscope:
-    api-key: ${VOICE_DASHSCOPE_API_KEY:}
-    asr-model: ${VOICE_DASHSCOPE_ASR_MODEL:fun-asr-realtime-2026-02-28}
-    tts-model: ${VOICE_DASHSCOPE_TTS_MODEL:qwen3-tts-instruct-flash-realtime}
-    tts-voice: ${VOICE_DASHSCOPE_TTS_VOICE:Cherry}
+    api-key: ${VOICE_API_KEY:}
+    asr-model: ${VOICE_ASR_MODEL:fun-asr-realtime-2026-02-28}
+    tts-model: ${VOICE_TTS_MODEL:qwen3-tts-instruct-flash-realtime}
+    tts-voice: ${VOICE_TTS_VOICE:Cherry}
   storage:
     path: ${VOICE_STORAGE_PATH:/tmp/audio}
-    url-prefix: ${VOICE_STORAGE_URL_PREFIX:http://localhost/audio}
+    url-prefix: ${VOICE_URL_PREFIX:http://localhost/audio}
 
 app:
   ai:
@@ -105,3 +105,13 @@ app:
     structured-retry-append-strict-json-instruction: true
     structured-error-message-max-length: 200
     structured-metrics-enabled: true
+
+rpc:
+  cpp:
+    host: ${RPC_CPP_HOST:127.0.0.1}
+    port: ${RPC_CPP_PORT:8888}
+  python:
+    host: ${RPC_PYTHON_HOST:127.0.0.1}
+    port: ${RPC_PYTHON_PORT:9997}
+  internal:
+    port: ${RPC_INTERNAL_PORT:9999}

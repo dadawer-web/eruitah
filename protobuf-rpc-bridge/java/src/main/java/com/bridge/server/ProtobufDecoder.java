@@ -107,6 +107,10 @@ public class ProtobufDecoder extends ByteToMessageDecoder {
             case "bridge.SwarmHelpRequest": return ChatProto.SwarmHelpRequest.parseFrom(payload);
             case "bridge.SwarmHelpResponse": return ChatProto.SwarmHelpResponse.parseFrom(payload);
             case "bridge.SwarmNodeListResponse": return ChatProto.SwarmNodeListResponse.parseFrom(payload);
+            case "bridge.InternalForwardRequest": return ChatProto.InternalForwardRequest.parseFrom(payload);
+            case "bridge.InternalForwardResponse": return ChatProto.InternalForwardResponse.parseFrom(payload);
+            case "bridge.InternalPushRequest": return ChatProto.InternalPushRequest.parseFrom(payload);
+            case "bridge.InternalPushResponse": return ChatProto.InternalPushResponse.parseFrom(payload);
             case "bridge.RpcMessage": return ChatProto.RpcMessage.parseFrom(payload);
             default: throw new IllegalArgumentException("Unknown message type: " + typeName);
         }

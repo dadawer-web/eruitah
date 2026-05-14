@@ -1,6 +1,7 @@
 package com.chat.ai.service;
 
 import com.chat.ai.model.HarvestJudgment;
+import com.chat.ai.rpc.RpcPushService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -17,6 +18,7 @@ public class FarmService {
     private final FarmAiJudgeService farmAiJudgeService;
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
+    private final RpcPushService rpcPushService;
 
     private static final String FARM_LOCK_PREFIX = "farm:lock:";
     private static final int FARM_DISPATCH_CHANNEL = 9996;
@@ -25,10 +27,12 @@ public class FarmService {
 
     public FarmService(FarmAiJudgeService farmAiJudgeService,
                        StringRedisTemplate stringRedisTemplate,
-                       ObjectMapper objectMapper) {
+                       ObjectMapper objectMapper,
+                       RpcPushService rpcPushService) {
         this.farmAiJudgeService = farmAiJudgeService;
         this.stringRedisTemplate = stringRedisTemplate;
         this.objectMapper = objectMapper;
+        this.rpcPushService = rpcPushService;
     }
 
     public HarvestJudgment processAnswer(int userId, int plotId, int ownerId,
@@ -98,5 +102,41 @@ public class FarmService {
         } catch (Exception e) {
             log.error("Error broadcasting farm harvest", e);
         }
+    }
+
+    public void addExperience(int userId, int experience, String type, String source) {
+        log.info("[RPC] addExperience: userId={}, exp={}, type={}, source={}", userId, experience, type, source);
+
+        try {
+            int calculatedExp = calculateExperience(userId, experience, type);
+
+            Map<String, Object> expUpdate = new HashMap<>();
+            expUpdate.put("userid", userId);
+            expUpdate.put("experience", calculatedExp);
+            expUpdate.put("type", type);
+            expUpdate.put("source", source);
+            expUpdate.put("timestamp", System.currentTimeMillis());
+
+            rpcPushService.pushExperienceUpdate(userId, expUpdate);
+
+            log.info("[RPC] Experience update pushed to C++: userId={}, exp={}", userId, calculatedExp);
+
+        } catch (Exception e) {
+            log.error("[RPC] Error in addExperience: userId={}", userId, e);
+        }
+    }
+
+    private int calculateExperience(int userId, int baseExp, String type) {
+        int multiplier = 1;
+
+        if ("answer_correct".equals(type)) {
+            multiplier = 2;
+        } else if ("harvest".equals(type)) {
+            multiplier = 1;
+        } else if ("plant".equals(type)) {
+            multiplier = 1;
+        }
+
+        return baseExp * multiplier;
     }
 }

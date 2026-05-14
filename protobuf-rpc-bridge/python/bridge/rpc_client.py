@@ -2,7 +2,7 @@ import asyncio
 import logging
 import threading
 import time
-from typing import Callable, Dict, Optional
+from typing import AsyncGenerator, Callable, Dict, Optional
 
 from google.protobuf.message import Message as ProtobufMessage
 
@@ -20,6 +20,7 @@ class RpcClient:
         self._writer: Optional[asyncio.StreamWriter] = None
         self._id = 0
         self._pending: Dict[int, asyncio.Future] = {}
+        self._stream_queues: Dict[int, asyncio.Queue] = {}
         self._loop: Optional[asyncio.EventLoop] = None
         self._connected = False
         self._recv_task: Optional[asyncio.Task] = None
@@ -97,6 +98,57 @@ class RpcClient:
         self._writer.write(data)
         await self._writer.drain()
 
+    async def call_stream(
+        self,
+        service_name: str,
+        method_name: str,
+        request: ProtobufMessage,
+        timeout: float = 600.0,
+    ) -> AsyncGenerator[chat_pb2.RpcMessage, None]:
+        if not self.connected:
+            raise ConnectionError("Not connected")
+
+        self._id += 1
+        rpc_id = self._id
+
+        rpc_msg = chat_pb2.RpcMessage(
+            type=chat_pb2.RpcMessage.REQUEST,
+            id=rpc_id,
+            service_name=service_name,
+            method_name=method_name,
+            payload=request.SerializeToString(),
+        )
+
+        queue = asyncio.Queue()
+        self._stream_queues[rpc_id] = queue
+
+        data = encode(rpc_msg)
+        self._writer.write(data)
+        await self._writer.drain()
+
+        logger.info(f"Sent streaming RPC: {service_name}.{method_name} id={rpc_id}")
+
+        try:
+            deadline = time.time() + timeout
+            while True:
+                remaining = deadline - time.time()
+                if remaining <= 0:
+                    logger.error(f"Stream timeout: {service_name}.{method_name} id={rpc_id}")
+                    break
+                try:
+                    item = await asyncio.wait_for(queue.get(), timeout=remaining)
+                except asyncio.TimeoutError:
+                    logger.error(f"Stream timeout: {service_name}.{method_name} id={rpc_id}")
+                    break
+
+                if item is None:
+                    break
+                if isinstance(item, Exception):
+                    raise item
+                yield item
+        finally:
+            self._stream_queues.pop(rpc_id, None)
+
     async def _recv_loop(self):
         codec = ProtobufCodec()
         try:
@@ -126,12 +178,24 @@ class RpcClient:
             if future and not future.done():
                 future.set_result(rpc_msg)
             logger.info(f"Received RPC response id={rpc_msg.id}")
+        elif rpc_msg.type == chat_pb2.RpcMessage.STREAM:
+            queue = self._stream_queues.get(rpc_msg.id)
+            if queue:
+                queue.put_nowait(rpc_msg)
+        elif rpc_msg.type == chat_pb2.RpcMessage.STREAM_END:
+            queue = self._stream_queues.get(rpc_msg.id)
+            if queue:
+                queue.put_nowait(None)
+            logger.info(f"Stream ended for id={rpc_msg.id}")
         elif rpc_msg.type == chat_pb2.RpcMessage.ERROR:
             future = self._pending.pop(rpc_msg.id, None)
+            queue = self._stream_queues.get(rpc_msg.id)
             if future and not future.done():
                 future.set_exception(
                     RuntimeError(f"RPC error: {rpc_msg.error_desc}")
                 )
+            if queue:
+                queue.put_nowait(RuntimeError(f"RPC error: {rpc_msg.error_desc}"))
             logger.error(f"RPC error id={rpc_msg.id}: {rpc_msg.error_desc}")
 
 

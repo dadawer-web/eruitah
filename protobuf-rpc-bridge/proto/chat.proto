@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package bridge;
 
-option java_package = "com.bridge.proto";
+option java_package = "com.chat.ai.rpc";
 option java_outer_classname = "ChatProto";
 
 // ==================== 聊天核心 ====================
@@ -235,6 +235,67 @@ message SwarmNodeListResponse {
     repeated SwarmAgentNode nodes = 1;
 }
 
+// ==================== C++ ↔ Java 内部路由 (替代 Redis Pub/Sub) ====================
+
+enum InternalMsgType {
+    INTERNAL_MSG_TYPE_UNSPECIFIED = 0;
+    CHAT_PRIVATE = 1;
+    CHAT_GROUP = 2;
+    AI_AT_MENTION = 3;
+    POINTS_UPDATE = 4;
+    AI_GRADE_RESULT = 5;
+    COMPANION_READ = 6;
+    DASHBOARD_QUERY = 7;
+    DASHBOARD_PUSH = 8;
+    VOICE_CHAT = 9;
+    SYSTEM_NOTIFICATION = 10;
+    SANDBOX_EXECUTE = 11;
+    EXPERIENCE_UPDATE = 12;
+}
+
+message InternalForwardRequest {
+    int32 sender_id = 1;
+    int32 receiver_id = 2;
+    int64 group_id = 3;
+    InternalMsgType msg_type = 4;
+    string payload_json = 5;
+    string trace_id = 6;
+    int64 timestamp = 7;
+    map<string, string> headers = 8;
+}
+
+message InternalForwardResponse {
+    bool success = 1;
+    string error = 2;
+    string trace_id = 3;
+    bytes result_payload = 4;
+}
+
+message InternalPushRequest {
+    int32 sender_id = 1;
+    int32 receiver_id = 2;
+    int64 group_id = 3;
+    InternalMsgType msg_type = 4;
+    string payload_json = 5;
+    string trace_id = 6;
+    int64 timestamp = 7;
+    bool broadcast = 8;
+    map<string, string> headers = 9;
+}
+
+message InternalPushResponse {
+    bool success = 1;
+    string error = 2;
+    string trace_id = 3;
+    int32 delivered_count = 4;
+}
+
+service InternalRouterService {
+    rpc ForwardToJava(InternalForwardRequest) returns (InternalForwardResponse);
+    rpc PushToClient(InternalPushRequest) returns (InternalPushResponse);
+    rpc StreamToClient(InternalPushRequest) returns (stream InternalPushResponse);
+}
+
 // ==================== RPC 消息封装 ====================
 
 message RpcMessage {
@@ -242,6 +303,8 @@ message RpcMessage {
         REQUEST = 0;
         RESPONSE = 1;
         ERROR = 2;
+        STREAM = 3;
+        STREAM_END = 4;
     }
 
     Type type = 1;

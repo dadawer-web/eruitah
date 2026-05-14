@@ -5,6 +5,8 @@ RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debia
     true
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 
 RUN apt-get update && apt-get install -y \
     git grep curl \
@@ -15,10 +17,6 @@ RUN apt-get update && apt-get install -y \
     libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 \
     fonts-noto-cjk fonts-wqy-zenhei \
     clangd default-jdk \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN apt-get update && apt-get install -y \
-    chromium --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
@@ -36,10 +34,8 @@ RUN npm install -g \
     @modelcontextprotocol/server-postgres \
     pyright typescript-language-server typescript
 
-RUN JDTLS_VERSION=1.38.0-202503271746 && \
-    curl -fsSL "https://download.eclipse.org/jdtls/milestones/${JDTLS_VERSION}/jdt-language-server-${JDTLS_VERSION}.tar.gz" \
-    | tar xz -C /opt && \
-    ln -s /opt/jdt-language-server-${JDTLS_VERSION} /opt/jdtls && \
+RUN mkdir -p /opt/jdtls && \
+    curl -fsSL "https://download.eclipse.org/jdtls/snapshots/jdt-language-server-latest.tar.gz" | tar xz -C /opt/jdtls && \
     mkdir -p /opt/jdtls/data
 
 ENV JDTLS_HOME=/opt/jdtls
@@ -61,7 +57,6 @@ EXPOSE 8001 5900
 ENV DISPLAY=:99
 ENV ERUITAH_SCREEN_WIDTH=1280
 ENV ERUITAH_SCREEN_HEIGHT=720
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 ENTRYPOINT ["/entrypoint.sh"]

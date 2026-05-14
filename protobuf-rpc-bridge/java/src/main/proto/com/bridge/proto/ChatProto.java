@@ -14,6 +14,204 @@ public final class ChatProto {
     registerAllExtensions(
         (com.google.protobuf.ExtensionRegistryLite) registry);
   }
+  /**
+   * Protobuf enum {@code bridge.InternalMsgType}
+   */
+  public enum InternalMsgType
+      implements com.google.protobuf.ProtocolMessageEnum {
+    /**
+     * <code>INTERNAL_MSG_TYPE_UNSPECIFIED = 0;</code>
+     */
+    INTERNAL_MSG_TYPE_UNSPECIFIED(0),
+    /**
+     * <code>CHAT_PRIVATE = 1;</code>
+     */
+    CHAT_PRIVATE(1),
+    /**
+     * <code>CHAT_GROUP = 2;</code>
+     */
+    CHAT_GROUP(2),
+    /**
+     * <code>AI_AT_MENTION = 3;</code>
+     */
+    AI_AT_MENTION(3),
+    /**
+     * <code>POINTS_UPDATE = 4;</code>
+     */
+    POINTS_UPDATE(4),
+    /**
+     * <code>AI_GRADE_RESULT = 5;</code>
+     */
+    AI_GRADE_RESULT(5),
+    /**
+     * <code>COMPANION_READ = 6;</code>
+     */
+    COMPANION_READ(6),
+    /**
+     * <code>DASHBOARD_QUERY = 7;</code>
+     */
+    DASHBOARD_QUERY(7),
+    /**
+     * <code>DASHBOARD_PUSH = 8;</code>
+     */
+    DASHBOARD_PUSH(8),
+    /**
+     * <code>VOICE_CHAT = 9;</code>
+     */
+    VOICE_CHAT(9),
+    /**
+     * <code>SYSTEM_NOTIFICATION = 10;</code>
+     */
+    SYSTEM_NOTIFICATION(10),
+    /**
+     * <code>SANDBOX_EXECUTE = 11;</code>
+     */
+    SANDBOX_EXECUTE(11),
+    UNRECOGNIZED(-1),
+    ;
+
+    /**
+     * <code>INTERNAL_MSG_TYPE_UNSPECIFIED = 0;</code>
+     */
+    public static final int INTERNAL_MSG_TYPE_UNSPECIFIED_VALUE = 0;
+    /**
+     * <code>CHAT_PRIVATE = 1;</code>
+     */
+    public static final int CHAT_PRIVATE_VALUE = 1;
+    /**
+     * <code>CHAT_GROUP = 2;</code>
+     */
+    public static final int CHAT_GROUP_VALUE = 2;
+    /**
+     * <code>AI_AT_MENTION = 3;</code>
+     */
+    public static final int AI_AT_MENTION_VALUE = 3;
+    /**
+     * <code>POINTS_UPDATE = 4;</code>
+     */
+    public static final int POINTS_UPDATE_VALUE = 4;
+    /**
+     * <code>AI_GRADE_RESULT = 5;</code>
+     */
+    public static final int AI_GRADE_RESULT_VALUE = 5;
+    /**
+     * <code>COMPANION_READ = 6;</code>
+     */
+    public static final int COMPANION_READ_VALUE = 6;
+    /**
+     * <code>DASHBOARD_QUERY = 7;</code>
+     */
+    public static final int DASHBOARD_QUERY_VALUE = 7;
+    /**
+     * <code>DASHBOARD_PUSH = 8;</code>
+     */
+    public static final int DASHBOARD_PUSH_VALUE = 8;
+    /**
+     * <code>VOICE_CHAT = 9;</code>
+     */
+    public static final int VOICE_CHAT_VALUE = 9;
+    /**
+     * <code>SYSTEM_NOTIFICATION = 10;</code>
+     */
+    public static final int SYSTEM_NOTIFICATION_VALUE = 10;
+    /**
+     * <code>SANDBOX_EXECUTE = 11;</code>
+     */
+    public static final int SANDBOX_EXECUTE_VALUE = 11;
+
+
+    public final int getNumber() {
+      if (this == UNRECOGNIZED) {
+        throw new java.lang.IllegalArgumentException(
+            "Can't get the number of an unknown enum value.");
+      }
+      return value;
+    }
+
+    /**
+     * @param value The numeric wire value of the corresponding enum entry.
+     * @return The enum associated with the given numeric wire value.
+     * @deprecated Use {@link #forNumber(int)} instead.
+     */
+    @java.lang.Deprecated
+    public static InternalMsgType valueOf(int value) {
+      return forNumber(value);
+    }
+
+    /**
+     * @param value The numeric wire value of the corresponding enum entry.
+     * @return The enum associated with the given numeric wire value.
+     */
+    public static InternalMsgType forNumber(int value) {
+      switch (value) {
+        case 0: return INTERNAL_MSG_TYPE_UNSPECIFIED;
+        case 1: return CHAT_PRIVATE;
+        case 2: return CHAT_GROUP;
+        case 3: return AI_AT_MENTION;
+        case 4: return POINTS_UPDATE;
+        case 5: return AI_GRADE_RESULT;
+        case 6: return COMPANION_READ;
+        case 7: return DASHBOARD_QUERY;
+        case 8: return DASHBOARD_PUSH;
+        case 9: return VOICE_CHAT;
+        case 10: return SYSTEM_NOTIFICATION;
+        case 11: return SANDBOX_EXECUTE;
+        default: return null;
+      }
+    }
+
+    public static com.google.protobuf.Internal.EnumLiteMap<InternalMsgType>
+        internalGetValueMap() {
+      return internalValueMap;
+    }
+    private static final com.google.protobuf.Internal.EnumLiteMap<
+        InternalMsgType> internalValueMap =
+          new com.google.protobuf.Internal.EnumLiteMap<InternalMsgType>() {
+            public InternalMsgType findValueByNumber(int number) {
+              return InternalMsgType.forNumber(number);
+            }
+          };
+
+    public final com.google.protobuf.Descriptors.EnumValueDescriptor
+        getValueDescriptor() {
+      if (this == UNRECOGNIZED) {
+        throw new java.lang.IllegalStateException(
+            "Can't get the descriptor of an unrecognized enum value.");
+      }
+      return getDescriptor().getValues().get(ordinal());
+    }
+    public final com.google.protobuf.Descriptors.EnumDescriptor
+        getDescriptorForType() {
+      return getDescriptor();
+    }
+    public static final com.google.protobuf.Descriptors.EnumDescriptor
+        getDescriptor() {
+      return com.bridge.proto.ChatProto.getDescriptor().getEnumTypes().get(0);
+    }
+
+    private static final InternalMsgType[] VALUES = values();
+
+    public static InternalMsgType valueOf(
+        com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
+      if (desc.getType() != getDescriptor()) {
+        throw new java.lang.IllegalArgumentException(
+          "EnumValueDescriptor is not for this type.");
+      }
+      if (desc.getIndex() == -1) {
+        return UNRECOGNIZED;
+      }
+      return VALUES[desc.getIndex()];
+    }
+
+    private final int value;
+
+    private InternalMsgType(int value) {
+      this.value = value;
+    }
+
+    // @@protoc_insertion_point(enum_scope:bridge.InternalMsgType)
+  }
+
   public interface ChatRequestOrBuilder extends
       // @@protoc_insertion_point(interface_extends:bridge.ChatRequest)
       com.google.protobuf.MessageOrBuilder {
@@ -27851,6 +28049,4598 @@ java.lang.String defaultValue) {
 
   }
 
+  public interface InternalForwardRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:bridge.InternalForwardRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>int32 sender_id = 1;</code>
+     * @return The senderId.
+     */
+    int getSenderId();
+
+    /**
+     * <code>int32 receiver_id = 2;</code>
+     * @return The receiverId.
+     */
+    int getReceiverId();
+
+    /**
+     * <code>int64 group_id = 3;</code>
+     * @return The groupId.
+     */
+    long getGroupId();
+
+    /**
+     * <code>.bridge.InternalMsgType msg_type = 4;</code>
+     * @return The enum numeric value on the wire for msgType.
+     */
+    int getMsgTypeValue();
+    /**
+     * <code>.bridge.InternalMsgType msg_type = 4;</code>
+     * @return The msgType.
+     */
+    com.bridge.proto.ChatProto.InternalMsgType getMsgType();
+
+    /**
+     * <code>string payload_json = 5;</code>
+     * @return The payloadJson.
+     */
+    java.lang.String getPayloadJson();
+    /**
+     * <code>string payload_json = 5;</code>
+     * @return The bytes for payloadJson.
+     */
+    com.google.protobuf.ByteString
+        getPayloadJsonBytes();
+
+    /**
+     * <code>string trace_id = 6;</code>
+     * @return The traceId.
+     */
+    java.lang.String getTraceId();
+    /**
+     * <code>string trace_id = 6;</code>
+     * @return The bytes for traceId.
+     */
+    com.google.protobuf.ByteString
+        getTraceIdBytes();
+
+    /**
+     * <code>int64 timestamp = 7;</code>
+     * @return The timestamp.
+     */
+    long getTimestamp();
+
+    /**
+     * <code>map&lt;string, string&gt; headers = 8;</code>
+     */
+    int getHeadersCount();
+    /**
+     * <code>map&lt;string, string&gt; headers = 8;</code>
+     */
+    boolean containsHeaders(
+        java.lang.String key);
+    /**
+     * Use {@link #getHeadersMap()} instead.
+     */
+    @java.lang.Deprecated
+    java.util.Map<java.lang.String, java.lang.String>
+    getHeaders();
+    /**
+     * <code>map&lt;string, string&gt; headers = 8;</code>
+     */
+    java.util.Map<java.lang.String, java.lang.String>
+    getHeadersMap();
+    /**
+     * <code>map&lt;string, string&gt; headers = 8;</code>
+     */
+    /* nullable */
+java.lang.String getHeadersOrDefault(
+        java.lang.String key,
+        /* nullable */
+java.lang.String defaultValue);
+    /**
+     * <code>map&lt;string, string&gt; headers = 8;</code>
+     */
+    java.lang.String getHeadersOrThrow(
+        java.lang.String key);
+  }
+  /**
+   * Protobuf type {@code bridge.InternalForwardRequest}
+   */
+  public static final class InternalForwardRequest extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:bridge.InternalForwardRequest)
+      InternalForwardRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use InternalForwardRequest.newBuilder() to construct.
+    private InternalForwardRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private InternalForwardRequest() {
+      msgType_ = 0;
+      payloadJson_ = "";
+      traceId_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new InternalForwardRequest();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_InternalForwardRequest_descriptor;
+    }
+
+    @SuppressWarnings({"rawtypes"})
+    @java.lang.Override
+    protected com.google.protobuf.MapField internalGetMapField(
+        int number) {
+      switch (number) {
+        case 8:
+          return internalGetHeaders();
+        default:
+          throw new RuntimeException(
+              "Invalid map field number: " + number);
+      }
+    }
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_InternalForwardRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.bridge.proto.ChatProto.InternalForwardRequest.class, com.bridge.proto.ChatProto.InternalForwardRequest.Builder.class);
+    }
+
+    public static final int SENDER_ID_FIELD_NUMBER = 1;
+    private int senderId_ = 0;
+    /**
+     * <code>int32 sender_id = 1;</code>
+     * @return The senderId.
+     */
+    @java.lang.Override
+    public int getSenderId() {
+      return senderId_;
+    }
+
+    public static final int RECEIVER_ID_FIELD_NUMBER = 2;
+    private int receiverId_ = 0;
+    /**
+     * <code>int32 receiver_id = 2;</code>
+     * @return The receiverId.
+     */
+    @java.lang.Override
+    public int getReceiverId() {
+      return receiverId_;
+    }
+
+    public static final int GROUP_ID_FIELD_NUMBER = 3;
+    private long groupId_ = 0L;
+    /**
+     * <code>int64 group_id = 3;</code>
+     * @return The groupId.
+     */
+    @java.lang.Override
+    public long getGroupId() {
+      return groupId_;
+    }
+
+    public static final int MSG_TYPE_FIELD_NUMBER = 4;
+    private int msgType_ = 0;
+    /**
+     * <code>.bridge.InternalMsgType msg_type = 4;</code>
+     * @return The enum numeric value on the wire for msgType.
+     */
+    @java.lang.Override public int getMsgTypeValue() {
+      return msgType_;
+    }
+    /**
+     * <code>.bridge.InternalMsgType msg_type = 4;</code>
+     * @return The msgType.
+     */
+    @java.lang.Override public com.bridge.proto.ChatProto.InternalMsgType getMsgType() {
+      com.bridge.proto.ChatProto.InternalMsgType result = com.bridge.proto.ChatProto.InternalMsgType.forNumber(msgType_);
+      return result == null ? com.bridge.proto.ChatProto.InternalMsgType.UNRECOGNIZED : result;
+    }
+
+    public static final int PAYLOAD_JSON_FIELD_NUMBER = 5;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object payloadJson_ = "";
+    /**
+     * <code>string payload_json = 5;</code>
+     * @return The payloadJson.
+     */
+    @java.lang.Override
+    public java.lang.String getPayloadJson() {
+      java.lang.Object ref = payloadJson_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        payloadJson_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string payload_json = 5;</code>
+     * @return The bytes for payloadJson.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getPayloadJsonBytes() {
+      java.lang.Object ref = payloadJson_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        payloadJson_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int TRACE_ID_FIELD_NUMBER = 6;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object traceId_ = "";
+    /**
+     * <code>string trace_id = 6;</code>
+     * @return The traceId.
+     */
+    @java.lang.Override
+    public java.lang.String getTraceId() {
+      java.lang.Object ref = traceId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        traceId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string trace_id = 6;</code>
+     * @return The bytes for traceId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getTraceIdBytes() {
+      java.lang.Object ref = traceId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        traceId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int TIMESTAMP_FIELD_NUMBER = 7;
+    private long timestamp_ = 0L;
+    /**
+     * <code>int64 timestamp = 7;</code>
+     * @return The timestamp.
+     */
+    @java.lang.Override
+    public long getTimestamp() {
+      return timestamp_;
+    }
+
+    public static final int HEADERS_FIELD_NUMBER = 8;
+    private static final class HeadersDefaultEntryHolder {
+      static final com.google.protobuf.MapEntry<
+          java.lang.String, java.lang.String> defaultEntry =
+              com.google.protobuf.MapEntry
+              .<java.lang.String, java.lang.String>newDefaultInstance(
+                  com.bridge.proto.ChatProto.internal_static_bridge_InternalForwardRequest_HeadersEntry_descriptor, 
+                  com.google.protobuf.WireFormat.FieldType.STRING,
+                  "",
+                  com.google.protobuf.WireFormat.FieldType.STRING,
+                  "");
+    }
+    @SuppressWarnings("serial")
+    private com.google.protobuf.MapField<
+        java.lang.String, java.lang.String> headers_;
+    private com.google.protobuf.MapField<java.lang.String, java.lang.String>
+    internalGetHeaders() {
+      if (headers_ == null) {
+        return com.google.protobuf.MapField.emptyMapField(
+            HeadersDefaultEntryHolder.defaultEntry);
+      }
+      return headers_;
+    }
+    public int getHeadersCount() {
+      return internalGetHeaders().getMap().size();
+    }
+    /**
+     * <code>map&lt;string, string&gt; headers = 8;</code>
+     */
+    @java.lang.Override
+    public boolean containsHeaders(
+        java.lang.String key) {
+      if (key == null) { throw new NullPointerException("map key"); }
+      return internalGetHeaders().getMap().containsKey(key);
+    }
+    /**
+     * Use {@link #getHeadersMap()} instead.
+     */
+    @java.lang.Override
+    @java.lang.Deprecated
+    public java.util.Map<java.lang.String, java.lang.String> getHeaders() {
+      return getHeadersMap();
+    }
+    /**
+     * <code>map&lt;string, string&gt; headers = 8;</code>
+     */
+    @java.lang.Override
+    public java.util.Map<java.lang.String, java.lang.String> getHeadersMap() {
+      return internalGetHeaders().getMap();
+    }
+    /**
+     * <code>map&lt;string, string&gt; headers = 8;</code>
+     */
+    @java.lang.Override
+    public /* nullable */
+java.lang.String getHeadersOrDefault(
+        java.lang.String key,
+        /* nullable */
+java.lang.String defaultValue) {
+      if (key == null) { throw new NullPointerException("map key"); }
+      java.util.Map<java.lang.String, java.lang.String> map =
+          internalGetHeaders().getMap();
+      return map.containsKey(key) ? map.get(key) : defaultValue;
+    }
+    /**
+     * <code>map&lt;string, string&gt; headers = 8;</code>
+     */
+    @java.lang.Override
+    public java.lang.String getHeadersOrThrow(
+        java.lang.String key) {
+      if (key == null) { throw new NullPointerException("map key"); }
+      java.util.Map<java.lang.String, java.lang.String> map =
+          internalGetHeaders().getMap();
+      if (!map.containsKey(key)) {
+        throw new java.lang.IllegalArgumentException();
+      }
+      return map.get(key);
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (senderId_ != 0) {
+        output.writeInt32(1, senderId_);
+      }
+      if (receiverId_ != 0) {
+        output.writeInt32(2, receiverId_);
+      }
+      if (groupId_ != 0L) {
+        output.writeInt64(3, groupId_);
+      }
+      if (msgType_ != com.bridge.proto.ChatProto.InternalMsgType.INTERNAL_MSG_TYPE_UNSPECIFIED.getNumber()) {
+        output.writeEnum(4, msgType_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(payloadJson_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 5, payloadJson_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(traceId_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 6, traceId_);
+      }
+      if (timestamp_ != 0L) {
+        output.writeInt64(7, timestamp_);
+      }
+      com.google.protobuf.GeneratedMessageV3
+        .serializeStringMapTo(
+          output,
+          internalGetHeaders(),
+          HeadersDefaultEntryHolder.defaultEntry,
+          8);
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (senderId_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(1, senderId_);
+      }
+      if (receiverId_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(2, receiverId_);
+      }
+      if (groupId_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(3, groupId_);
+      }
+      if (msgType_ != com.bridge.proto.ChatProto.InternalMsgType.INTERNAL_MSG_TYPE_UNSPECIFIED.getNumber()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeEnumSize(4, msgType_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(payloadJson_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, payloadJson_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(traceId_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, traceId_);
+      }
+      if (timestamp_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(7, timestamp_);
+      }
+      for (java.util.Map.Entry<java.lang.String, java.lang.String> entry
+           : internalGetHeaders().getMap().entrySet()) {
+        com.google.protobuf.MapEntry<java.lang.String, java.lang.String>
+        headers__ = HeadersDefaultEntryHolder.defaultEntry.newBuilderForType()
+            .setKey(entry.getKey())
+            .setValue(entry.getValue())
+            .build();
+        size += com.google.protobuf.CodedOutputStream
+            .computeMessageSize(8, headers__);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.bridge.proto.ChatProto.InternalForwardRequest)) {
+        return super.equals(obj);
+      }
+      com.bridge.proto.ChatProto.InternalForwardRequest other = (com.bridge.proto.ChatProto.InternalForwardRequest) obj;
+
+      if (getSenderId()
+          != other.getSenderId()) return false;
+      if (getReceiverId()
+          != other.getReceiverId()) return false;
+      if (getGroupId()
+          != other.getGroupId()) return false;
+      if (msgType_ != other.msgType_) return false;
+      if (!getPayloadJson()
+          .equals(other.getPayloadJson())) return false;
+      if (!getTraceId()
+          .equals(other.getTraceId())) return false;
+      if (getTimestamp()
+          != other.getTimestamp()) return false;
+      if (!internalGetHeaders().equals(
+          other.internalGetHeaders())) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + SENDER_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getSenderId();
+      hash = (37 * hash) + RECEIVER_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getReceiverId();
+      hash = (37 * hash) + GROUP_ID_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getGroupId());
+      hash = (37 * hash) + MSG_TYPE_FIELD_NUMBER;
+      hash = (53 * hash) + msgType_;
+      hash = (37 * hash) + PAYLOAD_JSON_FIELD_NUMBER;
+      hash = (53 * hash) + getPayloadJson().hashCode();
+      hash = (37 * hash) + TRACE_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getTraceId().hashCode();
+      hash = (37 * hash) + TIMESTAMP_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getTimestamp());
+      if (!internalGetHeaders().getMap().isEmpty()) {
+        hash = (37 * hash) + HEADERS_FIELD_NUMBER;
+        hash = (53 * hash) + internalGetHeaders().hashCode();
+      }
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.bridge.proto.ChatProto.InternalForwardRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.InternalForwardRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.InternalForwardRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.InternalForwardRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.InternalForwardRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.InternalForwardRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.InternalForwardRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.InternalForwardRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.InternalForwardRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.InternalForwardRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.InternalForwardRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.InternalForwardRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.bridge.proto.ChatProto.InternalForwardRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code bridge.InternalForwardRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:bridge.InternalForwardRequest)
+        com.bridge.proto.ChatProto.InternalForwardRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_InternalForwardRequest_descriptor;
+      }
+
+      @SuppressWarnings({"rawtypes"})
+      protected com.google.protobuf.MapField internalGetMapField(
+          int number) {
+        switch (number) {
+          case 8:
+            return internalGetHeaders();
+          default:
+            throw new RuntimeException(
+                "Invalid map field number: " + number);
+        }
+      }
+      @SuppressWarnings({"rawtypes"})
+      protected com.google.protobuf.MapField internalGetMutableMapField(
+          int number) {
+        switch (number) {
+          case 8:
+            return internalGetMutableHeaders();
+          default:
+            throw new RuntimeException(
+                "Invalid map field number: " + number);
+        }
+      }
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_InternalForwardRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.bridge.proto.ChatProto.InternalForwardRequest.class, com.bridge.proto.ChatProto.InternalForwardRequest.Builder.class);
+      }
+
+      // Construct using com.bridge.proto.ChatProto.InternalForwardRequest.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        senderId_ = 0;
+        receiverId_ = 0;
+        groupId_ = 0L;
+        msgType_ = 0;
+        payloadJson_ = "";
+        traceId_ = "";
+        timestamp_ = 0L;
+        internalGetMutableHeaders().clear();
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_InternalForwardRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.InternalForwardRequest getDefaultInstanceForType() {
+        return com.bridge.proto.ChatProto.InternalForwardRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.InternalForwardRequest build() {
+        com.bridge.proto.ChatProto.InternalForwardRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.InternalForwardRequest buildPartial() {
+        com.bridge.proto.ChatProto.InternalForwardRequest result = new com.bridge.proto.ChatProto.InternalForwardRequest(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(com.bridge.proto.ChatProto.InternalForwardRequest result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.senderId_ = senderId_;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.receiverId_ = receiverId_;
+        }
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.groupId_ = groupId_;
+        }
+        if (((from_bitField0_ & 0x00000008) != 0)) {
+          result.msgType_ = msgType_;
+        }
+        if (((from_bitField0_ & 0x00000010) != 0)) {
+          result.payloadJson_ = payloadJson_;
+        }
+        if (((from_bitField0_ & 0x00000020) != 0)) {
+          result.traceId_ = traceId_;
+        }
+        if (((from_bitField0_ & 0x00000040) != 0)) {
+          result.timestamp_ = timestamp_;
+        }
+        if (((from_bitField0_ & 0x00000080) != 0)) {
+          result.headers_ = internalGetHeaders();
+          result.headers_.makeImmutable();
+        }
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.bridge.proto.ChatProto.InternalForwardRequest) {
+          return mergeFrom((com.bridge.proto.ChatProto.InternalForwardRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.bridge.proto.ChatProto.InternalForwardRequest other) {
+        if (other == com.bridge.proto.ChatProto.InternalForwardRequest.getDefaultInstance()) return this;
+        if (other.getSenderId() != 0) {
+          setSenderId(other.getSenderId());
+        }
+        if (other.getReceiverId() != 0) {
+          setReceiverId(other.getReceiverId());
+        }
+        if (other.getGroupId() != 0L) {
+          setGroupId(other.getGroupId());
+        }
+        if (other.msgType_ != 0) {
+          setMsgTypeValue(other.getMsgTypeValue());
+        }
+        if (!other.getPayloadJson().isEmpty()) {
+          payloadJson_ = other.payloadJson_;
+          bitField0_ |= 0x00000010;
+          onChanged();
+        }
+        if (!other.getTraceId().isEmpty()) {
+          traceId_ = other.traceId_;
+          bitField0_ |= 0x00000020;
+          onChanged();
+        }
+        if (other.getTimestamp() != 0L) {
+          setTimestamp(other.getTimestamp());
+        }
+        internalGetMutableHeaders().mergeFrom(
+            other.internalGetHeaders());
+        bitField0_ |= 0x00000080;
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 8: {
+                senderId_ = input.readInt32();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 8
+              case 16: {
+                receiverId_ = input.readInt32();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 16
+              case 24: {
+                groupId_ = input.readInt64();
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 24
+              case 32: {
+                msgType_ = input.readEnum();
+                bitField0_ |= 0x00000008;
+                break;
+              } // case 32
+              case 42: {
+                payloadJson_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000010;
+                break;
+              } // case 42
+              case 50: {
+                traceId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000020;
+                break;
+              } // case 50
+              case 56: {
+                timestamp_ = input.readInt64();
+                bitField0_ |= 0x00000040;
+                break;
+              } // case 56
+              case 66: {
+                com.google.protobuf.MapEntry<java.lang.String, java.lang.String>
+                headers__ = input.readMessage(
+                    HeadersDefaultEntryHolder.defaultEntry.getParserForType(), extensionRegistry);
+                internalGetMutableHeaders().getMutableMap().put(
+                    headers__.getKey(), headers__.getValue());
+                bitField0_ |= 0x00000080;
+                break;
+              } // case 66
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private int senderId_ ;
+      /**
+       * <code>int32 sender_id = 1;</code>
+       * @return The senderId.
+       */
+      @java.lang.Override
+      public int getSenderId() {
+        return senderId_;
+      }
+      /**
+       * <code>int32 sender_id = 1;</code>
+       * @param value The senderId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSenderId(int value) {
+        
+        senderId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int32 sender_id = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSenderId() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        senderId_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int receiverId_ ;
+      /**
+       * <code>int32 receiver_id = 2;</code>
+       * @return The receiverId.
+       */
+      @java.lang.Override
+      public int getReceiverId() {
+        return receiverId_;
+      }
+      /**
+       * <code>int32 receiver_id = 2;</code>
+       * @param value The receiverId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setReceiverId(int value) {
+        
+        receiverId_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int32 receiver_id = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearReceiverId() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        receiverId_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private long groupId_ ;
+      /**
+       * <code>int64 group_id = 3;</code>
+       * @return The groupId.
+       */
+      @java.lang.Override
+      public long getGroupId() {
+        return groupId_;
+      }
+      /**
+       * <code>int64 group_id = 3;</code>
+       * @param value The groupId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setGroupId(long value) {
+        
+        groupId_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 group_id = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearGroupId() {
+        bitField0_ = (bitField0_ & ~0x00000004);
+        groupId_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private int msgType_ = 0;
+      /**
+       * <code>.bridge.InternalMsgType msg_type = 4;</code>
+       * @return The enum numeric value on the wire for msgType.
+       */
+      @java.lang.Override public int getMsgTypeValue() {
+        return msgType_;
+      }
+      /**
+       * <code>.bridge.InternalMsgType msg_type = 4;</code>
+       * @param value The enum numeric value on the wire for msgType to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMsgTypeValue(int value) {
+        msgType_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.bridge.InternalMsgType msg_type = 4;</code>
+       * @return The msgType.
+       */
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.InternalMsgType getMsgType() {
+        com.bridge.proto.ChatProto.InternalMsgType result = com.bridge.proto.ChatProto.InternalMsgType.forNumber(msgType_);
+        return result == null ? com.bridge.proto.ChatProto.InternalMsgType.UNRECOGNIZED : result;
+      }
+      /**
+       * <code>.bridge.InternalMsgType msg_type = 4;</code>
+       * @param value The msgType to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMsgType(com.bridge.proto.ChatProto.InternalMsgType value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        bitField0_ |= 0x00000008;
+        msgType_ = value.getNumber();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.bridge.InternalMsgType msg_type = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMsgType() {
+        bitField0_ = (bitField0_ & ~0x00000008);
+        msgType_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object payloadJson_ = "";
+      /**
+       * <code>string payload_json = 5;</code>
+       * @return The payloadJson.
+       */
+      public java.lang.String getPayloadJson() {
+        java.lang.Object ref = payloadJson_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          payloadJson_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string payload_json = 5;</code>
+       * @return The bytes for payloadJson.
+       */
+      public com.google.protobuf.ByteString
+          getPayloadJsonBytes() {
+        java.lang.Object ref = payloadJson_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          payloadJson_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string payload_json = 5;</code>
+       * @param value The payloadJson to set.
+       * @return This builder for chaining.
+       */
+      public Builder setPayloadJson(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        payloadJson_ = value;
+        bitField0_ |= 0x00000010;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string payload_json = 5;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearPayloadJson() {
+        payloadJson_ = getDefaultInstance().getPayloadJson();
+        bitField0_ = (bitField0_ & ~0x00000010);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string payload_json = 5;</code>
+       * @param value The bytes for payloadJson to set.
+       * @return This builder for chaining.
+       */
+      public Builder setPayloadJsonBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        payloadJson_ = value;
+        bitField0_ |= 0x00000010;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object traceId_ = "";
+      /**
+       * <code>string trace_id = 6;</code>
+       * @return The traceId.
+       */
+      public java.lang.String getTraceId() {
+        java.lang.Object ref = traceId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          traceId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string trace_id = 6;</code>
+       * @return The bytes for traceId.
+       */
+      public com.google.protobuf.ByteString
+          getTraceIdBytes() {
+        java.lang.Object ref = traceId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          traceId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string trace_id = 6;</code>
+       * @param value The traceId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTraceId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        traceId_ = value;
+        bitField0_ |= 0x00000020;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string trace_id = 6;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTraceId() {
+        traceId_ = getDefaultInstance().getTraceId();
+        bitField0_ = (bitField0_ & ~0x00000020);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string trace_id = 6;</code>
+       * @param value The bytes for traceId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTraceIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        traceId_ = value;
+        bitField0_ |= 0x00000020;
+        onChanged();
+        return this;
+      }
+
+      private long timestamp_ ;
+      /**
+       * <code>int64 timestamp = 7;</code>
+       * @return The timestamp.
+       */
+      @java.lang.Override
+      public long getTimestamp() {
+        return timestamp_;
+      }
+      /**
+       * <code>int64 timestamp = 7;</code>
+       * @param value The timestamp to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTimestamp(long value) {
+        
+        timestamp_ = value;
+        bitField0_ |= 0x00000040;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 timestamp = 7;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTimestamp() {
+        bitField0_ = (bitField0_ & ~0x00000040);
+        timestamp_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private com.google.protobuf.MapField<
+          java.lang.String, java.lang.String> headers_;
+      private com.google.protobuf.MapField<java.lang.String, java.lang.String>
+          internalGetHeaders() {
+        if (headers_ == null) {
+          return com.google.protobuf.MapField.emptyMapField(
+              HeadersDefaultEntryHolder.defaultEntry);
+        }
+        return headers_;
+      }
+      private com.google.protobuf.MapField<java.lang.String, java.lang.String>
+          internalGetMutableHeaders() {
+        if (headers_ == null) {
+          headers_ = com.google.protobuf.MapField.newMapField(
+              HeadersDefaultEntryHolder.defaultEntry);
+        }
+        if (!headers_.isMutable()) {
+          headers_ = headers_.copy();
+        }
+        bitField0_ |= 0x00000080;
+        onChanged();
+        return headers_;
+      }
+      public int getHeadersCount() {
+        return internalGetHeaders().getMap().size();
+      }
+      /**
+       * <code>map&lt;string, string&gt; headers = 8;</code>
+       */
+      @java.lang.Override
+      public boolean containsHeaders(
+          java.lang.String key) {
+        if (key == null) { throw new NullPointerException("map key"); }
+        return internalGetHeaders().getMap().containsKey(key);
+      }
+      /**
+       * Use {@link #getHeadersMap()} instead.
+       */
+      @java.lang.Override
+      @java.lang.Deprecated
+      public java.util.Map<java.lang.String, java.lang.String> getHeaders() {
+        return getHeadersMap();
+      }
+      /**
+       * <code>map&lt;string, string&gt; headers = 8;</code>
+       */
+      @java.lang.Override
+      public java.util.Map<java.lang.String, java.lang.String> getHeadersMap() {
+        return internalGetHeaders().getMap();
+      }
+      /**
+       * <code>map&lt;string, string&gt; headers = 8;</code>
+       */
+      @java.lang.Override
+      public /* nullable */
+java.lang.String getHeadersOrDefault(
+          java.lang.String key,
+          /* nullable */
+java.lang.String defaultValue) {
+        if (key == null) { throw new NullPointerException("map key"); }
+        java.util.Map<java.lang.String, java.lang.String> map =
+            internalGetHeaders().getMap();
+        return map.containsKey(key) ? map.get(key) : defaultValue;
+      }
+      /**
+       * <code>map&lt;string, string&gt; headers = 8;</code>
+       */
+      @java.lang.Override
+      public java.lang.String getHeadersOrThrow(
+          java.lang.String key) {
+        if (key == null) { throw new NullPointerException("map key"); }
+        java.util.Map<java.lang.String, java.lang.String> map =
+            internalGetHeaders().getMap();
+        if (!map.containsKey(key)) {
+          throw new java.lang.IllegalArgumentException();
+        }
+        return map.get(key);
+      }
+      public Builder clearHeaders() {
+        bitField0_ = (bitField0_ & ~0x00000080);
+        internalGetMutableHeaders().getMutableMap()
+            .clear();
+        return this;
+      }
+      /**
+       * <code>map&lt;string, string&gt; headers = 8;</code>
+       */
+      public Builder removeHeaders(
+          java.lang.String key) {
+        if (key == null) { throw new NullPointerException("map key"); }
+        internalGetMutableHeaders().getMutableMap()
+            .remove(key);
+        return this;
+      }
+      /**
+       * Use alternate mutation accessors instead.
+       */
+      @java.lang.Deprecated
+      public java.util.Map<java.lang.String, java.lang.String>
+          getMutableHeaders() {
+        bitField0_ |= 0x00000080;
+        return internalGetMutableHeaders().getMutableMap();
+      }
+      /**
+       * <code>map&lt;string, string&gt; headers = 8;</code>
+       */
+      public Builder putHeaders(
+          java.lang.String key,
+          java.lang.String value) {
+        if (key == null) { throw new NullPointerException("map key"); }
+        if (value == null) { throw new NullPointerException("map value"); }
+        internalGetMutableHeaders().getMutableMap()
+            .put(key, value);
+        bitField0_ |= 0x00000080;
+        return this;
+      }
+      /**
+       * <code>map&lt;string, string&gt; headers = 8;</code>
+       */
+      public Builder putAllHeaders(
+          java.util.Map<java.lang.String, java.lang.String> values) {
+        internalGetMutableHeaders().getMutableMap()
+            .putAll(values);
+        bitField0_ |= 0x00000080;
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:bridge.InternalForwardRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:bridge.InternalForwardRequest)
+    private static final com.bridge.proto.ChatProto.InternalForwardRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.bridge.proto.ChatProto.InternalForwardRequest();
+    }
+
+    public static com.bridge.proto.ChatProto.InternalForwardRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<InternalForwardRequest>
+        PARSER = new com.google.protobuf.AbstractParser<InternalForwardRequest>() {
+      @java.lang.Override
+      public InternalForwardRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<InternalForwardRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<InternalForwardRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.bridge.proto.ChatProto.InternalForwardRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface InternalForwardResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:bridge.InternalForwardResponse)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>bool success = 1;</code>
+     * @return The success.
+     */
+    boolean getSuccess();
+
+    /**
+     * <code>string error = 2;</code>
+     * @return The error.
+     */
+    java.lang.String getError();
+    /**
+     * <code>string error = 2;</code>
+     * @return The bytes for error.
+     */
+    com.google.protobuf.ByteString
+        getErrorBytes();
+
+    /**
+     * <code>string trace_id = 3;</code>
+     * @return The traceId.
+     */
+    java.lang.String getTraceId();
+    /**
+     * <code>string trace_id = 3;</code>
+     * @return The bytes for traceId.
+     */
+    com.google.protobuf.ByteString
+        getTraceIdBytes();
+
+    /**
+     * <code>bytes result_payload = 4;</code>
+     * @return The resultPayload.
+     */
+    com.google.protobuf.ByteString getResultPayload();
+  }
+  /**
+   * Protobuf type {@code bridge.InternalForwardResponse}
+   */
+  public static final class InternalForwardResponse extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:bridge.InternalForwardResponse)
+      InternalForwardResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use InternalForwardResponse.newBuilder() to construct.
+    private InternalForwardResponse(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private InternalForwardResponse() {
+      error_ = "";
+      traceId_ = "";
+      resultPayload_ = com.google.protobuf.ByteString.EMPTY;
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new InternalForwardResponse();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_InternalForwardResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_InternalForwardResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.bridge.proto.ChatProto.InternalForwardResponse.class, com.bridge.proto.ChatProto.InternalForwardResponse.Builder.class);
+    }
+
+    public static final int SUCCESS_FIELD_NUMBER = 1;
+    private boolean success_ = false;
+    /**
+     * <code>bool success = 1;</code>
+     * @return The success.
+     */
+    @java.lang.Override
+    public boolean getSuccess() {
+      return success_;
+    }
+
+    public static final int ERROR_FIELD_NUMBER = 2;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object error_ = "";
+    /**
+     * <code>string error = 2;</code>
+     * @return The error.
+     */
+    @java.lang.Override
+    public java.lang.String getError() {
+      java.lang.Object ref = error_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        error_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string error = 2;</code>
+     * @return The bytes for error.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getErrorBytes() {
+      java.lang.Object ref = error_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        error_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int TRACE_ID_FIELD_NUMBER = 3;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object traceId_ = "";
+    /**
+     * <code>string trace_id = 3;</code>
+     * @return The traceId.
+     */
+    @java.lang.Override
+    public java.lang.String getTraceId() {
+      java.lang.Object ref = traceId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        traceId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string trace_id = 3;</code>
+     * @return The bytes for traceId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getTraceIdBytes() {
+      java.lang.Object ref = traceId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        traceId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int RESULT_PAYLOAD_FIELD_NUMBER = 4;
+    private com.google.protobuf.ByteString resultPayload_ = com.google.protobuf.ByteString.EMPTY;
+    /**
+     * <code>bytes result_payload = 4;</code>
+     * @return The resultPayload.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString getResultPayload() {
+      return resultPayload_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (success_ != false) {
+        output.writeBool(1, success_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(error_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, error_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(traceId_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, traceId_);
+      }
+      if (!resultPayload_.isEmpty()) {
+        output.writeBytes(4, resultPayload_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (success_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(1, success_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(error_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, error_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(traceId_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, traceId_);
+      }
+      if (!resultPayload_.isEmpty()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(4, resultPayload_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.bridge.proto.ChatProto.InternalForwardResponse)) {
+        return super.equals(obj);
+      }
+      com.bridge.proto.ChatProto.InternalForwardResponse other = (com.bridge.proto.ChatProto.InternalForwardResponse) obj;
+
+      if (getSuccess()
+          != other.getSuccess()) return false;
+      if (!getError()
+          .equals(other.getError())) return false;
+      if (!getTraceId()
+          .equals(other.getTraceId())) return false;
+      if (!getResultPayload()
+          .equals(other.getResultPayload())) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + SUCCESS_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getSuccess());
+      hash = (37 * hash) + ERROR_FIELD_NUMBER;
+      hash = (53 * hash) + getError().hashCode();
+      hash = (37 * hash) + TRACE_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getTraceId().hashCode();
+      hash = (37 * hash) + RESULT_PAYLOAD_FIELD_NUMBER;
+      hash = (53 * hash) + getResultPayload().hashCode();
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.bridge.proto.ChatProto.InternalForwardResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.InternalForwardResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.InternalForwardResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.InternalForwardResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.InternalForwardResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.InternalForwardResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.InternalForwardResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.InternalForwardResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.InternalForwardResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.InternalForwardResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.InternalForwardResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.InternalForwardResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.bridge.proto.ChatProto.InternalForwardResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code bridge.InternalForwardResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:bridge.InternalForwardResponse)
+        com.bridge.proto.ChatProto.InternalForwardResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_InternalForwardResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_InternalForwardResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.bridge.proto.ChatProto.InternalForwardResponse.class, com.bridge.proto.ChatProto.InternalForwardResponse.Builder.class);
+      }
+
+      // Construct using com.bridge.proto.ChatProto.InternalForwardResponse.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        success_ = false;
+        error_ = "";
+        traceId_ = "";
+        resultPayload_ = com.google.protobuf.ByteString.EMPTY;
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_InternalForwardResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.InternalForwardResponse getDefaultInstanceForType() {
+        return com.bridge.proto.ChatProto.InternalForwardResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.InternalForwardResponse build() {
+        com.bridge.proto.ChatProto.InternalForwardResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.InternalForwardResponse buildPartial() {
+        com.bridge.proto.ChatProto.InternalForwardResponse result = new com.bridge.proto.ChatProto.InternalForwardResponse(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(com.bridge.proto.ChatProto.InternalForwardResponse result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.success_ = success_;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.error_ = error_;
+        }
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.traceId_ = traceId_;
+        }
+        if (((from_bitField0_ & 0x00000008) != 0)) {
+          result.resultPayload_ = resultPayload_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.bridge.proto.ChatProto.InternalForwardResponse) {
+          return mergeFrom((com.bridge.proto.ChatProto.InternalForwardResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.bridge.proto.ChatProto.InternalForwardResponse other) {
+        if (other == com.bridge.proto.ChatProto.InternalForwardResponse.getDefaultInstance()) return this;
+        if (other.getSuccess() != false) {
+          setSuccess(other.getSuccess());
+        }
+        if (!other.getError().isEmpty()) {
+          error_ = other.error_;
+          bitField0_ |= 0x00000002;
+          onChanged();
+        }
+        if (!other.getTraceId().isEmpty()) {
+          traceId_ = other.traceId_;
+          bitField0_ |= 0x00000004;
+          onChanged();
+        }
+        if (other.getResultPayload() != com.google.protobuf.ByteString.EMPTY) {
+          setResultPayload(other.getResultPayload());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 8: {
+                success_ = input.readBool();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 8
+              case 18: {
+                error_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 18
+              case 26: {
+                traceId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 26
+              case 34: {
+                resultPayload_ = input.readBytes();
+                bitField0_ |= 0x00000008;
+                break;
+              } // case 34
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private boolean success_ ;
+      /**
+       * <code>bool success = 1;</code>
+       * @return The success.
+       */
+      @java.lang.Override
+      public boolean getSuccess() {
+        return success_;
+      }
+      /**
+       * <code>bool success = 1;</code>
+       * @param value The success to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSuccess(boolean value) {
+        
+        success_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool success = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSuccess() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        success_ = false;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object error_ = "";
+      /**
+       * <code>string error = 2;</code>
+       * @return The error.
+       */
+      public java.lang.String getError() {
+        java.lang.Object ref = error_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          error_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string error = 2;</code>
+       * @return The bytes for error.
+       */
+      public com.google.protobuf.ByteString
+          getErrorBytes() {
+        java.lang.Object ref = error_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          error_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string error = 2;</code>
+       * @param value The error to set.
+       * @return This builder for chaining.
+       */
+      public Builder setError(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        error_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string error = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearError() {
+        error_ = getDefaultInstance().getError();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string error = 2;</code>
+       * @param value The bytes for error to set.
+       * @return This builder for chaining.
+       */
+      public Builder setErrorBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        error_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object traceId_ = "";
+      /**
+       * <code>string trace_id = 3;</code>
+       * @return The traceId.
+       */
+      public java.lang.String getTraceId() {
+        java.lang.Object ref = traceId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          traceId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string trace_id = 3;</code>
+       * @return The bytes for traceId.
+       */
+      public com.google.protobuf.ByteString
+          getTraceIdBytes() {
+        java.lang.Object ref = traceId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          traceId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string trace_id = 3;</code>
+       * @param value The traceId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTraceId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        traceId_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string trace_id = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTraceId() {
+        traceId_ = getDefaultInstance().getTraceId();
+        bitField0_ = (bitField0_ & ~0x00000004);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string trace_id = 3;</code>
+       * @param value The bytes for traceId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTraceIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        traceId_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+
+      private com.google.protobuf.ByteString resultPayload_ = com.google.protobuf.ByteString.EMPTY;
+      /**
+       * <code>bytes result_payload = 4;</code>
+       * @return The resultPayload.
+       */
+      @java.lang.Override
+      public com.google.protobuf.ByteString getResultPayload() {
+        return resultPayload_;
+      }
+      /**
+       * <code>bytes result_payload = 4;</code>
+       * @param value The resultPayload to set.
+       * @return This builder for chaining.
+       */
+      public Builder setResultPayload(com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        resultPayload_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bytes result_payload = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearResultPayload() {
+        bitField0_ = (bitField0_ & ~0x00000008);
+        resultPayload_ = getDefaultInstance().getResultPayload();
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:bridge.InternalForwardResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:bridge.InternalForwardResponse)
+    private static final com.bridge.proto.ChatProto.InternalForwardResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.bridge.proto.ChatProto.InternalForwardResponse();
+    }
+
+    public static com.bridge.proto.ChatProto.InternalForwardResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<InternalForwardResponse>
+        PARSER = new com.google.protobuf.AbstractParser<InternalForwardResponse>() {
+      @java.lang.Override
+      public InternalForwardResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<InternalForwardResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<InternalForwardResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.bridge.proto.ChatProto.InternalForwardResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface InternalPushRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:bridge.InternalPushRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>int32 sender_id = 1;</code>
+     * @return The senderId.
+     */
+    int getSenderId();
+
+    /**
+     * <code>int32 receiver_id = 2;</code>
+     * @return The receiverId.
+     */
+    int getReceiverId();
+
+    /**
+     * <code>int64 group_id = 3;</code>
+     * @return The groupId.
+     */
+    long getGroupId();
+
+    /**
+     * <code>.bridge.InternalMsgType msg_type = 4;</code>
+     * @return The enum numeric value on the wire for msgType.
+     */
+    int getMsgTypeValue();
+    /**
+     * <code>.bridge.InternalMsgType msg_type = 4;</code>
+     * @return The msgType.
+     */
+    com.bridge.proto.ChatProto.InternalMsgType getMsgType();
+
+    /**
+     * <code>string payload_json = 5;</code>
+     * @return The payloadJson.
+     */
+    java.lang.String getPayloadJson();
+    /**
+     * <code>string payload_json = 5;</code>
+     * @return The bytes for payloadJson.
+     */
+    com.google.protobuf.ByteString
+        getPayloadJsonBytes();
+
+    /**
+     * <code>string trace_id = 6;</code>
+     * @return The traceId.
+     */
+    java.lang.String getTraceId();
+    /**
+     * <code>string trace_id = 6;</code>
+     * @return The bytes for traceId.
+     */
+    com.google.protobuf.ByteString
+        getTraceIdBytes();
+
+    /**
+     * <code>int64 timestamp = 7;</code>
+     * @return The timestamp.
+     */
+    long getTimestamp();
+
+    /**
+     * <code>bool broadcast = 8;</code>
+     * @return The broadcast.
+     */
+    boolean getBroadcast();
+
+    /**
+     * <code>map&lt;string, string&gt; headers = 9;</code>
+     */
+    int getHeadersCount();
+    /**
+     * <code>map&lt;string, string&gt; headers = 9;</code>
+     */
+    boolean containsHeaders(
+        java.lang.String key);
+    /**
+     * Use {@link #getHeadersMap()} instead.
+     */
+    @java.lang.Deprecated
+    java.util.Map<java.lang.String, java.lang.String>
+    getHeaders();
+    /**
+     * <code>map&lt;string, string&gt; headers = 9;</code>
+     */
+    java.util.Map<java.lang.String, java.lang.String>
+    getHeadersMap();
+    /**
+     * <code>map&lt;string, string&gt; headers = 9;</code>
+     */
+    /* nullable */
+java.lang.String getHeadersOrDefault(
+        java.lang.String key,
+        /* nullable */
+java.lang.String defaultValue);
+    /**
+     * <code>map&lt;string, string&gt; headers = 9;</code>
+     */
+    java.lang.String getHeadersOrThrow(
+        java.lang.String key);
+  }
+  /**
+   * Protobuf type {@code bridge.InternalPushRequest}
+   */
+  public static final class InternalPushRequest extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:bridge.InternalPushRequest)
+      InternalPushRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use InternalPushRequest.newBuilder() to construct.
+    private InternalPushRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private InternalPushRequest() {
+      msgType_ = 0;
+      payloadJson_ = "";
+      traceId_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new InternalPushRequest();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_InternalPushRequest_descriptor;
+    }
+
+    @SuppressWarnings({"rawtypes"})
+    @java.lang.Override
+    protected com.google.protobuf.MapField internalGetMapField(
+        int number) {
+      switch (number) {
+        case 9:
+          return internalGetHeaders();
+        default:
+          throw new RuntimeException(
+              "Invalid map field number: " + number);
+      }
+    }
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_InternalPushRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.bridge.proto.ChatProto.InternalPushRequest.class, com.bridge.proto.ChatProto.InternalPushRequest.Builder.class);
+    }
+
+    public static final int SENDER_ID_FIELD_NUMBER = 1;
+    private int senderId_ = 0;
+    /**
+     * <code>int32 sender_id = 1;</code>
+     * @return The senderId.
+     */
+    @java.lang.Override
+    public int getSenderId() {
+      return senderId_;
+    }
+
+    public static final int RECEIVER_ID_FIELD_NUMBER = 2;
+    private int receiverId_ = 0;
+    /**
+     * <code>int32 receiver_id = 2;</code>
+     * @return The receiverId.
+     */
+    @java.lang.Override
+    public int getReceiverId() {
+      return receiverId_;
+    }
+
+    public static final int GROUP_ID_FIELD_NUMBER = 3;
+    private long groupId_ = 0L;
+    /**
+     * <code>int64 group_id = 3;</code>
+     * @return The groupId.
+     */
+    @java.lang.Override
+    public long getGroupId() {
+      return groupId_;
+    }
+
+    public static final int MSG_TYPE_FIELD_NUMBER = 4;
+    private int msgType_ = 0;
+    /**
+     * <code>.bridge.InternalMsgType msg_type = 4;</code>
+     * @return The enum numeric value on the wire for msgType.
+     */
+    @java.lang.Override public int getMsgTypeValue() {
+      return msgType_;
+    }
+    /**
+     * <code>.bridge.InternalMsgType msg_type = 4;</code>
+     * @return The msgType.
+     */
+    @java.lang.Override public com.bridge.proto.ChatProto.InternalMsgType getMsgType() {
+      com.bridge.proto.ChatProto.InternalMsgType result = com.bridge.proto.ChatProto.InternalMsgType.forNumber(msgType_);
+      return result == null ? com.bridge.proto.ChatProto.InternalMsgType.UNRECOGNIZED : result;
+    }
+
+    public static final int PAYLOAD_JSON_FIELD_NUMBER = 5;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object payloadJson_ = "";
+    /**
+     * <code>string payload_json = 5;</code>
+     * @return The payloadJson.
+     */
+    @java.lang.Override
+    public java.lang.String getPayloadJson() {
+      java.lang.Object ref = payloadJson_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        payloadJson_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string payload_json = 5;</code>
+     * @return The bytes for payloadJson.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getPayloadJsonBytes() {
+      java.lang.Object ref = payloadJson_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        payloadJson_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int TRACE_ID_FIELD_NUMBER = 6;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object traceId_ = "";
+    /**
+     * <code>string trace_id = 6;</code>
+     * @return The traceId.
+     */
+    @java.lang.Override
+    public java.lang.String getTraceId() {
+      java.lang.Object ref = traceId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        traceId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string trace_id = 6;</code>
+     * @return The bytes for traceId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getTraceIdBytes() {
+      java.lang.Object ref = traceId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        traceId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int TIMESTAMP_FIELD_NUMBER = 7;
+    private long timestamp_ = 0L;
+    /**
+     * <code>int64 timestamp = 7;</code>
+     * @return The timestamp.
+     */
+    @java.lang.Override
+    public long getTimestamp() {
+      return timestamp_;
+    }
+
+    public static final int BROADCAST_FIELD_NUMBER = 8;
+    private boolean broadcast_ = false;
+    /**
+     * <code>bool broadcast = 8;</code>
+     * @return The broadcast.
+     */
+    @java.lang.Override
+    public boolean getBroadcast() {
+      return broadcast_;
+    }
+
+    public static final int HEADERS_FIELD_NUMBER = 9;
+    private static final class HeadersDefaultEntryHolder {
+      static final com.google.protobuf.MapEntry<
+          java.lang.String, java.lang.String> defaultEntry =
+              com.google.protobuf.MapEntry
+              .<java.lang.String, java.lang.String>newDefaultInstance(
+                  com.bridge.proto.ChatProto.internal_static_bridge_InternalPushRequest_HeadersEntry_descriptor, 
+                  com.google.protobuf.WireFormat.FieldType.STRING,
+                  "",
+                  com.google.protobuf.WireFormat.FieldType.STRING,
+                  "");
+    }
+    @SuppressWarnings("serial")
+    private com.google.protobuf.MapField<
+        java.lang.String, java.lang.String> headers_;
+    private com.google.protobuf.MapField<java.lang.String, java.lang.String>
+    internalGetHeaders() {
+      if (headers_ == null) {
+        return com.google.protobuf.MapField.emptyMapField(
+            HeadersDefaultEntryHolder.defaultEntry);
+      }
+      return headers_;
+    }
+    public int getHeadersCount() {
+      return internalGetHeaders().getMap().size();
+    }
+    /**
+     * <code>map&lt;string, string&gt; headers = 9;</code>
+     */
+    @java.lang.Override
+    public boolean containsHeaders(
+        java.lang.String key) {
+      if (key == null) { throw new NullPointerException("map key"); }
+      return internalGetHeaders().getMap().containsKey(key);
+    }
+    /**
+     * Use {@link #getHeadersMap()} instead.
+     */
+    @java.lang.Override
+    @java.lang.Deprecated
+    public java.util.Map<java.lang.String, java.lang.String> getHeaders() {
+      return getHeadersMap();
+    }
+    /**
+     * <code>map&lt;string, string&gt; headers = 9;</code>
+     */
+    @java.lang.Override
+    public java.util.Map<java.lang.String, java.lang.String> getHeadersMap() {
+      return internalGetHeaders().getMap();
+    }
+    /**
+     * <code>map&lt;string, string&gt; headers = 9;</code>
+     */
+    @java.lang.Override
+    public /* nullable */
+java.lang.String getHeadersOrDefault(
+        java.lang.String key,
+        /* nullable */
+java.lang.String defaultValue) {
+      if (key == null) { throw new NullPointerException("map key"); }
+      java.util.Map<java.lang.String, java.lang.String> map =
+          internalGetHeaders().getMap();
+      return map.containsKey(key) ? map.get(key) : defaultValue;
+    }
+    /**
+     * <code>map&lt;string, string&gt; headers = 9;</code>
+     */
+    @java.lang.Override
+    public java.lang.String getHeadersOrThrow(
+        java.lang.String key) {
+      if (key == null) { throw new NullPointerException("map key"); }
+      java.util.Map<java.lang.String, java.lang.String> map =
+          internalGetHeaders().getMap();
+      if (!map.containsKey(key)) {
+        throw new java.lang.IllegalArgumentException();
+      }
+      return map.get(key);
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (senderId_ != 0) {
+        output.writeInt32(1, senderId_);
+      }
+      if (receiverId_ != 0) {
+        output.writeInt32(2, receiverId_);
+      }
+      if (groupId_ != 0L) {
+        output.writeInt64(3, groupId_);
+      }
+      if (msgType_ != com.bridge.proto.ChatProto.InternalMsgType.INTERNAL_MSG_TYPE_UNSPECIFIED.getNumber()) {
+        output.writeEnum(4, msgType_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(payloadJson_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 5, payloadJson_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(traceId_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 6, traceId_);
+      }
+      if (timestamp_ != 0L) {
+        output.writeInt64(7, timestamp_);
+      }
+      if (broadcast_ != false) {
+        output.writeBool(8, broadcast_);
+      }
+      com.google.protobuf.GeneratedMessageV3
+        .serializeStringMapTo(
+          output,
+          internalGetHeaders(),
+          HeadersDefaultEntryHolder.defaultEntry,
+          9);
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (senderId_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(1, senderId_);
+      }
+      if (receiverId_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(2, receiverId_);
+      }
+      if (groupId_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(3, groupId_);
+      }
+      if (msgType_ != com.bridge.proto.ChatProto.InternalMsgType.INTERNAL_MSG_TYPE_UNSPECIFIED.getNumber()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeEnumSize(4, msgType_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(payloadJson_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, payloadJson_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(traceId_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, traceId_);
+      }
+      if (timestamp_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(7, timestamp_);
+      }
+      if (broadcast_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(8, broadcast_);
+      }
+      for (java.util.Map.Entry<java.lang.String, java.lang.String> entry
+           : internalGetHeaders().getMap().entrySet()) {
+        com.google.protobuf.MapEntry<java.lang.String, java.lang.String>
+        headers__ = HeadersDefaultEntryHolder.defaultEntry.newBuilderForType()
+            .setKey(entry.getKey())
+            .setValue(entry.getValue())
+            .build();
+        size += com.google.protobuf.CodedOutputStream
+            .computeMessageSize(9, headers__);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.bridge.proto.ChatProto.InternalPushRequest)) {
+        return super.equals(obj);
+      }
+      com.bridge.proto.ChatProto.InternalPushRequest other = (com.bridge.proto.ChatProto.InternalPushRequest) obj;
+
+      if (getSenderId()
+          != other.getSenderId()) return false;
+      if (getReceiverId()
+          != other.getReceiverId()) return false;
+      if (getGroupId()
+          != other.getGroupId()) return false;
+      if (msgType_ != other.msgType_) return false;
+      if (!getPayloadJson()
+          .equals(other.getPayloadJson())) return false;
+      if (!getTraceId()
+          .equals(other.getTraceId())) return false;
+      if (getTimestamp()
+          != other.getTimestamp()) return false;
+      if (getBroadcast()
+          != other.getBroadcast()) return false;
+      if (!internalGetHeaders().equals(
+          other.internalGetHeaders())) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + SENDER_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getSenderId();
+      hash = (37 * hash) + RECEIVER_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getReceiverId();
+      hash = (37 * hash) + GROUP_ID_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getGroupId());
+      hash = (37 * hash) + MSG_TYPE_FIELD_NUMBER;
+      hash = (53 * hash) + msgType_;
+      hash = (37 * hash) + PAYLOAD_JSON_FIELD_NUMBER;
+      hash = (53 * hash) + getPayloadJson().hashCode();
+      hash = (37 * hash) + TRACE_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getTraceId().hashCode();
+      hash = (37 * hash) + TIMESTAMP_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getTimestamp());
+      hash = (37 * hash) + BROADCAST_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getBroadcast());
+      if (!internalGetHeaders().getMap().isEmpty()) {
+        hash = (37 * hash) + HEADERS_FIELD_NUMBER;
+        hash = (53 * hash) + internalGetHeaders().hashCode();
+      }
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.bridge.proto.ChatProto.InternalPushRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.InternalPushRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.InternalPushRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.InternalPushRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.InternalPushRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.InternalPushRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.InternalPushRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.InternalPushRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.InternalPushRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.InternalPushRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.InternalPushRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.InternalPushRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.bridge.proto.ChatProto.InternalPushRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code bridge.InternalPushRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:bridge.InternalPushRequest)
+        com.bridge.proto.ChatProto.InternalPushRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_InternalPushRequest_descriptor;
+      }
+
+      @SuppressWarnings({"rawtypes"})
+      protected com.google.protobuf.MapField internalGetMapField(
+          int number) {
+        switch (number) {
+          case 9:
+            return internalGetHeaders();
+          default:
+            throw new RuntimeException(
+                "Invalid map field number: " + number);
+        }
+      }
+      @SuppressWarnings({"rawtypes"})
+      protected com.google.protobuf.MapField internalGetMutableMapField(
+          int number) {
+        switch (number) {
+          case 9:
+            return internalGetMutableHeaders();
+          default:
+            throw new RuntimeException(
+                "Invalid map field number: " + number);
+        }
+      }
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_InternalPushRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.bridge.proto.ChatProto.InternalPushRequest.class, com.bridge.proto.ChatProto.InternalPushRequest.Builder.class);
+      }
+
+      // Construct using com.bridge.proto.ChatProto.InternalPushRequest.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        senderId_ = 0;
+        receiverId_ = 0;
+        groupId_ = 0L;
+        msgType_ = 0;
+        payloadJson_ = "";
+        traceId_ = "";
+        timestamp_ = 0L;
+        broadcast_ = false;
+        internalGetMutableHeaders().clear();
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_InternalPushRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.InternalPushRequest getDefaultInstanceForType() {
+        return com.bridge.proto.ChatProto.InternalPushRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.InternalPushRequest build() {
+        com.bridge.proto.ChatProto.InternalPushRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.InternalPushRequest buildPartial() {
+        com.bridge.proto.ChatProto.InternalPushRequest result = new com.bridge.proto.ChatProto.InternalPushRequest(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(com.bridge.proto.ChatProto.InternalPushRequest result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.senderId_ = senderId_;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.receiverId_ = receiverId_;
+        }
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.groupId_ = groupId_;
+        }
+        if (((from_bitField0_ & 0x00000008) != 0)) {
+          result.msgType_ = msgType_;
+        }
+        if (((from_bitField0_ & 0x00000010) != 0)) {
+          result.payloadJson_ = payloadJson_;
+        }
+        if (((from_bitField0_ & 0x00000020) != 0)) {
+          result.traceId_ = traceId_;
+        }
+        if (((from_bitField0_ & 0x00000040) != 0)) {
+          result.timestamp_ = timestamp_;
+        }
+        if (((from_bitField0_ & 0x00000080) != 0)) {
+          result.broadcast_ = broadcast_;
+        }
+        if (((from_bitField0_ & 0x00000100) != 0)) {
+          result.headers_ = internalGetHeaders();
+          result.headers_.makeImmutable();
+        }
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.bridge.proto.ChatProto.InternalPushRequest) {
+          return mergeFrom((com.bridge.proto.ChatProto.InternalPushRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.bridge.proto.ChatProto.InternalPushRequest other) {
+        if (other == com.bridge.proto.ChatProto.InternalPushRequest.getDefaultInstance()) return this;
+        if (other.getSenderId() != 0) {
+          setSenderId(other.getSenderId());
+        }
+        if (other.getReceiverId() != 0) {
+          setReceiverId(other.getReceiverId());
+        }
+        if (other.getGroupId() != 0L) {
+          setGroupId(other.getGroupId());
+        }
+        if (other.msgType_ != 0) {
+          setMsgTypeValue(other.getMsgTypeValue());
+        }
+        if (!other.getPayloadJson().isEmpty()) {
+          payloadJson_ = other.payloadJson_;
+          bitField0_ |= 0x00000010;
+          onChanged();
+        }
+        if (!other.getTraceId().isEmpty()) {
+          traceId_ = other.traceId_;
+          bitField0_ |= 0x00000020;
+          onChanged();
+        }
+        if (other.getTimestamp() != 0L) {
+          setTimestamp(other.getTimestamp());
+        }
+        if (other.getBroadcast() != false) {
+          setBroadcast(other.getBroadcast());
+        }
+        internalGetMutableHeaders().mergeFrom(
+            other.internalGetHeaders());
+        bitField0_ |= 0x00000100;
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 8: {
+                senderId_ = input.readInt32();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 8
+              case 16: {
+                receiverId_ = input.readInt32();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 16
+              case 24: {
+                groupId_ = input.readInt64();
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 24
+              case 32: {
+                msgType_ = input.readEnum();
+                bitField0_ |= 0x00000008;
+                break;
+              } // case 32
+              case 42: {
+                payloadJson_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000010;
+                break;
+              } // case 42
+              case 50: {
+                traceId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000020;
+                break;
+              } // case 50
+              case 56: {
+                timestamp_ = input.readInt64();
+                bitField0_ |= 0x00000040;
+                break;
+              } // case 56
+              case 64: {
+                broadcast_ = input.readBool();
+                bitField0_ |= 0x00000080;
+                break;
+              } // case 64
+              case 74: {
+                com.google.protobuf.MapEntry<java.lang.String, java.lang.String>
+                headers__ = input.readMessage(
+                    HeadersDefaultEntryHolder.defaultEntry.getParserForType(), extensionRegistry);
+                internalGetMutableHeaders().getMutableMap().put(
+                    headers__.getKey(), headers__.getValue());
+                bitField0_ |= 0x00000100;
+                break;
+              } // case 74
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private int senderId_ ;
+      /**
+       * <code>int32 sender_id = 1;</code>
+       * @return The senderId.
+       */
+      @java.lang.Override
+      public int getSenderId() {
+        return senderId_;
+      }
+      /**
+       * <code>int32 sender_id = 1;</code>
+       * @param value The senderId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSenderId(int value) {
+        
+        senderId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int32 sender_id = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSenderId() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        senderId_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int receiverId_ ;
+      /**
+       * <code>int32 receiver_id = 2;</code>
+       * @return The receiverId.
+       */
+      @java.lang.Override
+      public int getReceiverId() {
+        return receiverId_;
+      }
+      /**
+       * <code>int32 receiver_id = 2;</code>
+       * @param value The receiverId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setReceiverId(int value) {
+        
+        receiverId_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int32 receiver_id = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearReceiverId() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        receiverId_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private long groupId_ ;
+      /**
+       * <code>int64 group_id = 3;</code>
+       * @return The groupId.
+       */
+      @java.lang.Override
+      public long getGroupId() {
+        return groupId_;
+      }
+      /**
+       * <code>int64 group_id = 3;</code>
+       * @param value The groupId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setGroupId(long value) {
+        
+        groupId_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 group_id = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearGroupId() {
+        bitField0_ = (bitField0_ & ~0x00000004);
+        groupId_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private int msgType_ = 0;
+      /**
+       * <code>.bridge.InternalMsgType msg_type = 4;</code>
+       * @return The enum numeric value on the wire for msgType.
+       */
+      @java.lang.Override public int getMsgTypeValue() {
+        return msgType_;
+      }
+      /**
+       * <code>.bridge.InternalMsgType msg_type = 4;</code>
+       * @param value The enum numeric value on the wire for msgType to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMsgTypeValue(int value) {
+        msgType_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.bridge.InternalMsgType msg_type = 4;</code>
+       * @return The msgType.
+       */
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.InternalMsgType getMsgType() {
+        com.bridge.proto.ChatProto.InternalMsgType result = com.bridge.proto.ChatProto.InternalMsgType.forNumber(msgType_);
+        return result == null ? com.bridge.proto.ChatProto.InternalMsgType.UNRECOGNIZED : result;
+      }
+      /**
+       * <code>.bridge.InternalMsgType msg_type = 4;</code>
+       * @param value The msgType to set.
+       * @return This builder for chaining.
+       */
+      public Builder setMsgType(com.bridge.proto.ChatProto.InternalMsgType value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        bitField0_ |= 0x00000008;
+        msgType_ = value.getNumber();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.bridge.InternalMsgType msg_type = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearMsgType() {
+        bitField0_ = (bitField0_ & ~0x00000008);
+        msgType_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object payloadJson_ = "";
+      /**
+       * <code>string payload_json = 5;</code>
+       * @return The payloadJson.
+       */
+      public java.lang.String getPayloadJson() {
+        java.lang.Object ref = payloadJson_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          payloadJson_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string payload_json = 5;</code>
+       * @return The bytes for payloadJson.
+       */
+      public com.google.protobuf.ByteString
+          getPayloadJsonBytes() {
+        java.lang.Object ref = payloadJson_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          payloadJson_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string payload_json = 5;</code>
+       * @param value The payloadJson to set.
+       * @return This builder for chaining.
+       */
+      public Builder setPayloadJson(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        payloadJson_ = value;
+        bitField0_ |= 0x00000010;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string payload_json = 5;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearPayloadJson() {
+        payloadJson_ = getDefaultInstance().getPayloadJson();
+        bitField0_ = (bitField0_ & ~0x00000010);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string payload_json = 5;</code>
+       * @param value The bytes for payloadJson to set.
+       * @return This builder for chaining.
+       */
+      public Builder setPayloadJsonBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        payloadJson_ = value;
+        bitField0_ |= 0x00000010;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object traceId_ = "";
+      /**
+       * <code>string trace_id = 6;</code>
+       * @return The traceId.
+       */
+      public java.lang.String getTraceId() {
+        java.lang.Object ref = traceId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          traceId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string trace_id = 6;</code>
+       * @return The bytes for traceId.
+       */
+      public com.google.protobuf.ByteString
+          getTraceIdBytes() {
+        java.lang.Object ref = traceId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          traceId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string trace_id = 6;</code>
+       * @param value The traceId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTraceId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        traceId_ = value;
+        bitField0_ |= 0x00000020;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string trace_id = 6;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTraceId() {
+        traceId_ = getDefaultInstance().getTraceId();
+        bitField0_ = (bitField0_ & ~0x00000020);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string trace_id = 6;</code>
+       * @param value The bytes for traceId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTraceIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        traceId_ = value;
+        bitField0_ |= 0x00000020;
+        onChanged();
+        return this;
+      }
+
+      private long timestamp_ ;
+      /**
+       * <code>int64 timestamp = 7;</code>
+       * @return The timestamp.
+       */
+      @java.lang.Override
+      public long getTimestamp() {
+        return timestamp_;
+      }
+      /**
+       * <code>int64 timestamp = 7;</code>
+       * @param value The timestamp to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTimestamp(long value) {
+        
+        timestamp_ = value;
+        bitField0_ |= 0x00000040;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 timestamp = 7;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTimestamp() {
+        bitField0_ = (bitField0_ & ~0x00000040);
+        timestamp_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private boolean broadcast_ ;
+      /**
+       * <code>bool broadcast = 8;</code>
+       * @return The broadcast.
+       */
+      @java.lang.Override
+      public boolean getBroadcast() {
+        return broadcast_;
+      }
+      /**
+       * <code>bool broadcast = 8;</code>
+       * @param value The broadcast to set.
+       * @return This builder for chaining.
+       */
+      public Builder setBroadcast(boolean value) {
+        
+        broadcast_ = value;
+        bitField0_ |= 0x00000080;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool broadcast = 8;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearBroadcast() {
+        bitField0_ = (bitField0_ & ~0x00000080);
+        broadcast_ = false;
+        onChanged();
+        return this;
+      }
+
+      private com.google.protobuf.MapField<
+          java.lang.String, java.lang.String> headers_;
+      private com.google.protobuf.MapField<java.lang.String, java.lang.String>
+          internalGetHeaders() {
+        if (headers_ == null) {
+          return com.google.protobuf.MapField.emptyMapField(
+              HeadersDefaultEntryHolder.defaultEntry);
+        }
+        return headers_;
+      }
+      private com.google.protobuf.MapField<java.lang.String, java.lang.String>
+          internalGetMutableHeaders() {
+        if (headers_ == null) {
+          headers_ = com.google.protobuf.MapField.newMapField(
+              HeadersDefaultEntryHolder.defaultEntry);
+        }
+        if (!headers_.isMutable()) {
+          headers_ = headers_.copy();
+        }
+        bitField0_ |= 0x00000100;
+        onChanged();
+        return headers_;
+      }
+      public int getHeadersCount() {
+        return internalGetHeaders().getMap().size();
+      }
+      /**
+       * <code>map&lt;string, string&gt; headers = 9;</code>
+       */
+      @java.lang.Override
+      public boolean containsHeaders(
+          java.lang.String key) {
+        if (key == null) { throw new NullPointerException("map key"); }
+        return internalGetHeaders().getMap().containsKey(key);
+      }
+      /**
+       * Use {@link #getHeadersMap()} instead.
+       */
+      @java.lang.Override
+      @java.lang.Deprecated
+      public java.util.Map<java.lang.String, java.lang.String> getHeaders() {
+        return getHeadersMap();
+      }
+      /**
+       * <code>map&lt;string, string&gt; headers = 9;</code>
+       */
+      @java.lang.Override
+      public java.util.Map<java.lang.String, java.lang.String> getHeadersMap() {
+        return internalGetHeaders().getMap();
+      }
+      /**
+       * <code>map&lt;string, string&gt; headers = 9;</code>
+       */
+      @java.lang.Override
+      public /* nullable */
+java.lang.String getHeadersOrDefault(
+          java.lang.String key,
+          /* nullable */
+java.lang.String defaultValue) {
+        if (key == null) { throw new NullPointerException("map key"); }
+        java.util.Map<java.lang.String, java.lang.String> map =
+            internalGetHeaders().getMap();
+        return map.containsKey(key) ? map.get(key) : defaultValue;
+      }
+      /**
+       * <code>map&lt;string, string&gt; headers = 9;</code>
+       */
+      @java.lang.Override
+      public java.lang.String getHeadersOrThrow(
+          java.lang.String key) {
+        if (key == null) { throw new NullPointerException("map key"); }
+        java.util.Map<java.lang.String, java.lang.String> map =
+            internalGetHeaders().getMap();
+        if (!map.containsKey(key)) {
+          throw new java.lang.IllegalArgumentException();
+        }
+        return map.get(key);
+      }
+      public Builder clearHeaders() {
+        bitField0_ = (bitField0_ & ~0x00000100);
+        internalGetMutableHeaders().getMutableMap()
+            .clear();
+        return this;
+      }
+      /**
+       * <code>map&lt;string, string&gt; headers = 9;</code>
+       */
+      public Builder removeHeaders(
+          java.lang.String key) {
+        if (key == null) { throw new NullPointerException("map key"); }
+        internalGetMutableHeaders().getMutableMap()
+            .remove(key);
+        return this;
+      }
+      /**
+       * Use alternate mutation accessors instead.
+       */
+      @java.lang.Deprecated
+      public java.util.Map<java.lang.String, java.lang.String>
+          getMutableHeaders() {
+        bitField0_ |= 0x00000100;
+        return internalGetMutableHeaders().getMutableMap();
+      }
+      /**
+       * <code>map&lt;string, string&gt; headers = 9;</code>
+       */
+      public Builder putHeaders(
+          java.lang.String key,
+          java.lang.String value) {
+        if (key == null) { throw new NullPointerException("map key"); }
+        if (value == null) { throw new NullPointerException("map value"); }
+        internalGetMutableHeaders().getMutableMap()
+            .put(key, value);
+        bitField0_ |= 0x00000100;
+        return this;
+      }
+      /**
+       * <code>map&lt;string, string&gt; headers = 9;</code>
+       */
+      public Builder putAllHeaders(
+          java.util.Map<java.lang.String, java.lang.String> values) {
+        internalGetMutableHeaders().getMutableMap()
+            .putAll(values);
+        bitField0_ |= 0x00000100;
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:bridge.InternalPushRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:bridge.InternalPushRequest)
+    private static final com.bridge.proto.ChatProto.InternalPushRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.bridge.proto.ChatProto.InternalPushRequest();
+    }
+
+    public static com.bridge.proto.ChatProto.InternalPushRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<InternalPushRequest>
+        PARSER = new com.google.protobuf.AbstractParser<InternalPushRequest>() {
+      @java.lang.Override
+      public InternalPushRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<InternalPushRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<InternalPushRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.bridge.proto.ChatProto.InternalPushRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface InternalPushResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:bridge.InternalPushResponse)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>bool success = 1;</code>
+     * @return The success.
+     */
+    boolean getSuccess();
+
+    /**
+     * <code>string error = 2;</code>
+     * @return The error.
+     */
+    java.lang.String getError();
+    /**
+     * <code>string error = 2;</code>
+     * @return The bytes for error.
+     */
+    com.google.protobuf.ByteString
+        getErrorBytes();
+
+    /**
+     * <code>string trace_id = 3;</code>
+     * @return The traceId.
+     */
+    java.lang.String getTraceId();
+    /**
+     * <code>string trace_id = 3;</code>
+     * @return The bytes for traceId.
+     */
+    com.google.protobuf.ByteString
+        getTraceIdBytes();
+
+    /**
+     * <code>int32 delivered_count = 4;</code>
+     * @return The deliveredCount.
+     */
+    int getDeliveredCount();
+  }
+  /**
+   * Protobuf type {@code bridge.InternalPushResponse}
+   */
+  public static final class InternalPushResponse extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:bridge.InternalPushResponse)
+      InternalPushResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use InternalPushResponse.newBuilder() to construct.
+    private InternalPushResponse(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private InternalPushResponse() {
+      error_ = "";
+      traceId_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new InternalPushResponse();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_InternalPushResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.bridge.proto.ChatProto.internal_static_bridge_InternalPushResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.bridge.proto.ChatProto.InternalPushResponse.class, com.bridge.proto.ChatProto.InternalPushResponse.Builder.class);
+    }
+
+    public static final int SUCCESS_FIELD_NUMBER = 1;
+    private boolean success_ = false;
+    /**
+     * <code>bool success = 1;</code>
+     * @return The success.
+     */
+    @java.lang.Override
+    public boolean getSuccess() {
+      return success_;
+    }
+
+    public static final int ERROR_FIELD_NUMBER = 2;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object error_ = "";
+    /**
+     * <code>string error = 2;</code>
+     * @return The error.
+     */
+    @java.lang.Override
+    public java.lang.String getError() {
+      java.lang.Object ref = error_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        error_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string error = 2;</code>
+     * @return The bytes for error.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getErrorBytes() {
+      java.lang.Object ref = error_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        error_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int TRACE_ID_FIELD_NUMBER = 3;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object traceId_ = "";
+    /**
+     * <code>string trace_id = 3;</code>
+     * @return The traceId.
+     */
+    @java.lang.Override
+    public java.lang.String getTraceId() {
+      java.lang.Object ref = traceId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        traceId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string trace_id = 3;</code>
+     * @return The bytes for traceId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getTraceIdBytes() {
+      java.lang.Object ref = traceId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        traceId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int DELIVERED_COUNT_FIELD_NUMBER = 4;
+    private int deliveredCount_ = 0;
+    /**
+     * <code>int32 delivered_count = 4;</code>
+     * @return The deliveredCount.
+     */
+    @java.lang.Override
+    public int getDeliveredCount() {
+      return deliveredCount_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (success_ != false) {
+        output.writeBool(1, success_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(error_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, error_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(traceId_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, traceId_);
+      }
+      if (deliveredCount_ != 0) {
+        output.writeInt32(4, deliveredCount_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (success_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(1, success_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(error_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, error_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(traceId_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, traceId_);
+      }
+      if (deliveredCount_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(4, deliveredCount_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.bridge.proto.ChatProto.InternalPushResponse)) {
+        return super.equals(obj);
+      }
+      com.bridge.proto.ChatProto.InternalPushResponse other = (com.bridge.proto.ChatProto.InternalPushResponse) obj;
+
+      if (getSuccess()
+          != other.getSuccess()) return false;
+      if (!getError()
+          .equals(other.getError())) return false;
+      if (!getTraceId()
+          .equals(other.getTraceId())) return false;
+      if (getDeliveredCount()
+          != other.getDeliveredCount()) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + SUCCESS_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getSuccess());
+      hash = (37 * hash) + ERROR_FIELD_NUMBER;
+      hash = (53 * hash) + getError().hashCode();
+      hash = (37 * hash) + TRACE_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getTraceId().hashCode();
+      hash = (37 * hash) + DELIVERED_COUNT_FIELD_NUMBER;
+      hash = (53 * hash) + getDeliveredCount();
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.bridge.proto.ChatProto.InternalPushResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.InternalPushResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.InternalPushResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.InternalPushResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.InternalPushResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.bridge.proto.ChatProto.InternalPushResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.InternalPushResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.InternalPushResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.InternalPushResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.InternalPushResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.bridge.proto.ChatProto.InternalPushResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.bridge.proto.ChatProto.InternalPushResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.bridge.proto.ChatProto.InternalPushResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code bridge.InternalPushResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:bridge.InternalPushResponse)
+        com.bridge.proto.ChatProto.InternalPushResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_InternalPushResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_InternalPushResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.bridge.proto.ChatProto.InternalPushResponse.class, com.bridge.proto.ChatProto.InternalPushResponse.Builder.class);
+      }
+
+      // Construct using com.bridge.proto.ChatProto.InternalPushResponse.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        success_ = false;
+        error_ = "";
+        traceId_ = "";
+        deliveredCount_ = 0;
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.bridge.proto.ChatProto.internal_static_bridge_InternalPushResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.InternalPushResponse getDefaultInstanceForType() {
+        return com.bridge.proto.ChatProto.InternalPushResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.InternalPushResponse build() {
+        com.bridge.proto.ChatProto.InternalPushResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.bridge.proto.ChatProto.InternalPushResponse buildPartial() {
+        com.bridge.proto.ChatProto.InternalPushResponse result = new com.bridge.proto.ChatProto.InternalPushResponse(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(com.bridge.proto.ChatProto.InternalPushResponse result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.success_ = success_;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.error_ = error_;
+        }
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.traceId_ = traceId_;
+        }
+        if (((from_bitField0_ & 0x00000008) != 0)) {
+          result.deliveredCount_ = deliveredCount_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.bridge.proto.ChatProto.InternalPushResponse) {
+          return mergeFrom((com.bridge.proto.ChatProto.InternalPushResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.bridge.proto.ChatProto.InternalPushResponse other) {
+        if (other == com.bridge.proto.ChatProto.InternalPushResponse.getDefaultInstance()) return this;
+        if (other.getSuccess() != false) {
+          setSuccess(other.getSuccess());
+        }
+        if (!other.getError().isEmpty()) {
+          error_ = other.error_;
+          bitField0_ |= 0x00000002;
+          onChanged();
+        }
+        if (!other.getTraceId().isEmpty()) {
+          traceId_ = other.traceId_;
+          bitField0_ |= 0x00000004;
+          onChanged();
+        }
+        if (other.getDeliveredCount() != 0) {
+          setDeliveredCount(other.getDeliveredCount());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 8: {
+                success_ = input.readBool();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 8
+              case 18: {
+                error_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 18
+              case 26: {
+                traceId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 26
+              case 32: {
+                deliveredCount_ = input.readInt32();
+                bitField0_ |= 0x00000008;
+                break;
+              } // case 32
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private boolean success_ ;
+      /**
+       * <code>bool success = 1;</code>
+       * @return The success.
+       */
+      @java.lang.Override
+      public boolean getSuccess() {
+        return success_;
+      }
+      /**
+       * <code>bool success = 1;</code>
+       * @param value The success to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSuccess(boolean value) {
+        
+        success_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool success = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSuccess() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        success_ = false;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object error_ = "";
+      /**
+       * <code>string error = 2;</code>
+       * @return The error.
+       */
+      public java.lang.String getError() {
+        java.lang.Object ref = error_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          error_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string error = 2;</code>
+       * @return The bytes for error.
+       */
+      public com.google.protobuf.ByteString
+          getErrorBytes() {
+        java.lang.Object ref = error_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          error_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string error = 2;</code>
+       * @param value The error to set.
+       * @return This builder for chaining.
+       */
+      public Builder setError(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        error_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string error = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearError() {
+        error_ = getDefaultInstance().getError();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string error = 2;</code>
+       * @param value The bytes for error to set.
+       * @return This builder for chaining.
+       */
+      public Builder setErrorBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        error_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object traceId_ = "";
+      /**
+       * <code>string trace_id = 3;</code>
+       * @return The traceId.
+       */
+      public java.lang.String getTraceId() {
+        java.lang.Object ref = traceId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          traceId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string trace_id = 3;</code>
+       * @return The bytes for traceId.
+       */
+      public com.google.protobuf.ByteString
+          getTraceIdBytes() {
+        java.lang.Object ref = traceId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          traceId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string trace_id = 3;</code>
+       * @param value The traceId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTraceId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        traceId_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string trace_id = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTraceId() {
+        traceId_ = getDefaultInstance().getTraceId();
+        bitField0_ = (bitField0_ & ~0x00000004);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string trace_id = 3;</code>
+       * @param value The bytes for traceId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTraceIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        traceId_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+
+      private int deliveredCount_ ;
+      /**
+       * <code>int32 delivered_count = 4;</code>
+       * @return The deliveredCount.
+       */
+      @java.lang.Override
+      public int getDeliveredCount() {
+        return deliveredCount_;
+      }
+      /**
+       * <code>int32 delivered_count = 4;</code>
+       * @param value The deliveredCount to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDeliveredCount(int value) {
+        
+        deliveredCount_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int32 delivered_count = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDeliveredCount() {
+        bitField0_ = (bitField0_ & ~0x00000008);
+        deliveredCount_ = 0;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:bridge.InternalPushResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:bridge.InternalPushResponse)
+    private static final com.bridge.proto.ChatProto.InternalPushResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.bridge.proto.ChatProto.InternalPushResponse();
+    }
+
+    public static com.bridge.proto.ChatProto.InternalPushResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<InternalPushResponse>
+        PARSER = new com.google.protobuf.AbstractParser<InternalPushResponse>() {
+      @java.lang.Override
+      public InternalPushResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<InternalPushResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<InternalPushResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.bridge.proto.ChatProto.InternalPushResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
   public interface RpcMessageOrBuilder extends
       // @@protoc_insertion_point(interface_extends:bridge.RpcMessage)
       com.google.protobuf.MessageOrBuilder {
@@ -27982,6 +32772,14 @@ java.lang.String defaultValue) {
        * <code>ERROR = 2;</code>
        */
       ERROR(2),
+      /**
+       * <code>STREAM = 3;</code>
+       */
+      STREAM(3),
+      /**
+       * <code>STREAM_END = 4;</code>
+       */
+      STREAM_END(4),
       UNRECOGNIZED(-1),
       ;
 
@@ -27997,6 +32795,14 @@ java.lang.String defaultValue) {
        * <code>ERROR = 2;</code>
        */
       public static final int ERROR_VALUE = 2;
+      /**
+       * <code>STREAM = 3;</code>
+       */
+      public static final int STREAM_VALUE = 3;
+      /**
+       * <code>STREAM_END = 4;</code>
+       */
+      public static final int STREAM_END_VALUE = 4;
 
 
       public final int getNumber() {
@@ -28026,6 +32832,8 @@ java.lang.String defaultValue) {
           case 0: return REQUEST;
           case 1: return RESPONSE;
           case 2: return ERROR;
+          case 3: return STREAM;
+          case 4: return STREAM_END;
           default: return null;
         }
       }
@@ -29288,6 +34096,36 @@ java.lang.String defaultValue) {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_bridge_SwarmNodeListResponse_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_InternalForwardRequest_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_InternalForwardRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_InternalForwardRequest_HeadersEntry_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_InternalForwardRequest_HeadersEntry_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_InternalForwardResponse_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_InternalForwardResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_InternalPushRequest_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_InternalPushRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_InternalPushRequest_HeadersEntry_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_InternalPushRequest_HeadersEntry_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_InternalPushResponse_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_InternalPushResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_bridge_RpcMessage_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -29385,13 +34223,48 @@ java.lang.String defaultValue) {
       "se\022\017\n\007from_id\030\001 \001(\t\022\r\n\005to_id\030\002 \001(\t\022\014\n\004ta" +
       "sk\030\003 \001(\t\022\016\n\006result\030\004 \001(\t\022\r\n\005found\030\005 \001(\010\"" +
       ">\n\025SwarmNodeListResponse\022%\n\005nodes\030\001 \003(\0132" +
-      "\026.bridge.SwarmAgentNode\"\321\001\n\nRpcMessage\022%" +
-      "\n\004type\030\001 \001(\0162\027.bridge.RpcMessage.Type\022\n\n" +
-      "\002id\030\002 \001(\003\022\024\n\014service_name\030\003 \001(\t\022\023\n\013metho" +
-      "d_name\030\004 \001(\t\022\017\n\007payload\030\005 \001(\014\022\022\n\nerror_c" +
-      "ode\030\006 \001(\005\022\022\n\nerror_desc\030\007 \001(\t\",\n\004Type\022\013\n" +
-      "\007REQUEST\020\000\022\014\n\010RESPONSE\020\001\022\t\n\005ERROR\020\002B\035\n\020c" +
-      "om.bridge.protoB\tChatProtob\006proto3"
+      "\026.bridge.SwarmAgentNode\"\246\002\n\026InternalForw" +
+      "ardRequest\022\021\n\tsender_id\030\001 \001(\005\022\023\n\013receive" +
+      "r_id\030\002 \001(\005\022\020\n\010group_id\030\003 \001(\003\022)\n\010msg_type" +
+      "\030\004 \001(\0162\027.bridge.InternalMsgType\022\024\n\014paylo" +
+      "ad_json\030\005 \001(\t\022\020\n\010trace_id\030\006 \001(\t\022\021\n\ttimes" +
+      "tamp\030\007 \001(\003\022<\n\007headers\030\010 \003(\0132+.bridge.Int" +
+      "ernalForwardRequest.HeadersEntry\032.\n\014Head" +
+      "ersEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001" +
+      "\"c\n\027InternalForwardResponse\022\017\n\007success\030\001" +
+      " \001(\010\022\r\n\005error\030\002 \001(\t\022\020\n\010trace_id\030\003 \001(\t\022\026\n" +
+      "\016result_payload\030\004 \001(\014\"\263\002\n\023InternalPushRe" +
+      "quest\022\021\n\tsender_id\030\001 \001(\005\022\023\n\013receiver_id\030" +
+      "\002 \001(\005\022\020\n\010group_id\030\003 \001(\003\022)\n\010msg_type\030\004 \001(" +
+      "\0162\027.bridge.InternalMsgType\022\024\n\014payload_js" +
+      "on\030\005 \001(\t\022\020\n\010trace_id\030\006 \001(\t\022\021\n\ttimestamp\030" +
+      "\007 \001(\003\022\021\n\tbroadcast\030\010 \001(\010\0229\n\007headers\030\t \003(" +
+      "\0132(.bridge.InternalPushRequest.HeadersEn" +
+      "try\032.\n\014HeadersEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005valu" +
+      "e\030\002 \001(\t:\0028\001\"a\n\024InternalPushResponse\022\017\n\007s" +
+      "uccess\030\001 \001(\010\022\r\n\005error\030\002 \001(\t\022\020\n\010trace_id\030" +
+      "\003 \001(\t\022\027\n\017delivered_count\030\004 \001(\005\"\355\001\n\nRpcMe" +
+      "ssage\022%\n\004type\030\001 \001(\0162\027.bridge.RpcMessage." +
+      "Type\022\n\n\002id\030\002 \001(\003\022\024\n\014service_name\030\003 \001(\t\022\023" +
+      "\n\013method_name\030\004 \001(\t\022\017\n\007payload\030\005 \001(\014\022\022\n\n" +
+      "error_code\030\006 \001(\005\022\022\n\nerror_desc\030\007 \001(\t\"H\n\004" +
+      "Type\022\013\n\007REQUEST\020\000\022\014\n\010RESPONSE\020\001\022\t\n\005ERROR" +
+      "\020\002\022\n\n\006STREAM\020\003\022\016\n\nSTREAM_END\020\004*\214\002\n\017Inter" +
+      "nalMsgType\022!\n\035INTERNAL_MSG_TYPE_UNSPECIF" +
+      "IED\020\000\022\020\n\014CHAT_PRIVATE\020\001\022\016\n\nCHAT_GROUP\020\002\022" +
+      "\021\n\rAI_AT_MENTION\020\003\022\021\n\rPOINTS_UPDATE\020\004\022\023\n" +
+      "\017AI_GRADE_RESULT\020\005\022\022\n\016COMPANION_READ\020\006\022\023" +
+      "\n\017DASHBOARD_QUERY\020\007\022\022\n\016DASHBOARD_PUSH\020\010\022" +
+      "\016\n\nVOICE_CHAT\020\t\022\027\n\023SYSTEM_NOTIFICATION\020\n" +
+      "\022\023\n\017SANDBOX_EXECUTE\020\0132\203\002\n\025InternalRouter" +
+      "Service\022P\n\rForwardToJava\022\036.bridge.Intern" +
+      "alForwardRequest\032\037.bridge.InternalForwar" +
+      "dResponse\022I\n\014PushToClient\022\033.bridge.Inter" +
+      "nalPushRequest\032\034.bridge.InternalPushResp" +
+      "onse\022M\n\016StreamToClient\022\033.bridge.Internal" +
+      "PushRequest\032\034.bridge.InternalPushRespons" +
+      "e0\001B\035\n\020com.bridge.protoB\tChatProtob\006prot" +
+      "o3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -29571,8 +34444,44 @@ java.lang.String defaultValue) {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_bridge_SwarmNodeListResponse_descriptor,
         new java.lang.String[] { "Nodes", });
-    internal_static_bridge_RpcMessage_descriptor =
+    internal_static_bridge_InternalForwardRequest_descriptor =
       getDescriptor().getMessageTypes().get(26);
+    internal_static_bridge_InternalForwardRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_InternalForwardRequest_descriptor,
+        new java.lang.String[] { "SenderId", "ReceiverId", "GroupId", "MsgType", "PayloadJson", "TraceId", "Timestamp", "Headers", });
+    internal_static_bridge_InternalForwardRequest_HeadersEntry_descriptor =
+      internal_static_bridge_InternalForwardRequest_descriptor.getNestedTypes().get(0);
+    internal_static_bridge_InternalForwardRequest_HeadersEntry_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_InternalForwardRequest_HeadersEntry_descriptor,
+        new java.lang.String[] { "Key", "Value", });
+    internal_static_bridge_InternalForwardResponse_descriptor =
+      getDescriptor().getMessageTypes().get(27);
+    internal_static_bridge_InternalForwardResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_InternalForwardResponse_descriptor,
+        new java.lang.String[] { "Success", "Error", "TraceId", "ResultPayload", });
+    internal_static_bridge_InternalPushRequest_descriptor =
+      getDescriptor().getMessageTypes().get(28);
+    internal_static_bridge_InternalPushRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_InternalPushRequest_descriptor,
+        new java.lang.String[] { "SenderId", "ReceiverId", "GroupId", "MsgType", "PayloadJson", "TraceId", "Timestamp", "Broadcast", "Headers", });
+    internal_static_bridge_InternalPushRequest_HeadersEntry_descriptor =
+      internal_static_bridge_InternalPushRequest_descriptor.getNestedTypes().get(0);
+    internal_static_bridge_InternalPushRequest_HeadersEntry_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_InternalPushRequest_HeadersEntry_descriptor,
+        new java.lang.String[] { "Key", "Value", });
+    internal_static_bridge_InternalPushResponse_descriptor =
+      getDescriptor().getMessageTypes().get(29);
+    internal_static_bridge_InternalPushResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_InternalPushResponse_descriptor,
+        new java.lang.String[] { "Success", "Error", "TraceId", "DeliveredCount", });
+    internal_static_bridge_RpcMessage_descriptor =
+      getDescriptor().getMessageTypes().get(30);
     internal_static_bridge_RpcMessage_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_bridge_RpcMessage_descriptor,

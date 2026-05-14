@@ -33,6 +33,10 @@ _TYPE_MAP = {
     "bridge.SwarmHelpRequest": chat_pb2.SwarmHelpRequest,
     "bridge.SwarmHelpResponse": chat_pb2.SwarmHelpResponse,
     "bridge.SwarmNodeListResponse": chat_pb2.SwarmNodeListResponse,
+    "bridge.InternalForwardRequest": chat_pb2.InternalForwardRequest,
+    "bridge.InternalForwardResponse": chat_pb2.InternalForwardResponse,
+    "bridge.InternalPushRequest": chat_pb2.InternalPushRequest,
+    "bridge.InternalPushResponse": chat_pb2.InternalPushResponse,
     "bridge.RpcMessage": chat_pb2.RpcMessage,
 }
 
