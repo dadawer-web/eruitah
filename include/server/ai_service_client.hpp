@@ -35,6 +35,15 @@ public:
                    const std::string& voiceUrl, int voiceDuration,
                    std::function<void(bool, const std::string&, const std::string&)> callback);
 
+    void groupChat(int64_t groupId, int senderId, const std::string& senderName,
+                   const std::string& content,
+                   const std::vector<int32_t>& aiBotIds,
+                   std::function<void(bool, const std::string&)> callback);
+
+    void farmAnswer(int userId, int plotId, int ownerId,
+                    const std::string& question, const std::string& answer,
+                    std::function<void(bool, const std::string&)> callback);
+
     std::string getSessionId(int userId);
     void clearSession(int userId);
     bool isAvailable() const;

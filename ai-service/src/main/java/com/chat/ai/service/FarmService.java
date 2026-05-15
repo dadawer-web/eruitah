@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 public class FarmService {
 
     private final FarmAiJudgeService farmAiJudgeService;
+    // [RPC Migration] Kept for distributed lock only, not for message pushing
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
     private final RpcPushService rpcPushService;
@@ -44,13 +45,13 @@ public class FarmService {
         if (locked == null || !locked) {
             log.warn("Farm plot {} is locked by another user, rejecting answer from user {}", plotId, userId);
             HarvestJudgment rejected = new HarvestJudgment(false, 0, "这块地正在被别人回答，请稍后再试~");
-            sendAnswerAck(userId, plotId, ownerId, rejected);
+            sendAnswerAck(userId, plotId, ownerId, "", rejected);
             return rejected;
         }
 
         try {
             HarvestJudgment judgment = farmAiJudgeService.judgeAnswer(question, answer);
-            sendAnswerAck(userId, plotId, ownerId, judgment);
+            sendAnswerAck(userId, plotId, ownerId, answer, judgment);
 
             if (judgment.canHarvest()) {
                 sendBroadcast(userId, ownerId, judgment.feedback());
@@ -64,22 +65,12 @@ public class FarmService {
         }
     }
 
-    private void sendAnswerAck(int userId, int plotId, int ownerId, HarvestJudgment judgment) {
+    private void sendAnswerAck(int userId, int plotId, int ownerId, String answer, HarvestJudgment judgment) {
         try {
-            Map<String, Object> response = new HashMap<>();
-            response.put("msgid", FARM_ANSWER_MSG_ACK);
-            response.put("errno", 0);
-            response.put("plotid", plotId);
-            response.put("canHarvest", judgment.canHarvest());
-            response.put("score", judgment.score());
-            response.put("feedback", judgment.feedback());
-            response.put("userid", userId);
-            response.put("ownerid", ownerId);
+            rpcPushService.publishFarmAck(userId, plotId, ownerId, answer,
+                judgment.canHarvest(), judgment.score(), judgment.feedback());
 
-            String jsonMessage = objectMapper.writeValueAsString(response);
-            stringRedisTemplate.convertAndSend(String.valueOf(FARM_DISPATCH_CHANNEL), jsonMessage);
-
-            log.info("Sent farm answer ACK to channel 9996: userId={}, canHarvest={}, score={}", 
+            log.info("[RPC] Sent farm answer ACK: userId={}, canHarvest={}, score={}",
                 userId, judgment.canHarvest(), judgment.score());
 
         } catch (Exception e) {
@@ -89,15 +80,14 @@ public class FarmService {
 
     private void sendBroadcast(int userId, int ownerId, String feedback) {
         try {
-            Map<String, Object> broadcast = new HashMap<>();
-            broadcast.put("msgid", FARM_BROADCAST_MSG);
-            broadcast.put("msg", String.format("玩家%d 成功收割了玩家%d的菜！AI评语：%s",
-                userId, ownerId, feedback));
+            // [RPC Migration] Replaced Redis convertAndSend with RpcPushService.pushToCpp
+            // Old: stringRedisTemplate.convertAndSend(String.valueOf(FARM_DISPATCH_CHANNEL), broadcastJson);
+            String broadcastMsg = String.format("玩家%d 成功收割了玩家%d的菜！AI评语：%s",
+                userId, ownerId, feedback);
 
-            String broadcastJson = objectMapper.writeValueAsString(broadcast);
-            stringRedisTemplate.convertAndSend(String.valueOf(FARM_DISPATCH_CHANNEL), broadcastJson);
+            rpcPushService.publishFarmBroadcast(broadcastMsg);
 
-            log.info("Broadcast farm harvest: user {} harvested from owner {}", userId, ownerId);
+            log.info("[RPC] Broadcast farm harvest: user {} harvested from owner {}", userId, ownerId);
 
         } catch (Exception e) {
             log.error("Error broadcasting farm harvest", e);

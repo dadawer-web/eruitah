@@ -101,14 +101,15 @@ public class RedisConfig {
         StreamMessageListenerContainer<String, MapRecord<String, String, String>> container =
                 StreamMessageListenerContainer.create(connectionFactory, options);
 
-        container.receive(
-                Consumer.from(AI_GROUP, "ai_node_1"),
-                StreamOffset.create(AI_TASK_STREAM, ReadOffset.lastConsumed()),
-                aiTaskStreamConsumer
-        );
+        // container.receive(
+        //         Consumer.from(AI_GROUP, "ai_node_1"),
+        //         StreamOffset.create(AI_TASK_STREAM, ReadOffset.lastConsumed()),
+        //         aiTaskStreamConsumer
+        // );
 
-        container.start();
-        System.out.println("AI Task Stream Container started, listening on stream: " + AI_TASK_STREAM);
+        // container.start();
+        // System.out.println("AI Task Stream Container started, listening on stream: " + AI_TASK_STREAM);
+        System.out.println("AI Task Stream Container DISABLED - tasks now received via RPC (InternalRouterHandler)");
         return container;
     }
 }

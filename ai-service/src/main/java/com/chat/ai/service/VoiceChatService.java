@@ -2,29 +2,30 @@ package com.chat.ai.service;
 
 import com.alibaba.dashscope.audio.asr.recognition.Recognition;
 import com.alibaba.dashscope.audio.asr.recognition.RecognitionParam;
-import com.alibaba.dashscope.audio.qwen_tts_realtime.*;
 import com.alibaba.dashscope.utils.Constants;
 import com.chat.ai.config.VoiceConfig;
+import com.chat.ai.rpc.RpcPushService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Base64;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
 @Service
@@ -32,7 +33,7 @@ public class VoiceChatService {
 
     private final VoiceConfig voiceConfig;
     private final ChatClient fastChatClient;
-    private final RedisPubSubService redisPubSubService;
+    private final RpcPushService rpcPushService;
     private final WebClient webClient;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -42,16 +43,23 @@ public class VoiceChatService {
     public VoiceChatService(
             VoiceConfig voiceConfig,
             @Qualifier("fastChatClient") ChatClient fastChatClient,
-            RedisPubSubService redisPubSubService,
+            RpcPushService rpcPushService,
             WebClient.Builder webClientBuilder) {
         this.voiceConfig = voiceConfig;
         this.fastChatClient = fastChatClient;
-        this.redisPubSubService = redisPubSubService;
-        this.webClient = webClientBuilder.build();
-        
+        this.rpcPushService = rpcPushService;
+        ExchangeStrategies strategies = ExchangeStrategies.builder()
+            .codecs(configurer -> configurer
+                .defaultCodecs()
+                .maxInMemorySize(10 * 1024 * 1024))
+            .build();
+        this.webClient = webClientBuilder
+            .exchangeStrategies(strategies)
+            .build();
+
         Constants.baseWebsocketApiUrl = "wss://dashscope.aliyuncs.com/api-ws/v1/inference";
         Constants.baseHttpApiUrl = "https://dashscope.aliyuncs.com/api/v1";
-        
+
         try {
             Path storageDir = Paths.get(audioStoragePath);
             if (!Files.exists(storageDir)) {
@@ -65,77 +73,77 @@ public class VoiceChatService {
 
     public VoiceChatResult handleVoiceChat(String audioUrl, Integer userId, Integer botId, Integer inputDuration) {
         log.info("开始处理语音聊天: userId={}, botId={}, audioUrl={}", userId, botId, audioUrl);
-        
+
         String localFilePath = downloadAudioFile(audioUrl);
         if (localFilePath == null) {
             log.error("下载音频文件失败: {}", audioUrl);
             return new VoiceChatResult("抱歉，语音处理失败，请重试。", null, 0);
         }
-        
+
         String userText = transcribeAudio(localFilePath);
         log.info("ASR识别结果: {}", userText);
-        
+
         if (userText == null || userText.trim().isEmpty()) {
             userText = "[无法识别的语音内容]";
         }
-        
+
         SystemMessage systemMessage = AiPersonaRegistry.getPersonaByBotId(botId);
         String aiTextReply = fastChatClient.prompt()
             .system(systemMessage.getContent())
             .user(userText)
             .call()
             .content();
-        
+
         log.info("LLM回复: {}", aiTextReply.substring(0, Math.min(100, aiTextReply.length())) + "...");
-        
+
         String aiVoiceUrl = synthesizeSpeech(aiTextReply);
         log.info("TTS合成完成: {}", aiVoiceUrl);
-        
+
         return new VoiceChatResult(aiTextReply, aiVoiceUrl, estimateDuration(aiTextReply));
     }
 
     private String transcribeAudio(String localFilePath) {
         try {
-            String apiKey = voiceConfig.getDashscope().getApiKey();
-            String asrModel = voiceConfig.getDashscope().getAsrModel();
-            
+            String apiKey = voiceConfig.getAliyun().getApiKey();
+            String asrModel = voiceConfig.getAliyun().getAsrModel();
+
             log.info("开始ASR识别, 本地文件: {}, 模型: {}", localFilePath, asrModel);
-            
+
             Recognition recognizer = new Recognition();
             RecognitionParam param = RecognitionParam.builder()
-                .model(asrModel != null ? asrModel : "fun-asr-realtime")
+                .model(asrModel)
                 .apiKey(apiKey)
                 .format("wav")
                 .sampleRate(16000)
                 .build();
-            
+
             File audioFile = new File(localFilePath);
             if (!audioFile.exists()) {
                 log.error("音频文件不存在: {}", localFilePath);
                 return null;
             }
-            
+
             String result = recognizer.call(param, audioFile);
             log.info("ASR原始响应: {}", result);
-            
+
             recognizer.getDuplexApi().close(1000, "done");
-            
+
             return parseAsrResult(result);
-            
+
         } catch (Exception e) {
             log.error("ASR识别失败", e);
             return null;
         }
     }
-    
+
     private String parseAsrResult(String jsonResult) {
         if (jsonResult == null || jsonResult.isEmpty()) {
             return null;
         }
-        
+
         try {
             JsonNode root = objectMapper.readTree(jsonResult);
-            
+
             if (root.has("sentences")) {
                 StringBuilder textBuilder = new StringBuilder();
                 JsonNode sentences = root.get("sentences");
@@ -148,11 +156,11 @@ public class VoiceChatService {
                 log.info("ASR解析文本: {}", text);
                 return text;
             }
-            
+
             if (root.has("text")) {
                 return root.get("text").asText();
             }
-            
+
             return jsonResult;
         } catch (Exception e) {
             log.warn("解析ASR结果失败，返回原始结果", e);
@@ -164,15 +172,15 @@ public class VoiceChatService {
         try {
             String fileName = "input_" + UUID.randomUUID().toString() + ".wav";
             String localPath = audioStoragePath + "/" + fileName;
-            
+
             log.info("开始下载音频文件: {} -> {}", audioUrl, localPath);
-            
+
             byte[] audioData = webClient.get()
                 .uri(audioUrl)
                 .retrieve()
                 .bodyToMono(byte[].class)
                 .block();
-            
+
             if (audioData != null && audioData.length > 0) {
                 try (FileOutputStream fos = new FileOutputStream(localPath)) {
                     fos.write(audioData);
@@ -180,7 +188,7 @@ public class VoiceChatService {
                 log.info("音频文件下载完成: {} bytes", audioData.length);
                 return localPath;
             }
-            
+
             return null;
         } catch (Exception e) {
             log.error("下载音频文件失败: {}", audioUrl, e);
@@ -190,101 +198,88 @@ public class VoiceChatService {
 
     private String synthesizeSpeech(String text) {
         try {
-            String apiKey = voiceConfig.getDashscope().getApiKey();
-            String ttsModel = voiceConfig.getDashscope().getTtsModel();
-            String voiceName = voiceConfig.getDashscope().getTtsVoice();
-            
+            String apiKey = voiceConfig.getXiaomi().getApiKey();
+            String ttsModel = voiceConfig.getXiaomi().getTtsModel();
+            String voiceName = voiceConfig.getXiaomi().getTtsVoice();
+            String ttsBaseUrl = voiceConfig.getXiaomi().getBaseUrl();
+
             String fileName = "ai_" + UUID.randomUUID().toString() + ".wav";
             String outputPath = audioStoragePath + "/" + fileName;
-            
-            log.info("开始TTS合成, model={}, voice={}, text长度={}", ttsModel, voiceName, text.length());
-            
-            ByteArrayOutputStream audioBuffer = new ByteArrayOutputStream();
-            CountDownLatch completeLatch = new CountDownLatch(1);
-            AtomicReference<String> errorRef = new AtomicReference<>(null);
-            
-            QwenTtsRealtimeParam param = QwenTtsRealtimeParam.builder()
-                .model(ttsModel != null ? ttsModel : "qwen3-tts-flash-realtime")
-                .url("wss://dashscope.aliyuncs.com/api-ws/v1/realtime")
-                .apikey(apiKey)
-                .build();
-            
-            QwenTtsRealtime qwenTts = new QwenTtsRealtime(param, new QwenTtsRealtimeCallback() {
-                @Override
-                public void onOpen() {
-                    log.debug("TTS WebSocket连接已建立");
-                }
-                
-                @Override
-                public void onEvent(JsonObject message) {
-                    String type = message.get("type").getAsString();
-                    switch (type) {
-                        case "session.created":
-                            log.debug("TTS会话已创建");
-                            break;
-                        case "response.audio.delta":
-                            String audioB64 = message.get("delta").getAsString();
-                            byte[] rawAudio = Base64.getDecoder().decode(audioB64);
-                            audioBuffer.write(rawAudio, 0, rawAudio.length);
-                            break;
-                        case "response.done":
-                            log.debug("TTS响应完成");
-                            break;
-                        case "session.finished":
-                            log.debug("TTS会话结束");
-                            completeLatch.countDown();
-                            break;
-                        case "error":
-                            String errorMsg = message.has("error") ? message.get("error").toString() : "Unknown error";
-                            log.error("TTS错误: {}", errorMsg);
-                            errorRef.set(errorMsg);
-                            completeLatch.countDown();
-                            break;
-                    }
-                }
-                
-                @Override
-                public void onClose(int code, String reason) {
-                    log.debug("TTS WebSocket关闭: code={}, reason={}", code, reason);
-                }
-            });
-            
-            qwenTts.connect();
-            
-            QwenTtsRealtimeConfig config = QwenTtsRealtimeConfig.builder()
-                .voice(voiceName != null ? voiceName : "Cherry")
-                .responseFormat(QwenTtsRealtimeAudioFormat.PCM_24000HZ_MONO_16BIT)
-                .format("wav")
-                .mode("server_commit")
-                .build();
-            qwenTts.updateSession(config);
-            
-            qwenTts.appendText(text);
-            qwenTts.finish();
-            
-            completeLatch.await();
-            qwenTts.close();
-            
-            if (errorRef.get() != null) {
-                log.error("TTS合成失败: {}", errorRef.get());
+
+            log.info("开始TTS合成(MiMo), model={}, voice={}, baseUrl={}, text长度={}",
+                ttsModel, voiceName, ttsBaseUrl, text.length());
+
+            List<Map<String, String>> messages = List.of(
+                Map.of("role", "user", "content", "用温和耐心的语气，像一位经验丰富的考研辅导老师在给学生讲解知识点。语速适中，吐字清晰。"),
+                Map.of("role", "assistant", "content", text)
+            );
+
+            Map<String, Object> audioConfig = Map.of(
+                "format", "wav",
+                "voice", voiceName
+            );
+
+            Map<String, Object> requestBody = Map.of(
+                "model", ttsModel,
+                "messages", messages,
+                "audio", audioConfig
+            );
+
+            byte[] responseData = webClient.post()
+                .uri(ttsBaseUrl + "/chat/completions")
+                .header("Authorization", "Bearer " + apiKey)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .bodyValue(requestBody)
+                .retrieve()
+                .bodyToMono(byte[].class)
+                .block();
+
+            if (responseData == null || responseData.length == 0) {
+                log.error("MiMo TTS返回空响应");
                 return null;
             }
-            
-            byte[] audioData = audioBuffer.toByteArray();
-            if (audioData.length > 0) {
-                byte[] wavData = addWavHeader(audioData, 24000, 16, 1);
-                try (FileOutputStream fos = new FileOutputStream(outputPath)) {
-                    fos.write(wavData);
+
+            log.info("MiMo TTS响应大小: {} bytes", responseData.length);
+
+            JsonNode response = objectMapper.readTree(responseData);
+
+            if (!response.has("choices") || response.get("choices").size() == 0) {
+                log.error("MiMo TTS响应无choices: {}", new String(responseData, 0, Math.min(500, responseData.length)));
+                if (response.has("error")) {
+                    log.error("MiMo TTS错误: {}", response.get("error"));
                 }
-                log.info("TTS音频已保存: {} ({} bytes)", outputPath, wavData.length);
-                return audioUrlPrefix + "/" + fileName;
+                return null;
             }
-            
-            log.error("TTS合成失败: 未获取到音频数据");
-            return null;
-            
+
+            JsonNode message = response.get("choices").get(0).get("message");
+            if (message == null || !message.has("audio") || !message.get("audio").has("data")) {
+                log.error("MiMo TTS响应无audio.data字段");
+                return null;
+            }
+
+            String audioBase64 = message.get("audio").get("data").asText();
+            byte[] wavBytes = Base64.getDecoder().decode(audioBase64);
+
+            if (wavBytes.length == 0) {
+                log.error("MiMo TTS解码后音频数据为空");
+                return null;
+            }
+
+            try (FileOutputStream fos = new FileOutputStream(outputPath)) {
+                fos.write(wavBytes);
+            }
+
+            File outputFile = new File(outputPath);
+            if (!outputFile.exists() || outputFile.length() == 0) {
+                log.error("MiMo TTS音频文件写入失败: {}", outputPath);
+                return null;
+            }
+
+            log.info("MiMo TTS音频已保存: {} ({} bytes)", outputPath, wavBytes.length);
+            return audioUrlPrefix + "/" + fileName;
+
         } catch (Exception e) {
-            log.error("TTS合成失败", e);
+            log.error("MiMo TTS合成失败", e);
             return null;
         }
     }
@@ -295,46 +290,11 @@ public class VoiceChatService {
     }
 
     public String synthesizeSpeechPublic(String text) {
-        return synthesizeSpeech(text);
-    }
-    
-    private byte[] addWavHeader(byte[] pcmData, int sampleRate, int bitsPerSample, int channels) {
-        int byteRate = sampleRate * channels * bitsPerSample / 8;
-        int blockAlign = channels * bitsPerSample / 8;
-        int dataSize = pcmData.length;
-        int fileSize = 36 + dataSize;
-        
-        byte[] wavData = new byte[44 + dataSize];
-        
-        wavData[0] = 'R'; wavData[1] = 'I'; wavData[2] = 'F'; wavData[3] = 'F';
-        wavData[4] = (byte) (fileSize & 0xff);
-        wavData[5] = (byte) ((fileSize >> 8) & 0xff);
-        wavData[6] = (byte) ((fileSize >> 16) & 0xff);
-        wavData[7] = (byte) ((fileSize >> 24) & 0xff);
-        wavData[8] = 'W'; wavData[9] = 'A'; wavData[10] = 'V'; wavData[11] = 'E';
-        wavData[12] = 'f'; wavData[13] = 'm'; wavData[14] = 't'; wavData[15] = ' ';
-        wavData[16] = 16; wavData[17] = 0; wavData[18] = 0; wavData[19] = 0;
-        wavData[20] = 1; wavData[21] = 0;
-        wavData[22] = (byte) channels; wavData[23] = 0;
-        wavData[24] = (byte) (sampleRate & 0xff);
-        wavData[25] = (byte) ((sampleRate >> 8) & 0xff);
-        wavData[26] = (byte) ((sampleRate >> 16) & 0xff);
-        wavData[27] = (byte) ((sampleRate >> 24) & 0xff);
-        wavData[28] = (byte) (byteRate & 0xff);
-        wavData[29] = (byte) ((byteRate >> 8) & 0xff);
-        wavData[30] = (byte) ((byteRate >> 16) & 0xff);
-        wavData[31] = (byte) ((byteRate >> 24) & 0xff);
-        wavData[32] = (byte) blockAlign; wavData[33] = 0;
-        wavData[34] = (byte) bitsPerSample; wavData[35] = 0;
-        wavData[36] = 'd'; wavData[37] = 'a'; wavData[38] = 't'; wavData[39] = 'a';
-        wavData[40] = (byte) (dataSize & 0xff);
-        wavData[41] = (byte) ((dataSize >> 8) & 0xff);
-        wavData[42] = (byte) ((dataSize >> 16) & 0xff);
-        wavData[43] = (byte) ((dataSize >> 24) & 0xff);
-        
-        System.arraycopy(pcmData, 0, wavData, 44, dataSize);
-        
-        return wavData;
+        String result = synthesizeSpeech(text);
+        if (result == null) {
+            log.warn("TTS合成失败，返回null");
+        }
+        return result;
     }
 
     public record VoiceChatResult(String textReply, String voiceUrl, int duration) {}

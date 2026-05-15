@@ -172,6 +172,40 @@ void ChatService::handleRpcPushMessage(int receiverId, int64_t groupId,
              << " msgType=" << msgType
              << " broadcast=" << broadcast;
 
+    if (msgType == static_cast<int>(bridge::InternalMsgType::POINTS_UPDATE)) {
+        try {
+            json js = json::parse(payloadJson);
+            int appMsgId = js.value("msgid", -1);
+            
+            if (appMsgId == FARM_ANSWER_MSG_ACK) {
+                int plotId = js.value("plotid", -1);
+                int ownerId = js.value("ownerid", -1);
+                int userId = js.value("userid", -1);
+                bool canHarvest = js.value("canHarvest", false);
+                int score = js.value("score", 0);
+                std::string feedback = js.value("feedback", "");
+                std::string answer = js.value("answer", "");
+                
+                LOG_INFO << "[RPC Push] Farm answer ACK: plotId=" << plotId 
+                         << " ownerId=" << ownerId << " userId=" << userId
+                         << " canHarvest=" << canHarvest << " score=" << score;
+                
+                if (canHarvest && plotId >= 0 && ownerId > 0 && userId > 0) {
+                    if (_farmModel.answerPlot(ownerId, plotId, userId, answer, score, feedback)) {
+                        LOG_INFO << "[RPC Push] Farm plot persisted: owner=" << ownerId << " plot=" << plotId;
+                        _farmModel.updateFarmUserCoins(userId, 50);
+                        _farmModel.updateFarmUserExp(ownerId, 10);
+                        LOG_INFO << "[RPC Push] Coins +50 for user " << userId << ", Exp +10 for owner " << ownerId;
+                    } else {
+                        LOG_ERROR << "[RPC Push] Failed to persist farm plot: owner=" << ownerId << " plot=" << plotId;
+                    }
+                }
+            }
+        } catch (const json::exception& e) {
+            LOG_ERROR << "[RPC Push] JSON parse error in farm persistence: " << e.what();
+        }
+    }
+
     if (broadcast) {
         lock_guard<mutex> lock(_connMutex);
         for (auto& pair : _userConnMap) {
@@ -551,27 +585,37 @@ void ChatService::oneChat(const TcpConnectionPtr& conn,json& js,Timestamp time){
             userMessage = js.value("message", "");
         }
 
-        json aiRequest;
-        aiRequest["userId"] = fromId;
-        aiRequest["botId"] = toid;
-        aiRequest["message"] = userMessage;
-        aiRequest["userName"] = senderName;
-        
-        if (js.contains("voiceUrl") && !js["voiceUrl"].is_null()) {
-            aiRequest["voiceUrl"] = js["voiceUrl"];
-            LOG_INFO << "Voice message to AI Bot, voiceUrl included";
-        }
-        
-        if (js.contains("duration") && !js["duration"].is_null()) {
-            aiRequest["duration"] = js["duration"];
-            LOG_INFO << "Voice message duration included";
-        }
+        if (_rpcClient && _rpcClient->connected()) {
+            json aiPayload;
+            aiPayload["userId"] = fromId;
+            aiPayload["botId"] = toid;
+            aiPayload["message"] = userMessage;
+            aiPayload["userName"] = senderName;
 
-        string aiRequestStr = aiRequest.dump();
-        if (_redis.xadd("ai_task_stream", "PRIVATE_CHAT", aiRequestStr)) {
-            LOG_INFO << "AI chat request sent to Stream: userId=" << fromId << ", botId=" << toid;
+            if (js.contains("voiceUrl") && !js["voiceUrl"].is_null()) {
+                aiPayload["voiceUrl"] = js["voiceUrl"];
+                LOG_INFO << "Voice message to AI Bot, voiceUrl included";
+            }
+
+            if (js.contains("duration") && !js["duration"].is_null()) {
+                aiPayload["duration"] = js["duration"];
+                LOG_INFO << "Voice message duration included";
+            }
+
+            _rpcClient->forwardToJava(fromId, fromId, 0,
+                static_cast<int>(bridge::InternalMsgType::CHAT_PRIVATE),
+                aiPayload.dump(),
+                "pv_" + to_string(fromId),
+                [fromId, toid](const string& svc, const string& method,
+                               bool success, const string& error) {
+                    if (success) {
+                        LOG_INFO << "AI private chat forwarded via RPC: userId=" << fromId << " botId=" << toid;
+                    } else {
+                        LOG_ERROR << "AI private chat RPC failed: " << error;
+                    }
+                });
         } else {
-            LOG_ERROR << "Failed to send AI chat request to Stream";
+            LOG_ERROR << "RPC not connected, cannot forward AI chat request";
         }
 
         return;
@@ -870,30 +914,30 @@ void ChatService::groupChat(const TcpConnectionPtr& conn,json& js,Timestamp time
      }
 
      if (!aiBotIdsToRespond.empty()) {
-         LOG_INFO << "Forwarding group message to Java AI service: groupId=" << groupid;
+         LOG_INFO << "Forwarding group message to Java AI service via RPC: groupId=" << groupid;
 
-         json aiGroupRequest;
-         aiGroupRequest["groupId"] = groupid;
-         aiGroupRequest["senderId"] = userid;
-         aiGroupRequest["senderName"] = sender.getName();
-         aiGroupRequest["content"] = messageContent;
-         aiGroupRequest["aiBotIds"] = aiBotIdsToRespond;
+         json aiGroupPayload;
+         aiGroupPayload["groupId"] = groupid;
+         aiGroupPayload["senderId"] = userid;
+         aiGroupPayload["senderName"] = sender.getName();
+         aiGroupPayload["content"] = messageContent;
+         aiGroupPayload["aiBotIds"] = aiBotIdsToRespond;
 
-         string aiGroupRequestStr = aiGroupRequest.dump();
-        if (_rpcClient && _rpcClient->connected()) {
-            _rpcClient->forwardToJava(userid, 0, groupid,
-                2, aiGroupRequestStr, "grp_" + to_string(groupid),
-                [](const string& svc, const string& method, bool success, const string& error) {
-                    if (success) {
-                        LOG_INFO << "AI group chat request forwarded via RPC";
-                    } else {
-                        LOG_ERROR << "AI group chat RPC failed: " << error;
-                    }
-                });
-        } else {
-            _redis.publish(9998, aiGroupRequestStr);
-            LOG_WARN << "RPC not available, fallback to Redis for AI group chat";
-        }
+         if (_rpcClient && _rpcClient->connected()) {
+             _rpcClient->forwardToJava(userid, 0, groupid,
+                 static_cast<int>(bridge::InternalMsgType::CHAT_GROUP),
+                 aiGroupPayload.dump(), "grp_" + to_string(groupid),
+                 [groupid](const string& svc, const string& method,
+                            bool success, const string& error) {
+                     if (success) {
+                         LOG_INFO << "AI group chat forwarded via RPC: groupId=" << groupid;
+                     } else {
+                         LOG_ERROR << "AI group chat RPC failed: " << error;
+                     }
+                 });
+         } else {
+             LOG_ERROR << "RPC not connected, cannot forward AI group chat";
+         }
      }
 
      // ==================== 正常群聊消息分发 ====================
@@ -1749,17 +1793,18 @@ void ChatService::farmAnswer(const TcpConnectionPtr& conn, json& js, Timestamp t
 
     if (_rpcClient && _rpcClient->connected()) {
         _rpcClient->forwardToJava(userid, 0, 0,
-            5, aiRequest.dump(), "farm_" + to_string(plotid),
-            [](const string& svc, const string& method, bool success, const string& error) {
+            static_cast<int>(bridge::InternalMsgType::AI_GRADE_RESULT),
+            aiRequest.dump(), "farm_" + to_string(plotid),
+            [userid, plotid](const string& svc, const string& method,
+                             bool success, const string& error) {
                 if (success) {
-                    LOG_INFO << "Farm answer request forwarded via RPC";
+                    LOG_INFO << "Farm answer forwarded via RPC: userId=" << userid << " plotId=" << plotid;
                 } else {
                     LOG_ERROR << "Farm answer RPC failed: " << error;
                 }
             });
     } else {
-        _redis.publish(9995, aiRequest.dump());
-        LOG_WARN << "RPC not available, fallback to Redis for farm answer";
+        LOG_ERROR << "RPC not connected, cannot forward farm answer";
     }
 
     LOG_INFO << "Farm answer request sent to AI service for user " << userid << " plot " << plotid;

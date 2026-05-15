@@ -9,6 +9,7 @@ import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import com.chat.ai.rpc.RpcPushService;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
@@ -24,7 +25,9 @@ public class AiChatService {
     private final ChatClient smartChatClient;
     private final ChatClient fastChatClient;
     private final ChatMemory chatMemory;
-    private final RedisPubSubService redisPubSubService;
+    // [RPC Migration] Replaced RedisPubSubService with RpcPushService
+    // private final RedisPubSubService redisPubSubService;
+    private final RpcPushService rpcPushService;
     private final AgentOrchestratorService agentOrchestratorService;
 
     private static final String SESSION_ID_PREFIX = "[SESSION:";
@@ -34,12 +37,14 @@ public class AiChatService {
             @Qualifier("smartChatClient") ChatClient smartChatClient,
             @Qualifier("fastChatClient") ChatClient fastChatClient,
             ChatMemory chatMemory,
-            RedisPubSubService redisPubSubService,
+            // RedisPubSubService redisPubSubService,
+            RpcPushService rpcPushService,
             AgentOrchestratorService agentOrchestratorService) {
         this.smartChatClient = smartChatClient;
         this.fastChatClient = fastChatClient;
         this.chatMemory = chatMemory;
-        this.redisPubSubService = redisPubSubService;
+        // this.redisPubSubService = redisPubSubService;
+        this.rpcPushService = rpcPushService;
         this.agentOrchestratorService = agentOrchestratorService;
     }
 
@@ -112,7 +117,7 @@ public class AiChatService {
 
             log.info("[{}] 回复长度: {}字符", AiPersonaRegistry.getBotName(botId), response.length());
 
-            redisPubSubService.publishDirectMessage(userId, response, botId, AiPersonaRegistry.getBotName(botId));
+            rpcPushService.publishDirectMessage(userId, response, botId, AiPersonaRegistry.getBotName(botId));
 
             return new ChatResult(response, conversationId);
 

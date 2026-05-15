@@ -468,7 +468,7 @@ public class GraphExamService {
     }
 
     private void ensureUserNodeExists(String userId) {
-        String cypher = "MERGE (u:User {userId: $userId}) RETURN u.userId";
+        String cypher = "MERGE (u:User {userId: $userId}) ON CREATE SET u.createdAt = timestamp() RETURN u.userId LIMIT 1";
         neo4jClient.query(cypher)
             .bind(userId).to("userId")
             .fetch()

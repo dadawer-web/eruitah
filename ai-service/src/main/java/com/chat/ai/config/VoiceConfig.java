@@ -8,18 +8,27 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ConfigurationProperties(prefix = "voice")
 public class VoiceConfig {
-    
-    private DashScopeConfig dashscope = new DashScopeConfig();
+
+    private AliyunConfig aliyun = new AliyunConfig();
+    private XiaomiConfig xiaomi = new XiaomiConfig();
     private StorageConfig storage = new StorageConfig();
-    
+
     @Data
-    public static class DashScopeConfig {
+    public static class AliyunConfig {
         private String apiKey;
-        private String asrModel = "paraformer-v2";
-        private String ttsModel = "qwen3-tts-vd-2026-01-26";
-        private String ttsVoice = "zhimiao_emo";
+        private String asrModel = "fun-asr-realtime-2026-02-28";
+        private String realtimeTtsModel = "qwen3-tts-instruct-flash-realtime";
+        private String realtimeTtsVoice = "Cherry";
     }
-    
+
+    @Data
+    public static class XiaomiConfig {
+        private String apiKey;
+        private String baseUrl = "https://token-plan-cn.xiaomimimo.com/v1";
+        private String ttsModel = "mimo-v2.5-tts";
+        private String ttsVoice = "冰糖";
+    }
+
     @Data
     public static class StorageConfig {
         private String path = "/tmp/audio";

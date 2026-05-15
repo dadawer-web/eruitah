@@ -2,6 +2,7 @@ package com.chat.ai.config;
 
 import com.chat.ai.rpc.*;
 import com.chat.ai.service.AiChatRequestListener;
+import com.chat.ai.service.CareerAdviceService;
 import com.chat.ai.service.FarmAiJudgeService;
 import com.chat.ai.service.FarmService;
 import com.chat.ai.service.GroupChatService;
@@ -26,36 +27,14 @@ public class RpcBridgeConfig {
     @Value("${rpc.cpp.port:8888}")
     private int cppRpcPort;
 
-    @Value("${rpc.python.host:127.0.0.1}")
-    private String pythonRpcHost;
-
-    @Value("${rpc.python.port:9997}")
-    private int pythonRpcPort;
-
     @Value("${rpc.internal.port:9999}")
     private int internalRpcPort;
 
     @Bean
     public ProtobufRpcClient cppRpcClient() {
         ProtobufRpcClient client = new ProtobufRpcClient(cppRpcHost, cppRpcPort);
-        try {
-            client.connect();
-            log.info("Connected to C++ RPC at {}:{}", cppRpcHost, cppRpcPort);
-        } catch (Exception e) {
-            log.warn("Failed to connect to C++ RPC at {}:{}, will retry: {}", cppRpcHost, cppRpcPort, e.getMessage());
-        }
-        return client;
-    }
-
-    @Bean
-    public ProtobufRpcClient pythonRpcClient() {
-        ProtobufRpcClient client = new ProtobufRpcClient(pythonRpcHost, pythonRpcPort);
-        try {
-            client.connect();
-            log.info("Connected to Python RPC at {}:{}", pythonRpcHost, pythonRpcPort);
-        } catch (Exception e) {
-            log.warn("Failed to connect to Python RPC at {}:{}, will retry: {}", pythonRpcHost, pythonRpcPort, e.getMessage());
-        }
+        client.connect();
+        log.info("C++ RPC client initialized, connecting to {}:{} (auto-reconnect enabled)", cppRpcHost, cppRpcPort);
         return client;
     }
 
@@ -81,10 +60,11 @@ public class RpcBridgeConfig {
             FarmService farmService,
             FarmAiJudgeService farmAiJudgeService,
             GroupChatService groupChatService,
+            CareerAdviceService careerAdviceService,
             ObjectMapper objectMapper,
             Executor rpcTaskExecutor) {
         return new InternalRouterHandler(aiChatRequestListener, farmService, farmAiJudgeService,
-                groupChatService, objectMapper, rpcTaskExecutor);
+                groupChatService, careerAdviceService, objectMapper, rpcTaskExecutor);
     }
 
     @Bean

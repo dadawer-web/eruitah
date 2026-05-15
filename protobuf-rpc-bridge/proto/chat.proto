@@ -251,6 +251,7 @@ enum InternalMsgType {
     SYSTEM_NOTIFICATION = 10;
     SANDBOX_EXECUTE = 11;
     EXPERIENCE_UPDATE = 12;
+    CAREER_ADVICE = 13;
 }
 
 message InternalForwardRequest {
@@ -290,10 +291,23 @@ message InternalPushResponse {
     int32 delivered_count = 4;
 }
 
+// ==================== AI 职业导师 ====================
+
+message CareerAdviceRequest {
+    int64 user_id = 1;
+    repeated string skills = 2;
+    string resume_highlight = 3;
+    string learning_advice = 4;
+}
+
+message CareerAdviceResponse {
+}
+
 service InternalRouterService {
     rpc ForwardToJava(InternalForwardRequest) returns (InternalForwardResponse);
     rpc PushToClient(InternalPushRequest) returns (InternalPushResponse);
     rpc StreamToClient(InternalPushRequest) returns (stream InternalPushResponse);
+    rpc UpdateCareerProfile(CareerAdviceRequest) returns (CareerAdviceResponse);
 }
 
 // ==================== RPC 消息封装 ====================

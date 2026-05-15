@@ -8,35 +8,48 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     git grep curl \
-    xvfb x11vnc xdotool scrot imagemagick \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libx11-6 libxext6 libxrender1 libxtst6 libxi6 libxrandr2 \
+    libxss1 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libglib2.0-0 libgl1 libgtk-3-0 libnotify4 libnss3 libnspr4 \
-    libxss1 libasound2 libgbm1 libatk1.0-0 libatk-bridge2.0-0 \
-    libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 \
+    libasound2 libgbm1 libatk1.0-0 libatk-bridge2.0-0 libdrm2 libcups2 \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    xvfb x11vnc xdotool scrot imagemagick \
     fonts-noto-cjk fonts-wqy-zenhei \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
     clangd default-jdk \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs \
-    && rm -rf /var/lib/apt/lists/*
+    && sed -i 's|deb.nodesource.com|mirrors.tuna.tsinghua.edu.cn/nodesource|g' /etc/apt/sources.list.d/nodesource.list 2>/dev/null; \
+    apt-get update && apt-get install -y --no-install-recommends nodejs \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN npm config set registry https://registry.npmmirror.com
 
 RUN npm install -g \
     @modelcontextprotocol/server-filesystem \
-    @modelcontextprotocol/server-github \
-    @modelcontextprotocol/server-puppeteer \
     @modelcontextprotocol/server-memory \
     @modelcontextprotocol/server-sequential-thinking \
-    @modelcontextprotocol/server-postgres \
     pyright typescript-language-server typescript
 
-RUN mkdir -p /opt/jdtls && \
-    curl -fsSL "https://download.eclipse.org/jdtls/snapshots/jdt-language-server-latest.tar.gz" | tar xz -C /opt/jdtls && \
-    mkdir -p /opt/jdtls/data
+RUN mkdir -p /opt/jdtls/data && \
+    (curl -fsSL --retry 2 --retry-delay 3 --connect-timeout 10 --max-time 120 \
+        "https://mirrors.ustc.edu.cn/eclipse/jdtls/snapshots/jdt-language-server-latest.tar.gz" 2>/dev/null || \
+     curl -fsSL --retry 2 --retry-delay 3 --connect-timeout 10 --max-time 120 \
+        "https://download.eclipse.org/jdtls/snapshots/jdt-language-server-latest.tar.gz" 2>/dev/null \
+    ) | tar xz -C /opt/jdtls 2>/dev/null || echo "JDTLS download skipped - Java LSP will use fallback"
 
 ENV JDTLS_HOME=/opt/jdtls
 ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64

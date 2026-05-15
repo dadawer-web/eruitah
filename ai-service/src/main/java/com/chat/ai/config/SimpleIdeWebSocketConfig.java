@@ -32,13 +32,8 @@ public class SimpleIdeWebSocketConfig implements WebSocketConfigurer {
     @Bean
     public ProtobufRpcClient protobufRpcClient() {
         ProtobufRpcClient client = new ProtobufRpcClient(pythonRpcHost, pythonRpcPort);
-        try {
-            client.connect();
-            log.info("Connected to Python RPC at {}:{}", pythonRpcHost, pythonRpcPort);
-        } catch (Exception e) {
-            log.warn("Failed to connect to Python RPC at {}:{}, will retry on first request: {}",
-                    pythonRpcHost, pythonRpcPort, e.getMessage());
-        }
+        client.connect();
+        log.info("Python RPC client (IDE) initialized, connecting to {}:{} (auto-reconnect enabled)", pythonRpcHost, pythonRpcPort);
         return client;
     }
 

@@ -1585,6 +1585,13 @@ void ChatClient::processMessage(const QJsonObject &message) {
                 emit farmPlotHarvested(plotId, ownerId);
                 break;
             }
+            case MsgType::CAREER_ADVICE_MSG: {
+                QString skills = message["skills"].toString();
+                QString resumeHighlight = message["resumeHighlight"].toString();
+                QString learningAdvice = message["learningAdvice"].toString();
+                emit careerAdviceReceived(skills, resumeHighlight, learningAdvice);
+                break;
+            }
             default:
                 qWarning() << "Unknown farm message type:" << msgType;
                 break;

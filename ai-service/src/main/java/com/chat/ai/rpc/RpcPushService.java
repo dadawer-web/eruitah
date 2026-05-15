@@ -133,7 +133,7 @@ public class RpcPushService {
         pushToCpp(userId, 0, ChatProto.InternalMsgType.VOICE_CHAT, message);
     }
 
-    public void publishFarmAck(int userId, int plotId, int ownerId, boolean canHarvest, int score, String feedback) {
+    public void publishFarmAck(int userId, int plotId, int ownerId, String answer, boolean canHarvest, int score, String feedback) {
         Map<String, Object> message = new HashMap<>();
         message.put("msgid", FARM_ACK_MSG_ID);
         message.put("errno", 0);
@@ -143,6 +143,7 @@ public class RpcPushService {
         message.put("feedback", feedback);
         message.put("userid", userId);
         message.put("ownerid", ownerId);
+        message.put("answer", answer);
 
         pushToCpp(userId, 0, ChatProto.InternalMsgType.POINTS_UPDATE, message);
     }
@@ -157,6 +158,17 @@ public class RpcPushService {
 
     public void pushExperienceUpdate(int userId, Map<String, Object> expData) {
         pushToCpp(userId, 0, ChatProto.InternalMsgType.EXPERIENCE_UPDATE, expData);
+    }
+
+    public void publishCareerAdvice(int userId, String skills, String resumeHighlight, String learningAdvice) {
+        Map<String, Object> message = new HashMap<>();
+        message.put("msgid", 80);
+        message.put("userid", userId);
+        message.put("skills", skills);
+        message.put("resumeHighlight", resumeHighlight);
+        message.put("learningAdvice", learningAdvice);
+
+        pushToCpp(userId, 0, ChatProto.InternalMsgType.CAREER_ADVICE, message);
     }
 
     private void pushToCpp(int receiverId, long groupId, ChatProto.InternalMsgType msgType, Map<String, Object> message) {

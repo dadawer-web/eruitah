@@ -1,6 +1,7 @@
 package com.chat.ai.rpc;
 
 import com.chat.ai.service.AiChatRequestListener;
+import com.chat.ai.service.CareerAdviceService;
 import com.chat.ai.service.FarmAiJudgeService;
 import com.chat.ai.service.FarmService;
 import com.chat.ai.service.GroupChatService;
@@ -23,6 +24,7 @@ public class InternalRouterHandler implements Consumer<ChatProto.RpcMessage> {
     private final FarmService farmService;
     private final FarmAiJudgeService farmAiJudgeService;
     private final GroupChatService groupChatService;
+    private final CareerAdviceService careerAdviceService;
     private final ObjectMapper objectMapper;
     private final Executor streamTaskExecutor;
 
@@ -30,12 +32,14 @@ public class InternalRouterHandler implements Consumer<ChatProto.RpcMessage> {
                                   FarmService farmService,
                                   FarmAiJudgeService farmAiJudgeService,
                                   GroupChatService groupChatService,
+                                  CareerAdviceService careerAdviceService,
                                   ObjectMapper objectMapper,
                                   Executor streamTaskExecutor) {
         this.aiChatRequestListener = aiChatRequestListener;
         this.farmService = farmService;
         this.farmAiJudgeService = farmAiJudgeService;
         this.groupChatService = groupChatService;
+        this.careerAdviceService = careerAdviceService;
         this.objectMapper = objectMapper;
         this.streamTaskExecutor = streamTaskExecutor;
     }
@@ -78,6 +82,7 @@ public class InternalRouterHandler implements Consumer<ChatProto.RpcMessage> {
                 case DASHBOARD_QUERY -> handleDashboardQuery(payloadJson);
                 case SANDBOX_EXECUTE -> handleSandboxExecute(payloadJson);
                 case VOICE_CHAT -> handleVoiceChat(payloadJson);
+                case CAREER_ADVICE -> handleCareerAdvice(payloadJson);
                 default -> log.warn("Unhandled InternalMsgType: {}", msgType);
             }
         } catch (Exception e) {
@@ -232,6 +237,21 @@ public class InternalRouterHandler implements Consumer<ChatProto.RpcMessage> {
 
         } catch (Exception e) {
             log.error("[RPC] Error handling voice chat", e);
+        }
+    }
+
+    private void handleCareerAdvice(String payloadJson) {
+        try {
+            JsonNode request = objectMapper.readTree(payloadJson);
+            long userId = request.get("userId").asLong();
+            String codeContent = request.has("codeContent") ? request.get("codeContent").asText() : "";
+
+            log.info("[RPC] Career advice: userId={}", userId);
+
+            careerAdviceService.analyzeAndPush(userId, codeContent);
+
+        } catch (Exception e) {
+            log.error("[RPC] Error handling career advice", e);
         }
     }
 }

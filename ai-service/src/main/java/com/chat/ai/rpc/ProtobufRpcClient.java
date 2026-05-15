@@ -7,6 +7,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.ByteToMessageDecoder;
+import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
 import org.slf4j.Logger;
@@ -27,10 +28,13 @@ public class ProtobufRpcClient {
     private static final Logger log = LoggerFactory.getLogger(ProtobufRpcClient.class);
     private static final int HEADER_LEN = 4;
     private static final long STREAM_TIMEOUT_SECONDS = 600;
+    private static final long RECONNECT_DELAY_MS = 5000;
 
     private final String host;
     private final int port;
-    private Channel channel;
+    private volatile Channel channel;
+    private volatile boolean closed = false;
+    private volatile int reconnectAttempts = 0;
     private final EventLoopGroup group = new NioEventLoopGroup(2);
     private final Map<Long, StreamContext> pendingStreams = new ConcurrentHashMap<>();
     private final Map<Long, UnaryContext<?>> pendingUnaries = new ConcurrentHashMap<>();
@@ -47,25 +51,55 @@ public class ProtobufRpcClient {
         this.port = port;
     }
 
-    public void connect() throws InterruptedException {
+    public void connect() {
+        closed = false;
+        doConnect();
+    }
+
+    private void doConnect() {
+        if (closed) return;
+
         Bootstrap bootstrap = new Bootstrap();
         bootstrap.group(group)
                 .channel(NioSocketChannel.class)
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
+                .option(ChannelOption.TCP_NODELAY, true)
                 .handler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel ch) {
-                        ch.pipeline().addLast(new IdleStateHandler(0, 0, 120));
+                        ch.pipeline().addLast(new IdleStateHandler(600, 0, 0));
                         ch.pipeline().addLast(new ProtobufFrameDecoder());
                         ch.pipeline().addLast(new RpcMessageHandler());
                     }
                 });
 
-        ChannelFuture future = bootstrap.connect(host, port).sync();
-        this.channel = future.channel();
-        log.info("Connected to Python RPC at {}:{}", host, port);
+        bootstrap.connect(host, port).addListener((ChannelFutureListener) future -> {
+            if (closed) return;
+            if (future.isSuccess()) {
+                channel = future.channel();
+                reconnectAttempts = 0;
+                log.info("Connected to RPC server at {}:{}", host, port);
+            } else {
+                reconnectAttempts++;
+                if (reconnectAttempts <= 3) {
+                    log.warn("Failed to connect to RPC server at {}:{}, retrying in {}ms (attempt {}): {}",
+                             host, port, RECONNECT_DELAY_MS, reconnectAttempts, future.cause().getMessage());
+                } else {
+                    log.debug("Failed to connect to RPC server at {}:{}, retrying in {}ms (attempt {}): {}",
+                              host, port, RECONNECT_DELAY_MS, reconnectAttempts, future.cause().getMessage());
+                }
+                scheduleReconnect();
+            }
+        });
+    }
+
+    private void scheduleReconnect() {
+        if (closed) return;
+        group.schedule(() -> doConnect(), RECONNECT_DELAY_MS, TimeUnit.MILLISECONDS);
     }
 
     public void disconnect() {
+        closed = true;
         timeoutScheduler.shutdownNow();
         failAllPending("Client disconnecting");
         if (channel != null && channel.isActive()) {
@@ -275,17 +309,20 @@ public class ProtobufRpcClient {
 
         @Override
         public void channelInactive(ChannelHandlerContext ctx) {
-            log.warn("RPC connection closed by remote, failing all pending requests");
+            log.warn("RPC connection to {}:{} closed by remote, failing all pending requests", host, port);
             failAllPending("Connection closed by remote");
+            if (!closed) {
+                scheduleReconnect();
+            }
         }
 
         @Override
         public void userEventTriggered(ChannelHandlerContext ctx, Object evt) {
             if (evt instanceof IdleStateEvent) {
-                log.warn("RPC connection idle timeout, sending heartbeat check");
-                if (!isConnected()) {
-                    log.error("RPC connection lost (idle), failing all pending requests");
-                    failAllPending("Connection idle timeout");
+                IdleStateEvent ise = (IdleStateEvent) evt;
+                if (ise.state() == IdleState.READER_IDLE) {
+                    log.warn("RPC connection to {}:{} read idle (server dead?), closing to trigger reconnect", host, port);
+                    ctx.close();
                 }
             }
         }

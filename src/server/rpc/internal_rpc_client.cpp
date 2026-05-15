@@ -11,6 +11,7 @@ InternalRpcClient::InternalRpcClient(EventLoop* loop, const InetAddress& javaAdd
     client_.setMessageCallback(
         std::bind(&InternalRpcClient::onMessage, this, std::placeholders::_1,
                   std::placeholders::_2, std::placeholders::_3));
+    client_.enableRetry();
 }
 
 InternalRpcClient::~InternalRpcClient() {

@@ -1,6 +1,7 @@
 package com.chat.ai.service;
 
 import com.chat.ai.model.AiTask;
+import com.chat.ai.rpc.RpcPushService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -27,7 +28,9 @@ public class AiTaskConsumer {
     
     private final RedisTemplate<String, Object> redisTemplate;
     private final GroupChatMemoryService groupChatMemoryService;
-    private final RedisPubSubService redisPubSubService;
+    // [RPC Migration] Replaced RedisPubSubService with RpcPushService
+    // private final RedisPubSubService redisPubSubService;
+    private final RpcPushService rpcPushService;
     private final ChatClient chatClient;
     private final ObjectMapper objectMapper;
     
@@ -58,12 +61,14 @@ public class AiTaskConsumer {
     public AiTaskConsumer(
             RedisTemplate<String, Object> redisTemplate,
             GroupChatMemoryService groupChatMemoryService,
-            RedisPubSubService redisPubSubService,
+            // RedisPubSubService redisPubSubService,
+            RpcPushService rpcPushService,
             @Qualifier("fastChatClient") ChatClient fastChatClient,
             ObjectMapper objectMapper) {
         this.redisTemplate = redisTemplate;
         this.groupChatMemoryService = groupChatMemoryService;
-        this.redisPubSubService = redisPubSubService;
+        // this.redisPubSubService = redisPubSubService;
+        this.rpcPushService = rpcPushService;
         this.chatClient = fastChatClient;
         this.objectMapper = objectMapper;
     }
@@ -190,7 +195,7 @@ public class AiTaskConsumer {
     
     private void publishResult(Long groupId, String content, Integer replyTo) {
         try {
-            redisPubSubService.publishGroupMessage(groupId, content, replyTo);
+            rpcPushService.publishGroupMessage(groupId, content, replyTo);
             log.info("Published result to group: {}, replyTo: {}", groupId, replyTo);
         } catch (Exception e) {
             log.error("Error publishing result for group: {}", groupId, e);

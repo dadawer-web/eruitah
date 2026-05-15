@@ -1,6 +1,7 @@
 package com.chat.ai.service;
 
 import com.chat.ai.controller.ChatRequest;
+import com.chat.ai.rpc.RpcPushService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -10,10 +11,10 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.vectorstore.VectorStore;
-import org.springframework.data.redis.connection.MessageListener;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.listener.ChannelTopic;
-import org.springframework.data.redis.listener.RedisMessageListenerContainer;
+// import org.springframework.data.redis.connection.MessageListener;
+// import org.springframework.data.redis.core.StringRedisTemplate;
+// import org.springframework.data.redis.listener.ChannelTopic;
+// import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Qualifier;
 import jakarta.annotation.PostConstruct;
@@ -35,8 +36,10 @@ import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvis
 @Service
 public class AiChatRequestListener {
 
-    private final StringRedisTemplate stringRedisTemplate;
-    private final RedisPubSubService redisPubSubService;
+    // private final StringRedisTemplate stringRedisTemplate;
+    // [RPC Migration] Replaced RedisPubSubService with RpcPushService
+    // private final RedisPubSubService redisPubSubService;
+    private final RpcPushService rpcPushService;
     private final ChatClient fastChatClient;
     private final VectorStore vectorStore;
     private final ObjectMapper objectMapper;
@@ -46,16 +49,18 @@ public class AiChatRequestListener {
     private final CodeReviewerService codeReviewerService;
     private final ChatMemory chatMemory;
     private final VoiceChatService voiceChatService;
-    private final RedisMessageListenerContainer listenerContainer;
+    // private final RedisMessageListenerContainer listenerContainer;
     private final Executor streamTaskExecutor;
 
-    private static final String AI_PRIVATE_CHANNEL = "9999";
-    private static final String AI_GROUP_CHANNEL = "9998";
+    // [RPC Migration] Redis channels no longer needed - requests arrive via RPC
+    // private static final String AI_PRIVATE_CHANNEL = "9999";
+    // private static final String AI_GROUP_CHANNEL = "9998";
     private static final Pattern IMAGE_PATTERN = Pattern.compile("\\[IMAGE\\]([^,]+),([^\\[]+)");
 
     public AiChatRequestListener(
-            StringRedisTemplate stringRedisTemplate,
-            RedisPubSubService redisPubSubService,
+            // StringRedisTemplate stringRedisTemplate,
+            // RedisPubSubService redisPubSubService,
+            RpcPushService rpcPushService,
             @Qualifier("fastChatClient") ChatClient fastChatClient,
             VectorStore vectorStore,
             ObjectMapper objectMapper,
@@ -65,10 +70,11 @@ public class AiChatRequestListener {
             CodeReviewerService codeReviewerService,
             ChatMemory chatMemory,
             VoiceChatService voiceChatService,
-            RedisMessageListenerContainer listenerContainer,
+            // RedisMessageListenerContainer listenerContainer,
             Executor streamTaskExecutor) {
-        this.stringRedisTemplate = stringRedisTemplate;
-        this.redisPubSubService = redisPubSubService;
+        // this.stringRedisTemplate = stringRedisTemplate;
+        // this.redisPubSubService = redisPubSubService;
+        this.rpcPushService = rpcPushService;
         this.fastChatClient = fastChatClient;
         this.vectorStore = vectorStore;
         this.objectMapper = objectMapper;
@@ -78,27 +84,27 @@ public class AiChatRequestListener {
         this.codeReviewerService = codeReviewerService;
         this.chatMemory = chatMemory;
         this.voiceChatService = voiceChatService;
-        this.listenerContainer = listenerContainer;
+        // this.listenerContainer = listenerContainer;
         this.streamTaskExecutor = streamTaskExecutor;
     }
 
     @PostConstruct
     public void start() {
-        MessageListener privateListener = (org.springframework.data.redis.connection.Message message, byte[] pattern) -> {
-            String messageBody = new String(message.getBody());
-            handlePrivateAiRequestAsync(messageBody);
-        };
+        // [RPC Migration] Redis channel listeners disabled - AI requests now arrive via RPC (InternalRouterHandler)
+        // MessageListener privateListener = (org.springframework.data.redis.connection.Message message, byte[] pattern) -> {
+        //     String messageBody = new String(message.getBody());
+        //     handlePrivateAiRequestAsync(messageBody);
+        // };
+        //
+        // MessageListener groupListener = (org.springframework.data.redis.connection.Message message, byte[] pattern) -> {
+        //     String messageBody = new String(message.getBody());
+        //     handleGroupAiRequestAsync(messageBody);
+        // };
+        //
+        // listenerContainer.addMessageListener(privateListener, new ChannelTopic(AI_PRIVATE_CHANNEL));
+        // listenerContainer.addMessageListener(groupListener, new ChannelTopic(AI_GROUP_CHANNEL));
 
-        MessageListener groupListener = (org.springframework.data.redis.connection.Message message, byte[] pattern) -> {
-            String messageBody = new String(message.getBody());
-            handleGroupAiRequestAsync(messageBody);
-        };
-
-        listenerContainer.addMessageListener(privateListener, new ChannelTopic(AI_PRIVATE_CHANNEL));
-        listenerContainer.addMessageListener(groupListener, new ChannelTopic(AI_GROUP_CHANNEL));
-
-        log.info("AI Chat Request Listener started, listening on channels: {} (private), {} (group)", 
-            AI_PRIVATE_CHANNEL, AI_GROUP_CHANNEL);
+        log.info("AI Chat Request Listener started - receiving requests via RPC (InternalRouterHandler), pushing via RPC (RpcPushService)");
     }
 
     private void handlePrivateAiRequestAsync(String messageBody) {
@@ -142,7 +148,7 @@ public class AiChatRequestListener {
                 return;
             }
 
-            redisPubSubService.publishStreamStart(userId, botId, AiPersonaRegistry.getBotName(botId));
+            rpcPushService.publishStreamStart(userId, botId, AiPersonaRegistry.getBotName(botId));
 
             if (AiPersonaRegistry.isMasterBot(botId)) {
                 handleMasterBotStream(userId, botId, userMessage, conversationId);
@@ -178,16 +184,16 @@ public class AiChatRequestListener {
             .doOnNext(chunk -> {
                 if (chunk != null && !chunk.isEmpty()) {
                     if (firstChunk[0] && clearBeforeOutput) {
-                        redisPubSubService.publishStreamClear(userId, botId, botName);
+                        rpcPushService.publishStreamClear(userId, botId, botName);
                         firstChunk[0] = false;
                     }
                     fullAnswer.append(chunk);
-                    redisPubSubService.publishStreamChunk(userId, chunk, botId, botName);
+                    rpcPushService.publishStreamChunk(userId, chunk, botId, botName);
                 }
             })
             .doOnError(error -> {
                 log.error("[{}] 流式处理异常", botName, error);
-                sendErrorAndEnd(userId, botId, "\n[系统提示：" + botName + " 的思路被打断了，请重试]");
+                sendErrorAndEnd(userId, botId, "\n[系统提示：" + botName + " 的思路被打断了，请重试)");
             })
             .doOnComplete(() -> {
                 long cost = System.currentTimeMillis() - startTime;
@@ -198,7 +204,7 @@ public class AiChatRequestListener {
                     new AssistantMessage(fullAnswer.toString())
                 ));
                 
-                redisPubSubService.publishStreamEnd(userId, botId, botName);
+                rpcPushService.publishStreamEnd(userId, botId, botName);
             })
             .subscribe();
     }
@@ -234,7 +240,7 @@ public class AiChatRequestListener {
         List<ChatRequest.ImageData> images = extractImagesFromMessage(userMessage);
         String cleanMessage = removeImageTagsFromMessage(userMessage);
         
-        redisPubSubService.publishStreamChunk(userId, "👀 正在努力看图中...\n", botId, "解题大王");
+        rpcPushService.publishStreamChunk(userId, "👀 正在努力看图中...\n", botId, "解题大王");
 
         MultimodalChatService.ChatStreamResult result = multimodalChatService.chatStream(
             userId, botId, cleanMessage.isEmpty() ? "请分析这张图片" : cleanMessage, images);
@@ -245,7 +251,7 @@ public class AiChatRequestListener {
     private void handleCodeReviewerStream(int userId, int botId, String userMessage, String conversationId) {
         log.info("[代码审查员] 开始真流式代码 Review");
         
-        redisPubSubService.publishStreamChunk(userId, "💻 正在编译并扫描代码坏味道...\n", botId, "代码审查员");
+        rpcPushService.publishStreamChunk(userId, "💻 正在编译并扫描代码坏味道...\n", botId, "代码审查员");
 
         Flux<String> stream = codeReviewerService.reviewCodeStream(userMessage);
 
@@ -269,7 +275,7 @@ public class AiChatRequestListener {
                 voiceResult.voiceUrl());
             
             if (voiceResult.voiceUrl() != null) {
-                redisPubSubService.publishVoiceMessage(userId, voiceResult.voiceUrl(), voiceResult.duration(), 
+                rpcPushService.publishVoiceMessage(userId, voiceResult.voiceUrl(), voiceResult.duration(), 
                     botId, AiPersonaRegistry.getBotName(botId));
             }
             
@@ -311,7 +317,7 @@ public class AiChatRequestListener {
             log.error("Error handling group AI request: {}", messageBody, e);
             
             if (groupId != null) {
-                redisPubSubService.publishAgentGroupMessage(groupId, "抱歉，AI处理群聊请求时出现错误。", 
+                rpcPushService.publishAgentGroupMessage(groupId, "抱歉，AI处理群聊请求时出现错误。", 
                     10000, "AI助手", "AI_ERROR");
             }
         }
@@ -320,8 +326,8 @@ public class AiChatRequestListener {
     private void sendErrorAndEnd(Integer userId, int botId, String errorMessage) {
         if (userId != null && botId > 0) {
             try {
-                redisPubSubService.publishStreamChunk(userId, errorMessage, botId, AiPersonaRegistry.getBotName(botId));
-                redisPubSubService.publishStreamEnd(userId, botId, AiPersonaRegistry.getBotName(botId));
+                rpcPushService.publishStreamChunk(userId, errorMessage, botId, AiPersonaRegistry.getBotName(botId));
+                rpcPushService.publishStreamEnd(userId, botId, AiPersonaRegistry.getBotName(botId));
             } catch (Exception ex) {
                 log.error("Error sending error message to user: {}", userId, ex);
             }

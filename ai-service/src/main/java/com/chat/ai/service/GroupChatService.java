@@ -10,6 +10,7 @@ import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.beans.factory.annotation.Qualifier;
+import com.chat.ai.rpc.RpcPushService;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -34,7 +35,9 @@ public class GroupChatService {
 
     private final GroupChatMemoryService groupChatMemoryService;
     private final ChatMemory chatMemory;
-    private final RedisPubSubService redisPubSubService;
+    // [RPC Migration] Replaced RedisPubSubService with RpcPushService
+    // private final RedisPubSubService redisPubSubService;
+    private final RpcPushService rpcPushService;
     private final RedisTemplate<String, Object> redisTemplate;
     private final ChatClient smartChatClient;
     private final ChatClient fastChatClient;
@@ -94,14 +97,16 @@ public class GroupChatService {
     public GroupChatService(
             GroupChatMemoryService groupChatMemoryService,
             ChatMemory chatMemory,
-            RedisPubSubService redisPubSubService,
+            // RedisPubSubService redisPubSubService,
+            RpcPushService rpcPushService,
             RedisTemplate<String, Object> redisTemplate,
             @Qualifier("smartChatClient") ChatClient smartChatClient,
             @Qualifier("fastChatClient") ChatClient fastChatClient,
             ObjectMapper objectMapper) {
         this.groupChatMemoryService = groupChatMemoryService;
         this.chatMemory = chatMemory;
-        this.redisPubSubService = redisPubSubService;
+        // this.redisPubSubService = redisPubSubService;
+        this.rpcPushService = rpcPushService;
         this.redisTemplate = redisTemplate;
         this.smartChatClient = smartChatClient;
         this.fastChatClient = fastChatClient;
@@ -374,7 +379,7 @@ public class GroupChatService {
             int delayMs = MIN_DELAY_MS + random.nextInt(MAX_DELAY_MS - MIN_DELAY_MS);
             Thread.sleep(delayMs);
 
-            redisPubSubService.publishAgentGroupMessage(
+            rpcPushService.publishAgentGroupMessage(
                 groupId, response, botId, persona.name(), MESSAGE_TYPE_AGENT_CHAT
             );
 

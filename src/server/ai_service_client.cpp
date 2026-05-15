@@ -1,6 +1,9 @@
 #include "ai_service_client.hpp"
 #include "internal_rpc_client.hpp"
+#include "json.hpp"
 #include <muduo/base/Logging.h>
+
+using json = nlohmann::json;
 
 AiServiceClient& AiServiceClient::instance() {
     static AiServiceClient client;
@@ -21,27 +24,18 @@ void AiServiceClient::chat(int userId, int botId, const std::string& userName,
         return;
     }
 
-    bridge::ChatRequest request;
-    request.set_user_id(userId);
-    request.set_bot_id(botId);
-    request.set_user_name(userName);
-    request.set_message(message);
-    request.set_timestamp(muduo::Timestamp::now().microSecondsSinceEpoch() / 1000);
-
-    {
-        std::lock_guard<std::mutex> lock(sessionMutex_);
-        auto it = userSessions_.find(userId);
-        if (it != userSessions_.end() && !it->second.sessionId.empty()) {
-            request.set_session_id(it->second.sessionId);
-        }
-    }
+    json payload;
+    payload["userId"] = userId;
+    payload["botId"] = botId;
+    payload["userName"] = userName;
+    payload["message"] = message;
 
     rpcClient_->forwardToJava(userId, userId, 0,
         static_cast<int>(bridge::InternalMsgType::CHAT_PRIVATE),
-        request.SerializeAsString(),
+        payload.dump(),
         "chat_" + std::to_string(userId),
-        [this, userId, callback](const std::string& svc, const std::string& method,
-                                  bool success, const std::string& error) {
+        [callback](const std::string& svc, const std::string& method,
+                   bool success, const std::string& error) {
             if (callback) callback(success, success ? "ok" : "", error);
         });
 }
@@ -57,24 +51,23 @@ void AiServiceClient::streamChat(int userId, int botId, const std::string& userN
         return;
     }
 
-    bridge::ChatRequest request;
-    request.set_user_id(userId);
-    request.set_bot_id(botId);
-    request.set_user_name(userName);
-    request.set_message(message);
-    request.set_timestamp(muduo::Timestamp::now().microSecondsSinceEpoch() / 1000);
+    json payload;
+    payload["userId"] = userId;
+    payload["botId"] = botId;
+    payload["userName"] = userName;
+    payload["message"] = message;
 
     {
         std::lock_guard<std::mutex> lock(sessionMutex_);
         auto it = userSessions_.find(userId);
         if (it != userSessions_.end() && !it->second.sessionId.empty()) {
-            request.set_session_id(it->second.sessionId);
+            payload["sessionId"] = it->second.sessionId;
         }
     }
 
     rpcClient_->forwardToJava(userId, userId, 0,
         static_cast<int>(bridge::InternalMsgType::CHAT_PRIVATE),
-        request.SerializeAsString(),
+        payload.dump(),
         "stream_" + std::to_string(userId),
         [onChunk, onEnd, onError](const std::string& svc, const std::string& method,
                                    bool success, const std::string& error) {
@@ -96,21 +89,74 @@ void AiServiceClient::voiceChat(int userId, int botId, const std::string& userNa
         return;
     }
 
-    bridge::ChatRequest request;
-    request.set_user_id(userId);
-    request.set_bot_id(botId);
-    request.set_user_name(userName);
-    request.set_voice_url(voiceUrl);
-    request.set_voice_duration(voiceDuration);
-    request.set_timestamp(muduo::Timestamp::now().microSecondsSinceEpoch() / 1000);
+    json payload;
+    payload["userId"] = userId;
+    payload["botId"] = botId;
+    payload["userName"] = userName;
+    payload["voiceUrl"] = voiceUrl;
+    payload["duration"] = voiceDuration;
 
     rpcClient_->forwardToJava(userId, userId, 0,
         static_cast<int>(bridge::InternalMsgType::VOICE_CHAT),
-        request.SerializeAsString(),
+        payload.dump(),
         "voice_" + std::to_string(userId),
-        [this, userId, callback](const std::string& svc, const std::string& method,
-                                  bool success, const std::string& error) {
+        [callback](const std::string& svc, const std::string& method,
+                   bool success, const std::string& error) {
             if (callback) callback(success, success ? "ok" : "", error);
+        });
+}
+
+void AiServiceClient::groupChat(int64_t groupId, int senderId, const std::string& senderName,
+                                 const std::string& content,
+                                 const std::vector<int32_t>& aiBotIds,
+                                 std::function<void(bool, const std::string&)> callback) {
+    if (!rpcClient_ || !rpcClient_->connected()) {
+        LOG_ERROR << "[AiRpc] Not connected to Java backend for group chat";
+        if (callback) callback(false, "RPC not connected");
+        return;
+    }
+
+    json payload;
+    payload["groupId"] = groupId;
+    payload["senderId"] = senderId;
+    payload["senderName"] = senderName;
+    payload["content"] = content;
+    payload["aiBotIds"] = aiBotIds;
+
+    rpcClient_->forwardToJava(senderId, 0, groupId,
+        static_cast<int>(bridge::InternalMsgType::CHAT_GROUP),
+        payload.dump(),
+        "grp_" + std::to_string(groupId),
+        [callback](const std::string& svc, const std::string& method,
+                   bool success, const std::string& error) {
+            if (callback) callback(success, error);
+        });
+}
+
+void AiServiceClient::farmAnswer(int userId, int plotId, int ownerId,
+                                  const std::string& question, const std::string& answer,
+                                  std::function<void(bool, const std::string&)> callback) {
+    if (!rpcClient_ || !rpcClient_->connected()) {
+        LOG_ERROR << "[AiRpc] Not connected to Java backend for farm answer";
+        if (callback) callback(false, "RPC not connected");
+        return;
+    }
+
+    json payload;
+    payload["action"] = "answer";
+    payload["userid"] = userId;
+    payload["plotid"] = plotId;
+    payload["ownerid"] = ownerId;
+    payload["question"] = question;
+    payload["answer"] = answer;
+
+    rpcClient_->forwardToJava(userId, 0, 0,
+        static_cast<int>(bridge::InternalMsgType::AI_GRADE_RESULT),
+        payload.dump(),
+        "farm_" + std::to_string(plotId),
+        [callback](const std::string& svc, const std::string& method,
+                   bool success, const std::string& error) {
+            if (callback) callback(success, error);
         });
 }
 
