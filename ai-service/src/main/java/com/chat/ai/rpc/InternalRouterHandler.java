@@ -56,10 +56,18 @@ public class InternalRouterHandler implements Consumer<ChatProto.RpcMessage> {
         log.info("Received internal RPC: {}.{} id={}", service, method, rpcMsg.getId());
 
         try {
-            ChatProto.InternalForwardRequest request = ChatProto.InternalForwardRequest.parseFrom(rpcMsg.getPayload());
-            CompletableFuture.runAsync(() -> handleForwardRequest(request), streamTaskExecutor);
+            if ("EmitSkillEvent".equals(method)) {
+                ChatProto.AgentSkillEvent event = ChatProto.AgentSkillEvent.parseFrom(rpcMsg.getPayload());
+                CompletableFuture.runAsync(() -> handleSkillEvent(event), streamTaskExecutor);
+            } else if ("UpdateCareerProfile".equals(method)) {
+                ChatProto.CareerAdviceRequest request = ChatProto.CareerAdviceRequest.parseFrom(rpcMsg.getPayload());
+                CompletableFuture.runAsync(() -> handleCareerAdviceRequest(request), streamTaskExecutor);
+            } else {
+                ChatProto.InternalForwardRequest request = ChatProto.InternalForwardRequest.parseFrom(rpcMsg.getPayload());
+                CompletableFuture.runAsync(() -> handleForwardRequest(request), streamTaskExecutor);
+            }
         } catch (Exception e) {
-            log.error("Error handling ForwardToJava request", e);
+            log.error("Error handling RPC request: {}.{}", service, method, e);
         }
     }
 
@@ -253,5 +261,76 @@ public class InternalRouterHandler implements Consumer<ChatProto.RpcMessage> {
         } catch (Exception e) {
             log.error("[RPC] Error handling career advice", e);
         }
+    }
+
+    private void handleCareerAdviceRequest(ChatProto.CareerAdviceRequest request) {
+        long userId = request.getUserId();
+        List<String> skills = request.getSkillsList();
+        String resumeHighlight = request.getResumeHighlight();
+        String learningAdvice = request.getLearningAdvice();
+
+        log.info("[RPC] UpdateCareerProfile: userId={}, skills={}, highlight={}",
+                 userId, skills, resumeHighlight.length() > 50 ? resumeHighlight.substring(0, 50) + "..." : resumeHighlight);
+
+        careerAdviceService.saveAndPushProfile((int) userId, skills, resumeHighlight, learningAdvice);
+    }
+
+    private void handleSkillEvent(ChatProto.AgentSkillEvent event) {
+        String skillName = event.getSkillName();
+        String eventType = event.getEventType();
+        long userId = event.getUserId();
+        String payloadJson = event.getPayloadJson();
+        String traceId = event.getTraceId();
+
+        log.info("[RPC] SkillEvent: skill={} type={} userId={} trace={}", skillName, eventType, userId, traceId);
+
+        try {
+            switch (skillName) {
+                case "CareerMentor" -> routeCareerMentorEvent(userId, eventType, payloadJson, traceId);
+                case "SecurityChecker" -> routeSecurityCheckerEvent(userId, eventType, payloadJson, traceId);
+                case "PerformanceAdvisor" -> routePerformanceAdvisorEvent(userId, eventType, payloadJson, traceId);
+                default -> {
+                    log.warn("[RPC] Unknown skill_name: {}, forwarding as generic event", skillName);
+                    routeGenericSkillEvent(userId, skillName, eventType, payloadJson, traceId);
+                }
+            }
+        } catch (Exception e) {
+            log.error("[RPC] Error routing skill event: skill={} userId={} trace={}", skillName, userId, traceId, e);
+        }
+    }
+
+    private void routeCareerMentorEvent(long userId, String eventType, String payloadJson, String traceId) {
+        if (!"ANALYSIS_COMPLETE".equals(eventType)) {
+            log.info("[RPC] CareerMentor unhandled event_type: {}", eventType);
+            return;
+        }
+
+        try {
+            JsonNode payload = objectMapper.readTree(payloadJson);
+            List<String> skills = new ArrayList<>();
+            payload.path("skills").forEach(s -> skills.add(s.asText()));
+            String resumeHighlight = payload.path("resume_highlight").asText("");
+            String learningAdvice = payload.path("learning_advice").asText("");
+
+            careerAdviceService.saveAndPushProfile((int) userId, skills, resumeHighlight, learningAdvice);
+            log.info("[RPC] CareerMentor routed: userId={} skills={} trace={}", userId, skills, traceId);
+        } catch (Exception e) {
+            log.error("[RPC] Failed to parse CareerMentor payload: userId={} trace={}", userId, traceId, e);
+        }
+    }
+
+    private void routeSecurityCheckerEvent(long userId, String eventType, String payloadJson, String traceId) {
+        log.info("[RPC] SecurityChecker event: userId={} type={} (not yet implemented)", userId, eventType);
+        routeGenericSkillEvent(userId, "SecurityChecker", eventType, payloadJson, traceId);
+    }
+
+    private void routePerformanceAdvisorEvent(long userId, String eventType, String payloadJson, String traceId) {
+        log.info("[RPC] PerformanceAdvisor event: userId={} type={} (not yet implemented)", userId, eventType);
+        routeGenericSkillEvent(userId, "PerformanceAdvisor", eventType, payloadJson, traceId);
+    }
+
+    private void routeGenericSkillEvent(long userId, String skillName, String eventType, String payloadJson, String traceId) {
+        log.info("[RPC] Generic skill event: userId={} skill={} type={} payload_len={} trace={}",
+                 userId, skillName, eventType, payloadJson.length(), traceId);
     }
 }

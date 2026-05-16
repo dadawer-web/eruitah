@@ -8,6 +8,19 @@ export default defineConfig({
       '@': '/src',
     },
   },
+  server: {
+    proxy: {
+      '/ws/simple-ide': {
+        target: 'http://127.0.0.1:8081',
+        ws: true,
+        changeOrigin: true,
+      },
+      '/api': {
+        target: 'http://127.0.0.1:8001',
+        changeOrigin: true,
+      },
+    },
+  },
   build: {
     chunkSizeWarningLimit: 1500,
     rollupOptions: {

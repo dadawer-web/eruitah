@@ -288,15 +288,28 @@ struct PdfParseResponseDefaultTypeInternal {
   };
 };
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 PdfParseResponseDefaultTypeInternal _PdfParseResponse_default_instance_;
+PROTOBUF_CONSTEXPR SandboxExecuteRequest_MetadataEntry_DoNotUse::SandboxExecuteRequest_MetadataEntry_DoNotUse(
+    ::_pbi::ConstantInitialized) {}
+struct SandboxExecuteRequest_MetadataEntry_DoNotUseDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR SandboxExecuteRequest_MetadataEntry_DoNotUseDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~SandboxExecuteRequest_MetadataEntry_DoNotUseDefaultTypeInternal() {}
+  union {
+    SandboxExecuteRequest_MetadataEntry_DoNotUse _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 SandboxExecuteRequest_MetadataEntry_DoNotUseDefaultTypeInternal _SandboxExecuteRequest_MetadataEntry_DoNotUse_default_instance_;
 PROTOBUF_CONSTEXPR SandboxExecuteRequest::SandboxExecuteRequest(
     ::_pbi::ConstantInitialized): _impl_{
-    /*decltype(_impl_.prompt_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+    /*decltype(_impl_.metadata_)*/{::_pbi::ConstantInitialized()}
+  , /*decltype(_impl_.prompt_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
   , /*decltype(_impl_.work_dir_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
   , /*decltype(_impl_.model_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
   , /*decltype(_impl_.api_key_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
   , /*decltype(_impl_.base_url_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
   , /*decltype(_impl_.provider_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
   , /*decltype(_impl_.session_id_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_.user_id_)*/int64_t{0}
   , /*decltype(_impl_.max_turns_)*/0
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct SandboxExecuteRequestDefaultTypeInternal {
@@ -617,6 +630,51 @@ struct CareerAdviceResponseDefaultTypeInternal {
   };
 };
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 CareerAdviceResponseDefaultTypeInternal _CareerAdviceResponse_default_instance_;
+PROTOBUF_CONSTEXPR AgentSkillEvent_HeadersEntry_DoNotUse::AgentSkillEvent_HeadersEntry_DoNotUse(
+    ::_pbi::ConstantInitialized) {}
+struct AgentSkillEvent_HeadersEntry_DoNotUseDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR AgentSkillEvent_HeadersEntry_DoNotUseDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~AgentSkillEvent_HeadersEntry_DoNotUseDefaultTypeInternal() {}
+  union {
+    AgentSkillEvent_HeadersEntry_DoNotUse _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 AgentSkillEvent_HeadersEntry_DoNotUseDefaultTypeInternal _AgentSkillEvent_HeadersEntry_DoNotUse_default_instance_;
+PROTOBUF_CONSTEXPR AgentSkillEvent::AgentSkillEvent(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_.headers_)*/{::_pbi::ConstantInitialized()}
+  , /*decltype(_impl_.skill_name_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_.event_type_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_.payload_json_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_.trace_id_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_.user_id_)*/int64_t{0}
+  , /*decltype(_impl_.timestamp_)*/int64_t{0}
+  , /*decltype(_impl_._cached_size_)*/{}} {}
+struct AgentSkillEventDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR AgentSkillEventDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~AgentSkillEventDefaultTypeInternal() {}
+  union {
+    AgentSkillEvent _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 AgentSkillEventDefaultTypeInternal _AgentSkillEvent_default_instance_;
+PROTOBUF_CONSTEXPR AgentSkillEventAck::AgentSkillEventAck(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_.error_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_.trace_id_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_.success_)*/false
+  , /*decltype(_impl_._cached_size_)*/{}} {}
+struct AgentSkillEventAckDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR AgentSkillEventAckDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~AgentSkillEventAckDefaultTypeInternal() {}
+  union {
+    AgentSkillEventAck _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 AgentSkillEventAckDefaultTypeInternal _AgentSkillEventAck_default_instance_;
 PROTOBUF_CONSTEXPR RpcMessage::RpcMessage(
     ::_pbi::ConstantInitialized): _impl_{
     /*decltype(_impl_.service_name_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
@@ -637,7 +695,7 @@ struct RpcMessageDefaultTypeInternal {
 };
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 RpcMessageDefaultTypeInternal _RpcMessage_default_instance_;
 }  // namespace bridge
-static ::_pb::Metadata file_level_metadata_chat_2eproto[38];
+static ::_pb::Metadata file_level_metadata_chat_2eproto[42];
 static const ::_pb::EnumDescriptor* file_level_enum_descriptors_chat_2eproto[3];
 static constexpr ::_pb::ServiceDescriptor const** file_level_service_descriptors_chat_2eproto = nullptr;
 
@@ -820,6 +878,16 @@ const uint32_t TableStruct_chat_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(pro
   PROTOBUF_FIELD_OFFSET(::bridge::PdfParseResponse, _impl_.page_count_),
   PROTOBUF_FIELD_OFFSET(::bridge::PdfParseResponse, _impl_.success_),
   PROTOBUF_FIELD_OFFSET(::bridge::PdfParseResponse, _impl_.error_),
+  PROTOBUF_FIELD_OFFSET(::bridge::SandboxExecuteRequest_MetadataEntry_DoNotUse, _has_bits_),
+  PROTOBUF_FIELD_OFFSET(::bridge::SandboxExecuteRequest_MetadataEntry_DoNotUse, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::bridge::SandboxExecuteRequest_MetadataEntry_DoNotUse, key_),
+  PROTOBUF_FIELD_OFFSET(::bridge::SandboxExecuteRequest_MetadataEntry_DoNotUse, value_),
+  0,
+  1,
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::bridge::SandboxExecuteRequest, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -834,6 +902,8 @@ const uint32_t TableStruct_chat_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(pro
   PROTOBUF_FIELD_OFFSET(::bridge::SandboxExecuteRequest, _impl_.base_url_),
   PROTOBUF_FIELD_OFFSET(::bridge::SandboxExecuteRequest, _impl_.provider_),
   PROTOBUF_FIELD_OFFSET(::bridge::SandboxExecuteRequest, _impl_.session_id_),
+  PROTOBUF_FIELD_OFFSET(::bridge::SandboxExecuteRequest, _impl_.user_id_),
+  PROTOBUF_FIELD_OFFSET(::bridge::SandboxExecuteRequest, _impl_.metadata_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::bridge::SandboxExecuteResponse, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -1040,6 +1110,38 @@ const uint32_t TableStruct_chat_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(pro
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::bridge::AgentSkillEvent_HeadersEntry_DoNotUse, _has_bits_),
+  PROTOBUF_FIELD_OFFSET(::bridge::AgentSkillEvent_HeadersEntry_DoNotUse, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::bridge::AgentSkillEvent_HeadersEntry_DoNotUse, key_),
+  PROTOBUF_FIELD_OFFSET(::bridge::AgentSkillEvent_HeadersEntry_DoNotUse, value_),
+  0,
+  1,
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::bridge::AgentSkillEvent, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::bridge::AgentSkillEvent, _impl_.user_id_),
+  PROTOBUF_FIELD_OFFSET(::bridge::AgentSkillEvent, _impl_.skill_name_),
+  PROTOBUF_FIELD_OFFSET(::bridge::AgentSkillEvent, _impl_.event_type_),
+  PROTOBUF_FIELD_OFFSET(::bridge::AgentSkillEvent, _impl_.payload_json_),
+  PROTOBUF_FIELD_OFFSET(::bridge::AgentSkillEvent, _impl_.trace_id_),
+  PROTOBUF_FIELD_OFFSET(::bridge::AgentSkillEvent, _impl_.timestamp_),
+  PROTOBUF_FIELD_OFFSET(::bridge::AgentSkillEvent, _impl_.headers_),
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::bridge::AgentSkillEventAck, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::bridge::AgentSkillEventAck, _impl_.success_),
+  PROTOBUF_FIELD_OFFSET(::bridge::AgentSkillEventAck, _impl_.error_),
+  PROTOBUF_FIELD_OFFSET(::bridge::AgentSkillEventAck, _impl_.trace_id_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::bridge::RpcMessage, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -1072,27 +1174,31 @@ static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protode
   { 150, -1, -1, sizeof(::bridge::WeeklyReportResponse)},
   { 160, -1, -1, sizeof(::bridge::PdfParseRequest)},
   { 168, -1, -1, sizeof(::bridge::PdfParseResponse)},
-  { 178, -1, -1, sizeof(::bridge::SandboxExecuteRequest)},
-  { 192, -1, -1, sizeof(::bridge::SandboxExecuteResponse)},
-  { 204, -1, -1, sizeof(::bridge::SandboxTaskRequest)},
-  { 214, -1, -1, sizeof(::bridge::SandboxTaskResponse)},
-  { 225, -1, -1, sizeof(::bridge::SandboxToolEvent)},
-  { 240, -1, -1, sizeof(::bridge::SwarmMessage)},
-  { 256, -1, -1, sizeof(::bridge::SwarmAgentNode)},
-  { 268, -1, -1, sizeof(::bridge::SwarmRegisterRequest)},
-  { 277, -1, -1, sizeof(::bridge::SwarmRegisterResponse)},
-  { 286, -1, -1, sizeof(::bridge::SwarmHelpRequest)},
-  { 295, -1, -1, sizeof(::bridge::SwarmHelpResponse)},
-  { 306, -1, -1, sizeof(::bridge::SwarmNodeListResponse)},
-  { 313, 321, -1, sizeof(::bridge::InternalForwardRequest_HeadersEntry_DoNotUse)},
-  { 323, -1, -1, sizeof(::bridge::InternalForwardRequest)},
-  { 337, -1, -1, sizeof(::bridge::InternalForwardResponse)},
-  { 347, 355, -1, sizeof(::bridge::InternalPushRequest_HeadersEntry_DoNotUse)},
-  { 357, -1, -1, sizeof(::bridge::InternalPushRequest)},
-  { 372, -1, -1, sizeof(::bridge::InternalPushResponse)},
-  { 382, -1, -1, sizeof(::bridge::CareerAdviceRequest)},
-  { 392, -1, -1, sizeof(::bridge::CareerAdviceResponse)},
-  { 398, -1, -1, sizeof(::bridge::RpcMessage)},
+  { 178, 186, -1, sizeof(::bridge::SandboxExecuteRequest_MetadataEntry_DoNotUse)},
+  { 188, -1, -1, sizeof(::bridge::SandboxExecuteRequest)},
+  { 204, -1, -1, sizeof(::bridge::SandboxExecuteResponse)},
+  { 216, -1, -1, sizeof(::bridge::SandboxTaskRequest)},
+  { 226, -1, -1, sizeof(::bridge::SandboxTaskResponse)},
+  { 237, -1, -1, sizeof(::bridge::SandboxToolEvent)},
+  { 252, -1, -1, sizeof(::bridge::SwarmMessage)},
+  { 268, -1, -1, sizeof(::bridge::SwarmAgentNode)},
+  { 280, -1, -1, sizeof(::bridge::SwarmRegisterRequest)},
+  { 289, -1, -1, sizeof(::bridge::SwarmRegisterResponse)},
+  { 298, -1, -1, sizeof(::bridge::SwarmHelpRequest)},
+  { 307, -1, -1, sizeof(::bridge::SwarmHelpResponse)},
+  { 318, -1, -1, sizeof(::bridge::SwarmNodeListResponse)},
+  { 325, 333, -1, sizeof(::bridge::InternalForwardRequest_HeadersEntry_DoNotUse)},
+  { 335, -1, -1, sizeof(::bridge::InternalForwardRequest)},
+  { 349, -1, -1, sizeof(::bridge::InternalForwardResponse)},
+  { 359, 367, -1, sizeof(::bridge::InternalPushRequest_HeadersEntry_DoNotUse)},
+  { 369, -1, -1, sizeof(::bridge::InternalPushRequest)},
+  { 384, -1, -1, sizeof(::bridge::InternalPushResponse)},
+  { 394, -1, -1, sizeof(::bridge::CareerAdviceRequest)},
+  { 404, -1, -1, sizeof(::bridge::CareerAdviceResponse)},
+  { 410, 418, -1, sizeof(::bridge::AgentSkillEvent_HeadersEntry_DoNotUse)},
+  { 420, -1, -1, sizeof(::bridge::AgentSkillEvent)},
+  { 433, -1, -1, sizeof(::bridge::AgentSkillEventAck)},
+  { 442, -1, -1, sizeof(::bridge::RpcMessage)},
 };
 
 static const ::_pb::Message* const file_default_instances[] = {
@@ -1113,6 +1219,7 @@ static const ::_pb::Message* const file_default_instances[] = {
   &::bridge::_WeeklyReportResponse_default_instance_._instance,
   &::bridge::_PdfParseRequest_default_instance_._instance,
   &::bridge::_PdfParseResponse_default_instance_._instance,
+  &::bridge::_SandboxExecuteRequest_MetadataEntry_DoNotUse_default_instance_._instance,
   &::bridge::_SandboxExecuteRequest_default_instance_._instance,
   &::bridge::_SandboxExecuteResponse_default_instance_._instance,
   &::bridge::_SandboxTaskRequest_default_instance_._instance,
@@ -1133,6 +1240,9 @@ static const ::_pb::Message* const file_default_instances[] = {
   &::bridge::_InternalPushResponse_default_instance_._instance,
   &::bridge::_CareerAdviceRequest_default_instance_._instance,
   &::bridge::_CareerAdviceResponse_default_instance_._instance,
+  &::bridge::_AgentSkillEvent_HeadersEntry_DoNotUse_default_instance_._instance,
+  &::bridge::_AgentSkillEvent_default_instance_._instance,
+  &::bridge::_AgentSkillEventAck_default_instance_._instance,
   &::bridge::_RpcMessage_default_instance_._instance,
 };
 
@@ -1181,100 +1291,113 @@ const char descriptor_table_protodef_chat_2eproto[] PROTOBUF_SECTION_VARIABLE(pr
   "or\030\004 \001(\t\"5\n\017PdfParseRequest\022\020\n\010pdf_data\030"
   "\001 \001(\014\022\020\n\010filename\030\002 \001(\t\"W\n\020PdfParseRespo"
   "nse\022\017\n\007content\030\001 \001(\t\022\022\n\npage_count\030\002 \001(\005"
-  "\022\017\n\007success\030\003 \001(\010\022\r\n\005error\030\004 \001(\t\"\244\001\n\025San"
+  "\022\017\n\007success\030\003 \001(\010\022\r\n\005error\030\004 \001(\t\"\245\002\n\025San"
   "dboxExecuteRequest\022\016\n\006prompt\030\001 \001(\t\022\020\n\010wo"
   "rk_dir\030\002 \001(\t\022\021\n\tmax_turns\030\003 \001(\005\022\r\n\005model"
   "\030\004 \001(\t\022\017\n\007api_key\030\005 \001(\t\022\020\n\010base_url\030\006 \001("
-  "\t\022\020\n\010provider\030\007 \001(\t\022\022\n\nsession_id\030\010 \001(\t\""
-  "\211\001\n\026SandboxExecuteResponse\022\022\n\nsession_id"
-  "\030\001 \001(\t\022\017\n\007success\030\002 \001(\010\022\r\n\005error\030\003 \001(\t\022\024"
-  "\n\014final_result\030\004 \001(\t\022\022\n\nturns_used\030\005 \001(\005"
-  "\022\021\n\ttimestamp\030\006 \001(\003\"_\n\022SandboxTaskReques"
-  "t\022\016\n\006action\030\001 \001(\t\022\017\n\007task_id\030\002 \001(\t\022\020\n\010wo"
-  "rk_dir\030\003 \001(\t\022\026\n\016target_task_id\030\004 \001(\t\"d\n\023"
-  "SandboxTaskResponse\022\017\n\007success\030\001 \001(\010\022\016\n\006"
-  "action\030\002 \001(\t\022\r\n\005error\030\003 \001(\t\022\014\n\004data\030\004 \001("
-  "\t\022\017\n\007task_id\030\005 \001(\t\"\273\001\n\020SandboxToolEvent\022"
-  "\022\n\nsession_id\030\001 \001(\t\022\022\n\nevent_type\030\002 \001(\t\022"
-  "\021\n\ttool_name\030\003 \001(\t\022\021\n\targs_json\030\004 \001(\t\022\016\n"
-  "\006result\030\005 \001(\t\022\020\n\010is_error\030\006 \001(\010\022\017\n\007conte"
-  "nt\030\007 \001(\t\022\023\n\013status_data\030\010 \001(\t\022\021\n\ttimesta"
-  "mp\030\t \001(\003\"\333\002\n\014SwarmMessage\022\'\n\004type\030\001 \001(\0162"
-  "\031.bridge.SwarmMessage.Type\022\017\n\007from_id\030\002 "
-  "\001(\t\022\r\n\005to_id\030\003 \001(\t\022\017\n\007content\030\004 \001(\t\022\014\n\004t"
-  "ask\030\005 \001(\t\022\016\n\006result\030\006 \001(\t\022\016\n\006msg_id\030\007 \001("
-  "\t\022\024\n\014capabilities\030\010 \003(\t\022\023\n\013specialties\030\t"
-  " \003(\t\022\021\n\ttimestamp\030\n \001(\003\"\204\001\n\004Type\022\014\n\010REGI"
-  "STER\020\000\022\020\n\014REGISTER_ACK\020\001\022\r\n\tHEARTBEAT\020\002\022"
-  "\r\n\tBROADCAST\020\003\022\n\n\006DIRECT\020\004\022\020\n\014HELP_REQUE"
-  "ST\020\005\022\021\n\rHELP_RESPONSE\020\006\022\r\n\tNODE_LIST\020\007\"\214"
-  "\001\n\016SwarmAgentNode\022\020\n\010agent_id\030\001 \001(\t\022\024\n\014c"
-  "apabilities\030\002 \003(\t\022\023\n\013specialties\030\003 \003(\t\022\016"
-  "\n\006status\030\004 \001(\t\022\025\n\rregistered_at\030\005 \001(\003\022\026\n"
-  "\016last_heartbeat\030\006 \001(\003\"S\n\024SwarmRegisterRe"
-  "quest\022\020\n\010agent_id\030\001 \001(\t\022\024\n\014capabilities\030"
-  "\002 \003(\t\022\023\n\013specialties\030\003 \003(\t\"M\n\025SwarmRegis"
-  "terResponse\022\017\n\007success\030\001 \001(\010\022\017\n\007message\030"
-  "\002 \001(\t\022\022\n\nnode_count\030\003 \001(\005\"J\n\020SwarmHelpRe"
-  "quest\022\017\n\007from_id\030\001 \001(\t\022\014\n\004task\030\002 \001(\t\022\027\n\017"
-  "timeout_seconds\030\003 \001(\001\"`\n\021SwarmHelpRespon"
-  "se\022\017\n\007from_id\030\001 \001(\t\022\r\n\005to_id\030\002 \001(\t\022\014\n\004ta"
-  "sk\030\003 \001(\t\022\016\n\006result\030\004 \001(\t\022\r\n\005found\030\005 \001(\010\""
-  ">\n\025SwarmNodeListResponse\022%\n\005nodes\030\001 \003(\0132"
-  "\026.bridge.SwarmAgentNode\"\246\002\n\026InternalForw"
-  "ardRequest\022\021\n\tsender_id\030\001 \001(\005\022\023\n\013receive"
-  "r_id\030\002 \001(\005\022\020\n\010group_id\030\003 \001(\003\022)\n\010msg_type"
-  "\030\004 \001(\0162\027.bridge.InternalMsgType\022\024\n\014paylo"
-  "ad_json\030\005 \001(\t\022\020\n\010trace_id\030\006 \001(\t\022\021\n\ttimes"
-  "tamp\030\007 \001(\003\022<\n\007headers\030\010 \003(\0132+.bridge.Int"
-  "ernalForwardRequest.HeadersEntry\032.\n\014Head"
-  "ersEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001"
-  "\"c\n\027InternalForwardResponse\022\017\n\007success\030\001"
-  " \001(\010\022\r\n\005error\030\002 \001(\t\022\020\n\010trace_id\030\003 \001(\t\022\026\n"
-  "\016result_payload\030\004 \001(\014\"\263\002\n\023InternalPushRe"
-  "quest\022\021\n\tsender_id\030\001 \001(\005\022\023\n\013receiver_id\030"
-  "\002 \001(\005\022\020\n\010group_id\030\003 \001(\003\022)\n\010msg_type\030\004 \001("
-  "\0162\027.bridge.InternalMsgType\022\024\n\014payload_js"
-  "on\030\005 \001(\t\022\020\n\010trace_id\030\006 \001(\t\022\021\n\ttimestamp\030"
-  "\007 \001(\003\022\021\n\tbroadcast\030\010 \001(\010\0229\n\007headers\030\t \003("
-  "\0132(.bridge.InternalPushRequest.HeadersEn"
-  "try\032.\n\014HeadersEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005valu"
-  "e\030\002 \001(\t:\0028\001\"a\n\024InternalPushResponse\022\017\n\007s"
-  "uccess\030\001 \001(\010\022\r\n\005error\030\002 \001(\t\022\020\n\010trace_id\030"
-  "\003 \001(\t\022\027\n\017delivered_count\030\004 \001(\005\"i\n\023Career"
-  "AdviceRequest\022\017\n\007user_id\030\001 \001(\003\022\016\n\006skills"
-  "\030\002 \003(\t\022\030\n\020resume_highlight\030\003 \001(\t\022\027\n\017lear"
-  "ning_advice\030\004 \001(\t\"\026\n\024CareerAdviceRespons"
-  "e\"\355\001\n\nRpcMessage\022%\n\004type\030\001 \001(\0162\027.bridge."
+  "\t\022\020\n\010provider\030\007 \001(\t\022\022\n\nsession_id\030\010 \001(\t\022"
+  "\017\n\007user_id\030\t \001(\003\022=\n\010metadata\030\n \003(\0132+.bri"
+  "dge.SandboxExecuteRequest.MetadataEntry\032"
+  "/\n\rMetadataEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002"
+  " \001(\t:\0028\001\"\211\001\n\026SandboxExecuteResponse\022\022\n\ns"
+  "ession_id\030\001 \001(\t\022\017\n\007success\030\002 \001(\010\022\r\n\005erro"
+  "r\030\003 \001(\t\022\024\n\014final_result\030\004 \001(\t\022\022\n\nturns_u"
+  "sed\030\005 \001(\005\022\021\n\ttimestamp\030\006 \001(\003\"_\n\022SandboxT"
+  "askRequest\022\016\n\006action\030\001 \001(\t\022\017\n\007task_id\030\002 "
+  "\001(\t\022\020\n\010work_dir\030\003 \001(\t\022\026\n\016target_task_id\030"
+  "\004 \001(\t\"d\n\023SandboxTaskResponse\022\017\n\007success\030"
+  "\001 \001(\010\022\016\n\006action\030\002 \001(\t\022\r\n\005error\030\003 \001(\t\022\014\n\004"
+  "data\030\004 \001(\t\022\017\n\007task_id\030\005 \001(\t\"\273\001\n\020SandboxT"
+  "oolEvent\022\022\n\nsession_id\030\001 \001(\t\022\022\n\nevent_ty"
+  "pe\030\002 \001(\t\022\021\n\ttool_name\030\003 \001(\t\022\021\n\targs_json"
+  "\030\004 \001(\t\022\016\n\006result\030\005 \001(\t\022\020\n\010is_error\030\006 \001(\010"
+  "\022\017\n\007content\030\007 \001(\t\022\023\n\013status_data\030\010 \001(\t\022\021"
+  "\n\ttimestamp\030\t \001(\003\"\333\002\n\014SwarmMessage\022\'\n\004ty"
+  "pe\030\001 \001(\0162\031.bridge.SwarmMessage.Type\022\017\n\007f"
+  "rom_id\030\002 \001(\t\022\r\n\005to_id\030\003 \001(\t\022\017\n\007content\030\004"
+  " \001(\t\022\014\n\004task\030\005 \001(\t\022\016\n\006result\030\006 \001(\t\022\016\n\006ms"
+  "g_id\030\007 \001(\t\022\024\n\014capabilities\030\010 \003(\t\022\023\n\013spec"
+  "ialties\030\t \003(\t\022\021\n\ttimestamp\030\n \001(\003\"\204\001\n\004Typ"
+  "e\022\014\n\010REGISTER\020\000\022\020\n\014REGISTER_ACK\020\001\022\r\n\tHEA"
+  "RTBEAT\020\002\022\r\n\tBROADCAST\020\003\022\n\n\006DIRECT\020\004\022\020\n\014H"
+  "ELP_REQUEST\020\005\022\021\n\rHELP_RESPONSE\020\006\022\r\n\tNODE"
+  "_LIST\020\007\"\214\001\n\016SwarmAgentNode\022\020\n\010agent_id\030\001"
+  " \001(\t\022\024\n\014capabilities\030\002 \003(\t\022\023\n\013specialtie"
+  "s\030\003 \003(\t\022\016\n\006status\030\004 \001(\t\022\025\n\rregistered_at"
+  "\030\005 \001(\003\022\026\n\016last_heartbeat\030\006 \001(\003\"S\n\024SwarmR"
+  "egisterRequest\022\020\n\010agent_id\030\001 \001(\t\022\024\n\014capa"
+  "bilities\030\002 \003(\t\022\023\n\013specialties\030\003 \003(\t\"M\n\025S"
+  "warmRegisterResponse\022\017\n\007success\030\001 \001(\010\022\017\n"
+  "\007message\030\002 \001(\t\022\022\n\nnode_count\030\003 \001(\005\"J\n\020Sw"
+  "armHelpRequest\022\017\n\007from_id\030\001 \001(\t\022\014\n\004task\030"
+  "\002 \001(\t\022\027\n\017timeout_seconds\030\003 \001(\001\"`\n\021SwarmH"
+  "elpResponse\022\017\n\007from_id\030\001 \001(\t\022\r\n\005to_id\030\002 "
+  "\001(\t\022\014\n\004task\030\003 \001(\t\022\016\n\006result\030\004 \001(\t\022\r\n\005fou"
+  "nd\030\005 \001(\010\">\n\025SwarmNodeListResponse\022%\n\005nod"
+  "es\030\001 \003(\0132\026.bridge.SwarmAgentNode\"\246\002\n\026Int"
+  "ernalForwardRequest\022\021\n\tsender_id\030\001 \001(\005\022\023"
+  "\n\013receiver_id\030\002 \001(\005\022\020\n\010group_id\030\003 \001(\003\022)\n"
+  "\010msg_type\030\004 \001(\0162\027.bridge.InternalMsgType"
+  "\022\024\n\014payload_json\030\005 \001(\t\022\020\n\010trace_id\030\006 \001(\t"
+  "\022\021\n\ttimestamp\030\007 \001(\003\022<\n\007headers\030\010 \003(\0132+.b"
+  "ridge.InternalForwardRequest.HeadersEntr"
+  "y\032.\n\014HeadersEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030"
+  "\002 \001(\t:\0028\001\"c\n\027InternalForwardResponse\022\017\n\007"
+  "success\030\001 \001(\010\022\r\n\005error\030\002 \001(\t\022\020\n\010trace_id"
+  "\030\003 \001(\t\022\026\n\016result_payload\030\004 \001(\014\"\263\002\n\023Inter"
+  "nalPushRequest\022\021\n\tsender_id\030\001 \001(\005\022\023\n\013rec"
+  "eiver_id\030\002 \001(\005\022\020\n\010group_id\030\003 \001(\003\022)\n\010msg_"
+  "type\030\004 \001(\0162\027.bridge.InternalMsgType\022\024\n\014p"
+  "ayload_json\030\005 \001(\t\022\020\n\010trace_id\030\006 \001(\t\022\021\n\tt"
+  "imestamp\030\007 \001(\003\022\021\n\tbroadcast\030\010 \001(\010\0229\n\007hea"
+  "ders\030\t \003(\0132(.bridge.InternalPushRequest."
+  "HeadersEntry\032.\n\014HeadersEntry\022\013\n\003key\030\001 \001("
+  "\t\022\r\n\005value\030\002 \001(\t:\0028\001\"a\n\024InternalPushResp"
+  "onse\022\017\n\007success\030\001 \001(\010\022\r\n\005error\030\002 \001(\t\022\020\n\010"
+  "trace_id\030\003 \001(\t\022\027\n\017delivered_count\030\004 \001(\005\""
+  "i\n\023CareerAdviceRequest\022\017\n\007user_id\030\001 \001(\003\022"
+  "\016\n\006skills\030\002 \003(\t\022\030\n\020resume_highlight\030\003 \001("
+  "\t\022\027\n\017learning_advice\030\004 \001(\t\"\026\n\024CareerAdvi"
+  "ceResponse\"\354\001\n\017AgentSkillEvent\022\017\n\007user_i"
+  "d\030\001 \001(\003\022\022\n\nskill_name\030\002 \001(\t\022\022\n\nevent_typ"
+  "e\030\003 \001(\t\022\024\n\014payload_json\030\004 \001(\t\022\020\n\010trace_i"
+  "d\030\005 \001(\t\022\021\n\ttimestamp\030\006 \001(\003\0225\n\007headers\030\007 "
+  "\003(\0132$.bridge.AgentSkillEvent.HeadersEntr"
+  "y\032.\n\014HeadersEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030"
+  "\002 \001(\t:\0028\001\"F\n\022AgentSkillEventAck\022\017\n\007succe"
+  "ss\030\001 \001(\010\022\r\n\005error\030\002 \001(\t\022\020\n\010trace_id\030\003 \001("
+  "\t\"\355\001\n\nRpcMessage\022%\n\004type\030\001 \001(\0162\027.bridge."
   "RpcMessage.Type\022\n\n\002id\030\002 \001(\003\022\024\n\014service_n"
   "ame\030\003 \001(\t\022\023\n\013method_name\030\004 \001(\t\022\017\n\007payloa"
   "d\030\005 \001(\014\022\022\n\nerror_code\030\006 \001(\005\022\022\n\nerror_des"
   "c\030\007 \001(\t\"H\n\004Type\022\013\n\007REQUEST\020\000\022\014\n\010RESPONSE"
   "\020\001\022\t\n\005ERROR\020\002\022\n\n\006STREAM\020\003\022\016\n\nSTREAM_END\020"
-  "\004*\266\002\n\017InternalMsgType\022!\n\035INTERNAL_MSG_TY"
+  "\004*\307\002\n\017InternalMsgType\022!\n\035INTERNAL_MSG_TY"
   "PE_UNSPECIFIED\020\000\022\020\n\014CHAT_PRIVATE\020\001\022\016\n\nCH"
   "AT_GROUP\020\002\022\021\n\rAI_AT_MENTION\020\003\022\021\n\rPOINTS_"
   "UPDATE\020\004\022\023\n\017AI_GRADE_RESULT\020\005\022\022\n\016COMPANI"
   "ON_READ\020\006\022\023\n\017DASHBOARD_QUERY\020\007\022\022\n\016DASHBO"
   "ARD_PUSH\020\010\022\016\n\nVOICE_CHAT\020\t\022\027\n\023SYSTEM_NOT"
   "IFICATION\020\n\022\023\n\017SANDBOX_EXECUTE\020\013\022\025\n\021EXPE"
-  "RIENCE_UPDATE\020\014\022\021\n\rCAREER_ADVICE\020\r2\325\002\n\025I"
-  "nternalRouterService\022P\n\rForwardToJava\022\036."
-  "bridge.InternalForwardRequest\032\037.bridge.I"
-  "nternalForwardResponse\022I\n\014PushToClient\022\033"
-  ".bridge.InternalPushRequest\032\034.bridge.Int"
-  "ernalPushResponse\022M\n\016StreamToClient\022\033.br"
-  "idge.InternalPushRequest\032\034.bridge.Intern"
-  "alPushResponse0\001\022P\n\023UpdateCareerProfile\022"
-  "\033.bridge.CareerAdviceRequest\032\034.bridge.Ca"
-  "reerAdviceResponseB\034\n\017com.chat.ai.rpcB\tC"
-  "hatProtob\006proto3"
+  "RIENCE_UPDATE\020\014\022\021\n\rCAREER_ADVICE\020\r\022\017\n\013SK"
+  "ILL_EVENT\020\0162\234\003\n\025InternalRouterService\022P\n"
+  "\rForwardToJava\022\036.bridge.InternalForwardR"
+  "equest\032\037.bridge.InternalForwardResponse\022"
+  "I\n\014PushToClient\022\033.bridge.InternalPushReq"
+  "uest\032\034.bridge.InternalPushResponse\022M\n\016St"
+  "reamToClient\022\033.bridge.InternalPushReques"
+  "t\032\034.bridge.InternalPushResponse0\001\022P\n\023Upd"
+  "ateCareerProfile\022\033.bridge.CareerAdviceRe"
+  "quest\032\034.bridge.CareerAdviceResponse\022E\n\016E"
+  "mitSkillEvent\022\027.bridge.AgentSkillEvent\032\032"
+  ".bridge.AgentSkillEventAckB\034\n\017com.chat.a"
+  "i.rpcB\tChatProtob\006proto3"
   ;
 static ::_pbi::once_flag descriptor_table_chat_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_chat_2eproto = {
-    false, false, 5256, descriptor_table_protodef_chat_2eproto,
+    false, false, 5784, descriptor_table_protodef_chat_2eproto,
     "chat.proto",
-    &descriptor_table_chat_2eproto_once, nullptr, 0, 38,
+    &descriptor_table_chat_2eproto_once, nullptr, 0, 42,
     schemas, file_default_instances, TableStruct_chat_2eproto::offsets,
     file_level_metadata_chat_2eproto, file_level_enum_descriptors_chat_2eproto,
     file_level_service_descriptors_chat_2eproto,
@@ -1366,6 +1489,7 @@ bool InternalMsgType_IsValid(int value) {
     case 11:
     case 12:
     case 13:
+    case 14:
       return true;
     default:
       return false;
@@ -6263,6 +6387,20 @@ void PdfParseResponse::InternalSwap(PdfParseResponse* other) {
 
 // ===================================================================
 
+SandboxExecuteRequest_MetadataEntry_DoNotUse::SandboxExecuteRequest_MetadataEntry_DoNotUse() {}
+SandboxExecuteRequest_MetadataEntry_DoNotUse::SandboxExecuteRequest_MetadataEntry_DoNotUse(::PROTOBUF_NAMESPACE_ID::Arena* arena)
+    : SuperType(arena) {}
+void SandboxExecuteRequest_MetadataEntry_DoNotUse::MergeFrom(const SandboxExecuteRequest_MetadataEntry_DoNotUse& other) {
+  MergeFromInternal(other);
+}
+::PROTOBUF_NAMESPACE_ID::Metadata SandboxExecuteRequest_MetadataEntry_DoNotUse::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_chat_2eproto_getter, &descriptor_table_chat_2eproto_once,
+      file_level_metadata_chat_2eproto[17]);
+}
+
+// ===================================================================
+
 class SandboxExecuteRequest::_Internal {
  public:
 };
@@ -6271,23 +6409,29 @@ SandboxExecuteRequest::SandboxExecuteRequest(::PROTOBUF_NAMESPACE_ID::Arena* are
                          bool is_message_owned)
   : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
   SharedCtor(arena, is_message_owned);
+  if (arena != nullptr && !is_message_owned) {
+    arena->OwnCustomDestructor(this, &SandboxExecuteRequest::ArenaDtor);
+  }
   // @@protoc_insertion_point(arena_constructor:bridge.SandboxExecuteRequest)
 }
 SandboxExecuteRequest::SandboxExecuteRequest(const SandboxExecuteRequest& from)
   : ::PROTOBUF_NAMESPACE_ID::Message() {
   SandboxExecuteRequest* const _this = this; (void)_this;
   new (&_impl_) Impl_{
-      decltype(_impl_.prompt_){}
+      /*decltype(_impl_.metadata_)*/{}
+    , decltype(_impl_.prompt_){}
     , decltype(_impl_.work_dir_){}
     , decltype(_impl_.model_){}
     , decltype(_impl_.api_key_){}
     , decltype(_impl_.base_url_){}
     , decltype(_impl_.provider_){}
     , decltype(_impl_.session_id_){}
+    , decltype(_impl_.user_id_){}
     , decltype(_impl_.max_turns_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  _this->_impl_.metadata_.MergeFrom(from._impl_.metadata_);
   _impl_.prompt_.InitDefault();
   #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
     _impl_.prompt_.Set("", GetArenaForAllocation());
@@ -6344,7 +6488,9 @@ SandboxExecuteRequest::SandboxExecuteRequest(const SandboxExecuteRequest& from)
     _this->_impl_.session_id_.Set(from._internal_session_id(), 
       _this->GetArenaForAllocation());
   }
-  _this->_impl_.max_turns_ = from._impl_.max_turns_;
+  ::memcpy(&_impl_.user_id_, &from._impl_.user_id_,
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.max_turns_) -
+    reinterpret_cast<char*>(&_impl_.user_id_)) + sizeof(_impl_.max_turns_));
   // @@protoc_insertion_point(copy_constructor:bridge.SandboxExecuteRequest)
 }
 
@@ -6353,13 +6499,15 @@ inline void SandboxExecuteRequest::SharedCtor(
   (void)arena;
   (void)is_message_owned;
   new (&_impl_) Impl_{
-      decltype(_impl_.prompt_){}
+      /*decltype(_impl_.metadata_)*/{::_pbi::ArenaInitialized(), arena}
+    , decltype(_impl_.prompt_){}
     , decltype(_impl_.work_dir_){}
     , decltype(_impl_.model_){}
     , decltype(_impl_.api_key_){}
     , decltype(_impl_.base_url_){}
     , decltype(_impl_.provider_){}
     , decltype(_impl_.session_id_){}
+    , decltype(_impl_.user_id_){int64_t{0}}
     , decltype(_impl_.max_turns_){0}
     , /*decltype(_impl_._cached_size_)*/{}
   };
@@ -6397,6 +6545,7 @@ SandboxExecuteRequest::~SandboxExecuteRequest() {
   // @@protoc_insertion_point(destructor:bridge.SandboxExecuteRequest)
   if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
   (void)arena;
+    ArenaDtor(this);
     return;
   }
   SharedDtor();
@@ -6404,6 +6553,8 @@ SandboxExecuteRequest::~SandboxExecuteRequest() {
 
 inline void SandboxExecuteRequest::SharedDtor() {
   GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+  _impl_.metadata_.Destruct();
+  _impl_.metadata_.~MapField();
   _impl_.prompt_.Destroy();
   _impl_.work_dir_.Destroy();
   _impl_.model_.Destroy();
@@ -6413,6 +6564,10 @@ inline void SandboxExecuteRequest::SharedDtor() {
   _impl_.session_id_.Destroy();
 }
 
+void SandboxExecuteRequest::ArenaDtor(void* object) {
+  SandboxExecuteRequest* _this = reinterpret_cast< SandboxExecuteRequest* >(object);
+  _this->_impl_.metadata_.Destruct();
+}
 void SandboxExecuteRequest::SetCachedSize(int size) const {
   _impl_._cached_size_.Set(size);
 }
@@ -6423,6 +6578,7 @@ void SandboxExecuteRequest::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  _impl_.metadata_.Clear();
   _impl_.prompt_.ClearToEmpty();
   _impl_.work_dir_.ClearToEmpty();
   _impl_.model_.ClearToEmpty();
@@ -6430,7 +6586,9 @@ void SandboxExecuteRequest::Clear() {
   _impl_.base_url_.ClearToEmpty();
   _impl_.provider_.ClearToEmpty();
   _impl_.session_id_.ClearToEmpty();
-  _impl_.max_turns_ = 0;
+  ::memset(&_impl_.user_id_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&_impl_.max_turns_) -
+      reinterpret_cast<char*>(&_impl_.user_id_)) + sizeof(_impl_.max_turns_));
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -6515,6 +6673,27 @@ const char* SandboxExecuteRequest::_InternalParse(const char* ptr, ::_pbi::Parse
           ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
           CHK_(ptr);
           CHK_(::_pbi::VerifyUTF8(str, "bridge.SandboxExecuteRequest.session_id"));
+        } else
+          goto handle_unusual;
+        continue;
+      // int64 user_id = 9;
+      case 9:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 72)) {
+          _impl_.user_id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // map<string, string> metadata = 10;
+      case 10:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 82)) {
+          ptr -= 1;
+          do {
+            ptr += 1;
+            ptr = ctx->ParseMessage(&_impl_.metadata_, ptr);
+            CHK_(ptr);
+            if (!ctx->DataAvailable(ptr)) break;
+          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<82>(ptr));
         } else
           goto handle_unusual;
         continue;
@@ -6623,6 +6802,42 @@ uint8_t* SandboxExecuteRequest::_InternalSerialize(
         8, this->_internal_session_id(), target);
   }
 
+  // int64 user_id = 9;
+  if (this->_internal_user_id() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt64ToArray(9, this->_internal_user_id(), target);
+  }
+
+  // map<string, string> metadata = 10;
+  if (!this->_internal_metadata().empty()) {
+    using MapType = ::_pb::Map<std::string, std::string>;
+    using WireHelper = SandboxExecuteRequest_MetadataEntry_DoNotUse::Funcs;
+    const auto& map_field = this->_internal_metadata();
+    auto check_utf8 = [](const MapType::value_type& entry) {
+      (void)entry;
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+        entry.first.data(), static_cast<int>(entry.first.length()),
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+        "bridge.SandboxExecuteRequest.MetadataEntry.key");
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+        entry.second.data(), static_cast<int>(entry.second.length()),
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+        "bridge.SandboxExecuteRequest.MetadataEntry.value");
+    };
+
+    if (stream->IsSerializationDeterministic() && map_field.size() > 1) {
+      for (const auto& entry : ::_pbi::MapSorterPtr<MapType>(map_field)) {
+        target = WireHelper::InternalSerialize(10, entry.first, entry.second, target, stream);
+        check_utf8(entry);
+      }
+    } else {
+      for (const auto& entry : map_field) {
+        target = WireHelper::InternalSerialize(10, entry.first, entry.second, target, stream);
+        check_utf8(entry);
+      }
+    }
+  }
+
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
     target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
         _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
@@ -6638,6 +6853,15 @@ size_t SandboxExecuteRequest::ByteSizeLong() const {
   uint32_t cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
+
+  // map<string, string> metadata = 10;
+  total_size += 1 *
+      ::PROTOBUF_NAMESPACE_ID::internal::FromIntSize(this->_internal_metadata_size());
+  for (::PROTOBUF_NAMESPACE_ID::Map< std::string, std::string >::const_iterator
+      it = this->_internal_metadata().begin();
+      it != this->_internal_metadata().end(); ++it) {
+    total_size += SandboxExecuteRequest_MetadataEntry_DoNotUse::Funcs::ByteSizeLong(it->first, it->second);
+  }
 
   // string prompt = 1;
   if (!this->_internal_prompt().empty()) {
@@ -6688,6 +6912,11 @@ size_t SandboxExecuteRequest::ByteSizeLong() const {
         this->_internal_session_id());
   }
 
+  // int64 user_id = 9;
+  if (this->_internal_user_id() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int64SizePlusOne(this->_internal_user_id());
+  }
+
   // int32 max_turns = 3;
   if (this->_internal_max_turns() != 0) {
     total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_max_turns());
@@ -6711,6 +6940,7 @@ void SandboxExecuteRequest::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, 
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
+  _this->_impl_.metadata_.MergeFrom(from._impl_.metadata_);
   if (!from._internal_prompt().empty()) {
     _this->_internal_set_prompt(from._internal_prompt());
   }
@@ -6731,6 +6961,9 @@ void SandboxExecuteRequest::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, 
   }
   if (!from._internal_session_id().empty()) {
     _this->_internal_set_session_id(from._internal_session_id());
+  }
+  if (from._internal_user_id() != 0) {
+    _this->_internal_set_user_id(from._internal_user_id());
   }
   if (from._internal_max_turns() != 0) {
     _this->_internal_set_max_turns(from._internal_max_turns());
@@ -6754,6 +6987,7 @@ void SandboxExecuteRequest::InternalSwap(SandboxExecuteRequest* other) {
   auto* lhs_arena = GetArenaForAllocation();
   auto* rhs_arena = other->GetArenaForAllocation();
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  _impl_.metadata_.InternalSwap(&other->_impl_.metadata_);
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
       &_impl_.prompt_, lhs_arena,
       &other->_impl_.prompt_, rhs_arena
@@ -6782,13 +7016,18 @@ void SandboxExecuteRequest::InternalSwap(SandboxExecuteRequest* other) {
       &_impl_.session_id_, lhs_arena,
       &other->_impl_.session_id_, rhs_arena
   );
-  swap(_impl_.max_turns_, other->_impl_.max_turns_);
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(SandboxExecuteRequest, _impl_.max_turns_)
+      + sizeof(SandboxExecuteRequest::_impl_.max_turns_)
+      - PROTOBUF_FIELD_OFFSET(SandboxExecuteRequest, _impl_.user_id_)>(
+          reinterpret_cast<char*>(&_impl_.user_id_),
+          reinterpret_cast<char*>(&other->_impl_.user_id_));
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata SandboxExecuteRequest::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_chat_2eproto_getter, &descriptor_table_chat_2eproto_once,
-      file_level_metadata_chat_2eproto[17]);
+      file_level_metadata_chat_2eproto[18]);
 }
 
 // ===================================================================
@@ -7175,7 +7414,7 @@ void SandboxExecuteResponse::InternalSwap(SandboxExecuteResponse* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata SandboxExecuteResponse::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_chat_2eproto_getter, &descriptor_table_chat_2eproto_once,
-      file_level_metadata_chat_2eproto[18]);
+      file_level_metadata_chat_2eproto[19]);
 }
 
 // ===================================================================
@@ -7528,7 +7767,7 @@ void SandboxTaskRequest::InternalSwap(SandboxTaskRequest* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata SandboxTaskRequest::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_chat_2eproto_getter, &descriptor_table_chat_2eproto_once,
-      file_level_metadata_chat_2eproto[19]);
+      file_level_metadata_chat_2eproto[20]);
 }
 
 // ===================================================================
@@ -7908,7 +8147,7 @@ void SandboxTaskResponse::InternalSwap(SandboxTaskResponse* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata SandboxTaskResponse::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_chat_2eproto_getter, &descriptor_table_chat_2eproto_once,
-      file_level_metadata_chat_2eproto[20]);
+      file_level_metadata_chat_2eproto[21]);
 }
 
 // ===================================================================
@@ -8471,7 +8710,7 @@ void SandboxToolEvent::InternalSwap(SandboxToolEvent* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata SandboxToolEvent::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_chat_2eproto_getter, &descriptor_table_chat_2eproto_once,
-      file_level_metadata_chat_2eproto[21]);
+      file_level_metadata_chat_2eproto[22]);
 }
 
 // ===================================================================
@@ -9065,7 +9304,7 @@ void SwarmMessage::InternalSwap(SwarmMessage* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata SwarmMessage::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_chat_2eproto_getter, &descriptor_table_chat_2eproto_once,
-      file_level_metadata_chat_2eproto[22]);
+      file_level_metadata_chat_2eproto[23]);
 }
 
 // ===================================================================
@@ -9456,7 +9695,7 @@ void SwarmAgentNode::InternalSwap(SwarmAgentNode* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata SwarmAgentNode::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_chat_2eproto_getter, &descriptor_table_chat_2eproto_once,
-      file_level_metadata_chat_2eproto[23]);
+      file_level_metadata_chat_2eproto[24]);
 }
 
 // ===================================================================
@@ -9737,7 +9976,7 @@ void SwarmRegisterRequest::InternalSwap(SwarmRegisterRequest* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata SwarmRegisterRequest::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_chat_2eproto_getter, &descriptor_table_chat_2eproto_once,
-      file_level_metadata_chat_2eproto[24]);
+      file_level_metadata_chat_2eproto[25]);
 }
 
 // ===================================================================
@@ -10000,7 +10239,7 @@ void SwarmRegisterResponse::InternalSwap(SwarmRegisterResponse* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata SwarmRegisterResponse::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_chat_2eproto_getter, &descriptor_table_chat_2eproto_once,
-      file_level_metadata_chat_2eproto[25]);
+      file_level_metadata_chat_2eproto[26]);
 }
 
 // ===================================================================
@@ -10292,7 +10531,7 @@ void SwarmHelpRequest::InternalSwap(SwarmHelpRequest* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata SwarmHelpRequest::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_chat_2eproto_getter, &descriptor_table_chat_2eproto_once,
-      file_level_metadata_chat_2eproto[26]);
+      file_level_metadata_chat_2eproto[27]);
 }
 
 // ===================================================================
@@ -10672,7 +10911,7 @@ void SwarmHelpResponse::InternalSwap(SwarmHelpResponse* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata SwarmHelpResponse::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_chat_2eproto_getter, &descriptor_table_chat_2eproto_once,
-      file_level_metadata_chat_2eproto[27]);
+      file_level_metadata_chat_2eproto[28]);
 }
 
 // ===================================================================
@@ -10857,7 +11096,7 @@ void SwarmNodeListResponse::InternalSwap(SwarmNodeListResponse* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata SwarmNodeListResponse::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_chat_2eproto_getter, &descriptor_table_chat_2eproto_once,
-      file_level_metadata_chat_2eproto[28]);
+      file_level_metadata_chat_2eproto[29]);
 }
 
 // ===================================================================
@@ -10871,7 +11110,7 @@ void InternalForwardRequest_HeadersEntry_DoNotUse::MergeFrom(const InternalForwa
 ::PROTOBUF_NAMESPACE_ID::Metadata InternalForwardRequest_HeadersEntry_DoNotUse::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_chat_2eproto_getter, &descriptor_table_chat_2eproto_once,
-      file_level_metadata_chat_2eproto[29]);
+      file_level_metadata_chat_2eproto[30]);
 }
 
 // ===================================================================
@@ -11327,7 +11566,7 @@ void InternalForwardRequest::InternalSwap(InternalForwardRequest* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata InternalForwardRequest::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_chat_2eproto_getter, &descriptor_table_chat_2eproto_once,
-      file_level_metadata_chat_2eproto[30]);
+      file_level_metadata_chat_2eproto[31]);
 }
 
 // ===================================================================
@@ -11652,7 +11891,7 @@ void InternalForwardResponse::InternalSwap(InternalForwardResponse* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata InternalForwardResponse::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_chat_2eproto_getter, &descriptor_table_chat_2eproto_once,
-      file_level_metadata_chat_2eproto[31]);
+      file_level_metadata_chat_2eproto[32]);
 }
 
 // ===================================================================
@@ -11666,7 +11905,7 @@ void InternalPushRequest_HeadersEntry_DoNotUse::MergeFrom(const InternalPushRequ
 ::PROTOBUF_NAMESPACE_ID::Metadata InternalPushRequest_HeadersEntry_DoNotUse::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_chat_2eproto_getter, &descriptor_table_chat_2eproto_once,
-      file_level_metadata_chat_2eproto[32]);
+      file_level_metadata_chat_2eproto[33]);
 }
 
 // ===================================================================
@@ -12146,7 +12385,7 @@ void InternalPushRequest::InternalSwap(InternalPushRequest* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata InternalPushRequest::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_chat_2eproto_getter, &descriptor_table_chat_2eproto_once,
-      file_level_metadata_chat_2eproto[33]);
+      file_level_metadata_chat_2eproto[34]);
 }
 
 // ===================================================================
@@ -12459,7 +12698,7 @@ void InternalPushResponse::InternalSwap(InternalPushResponse* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata InternalPushResponse::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_chat_2eproto_getter, &descriptor_table_chat_2eproto_once,
-      file_level_metadata_chat_2eproto[34]);
+      file_level_metadata_chat_2eproto[35]);
 }
 
 // ===================================================================
@@ -12778,7 +13017,7 @@ void CareerAdviceRequest::InternalSwap(CareerAdviceRequest* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata CareerAdviceRequest::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_chat_2eproto_getter, &descriptor_table_chat_2eproto_once,
-      file_level_metadata_chat_2eproto[35]);
+      file_level_metadata_chat_2eproto[36]);
 }
 
 // ===================================================================
@@ -12818,7 +13057,782 @@ const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*CareerAdviceResponse::GetClass
 ::PROTOBUF_NAMESPACE_ID::Metadata CareerAdviceResponse::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_chat_2eproto_getter, &descriptor_table_chat_2eproto_once,
-      file_level_metadata_chat_2eproto[36]);
+      file_level_metadata_chat_2eproto[37]);
+}
+
+// ===================================================================
+
+AgentSkillEvent_HeadersEntry_DoNotUse::AgentSkillEvent_HeadersEntry_DoNotUse() {}
+AgentSkillEvent_HeadersEntry_DoNotUse::AgentSkillEvent_HeadersEntry_DoNotUse(::PROTOBUF_NAMESPACE_ID::Arena* arena)
+    : SuperType(arena) {}
+void AgentSkillEvent_HeadersEntry_DoNotUse::MergeFrom(const AgentSkillEvent_HeadersEntry_DoNotUse& other) {
+  MergeFromInternal(other);
+}
+::PROTOBUF_NAMESPACE_ID::Metadata AgentSkillEvent_HeadersEntry_DoNotUse::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_chat_2eproto_getter, &descriptor_table_chat_2eproto_once,
+      file_level_metadata_chat_2eproto[38]);
+}
+
+// ===================================================================
+
+class AgentSkillEvent::_Internal {
+ public:
+};
+
+AgentSkillEvent::AgentSkillEvent(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  if (arena != nullptr && !is_message_owned) {
+    arena->OwnCustomDestructor(this, &AgentSkillEvent::ArenaDtor);
+  }
+  // @@protoc_insertion_point(arena_constructor:bridge.AgentSkillEvent)
+}
+AgentSkillEvent::AgentSkillEvent(const AgentSkillEvent& from)
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  AgentSkillEvent* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      /*decltype(_impl_.headers_)*/{}
+    , decltype(_impl_.skill_name_){}
+    , decltype(_impl_.event_type_){}
+    , decltype(_impl_.payload_json_){}
+    , decltype(_impl_.trace_id_){}
+    , decltype(_impl_.user_id_){}
+    , decltype(_impl_.timestamp_){}
+    , /*decltype(_impl_._cached_size_)*/{}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  _this->_impl_.headers_.MergeFrom(from._impl_.headers_);
+  _impl_.skill_name_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.skill_name_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (!from._internal_skill_name().empty()) {
+    _this->_impl_.skill_name_.Set(from._internal_skill_name(), 
+      _this->GetArenaForAllocation());
+  }
+  _impl_.event_type_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.event_type_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (!from._internal_event_type().empty()) {
+    _this->_impl_.event_type_.Set(from._internal_event_type(), 
+      _this->GetArenaForAllocation());
+  }
+  _impl_.payload_json_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.payload_json_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (!from._internal_payload_json().empty()) {
+    _this->_impl_.payload_json_.Set(from._internal_payload_json(), 
+      _this->GetArenaForAllocation());
+  }
+  _impl_.trace_id_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.trace_id_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (!from._internal_trace_id().empty()) {
+    _this->_impl_.trace_id_.Set(from._internal_trace_id(), 
+      _this->GetArenaForAllocation());
+  }
+  ::memcpy(&_impl_.user_id_, &from._impl_.user_id_,
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.timestamp_) -
+    reinterpret_cast<char*>(&_impl_.user_id_)) + sizeof(_impl_.timestamp_));
+  // @@protoc_insertion_point(copy_constructor:bridge.AgentSkillEvent)
+}
+
+inline void AgentSkillEvent::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      /*decltype(_impl_.headers_)*/{::_pbi::ArenaInitialized(), arena}
+    , decltype(_impl_.skill_name_){}
+    , decltype(_impl_.event_type_){}
+    , decltype(_impl_.payload_json_){}
+    , decltype(_impl_.trace_id_){}
+    , decltype(_impl_.user_id_){int64_t{0}}
+    , decltype(_impl_.timestamp_){int64_t{0}}
+    , /*decltype(_impl_._cached_size_)*/{}
+  };
+  _impl_.skill_name_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.skill_name_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  _impl_.event_type_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.event_type_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  _impl_.payload_json_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.payload_json_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  _impl_.trace_id_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.trace_id_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+}
+
+AgentSkillEvent::~AgentSkillEvent() {
+  // @@protoc_insertion_point(destructor:bridge.AgentSkillEvent)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    ArenaDtor(this);
+    return;
+  }
+  SharedDtor();
+}
+
+inline void AgentSkillEvent::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+  _impl_.headers_.Destruct();
+  _impl_.headers_.~MapField();
+  _impl_.skill_name_.Destroy();
+  _impl_.event_type_.Destroy();
+  _impl_.payload_json_.Destroy();
+  _impl_.trace_id_.Destroy();
+}
+
+void AgentSkillEvent::ArenaDtor(void* object) {
+  AgentSkillEvent* _this = reinterpret_cast< AgentSkillEvent* >(object);
+  _this->_impl_.headers_.Destruct();
+}
+void AgentSkillEvent::SetCachedSize(int size) const {
+  _impl_._cached_size_.Set(size);
+}
+
+void AgentSkillEvent::Clear() {
+// @@protoc_insertion_point(message_clear_start:bridge.AgentSkillEvent)
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  _impl_.headers_.Clear();
+  _impl_.skill_name_.ClearToEmpty();
+  _impl_.event_type_.ClearToEmpty();
+  _impl_.payload_json_.ClearToEmpty();
+  _impl_.trace_id_.ClearToEmpty();
+  ::memset(&_impl_.user_id_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&_impl_.timestamp_) -
+      reinterpret_cast<char*>(&_impl_.user_id_)) + sizeof(_impl_.timestamp_));
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+const char* AgentSkillEvent::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
+      // int64 user_id = 1;
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
+          _impl_.user_id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // string skill_name = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 18)) {
+          auto str = _internal_mutable_skill_name();
+          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+          CHK_(::_pbi::VerifyUTF8(str, "bridge.AgentSkillEvent.skill_name"));
+        } else
+          goto handle_unusual;
+        continue;
+      // string event_type = 3;
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 26)) {
+          auto str = _internal_mutable_event_type();
+          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+          CHK_(::_pbi::VerifyUTF8(str, "bridge.AgentSkillEvent.event_type"));
+        } else
+          goto handle_unusual;
+        continue;
+      // string payload_json = 4;
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 34)) {
+          auto str = _internal_mutable_payload_json();
+          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+          CHK_(::_pbi::VerifyUTF8(str, "bridge.AgentSkillEvent.payload_json"));
+        } else
+          goto handle_unusual;
+        continue;
+      // string trace_id = 5;
+      case 5:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 42)) {
+          auto str = _internal_mutable_trace_id();
+          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+          CHK_(::_pbi::VerifyUTF8(str, "bridge.AgentSkillEvent.trace_id"));
+        } else
+          goto handle_unusual;
+        continue;
+      // int64 timestamp = 6;
+      case 6:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 48)) {
+          _impl_.timestamp_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // map<string, string> headers = 7;
+      case 7:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 58)) {
+          ptr -= 1;
+          do {
+            ptr += 1;
+            ptr = ctx->ParseMessage(&_impl_.headers_, ptr);
+            CHK_(ptr);
+            if (!ctx->DataAvailable(ptr)) break;
+          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<58>(ptr));
+        } else
+          goto handle_unusual;
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
+    }
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  return ptr;
+failure:
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
+}
+
+uint8_t* AgentSkillEvent::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
+  // @@protoc_insertion_point(serialize_to_array_start:bridge.AgentSkillEvent)
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // int64 user_id = 1;
+  if (this->_internal_user_id() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt64ToArray(1, this->_internal_user_id(), target);
+  }
+
+  // string skill_name = 2;
+  if (!this->_internal_skill_name().empty()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_skill_name().data(), static_cast<int>(this->_internal_skill_name().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "bridge.AgentSkillEvent.skill_name");
+    target = stream->WriteStringMaybeAliased(
+        2, this->_internal_skill_name(), target);
+  }
+
+  // string event_type = 3;
+  if (!this->_internal_event_type().empty()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_event_type().data(), static_cast<int>(this->_internal_event_type().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "bridge.AgentSkillEvent.event_type");
+    target = stream->WriteStringMaybeAliased(
+        3, this->_internal_event_type(), target);
+  }
+
+  // string payload_json = 4;
+  if (!this->_internal_payload_json().empty()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_payload_json().data(), static_cast<int>(this->_internal_payload_json().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "bridge.AgentSkillEvent.payload_json");
+    target = stream->WriteStringMaybeAliased(
+        4, this->_internal_payload_json(), target);
+  }
+
+  // string trace_id = 5;
+  if (!this->_internal_trace_id().empty()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_trace_id().data(), static_cast<int>(this->_internal_trace_id().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "bridge.AgentSkillEvent.trace_id");
+    target = stream->WriteStringMaybeAliased(
+        5, this->_internal_trace_id(), target);
+  }
+
+  // int64 timestamp = 6;
+  if (this->_internal_timestamp() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt64ToArray(6, this->_internal_timestamp(), target);
+  }
+
+  // map<string, string> headers = 7;
+  if (!this->_internal_headers().empty()) {
+    using MapType = ::_pb::Map<std::string, std::string>;
+    using WireHelper = AgentSkillEvent_HeadersEntry_DoNotUse::Funcs;
+    const auto& map_field = this->_internal_headers();
+    auto check_utf8 = [](const MapType::value_type& entry) {
+      (void)entry;
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+        entry.first.data(), static_cast<int>(entry.first.length()),
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+        "bridge.AgentSkillEvent.HeadersEntry.key");
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+        entry.second.data(), static_cast<int>(entry.second.length()),
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+        "bridge.AgentSkillEvent.HeadersEntry.value");
+    };
+
+    if (stream->IsSerializationDeterministic() && map_field.size() > 1) {
+      for (const auto& entry : ::_pbi::MapSorterPtr<MapType>(map_field)) {
+        target = WireHelper::InternalSerialize(7, entry.first, entry.second, target, stream);
+        check_utf8(entry);
+      }
+    } else {
+      for (const auto& entry : map_field) {
+        target = WireHelper::InternalSerialize(7, entry.first, entry.second, target, stream);
+        check_utf8(entry);
+      }
+    }
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:bridge.AgentSkillEvent)
+  return target;
+}
+
+size_t AgentSkillEvent::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:bridge.AgentSkillEvent)
+  size_t total_size = 0;
+
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  // map<string, string> headers = 7;
+  total_size += 1 *
+      ::PROTOBUF_NAMESPACE_ID::internal::FromIntSize(this->_internal_headers_size());
+  for (::PROTOBUF_NAMESPACE_ID::Map< std::string, std::string >::const_iterator
+      it = this->_internal_headers().begin();
+      it != this->_internal_headers().end(); ++it) {
+    total_size += AgentSkillEvent_HeadersEntry_DoNotUse::Funcs::ByteSizeLong(it->first, it->second);
+  }
+
+  // string skill_name = 2;
+  if (!this->_internal_skill_name().empty()) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->_internal_skill_name());
+  }
+
+  // string event_type = 3;
+  if (!this->_internal_event_type().empty()) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->_internal_event_type());
+  }
+
+  // string payload_json = 4;
+  if (!this->_internal_payload_json().empty()) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->_internal_payload_json());
+  }
+
+  // string trace_id = 5;
+  if (!this->_internal_trace_id().empty()) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->_internal_trace_id());
+  }
+
+  // int64 user_id = 1;
+  if (this->_internal_user_id() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int64SizePlusOne(this->_internal_user_id());
+  }
+
+  // int64 timestamp = 6;
+  if (this->_internal_timestamp() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int64SizePlusOne(this->_internal_timestamp());
+  }
+
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
+}
+
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData AgentSkillEvent::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    AgentSkillEvent::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*AgentSkillEvent::GetClassData() const { return &_class_data_; }
+
+
+void AgentSkillEvent::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<AgentSkillEvent*>(&to_msg);
+  auto& from = static_cast<const AgentSkillEvent&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:bridge.AgentSkillEvent)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  _this->_impl_.headers_.MergeFrom(from._impl_.headers_);
+  if (!from._internal_skill_name().empty()) {
+    _this->_internal_set_skill_name(from._internal_skill_name());
+  }
+  if (!from._internal_event_type().empty()) {
+    _this->_internal_set_event_type(from._internal_event_type());
+  }
+  if (!from._internal_payload_json().empty()) {
+    _this->_internal_set_payload_json(from._internal_payload_json());
+  }
+  if (!from._internal_trace_id().empty()) {
+    _this->_internal_set_trace_id(from._internal_trace_id());
+  }
+  if (from._internal_user_id() != 0) {
+    _this->_internal_set_user_id(from._internal_user_id());
+  }
+  if (from._internal_timestamp() != 0) {
+    _this->_internal_set_timestamp(from._internal_timestamp());
+  }
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+}
+
+void AgentSkillEvent::CopyFrom(const AgentSkillEvent& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:bridge.AgentSkillEvent)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool AgentSkillEvent::IsInitialized() const {
+  return true;
+}
+
+void AgentSkillEvent::InternalSwap(AgentSkillEvent* other) {
+  using std::swap;
+  auto* lhs_arena = GetArenaForAllocation();
+  auto* rhs_arena = other->GetArenaForAllocation();
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  _impl_.headers_.InternalSwap(&other->_impl_.headers_);
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &_impl_.skill_name_, lhs_arena,
+      &other->_impl_.skill_name_, rhs_arena
+  );
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &_impl_.event_type_, lhs_arena,
+      &other->_impl_.event_type_, rhs_arena
+  );
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &_impl_.payload_json_, lhs_arena,
+      &other->_impl_.payload_json_, rhs_arena
+  );
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &_impl_.trace_id_, lhs_arena,
+      &other->_impl_.trace_id_, rhs_arena
+  );
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(AgentSkillEvent, _impl_.timestamp_)
+      + sizeof(AgentSkillEvent::_impl_.timestamp_)
+      - PROTOBUF_FIELD_OFFSET(AgentSkillEvent, _impl_.user_id_)>(
+          reinterpret_cast<char*>(&_impl_.user_id_),
+          reinterpret_cast<char*>(&other->_impl_.user_id_));
+}
+
+::PROTOBUF_NAMESPACE_ID::Metadata AgentSkillEvent::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_chat_2eproto_getter, &descriptor_table_chat_2eproto_once,
+      file_level_metadata_chat_2eproto[39]);
+}
+
+// ===================================================================
+
+class AgentSkillEventAck::_Internal {
+ public:
+};
+
+AgentSkillEventAck::AgentSkillEventAck(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:bridge.AgentSkillEventAck)
+}
+AgentSkillEventAck::AgentSkillEventAck(const AgentSkillEventAck& from)
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  AgentSkillEventAck* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_.error_){}
+    , decltype(_impl_.trace_id_){}
+    , decltype(_impl_.success_){}
+    , /*decltype(_impl_._cached_size_)*/{}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  _impl_.error_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.error_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (!from._internal_error().empty()) {
+    _this->_impl_.error_.Set(from._internal_error(), 
+      _this->GetArenaForAllocation());
+  }
+  _impl_.trace_id_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.trace_id_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (!from._internal_trace_id().empty()) {
+    _this->_impl_.trace_id_.Set(from._internal_trace_id(), 
+      _this->GetArenaForAllocation());
+  }
+  _this->_impl_.success_ = from._impl_.success_;
+  // @@protoc_insertion_point(copy_constructor:bridge.AgentSkillEventAck)
+}
+
+inline void AgentSkillEventAck::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_.error_){}
+    , decltype(_impl_.trace_id_){}
+    , decltype(_impl_.success_){false}
+    , /*decltype(_impl_._cached_size_)*/{}
+  };
+  _impl_.error_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.error_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  _impl_.trace_id_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.trace_id_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+}
+
+AgentSkillEventAck::~AgentSkillEventAck() {
+  // @@protoc_insertion_point(destructor:bridge.AgentSkillEventAck)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
+  SharedDtor();
+}
+
+inline void AgentSkillEventAck::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+  _impl_.error_.Destroy();
+  _impl_.trace_id_.Destroy();
+}
+
+void AgentSkillEventAck::SetCachedSize(int size) const {
+  _impl_._cached_size_.Set(size);
+}
+
+void AgentSkillEventAck::Clear() {
+// @@protoc_insertion_point(message_clear_start:bridge.AgentSkillEventAck)
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  _impl_.error_.ClearToEmpty();
+  _impl_.trace_id_.ClearToEmpty();
+  _impl_.success_ = false;
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+const char* AgentSkillEventAck::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
+      // bool success = 1;
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
+          _impl_.success_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // string error = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 18)) {
+          auto str = _internal_mutable_error();
+          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+          CHK_(::_pbi::VerifyUTF8(str, "bridge.AgentSkillEventAck.error"));
+        } else
+          goto handle_unusual;
+        continue;
+      // string trace_id = 3;
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 26)) {
+          auto str = _internal_mutable_trace_id();
+          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+          CHK_(::_pbi::VerifyUTF8(str, "bridge.AgentSkillEventAck.trace_id"));
+        } else
+          goto handle_unusual;
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
+    }
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  return ptr;
+failure:
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
+}
+
+uint8_t* AgentSkillEventAck::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
+  // @@protoc_insertion_point(serialize_to_array_start:bridge.AgentSkillEventAck)
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // bool success = 1;
+  if (this->_internal_success() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteBoolToArray(1, this->_internal_success(), target);
+  }
+
+  // string error = 2;
+  if (!this->_internal_error().empty()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_error().data(), static_cast<int>(this->_internal_error().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "bridge.AgentSkillEventAck.error");
+    target = stream->WriteStringMaybeAliased(
+        2, this->_internal_error(), target);
+  }
+
+  // string trace_id = 3;
+  if (!this->_internal_trace_id().empty()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_trace_id().data(), static_cast<int>(this->_internal_trace_id().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "bridge.AgentSkillEventAck.trace_id");
+    target = stream->WriteStringMaybeAliased(
+        3, this->_internal_trace_id(), target);
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:bridge.AgentSkillEventAck)
+  return target;
+}
+
+size_t AgentSkillEventAck::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:bridge.AgentSkillEventAck)
+  size_t total_size = 0;
+
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  // string error = 2;
+  if (!this->_internal_error().empty()) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->_internal_error());
+  }
+
+  // string trace_id = 3;
+  if (!this->_internal_trace_id().empty()) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->_internal_trace_id());
+  }
+
+  // bool success = 1;
+  if (this->_internal_success() != 0) {
+    total_size += 1 + 1;
+  }
+
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
+}
+
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData AgentSkillEventAck::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    AgentSkillEventAck::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*AgentSkillEventAck::GetClassData() const { return &_class_data_; }
+
+
+void AgentSkillEventAck::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<AgentSkillEventAck*>(&to_msg);
+  auto& from = static_cast<const AgentSkillEventAck&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:bridge.AgentSkillEventAck)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (!from._internal_error().empty()) {
+    _this->_internal_set_error(from._internal_error());
+  }
+  if (!from._internal_trace_id().empty()) {
+    _this->_internal_set_trace_id(from._internal_trace_id());
+  }
+  if (from._internal_success() != 0) {
+    _this->_internal_set_success(from._internal_success());
+  }
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+}
+
+void AgentSkillEventAck::CopyFrom(const AgentSkillEventAck& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:bridge.AgentSkillEventAck)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool AgentSkillEventAck::IsInitialized() const {
+  return true;
+}
+
+void AgentSkillEventAck::InternalSwap(AgentSkillEventAck* other) {
+  using std::swap;
+  auto* lhs_arena = GetArenaForAllocation();
+  auto* rhs_arena = other->GetArenaForAllocation();
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &_impl_.error_, lhs_arena,
+      &other->_impl_.error_, rhs_arena
+  );
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &_impl_.trace_id_, lhs_arena,
+      &other->_impl_.trace_id_, rhs_arena
+  );
+  swap(_impl_.success_, other->_impl_.success_);
+}
+
+::PROTOBUF_NAMESPACE_ID::Metadata AgentSkillEventAck::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_chat_2eproto_getter, &descriptor_table_chat_2eproto_once,
+      file_level_metadata_chat_2eproto[40]);
 }
 
 // ===================================================================
@@ -13253,7 +14267,7 @@ void RpcMessage::InternalSwap(RpcMessage* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata RpcMessage::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_chat_2eproto_getter, &descriptor_table_chat_2eproto_once,
-      file_level_metadata_chat_2eproto[37]);
+      file_level_metadata_chat_2eproto[41]);
 }
 
 // @@protoc_insertion_point(namespace_scope)
@@ -13326,6 +14340,10 @@ Arena::CreateMaybeMessage< ::bridge::PdfParseRequest >(Arena* arena) {
 template<> PROTOBUF_NOINLINE ::bridge::PdfParseResponse*
 Arena::CreateMaybeMessage< ::bridge::PdfParseResponse >(Arena* arena) {
   return Arena::CreateMessageInternal< ::bridge::PdfParseResponse >(arena);
+}
+template<> PROTOBUF_NOINLINE ::bridge::SandboxExecuteRequest_MetadataEntry_DoNotUse*
+Arena::CreateMaybeMessage< ::bridge::SandboxExecuteRequest_MetadataEntry_DoNotUse >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::bridge::SandboxExecuteRequest_MetadataEntry_DoNotUse >(arena);
 }
 template<> PROTOBUF_NOINLINE ::bridge::SandboxExecuteRequest*
 Arena::CreateMaybeMessage< ::bridge::SandboxExecuteRequest >(Arena* arena) {
@@ -13406,6 +14424,18 @@ Arena::CreateMaybeMessage< ::bridge::CareerAdviceRequest >(Arena* arena) {
 template<> PROTOBUF_NOINLINE ::bridge::CareerAdviceResponse*
 Arena::CreateMaybeMessage< ::bridge::CareerAdviceResponse >(Arena* arena) {
   return Arena::CreateMessageInternal< ::bridge::CareerAdviceResponse >(arena);
+}
+template<> PROTOBUF_NOINLINE ::bridge::AgentSkillEvent_HeadersEntry_DoNotUse*
+Arena::CreateMaybeMessage< ::bridge::AgentSkillEvent_HeadersEntry_DoNotUse >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::bridge::AgentSkillEvent_HeadersEntry_DoNotUse >(arena);
+}
+template<> PROTOBUF_NOINLINE ::bridge::AgentSkillEvent*
+Arena::CreateMaybeMessage< ::bridge::AgentSkillEvent >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::bridge::AgentSkillEvent >(arena);
+}
+template<> PROTOBUF_NOINLINE ::bridge::AgentSkillEventAck*
+Arena::CreateMaybeMessage< ::bridge::AgentSkillEventAck >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::bridge::AgentSkillEventAck >(arena);
 }
 template<> PROTOBUF_NOINLINE ::bridge::RpcMessage*
 Arena::CreateMaybeMessage< ::bridge::RpcMessage >(Arena* arena) {

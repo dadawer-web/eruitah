@@ -53,8 +53,25 @@ export const useAgentStore = defineStore('agent', () => {
 
   let rafId = null
   let editorInstance = null
+  const userId = ref(null)
   let wsRetryCount = 0
   const WS_MAX_RETRY = 20
+
+  function _initUserId() {
+    const params = new URLSearchParams(window.location.search)
+    const fromUrl = params.get('user_id') || params.get('userId')
+    if (fromUrl) {
+      userId.value = parseInt(fromUrl, 10) || null
+      return
+    }
+    try {
+      const stored = localStorage.getItem('eruitah_user_id')
+      if (stored) {
+        userId.value = parseInt(stored, 10) || null
+      }
+    } catch {}
+  }
+  _initUserId()
 
   function pushMessage(msg) {
     messages.value.push(msg)
@@ -75,7 +92,7 @@ export const useAgentStore = defineStore('agent', () => {
     }
 
     const wsProto = location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const socket = new WebSocket(`${wsProto}//${location.host}/ws/coding`)
+    const socket = new WebSocket(`${wsProto}//${location.host}/ws/simple-ide`)
 
     socket.onopen = () => {
       connected.value = true
@@ -1027,6 +1044,7 @@ export const useAgentStore = defineStore('agent', () => {
         base_task_id: options.base_task_id || pendingBaseTaskId.value || '',
         auto_approve: autoApprove.value,
         use_swarm: options.use_swarm || false,
+        user_id: userId.value,
       }
 
       pendingBaseTaskId.value = ''
@@ -1058,6 +1076,7 @@ export const useAgentStore = defineStore('agent', () => {
         provider: options.provider,
         auto_approve: autoApprove.value,
         use_swarm: options.use_swarm || false,
+        user_id: userId.value,
       }
 
       Object.keys(payload).forEach(key => {
@@ -1298,6 +1317,7 @@ export const useAgentStore = defineStore('agent', () => {
     taskMessages,
     activeTaskId,
     autoApprove,
+    userId,
     historyStates,
     rollbackPreview,
     checkpointView,

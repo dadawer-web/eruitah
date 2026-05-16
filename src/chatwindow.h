@@ -45,6 +45,9 @@
 #include "models/user.h"
 #include "models/group.h"
 #include "customtitlebar.h"
+#include "careeradvicepopup.h"
+#include "career_history.h"
+#include "career_dashboard_dialog.h"
 
 // Material 组件前向声明
 class QtMaterialTextField;
@@ -58,6 +61,7 @@ class KnowledgeGraphDialog;
 class RealtimeVoiceDialog;
 class DashboardDialog;
 class CompanionReadingDialog;
+class CareerDashboardDialog;
 
 // 未处理消息结构体
 struct PendingMessage {
@@ -300,12 +304,14 @@ public slots:
     void onFarmHarvestResponse(bool success, int plotId, const QString &message, int coins);
     void onFarmPlotHarvested(int plotId, int ownerId);
     void onFarmBroadcastReceived(const QString &message);
+    void onCareerAdviceReceived(const QString &skills, const QString &resumeHighlight, const QString &learningAdvice);
     
     void onRealtimeVoiceCall();
     void onRealtimeVoiceCallEnded();
 
     void onOpenCompanionReading();
     void onOpenCodingAgent();
+    void onOpenCareerDashboard();
 
 protected:
     void closeEvent(QCloseEvent *event) override;

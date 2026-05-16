@@ -50,6 +50,15 @@ struct TableStruct_chat_2eproto {
 };
 extern const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_chat_2eproto;
 namespace bridge {
+class AgentSkillEvent;
+struct AgentSkillEventDefaultTypeInternal;
+extern AgentSkillEventDefaultTypeInternal _AgentSkillEvent_default_instance_;
+class AgentSkillEventAck;
+struct AgentSkillEventAckDefaultTypeInternal;
+extern AgentSkillEventAckDefaultTypeInternal _AgentSkillEventAck_default_instance_;
+class AgentSkillEvent_HeadersEntry_DoNotUse;
+struct AgentSkillEvent_HeadersEntry_DoNotUseDefaultTypeInternal;
+extern AgentSkillEvent_HeadersEntry_DoNotUseDefaultTypeInternal _AgentSkillEvent_HeadersEntry_DoNotUse_default_instance_;
 class CareerAdviceRequest;
 struct CareerAdviceRequestDefaultTypeInternal;
 extern CareerAdviceRequestDefaultTypeInternal _CareerAdviceRequest_default_instance_;
@@ -125,6 +134,9 @@ extern RpcMessageDefaultTypeInternal _RpcMessage_default_instance_;
 class SandboxExecuteRequest;
 struct SandboxExecuteRequestDefaultTypeInternal;
 extern SandboxExecuteRequestDefaultTypeInternal _SandboxExecuteRequest_default_instance_;
+class SandboxExecuteRequest_MetadataEntry_DoNotUse;
+struct SandboxExecuteRequest_MetadataEntry_DoNotUseDefaultTypeInternal;
+extern SandboxExecuteRequest_MetadataEntry_DoNotUseDefaultTypeInternal _SandboxExecuteRequest_MetadataEntry_DoNotUse_default_instance_;
 class SandboxExecuteResponse;
 struct SandboxExecuteResponseDefaultTypeInternal;
 extern SandboxExecuteResponseDefaultTypeInternal _SandboxExecuteResponse_default_instance_;
@@ -166,6 +178,9 @@ struct WeeklyReportResponseDefaultTypeInternal;
 extern WeeklyReportResponseDefaultTypeInternal _WeeklyReportResponse_default_instance_;
 }  // namespace bridge
 PROTOBUF_NAMESPACE_OPEN
+template<> ::bridge::AgentSkillEvent* Arena::CreateMaybeMessage<::bridge::AgentSkillEvent>(Arena*);
+template<> ::bridge::AgentSkillEventAck* Arena::CreateMaybeMessage<::bridge::AgentSkillEventAck>(Arena*);
+template<> ::bridge::AgentSkillEvent_HeadersEntry_DoNotUse* Arena::CreateMaybeMessage<::bridge::AgentSkillEvent_HeadersEntry_DoNotUse>(Arena*);
 template<> ::bridge::CareerAdviceRequest* Arena::CreateMaybeMessage<::bridge::CareerAdviceRequest>(Arena*);
 template<> ::bridge::CareerAdviceResponse* Arena::CreateMaybeMessage<::bridge::CareerAdviceResponse>(Arena*);
 template<> ::bridge::ChatRequest* Arena::CreateMaybeMessage<::bridge::ChatRequest>(Arena*);
@@ -191,6 +206,7 @@ template<> ::bridge::PdfParseRequest* Arena::CreateMaybeMessage<::bridge::PdfPar
 template<> ::bridge::PdfParseResponse* Arena::CreateMaybeMessage<::bridge::PdfParseResponse>(Arena*);
 template<> ::bridge::RpcMessage* Arena::CreateMaybeMessage<::bridge::RpcMessage>(Arena*);
 template<> ::bridge::SandboxExecuteRequest* Arena::CreateMaybeMessage<::bridge::SandboxExecuteRequest>(Arena*);
+template<> ::bridge::SandboxExecuteRequest_MetadataEntry_DoNotUse* Arena::CreateMaybeMessage<::bridge::SandboxExecuteRequest_MetadataEntry_DoNotUse>(Arena*);
 template<> ::bridge::SandboxExecuteResponse* Arena::CreateMaybeMessage<::bridge::SandboxExecuteResponse>(Arena*);
 template<> ::bridge::SandboxTaskRequest* Arena::CreateMaybeMessage<::bridge::SandboxTaskRequest>(Arena*);
 template<> ::bridge::SandboxTaskResponse* Arena::CreateMaybeMessage<::bridge::SandboxTaskResponse>(Arena*);
@@ -281,12 +297,13 @@ enum InternalMsgType : int {
   SANDBOX_EXECUTE = 11,
   EXPERIENCE_UPDATE = 12,
   CAREER_ADVICE = 13,
+  SKILL_EVENT = 14,
   InternalMsgType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
   InternalMsgType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
 bool InternalMsgType_IsValid(int value);
 constexpr InternalMsgType InternalMsgType_MIN = INTERNAL_MSG_TYPE_UNSPECIFIED;
-constexpr InternalMsgType InternalMsgType_MAX = CAREER_ADVICE;
+constexpr InternalMsgType InternalMsgType_MAX = SKILL_EVENT;
 constexpr int InternalMsgType_ARRAYSIZE = InternalMsgType_MAX + 1;
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* InternalMsgType_descriptor();
@@ -3270,6 +3287,34 @@ class PdfParseResponse final :
 };
 // -------------------------------------------------------------------
 
+class SandboxExecuteRequest_MetadataEntry_DoNotUse : public ::PROTOBUF_NAMESPACE_ID::internal::MapEntry<SandboxExecuteRequest_MetadataEntry_DoNotUse, 
+    std::string, std::string,
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_STRING,
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_STRING> {
+public:
+  typedef ::PROTOBUF_NAMESPACE_ID::internal::MapEntry<SandboxExecuteRequest_MetadataEntry_DoNotUse, 
+    std::string, std::string,
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_STRING,
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_STRING> SuperType;
+  SandboxExecuteRequest_MetadataEntry_DoNotUse();
+  explicit PROTOBUF_CONSTEXPR SandboxExecuteRequest_MetadataEntry_DoNotUse(
+      ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+  explicit SandboxExecuteRequest_MetadataEntry_DoNotUse(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  void MergeFrom(const SandboxExecuteRequest_MetadataEntry_DoNotUse& other);
+  static const SandboxExecuteRequest_MetadataEntry_DoNotUse* internal_default_instance() { return reinterpret_cast<const SandboxExecuteRequest_MetadataEntry_DoNotUse*>(&_SandboxExecuteRequest_MetadataEntry_DoNotUse_default_instance_); }
+  static bool ValidateKey(std::string* s) {
+    return ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(s->data(), static_cast<int>(s->size()), ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::PARSE, "bridge.SandboxExecuteRequest.MetadataEntry.key");
+ }
+  static bool ValidateValue(std::string* s) {
+    return ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(s->data(), static_cast<int>(s->size()), ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::PARSE, "bridge.SandboxExecuteRequest.MetadataEntry.value");
+ }
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+  friend struct ::TableStruct_chat_2eproto;
+};
+
+// -------------------------------------------------------------------
+
 class SandboxExecuteRequest final :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:bridge.SandboxExecuteRequest) */ {
  public:
@@ -3318,7 +3363,7 @@ class SandboxExecuteRequest final :
                &_SandboxExecuteRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    17;
+    18;
 
   friend void swap(SandboxExecuteRequest& a, SandboxExecuteRequest& b) {
     a.Swap(&b);
@@ -3379,6 +3424,8 @@ class SandboxExecuteRequest final :
   protected:
   explicit SandboxExecuteRequest(::PROTOBUF_NAMESPACE_ID::Arena* arena,
                        bool is_message_owned = false);
+  private:
+  static void ArenaDtor(void* object);
   public:
 
   static const ClassData _class_data_;
@@ -3388,9 +3435,11 @@ class SandboxExecuteRequest final :
 
   // nested types ----------------------------------------------------
 
+
   // accessors -------------------------------------------------------
 
   enum : int {
+    kMetadataFieldNumber = 10,
     kPromptFieldNumber = 1,
     kWorkDirFieldNumber = 2,
     kModelFieldNumber = 4,
@@ -3398,8 +3447,26 @@ class SandboxExecuteRequest final :
     kBaseUrlFieldNumber = 6,
     kProviderFieldNumber = 7,
     kSessionIdFieldNumber = 8,
+    kUserIdFieldNumber = 9,
     kMaxTurnsFieldNumber = 3,
   };
+  // map<string, string> metadata = 10;
+  int metadata_size() const;
+  private:
+  int _internal_metadata_size() const;
+  public:
+  void clear_metadata();
+  private:
+  const ::PROTOBUF_NAMESPACE_ID::Map< std::string, std::string >&
+      _internal_metadata() const;
+  ::PROTOBUF_NAMESPACE_ID::Map< std::string, std::string >*
+      _internal_mutable_metadata();
+  public:
+  const ::PROTOBUF_NAMESPACE_ID::Map< std::string, std::string >&
+      metadata() const;
+  ::PROTOBUF_NAMESPACE_ID::Map< std::string, std::string >*
+      mutable_metadata();
+
   // string prompt = 1;
   void clear_prompt();
   const std::string& prompt() const;
@@ -3498,6 +3565,15 @@ class SandboxExecuteRequest final :
   std::string* _internal_mutable_session_id();
   public:
 
+  // int64 user_id = 9;
+  void clear_user_id();
+  int64_t user_id() const;
+  void set_user_id(int64_t value);
+  private:
+  int64_t _internal_user_id() const;
+  void _internal_set_user_id(int64_t value);
+  public:
+
   // int32 max_turns = 3;
   void clear_max_turns();
   int32_t max_turns() const;
@@ -3515,6 +3591,11 @@ class SandboxExecuteRequest final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::MapField<
+        SandboxExecuteRequest_MetadataEntry_DoNotUse,
+        std::string, std::string,
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_STRING,
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_STRING> metadata_;
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr prompt_;
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr work_dir_;
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr model_;
@@ -3522,6 +3603,7 @@ class SandboxExecuteRequest final :
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr base_url_;
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr provider_;
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr session_id_;
+    int64_t user_id_;
     int32_t max_turns_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
@@ -3578,7 +3660,7 @@ class SandboxExecuteResponse final :
                &_SandboxExecuteResponse_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    18;
+    19;
 
   friend void swap(SandboxExecuteResponse& a, SandboxExecuteResponse& b) {
     a.Swap(&b);
@@ -3796,7 +3878,7 @@ class SandboxTaskRequest final :
                &_SandboxTaskRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    19;
+    20;
 
   friend void swap(SandboxTaskRequest& a, SandboxTaskRequest& b) {
     a.Swap(&b);
@@ -3997,7 +4079,7 @@ class SandboxTaskResponse final :
                &_SandboxTaskResponse_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    20;
+    21;
 
   friend void swap(SandboxTaskResponse& a, SandboxTaskResponse& b) {
     a.Swap(&b);
@@ -4209,7 +4291,7 @@ class SandboxToolEvent final :
                &_SandboxToolEvent_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    21;
+    22;
 
   friend void swap(SandboxToolEvent& a, SandboxToolEvent& b) {
     a.Swap(&b);
@@ -4480,7 +4562,7 @@ class SwarmMessage final :
                &_SwarmMessage_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    22;
+    23;
 
   friend void swap(SwarmMessage& a, SwarmMessage& b) {
     a.Swap(&b);
@@ -4829,7 +4911,7 @@ class SwarmAgentNode final :
                &_SwarmAgentNode_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    23;
+    24;
 
   friend void swap(SwarmAgentNode& a, SwarmAgentNode& b) {
     a.Swap(&b);
@@ -5072,7 +5154,7 @@ class SwarmRegisterRequest final :
                &_SwarmRegisterRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    24;
+    25;
 
   friend void swap(SwarmRegisterRequest& a, SwarmRegisterRequest& b) {
     a.Swap(&b);
@@ -5277,7 +5359,7 @@ class SwarmRegisterResponse final :
                &_SwarmRegisterResponse_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    25;
+    26;
 
   friend void swap(SwarmRegisterResponse& a, SwarmRegisterResponse& b) {
     a.Swap(&b);
@@ -5452,7 +5534,7 @@ class SwarmHelpRequest final :
                &_SwarmHelpRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    26;
+    27;
 
   friend void swap(SwarmHelpRequest& a, SwarmHelpRequest& b) {
     a.Swap(&b);
@@ -5632,7 +5714,7 @@ class SwarmHelpResponse final :
                &_SwarmHelpResponse_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    27;
+    28;
 
   friend void swap(SwarmHelpResponse& a, SwarmHelpResponse& b) {
     a.Swap(&b);
@@ -5844,7 +5926,7 @@ class SwarmNodeListResponse final :
                &_SwarmNodeListResponse_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    28;
+    29;
 
   friend void swap(SwarmNodeListResponse& a, SwarmNodeListResponse& b) {
     a.Swap(&b);
@@ -6029,7 +6111,7 @@ class InternalForwardRequest final :
                &_InternalForwardRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    30;
+    31;
 
   friend void swap(InternalForwardRequest& a, InternalForwardRequest& b) {
     a.Swap(&b);
@@ -6279,7 +6361,7 @@ class InternalForwardResponse final :
                &_InternalForwardResponse_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    31;
+    32;
 
   friend void swap(InternalForwardResponse& a, InternalForwardResponse& b) {
     a.Swap(&b);
@@ -6503,7 +6585,7 @@ class InternalPushRequest final :
                &_InternalPushRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    33;
+    34;
 
   friend void swap(InternalPushRequest& a, InternalPushRequest& b) {
     a.Swap(&b);
@@ -6764,7 +6846,7 @@ class InternalPushResponse final :
                &_InternalPushResponse_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    34;
+    35;
 
   friend void swap(InternalPushResponse& a, InternalPushResponse& b) {
     a.Swap(&b);
@@ -6955,7 +7037,7 @@ class CareerAdviceRequest final :
                &_CareerAdviceRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    35;
+    36;
 
   friend void swap(CareerAdviceRequest& a, CareerAdviceRequest& b) {
     a.Swap(&b);
@@ -7160,7 +7242,7 @@ class CareerAdviceResponse final :
                &_CareerAdviceResponse_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    36;
+    37;
 
   friend void swap(CareerAdviceResponse& a, CareerAdviceResponse& b) {
     a.Swap(&b);
@@ -7231,6 +7313,463 @@ class CareerAdviceResponse final :
 };
 // -------------------------------------------------------------------
 
+class AgentSkillEvent_HeadersEntry_DoNotUse : public ::PROTOBUF_NAMESPACE_ID::internal::MapEntry<AgentSkillEvent_HeadersEntry_DoNotUse, 
+    std::string, std::string,
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_STRING,
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_STRING> {
+public:
+  typedef ::PROTOBUF_NAMESPACE_ID::internal::MapEntry<AgentSkillEvent_HeadersEntry_DoNotUse, 
+    std::string, std::string,
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_STRING,
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_STRING> SuperType;
+  AgentSkillEvent_HeadersEntry_DoNotUse();
+  explicit PROTOBUF_CONSTEXPR AgentSkillEvent_HeadersEntry_DoNotUse(
+      ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+  explicit AgentSkillEvent_HeadersEntry_DoNotUse(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  void MergeFrom(const AgentSkillEvent_HeadersEntry_DoNotUse& other);
+  static const AgentSkillEvent_HeadersEntry_DoNotUse* internal_default_instance() { return reinterpret_cast<const AgentSkillEvent_HeadersEntry_DoNotUse*>(&_AgentSkillEvent_HeadersEntry_DoNotUse_default_instance_); }
+  static bool ValidateKey(std::string* s) {
+    return ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(s->data(), static_cast<int>(s->size()), ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::PARSE, "bridge.AgentSkillEvent.HeadersEntry.key");
+ }
+  static bool ValidateValue(std::string* s) {
+    return ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(s->data(), static_cast<int>(s->size()), ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::PARSE, "bridge.AgentSkillEvent.HeadersEntry.value");
+ }
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+  friend struct ::TableStruct_chat_2eproto;
+};
+
+// -------------------------------------------------------------------
+
+class AgentSkillEvent final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:bridge.AgentSkillEvent) */ {
+ public:
+  inline AgentSkillEvent() : AgentSkillEvent(nullptr) {}
+  ~AgentSkillEvent() override;
+  explicit PROTOBUF_CONSTEXPR AgentSkillEvent(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  AgentSkillEvent(const AgentSkillEvent& from);
+  AgentSkillEvent(AgentSkillEvent&& from) noexcept
+    : AgentSkillEvent() {
+    *this = ::std::move(from);
+  }
+
+  inline AgentSkillEvent& operator=(const AgentSkillEvent& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline AgentSkillEvent& operator=(AgentSkillEvent&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const AgentSkillEvent& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const AgentSkillEvent* internal_default_instance() {
+    return reinterpret_cast<const AgentSkillEvent*>(
+               &_AgentSkillEvent_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    39;
+
+  friend void swap(AgentSkillEvent& a, AgentSkillEvent& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(AgentSkillEvent* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(AgentSkillEvent* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  AgentSkillEvent* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<AgentSkillEvent>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const AgentSkillEvent& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const AgentSkillEvent& from) {
+    AgentSkillEvent::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(AgentSkillEvent* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "bridge.AgentSkillEvent";
+  }
+  protected:
+  explicit AgentSkillEvent(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  private:
+  static void ArenaDtor(void* object);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kHeadersFieldNumber = 7,
+    kSkillNameFieldNumber = 2,
+    kEventTypeFieldNumber = 3,
+    kPayloadJsonFieldNumber = 4,
+    kTraceIdFieldNumber = 5,
+    kUserIdFieldNumber = 1,
+    kTimestampFieldNumber = 6,
+  };
+  // map<string, string> headers = 7;
+  int headers_size() const;
+  private:
+  int _internal_headers_size() const;
+  public:
+  void clear_headers();
+  private:
+  const ::PROTOBUF_NAMESPACE_ID::Map< std::string, std::string >&
+      _internal_headers() const;
+  ::PROTOBUF_NAMESPACE_ID::Map< std::string, std::string >*
+      _internal_mutable_headers();
+  public:
+  const ::PROTOBUF_NAMESPACE_ID::Map< std::string, std::string >&
+      headers() const;
+  ::PROTOBUF_NAMESPACE_ID::Map< std::string, std::string >*
+      mutable_headers();
+
+  // string skill_name = 2;
+  void clear_skill_name();
+  const std::string& skill_name() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_skill_name(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_skill_name();
+  PROTOBUF_NODISCARD std::string* release_skill_name();
+  void set_allocated_skill_name(std::string* skill_name);
+  private:
+  const std::string& _internal_skill_name() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_skill_name(const std::string& value);
+  std::string* _internal_mutable_skill_name();
+  public:
+
+  // string event_type = 3;
+  void clear_event_type();
+  const std::string& event_type() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_event_type(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_event_type();
+  PROTOBUF_NODISCARD std::string* release_event_type();
+  void set_allocated_event_type(std::string* event_type);
+  private:
+  const std::string& _internal_event_type() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_event_type(const std::string& value);
+  std::string* _internal_mutable_event_type();
+  public:
+
+  // string payload_json = 4;
+  void clear_payload_json();
+  const std::string& payload_json() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_payload_json(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_payload_json();
+  PROTOBUF_NODISCARD std::string* release_payload_json();
+  void set_allocated_payload_json(std::string* payload_json);
+  private:
+  const std::string& _internal_payload_json() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_payload_json(const std::string& value);
+  std::string* _internal_mutable_payload_json();
+  public:
+
+  // string trace_id = 5;
+  void clear_trace_id();
+  const std::string& trace_id() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_trace_id(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_trace_id();
+  PROTOBUF_NODISCARD std::string* release_trace_id();
+  void set_allocated_trace_id(std::string* trace_id);
+  private:
+  const std::string& _internal_trace_id() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_trace_id(const std::string& value);
+  std::string* _internal_mutable_trace_id();
+  public:
+
+  // int64 user_id = 1;
+  void clear_user_id();
+  int64_t user_id() const;
+  void set_user_id(int64_t value);
+  private:
+  int64_t _internal_user_id() const;
+  void _internal_set_user_id(int64_t value);
+  public:
+
+  // int64 timestamp = 6;
+  void clear_timestamp();
+  int64_t timestamp() const;
+  void set_timestamp(int64_t value);
+  private:
+  int64_t _internal_timestamp() const;
+  void _internal_set_timestamp(int64_t value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:bridge.AgentSkillEvent)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::MapField<
+        AgentSkillEvent_HeadersEntry_DoNotUse,
+        std::string, std::string,
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_STRING,
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_STRING> headers_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr skill_name_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr event_type_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr payload_json_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr trace_id_;
+    int64_t user_id_;
+    int64_t timestamp_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_chat_2eproto;
+};
+// -------------------------------------------------------------------
+
+class AgentSkillEventAck final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:bridge.AgentSkillEventAck) */ {
+ public:
+  inline AgentSkillEventAck() : AgentSkillEventAck(nullptr) {}
+  ~AgentSkillEventAck() override;
+  explicit PROTOBUF_CONSTEXPR AgentSkillEventAck(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  AgentSkillEventAck(const AgentSkillEventAck& from);
+  AgentSkillEventAck(AgentSkillEventAck&& from) noexcept
+    : AgentSkillEventAck() {
+    *this = ::std::move(from);
+  }
+
+  inline AgentSkillEventAck& operator=(const AgentSkillEventAck& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline AgentSkillEventAck& operator=(AgentSkillEventAck&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const AgentSkillEventAck& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const AgentSkillEventAck* internal_default_instance() {
+    return reinterpret_cast<const AgentSkillEventAck*>(
+               &_AgentSkillEventAck_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    40;
+
+  friend void swap(AgentSkillEventAck& a, AgentSkillEventAck& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(AgentSkillEventAck* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(AgentSkillEventAck* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  AgentSkillEventAck* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<AgentSkillEventAck>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const AgentSkillEventAck& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const AgentSkillEventAck& from) {
+    AgentSkillEventAck::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(AgentSkillEventAck* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "bridge.AgentSkillEventAck";
+  }
+  protected:
+  explicit AgentSkillEventAck(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kErrorFieldNumber = 2,
+    kTraceIdFieldNumber = 3,
+    kSuccessFieldNumber = 1,
+  };
+  // string error = 2;
+  void clear_error();
+  const std::string& error() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_error(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_error();
+  PROTOBUF_NODISCARD std::string* release_error();
+  void set_allocated_error(std::string* error);
+  private:
+  const std::string& _internal_error() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_error(const std::string& value);
+  std::string* _internal_mutable_error();
+  public:
+
+  // string trace_id = 3;
+  void clear_trace_id();
+  const std::string& trace_id() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_trace_id(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_trace_id();
+  PROTOBUF_NODISCARD std::string* release_trace_id();
+  void set_allocated_trace_id(std::string* trace_id);
+  private:
+  const std::string& _internal_trace_id() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_trace_id(const std::string& value);
+  std::string* _internal_mutable_trace_id();
+  public:
+
+  // bool success = 1;
+  void clear_success();
+  bool success() const;
+  void set_success(bool value);
+  private:
+  bool _internal_success() const;
+  void _internal_set_success(bool value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:bridge.AgentSkillEventAck)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr error_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr trace_id_;
+    bool success_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_chat_2eproto;
+};
+// -------------------------------------------------------------------
+
 class RpcMessage final :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:bridge.RpcMessage) */ {
  public:
@@ -7279,7 +7818,7 @@ class RpcMessage final :
                &_RpcMessage_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    37;
+    41;
 
   friend void swap(RpcMessage& a, RpcMessage& b) {
     a.Swap(&b);
@@ -10008,6 +10547,8 @@ inline void PdfParseResponse::set_allocated_error(std::string* error) {
 
 // -------------------------------------------------------------------
 
+// -------------------------------------------------------------------
+
 // SandboxExecuteRequest
 
 // string prompt = 1;
@@ -10378,6 +10919,55 @@ inline void SandboxExecuteRequest::set_allocated_session_id(std::string* session
   }
 #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
   // @@protoc_insertion_point(field_set_allocated:bridge.SandboxExecuteRequest.session_id)
+}
+
+// int64 user_id = 9;
+inline void SandboxExecuteRequest::clear_user_id() {
+  _impl_.user_id_ = int64_t{0};
+}
+inline int64_t SandboxExecuteRequest::_internal_user_id() const {
+  return _impl_.user_id_;
+}
+inline int64_t SandboxExecuteRequest::user_id() const {
+  // @@protoc_insertion_point(field_get:bridge.SandboxExecuteRequest.user_id)
+  return _internal_user_id();
+}
+inline void SandboxExecuteRequest::_internal_set_user_id(int64_t value) {
+  
+  _impl_.user_id_ = value;
+}
+inline void SandboxExecuteRequest::set_user_id(int64_t value) {
+  _internal_set_user_id(value);
+  // @@protoc_insertion_point(field_set:bridge.SandboxExecuteRequest.user_id)
+}
+
+// map<string, string> metadata = 10;
+inline int SandboxExecuteRequest::_internal_metadata_size() const {
+  return _impl_.metadata_.size();
+}
+inline int SandboxExecuteRequest::metadata_size() const {
+  return _internal_metadata_size();
+}
+inline void SandboxExecuteRequest::clear_metadata() {
+  _impl_.metadata_.Clear();
+}
+inline const ::PROTOBUF_NAMESPACE_ID::Map< std::string, std::string >&
+SandboxExecuteRequest::_internal_metadata() const {
+  return _impl_.metadata_.GetMap();
+}
+inline const ::PROTOBUF_NAMESPACE_ID::Map< std::string, std::string >&
+SandboxExecuteRequest::metadata() const {
+  // @@protoc_insertion_point(field_map:bridge.SandboxExecuteRequest.metadata)
+  return _internal_metadata();
+}
+inline ::PROTOBUF_NAMESPACE_ID::Map< std::string, std::string >*
+SandboxExecuteRequest::_internal_mutable_metadata() {
+  return _impl_.metadata_.MutableMap();
+}
+inline ::PROTOBUF_NAMESPACE_ID::Map< std::string, std::string >*
+SandboxExecuteRequest::mutable_metadata() {
+  // @@protoc_insertion_point(field_mutable_map:bridge.SandboxExecuteRequest.metadata)
+  return _internal_mutable_metadata();
 }
 
 // -------------------------------------------------------------------
@@ -13907,6 +14497,405 @@ inline void CareerAdviceRequest::set_allocated_learning_advice(std::string* lear
 
 // -------------------------------------------------------------------
 
+// -------------------------------------------------------------------
+
+// AgentSkillEvent
+
+// int64 user_id = 1;
+inline void AgentSkillEvent::clear_user_id() {
+  _impl_.user_id_ = int64_t{0};
+}
+inline int64_t AgentSkillEvent::_internal_user_id() const {
+  return _impl_.user_id_;
+}
+inline int64_t AgentSkillEvent::user_id() const {
+  // @@protoc_insertion_point(field_get:bridge.AgentSkillEvent.user_id)
+  return _internal_user_id();
+}
+inline void AgentSkillEvent::_internal_set_user_id(int64_t value) {
+  
+  _impl_.user_id_ = value;
+}
+inline void AgentSkillEvent::set_user_id(int64_t value) {
+  _internal_set_user_id(value);
+  // @@protoc_insertion_point(field_set:bridge.AgentSkillEvent.user_id)
+}
+
+// string skill_name = 2;
+inline void AgentSkillEvent::clear_skill_name() {
+  _impl_.skill_name_.ClearToEmpty();
+}
+inline const std::string& AgentSkillEvent::skill_name() const {
+  // @@protoc_insertion_point(field_get:bridge.AgentSkillEvent.skill_name)
+  return _internal_skill_name();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void AgentSkillEvent::set_skill_name(ArgT0&& arg0, ArgT... args) {
+ 
+ _impl_.skill_name_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:bridge.AgentSkillEvent.skill_name)
+}
+inline std::string* AgentSkillEvent::mutable_skill_name() {
+  std::string* _s = _internal_mutable_skill_name();
+  // @@protoc_insertion_point(field_mutable:bridge.AgentSkillEvent.skill_name)
+  return _s;
+}
+inline const std::string& AgentSkillEvent::_internal_skill_name() const {
+  return _impl_.skill_name_.Get();
+}
+inline void AgentSkillEvent::_internal_set_skill_name(const std::string& value) {
+  
+  _impl_.skill_name_.Set(value, GetArenaForAllocation());
+}
+inline std::string* AgentSkillEvent::_internal_mutable_skill_name() {
+  
+  return _impl_.skill_name_.Mutable(GetArenaForAllocation());
+}
+inline std::string* AgentSkillEvent::release_skill_name() {
+  // @@protoc_insertion_point(field_release:bridge.AgentSkillEvent.skill_name)
+  return _impl_.skill_name_.Release();
+}
+inline void AgentSkillEvent::set_allocated_skill_name(std::string* skill_name) {
+  if (skill_name != nullptr) {
+    
+  } else {
+    
+  }
+  _impl_.skill_name_.SetAllocated(skill_name, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.skill_name_.IsDefault()) {
+    _impl_.skill_name_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:bridge.AgentSkillEvent.skill_name)
+}
+
+// string event_type = 3;
+inline void AgentSkillEvent::clear_event_type() {
+  _impl_.event_type_.ClearToEmpty();
+}
+inline const std::string& AgentSkillEvent::event_type() const {
+  // @@protoc_insertion_point(field_get:bridge.AgentSkillEvent.event_type)
+  return _internal_event_type();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void AgentSkillEvent::set_event_type(ArgT0&& arg0, ArgT... args) {
+ 
+ _impl_.event_type_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:bridge.AgentSkillEvent.event_type)
+}
+inline std::string* AgentSkillEvent::mutable_event_type() {
+  std::string* _s = _internal_mutable_event_type();
+  // @@protoc_insertion_point(field_mutable:bridge.AgentSkillEvent.event_type)
+  return _s;
+}
+inline const std::string& AgentSkillEvent::_internal_event_type() const {
+  return _impl_.event_type_.Get();
+}
+inline void AgentSkillEvent::_internal_set_event_type(const std::string& value) {
+  
+  _impl_.event_type_.Set(value, GetArenaForAllocation());
+}
+inline std::string* AgentSkillEvent::_internal_mutable_event_type() {
+  
+  return _impl_.event_type_.Mutable(GetArenaForAllocation());
+}
+inline std::string* AgentSkillEvent::release_event_type() {
+  // @@protoc_insertion_point(field_release:bridge.AgentSkillEvent.event_type)
+  return _impl_.event_type_.Release();
+}
+inline void AgentSkillEvent::set_allocated_event_type(std::string* event_type) {
+  if (event_type != nullptr) {
+    
+  } else {
+    
+  }
+  _impl_.event_type_.SetAllocated(event_type, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.event_type_.IsDefault()) {
+    _impl_.event_type_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:bridge.AgentSkillEvent.event_type)
+}
+
+// string payload_json = 4;
+inline void AgentSkillEvent::clear_payload_json() {
+  _impl_.payload_json_.ClearToEmpty();
+}
+inline const std::string& AgentSkillEvent::payload_json() const {
+  // @@protoc_insertion_point(field_get:bridge.AgentSkillEvent.payload_json)
+  return _internal_payload_json();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void AgentSkillEvent::set_payload_json(ArgT0&& arg0, ArgT... args) {
+ 
+ _impl_.payload_json_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:bridge.AgentSkillEvent.payload_json)
+}
+inline std::string* AgentSkillEvent::mutable_payload_json() {
+  std::string* _s = _internal_mutable_payload_json();
+  // @@protoc_insertion_point(field_mutable:bridge.AgentSkillEvent.payload_json)
+  return _s;
+}
+inline const std::string& AgentSkillEvent::_internal_payload_json() const {
+  return _impl_.payload_json_.Get();
+}
+inline void AgentSkillEvent::_internal_set_payload_json(const std::string& value) {
+  
+  _impl_.payload_json_.Set(value, GetArenaForAllocation());
+}
+inline std::string* AgentSkillEvent::_internal_mutable_payload_json() {
+  
+  return _impl_.payload_json_.Mutable(GetArenaForAllocation());
+}
+inline std::string* AgentSkillEvent::release_payload_json() {
+  // @@protoc_insertion_point(field_release:bridge.AgentSkillEvent.payload_json)
+  return _impl_.payload_json_.Release();
+}
+inline void AgentSkillEvent::set_allocated_payload_json(std::string* payload_json) {
+  if (payload_json != nullptr) {
+    
+  } else {
+    
+  }
+  _impl_.payload_json_.SetAllocated(payload_json, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.payload_json_.IsDefault()) {
+    _impl_.payload_json_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:bridge.AgentSkillEvent.payload_json)
+}
+
+// string trace_id = 5;
+inline void AgentSkillEvent::clear_trace_id() {
+  _impl_.trace_id_.ClearToEmpty();
+}
+inline const std::string& AgentSkillEvent::trace_id() const {
+  // @@protoc_insertion_point(field_get:bridge.AgentSkillEvent.trace_id)
+  return _internal_trace_id();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void AgentSkillEvent::set_trace_id(ArgT0&& arg0, ArgT... args) {
+ 
+ _impl_.trace_id_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:bridge.AgentSkillEvent.trace_id)
+}
+inline std::string* AgentSkillEvent::mutable_trace_id() {
+  std::string* _s = _internal_mutable_trace_id();
+  // @@protoc_insertion_point(field_mutable:bridge.AgentSkillEvent.trace_id)
+  return _s;
+}
+inline const std::string& AgentSkillEvent::_internal_trace_id() const {
+  return _impl_.trace_id_.Get();
+}
+inline void AgentSkillEvent::_internal_set_trace_id(const std::string& value) {
+  
+  _impl_.trace_id_.Set(value, GetArenaForAllocation());
+}
+inline std::string* AgentSkillEvent::_internal_mutable_trace_id() {
+  
+  return _impl_.trace_id_.Mutable(GetArenaForAllocation());
+}
+inline std::string* AgentSkillEvent::release_trace_id() {
+  // @@protoc_insertion_point(field_release:bridge.AgentSkillEvent.trace_id)
+  return _impl_.trace_id_.Release();
+}
+inline void AgentSkillEvent::set_allocated_trace_id(std::string* trace_id) {
+  if (trace_id != nullptr) {
+    
+  } else {
+    
+  }
+  _impl_.trace_id_.SetAllocated(trace_id, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.trace_id_.IsDefault()) {
+    _impl_.trace_id_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:bridge.AgentSkillEvent.trace_id)
+}
+
+// int64 timestamp = 6;
+inline void AgentSkillEvent::clear_timestamp() {
+  _impl_.timestamp_ = int64_t{0};
+}
+inline int64_t AgentSkillEvent::_internal_timestamp() const {
+  return _impl_.timestamp_;
+}
+inline int64_t AgentSkillEvent::timestamp() const {
+  // @@protoc_insertion_point(field_get:bridge.AgentSkillEvent.timestamp)
+  return _internal_timestamp();
+}
+inline void AgentSkillEvent::_internal_set_timestamp(int64_t value) {
+  
+  _impl_.timestamp_ = value;
+}
+inline void AgentSkillEvent::set_timestamp(int64_t value) {
+  _internal_set_timestamp(value);
+  // @@protoc_insertion_point(field_set:bridge.AgentSkillEvent.timestamp)
+}
+
+// map<string, string> headers = 7;
+inline int AgentSkillEvent::_internal_headers_size() const {
+  return _impl_.headers_.size();
+}
+inline int AgentSkillEvent::headers_size() const {
+  return _internal_headers_size();
+}
+inline void AgentSkillEvent::clear_headers() {
+  _impl_.headers_.Clear();
+}
+inline const ::PROTOBUF_NAMESPACE_ID::Map< std::string, std::string >&
+AgentSkillEvent::_internal_headers() const {
+  return _impl_.headers_.GetMap();
+}
+inline const ::PROTOBUF_NAMESPACE_ID::Map< std::string, std::string >&
+AgentSkillEvent::headers() const {
+  // @@protoc_insertion_point(field_map:bridge.AgentSkillEvent.headers)
+  return _internal_headers();
+}
+inline ::PROTOBUF_NAMESPACE_ID::Map< std::string, std::string >*
+AgentSkillEvent::_internal_mutable_headers() {
+  return _impl_.headers_.MutableMap();
+}
+inline ::PROTOBUF_NAMESPACE_ID::Map< std::string, std::string >*
+AgentSkillEvent::mutable_headers() {
+  // @@protoc_insertion_point(field_mutable_map:bridge.AgentSkillEvent.headers)
+  return _internal_mutable_headers();
+}
+
+// -------------------------------------------------------------------
+
+// AgentSkillEventAck
+
+// bool success = 1;
+inline void AgentSkillEventAck::clear_success() {
+  _impl_.success_ = false;
+}
+inline bool AgentSkillEventAck::_internal_success() const {
+  return _impl_.success_;
+}
+inline bool AgentSkillEventAck::success() const {
+  // @@protoc_insertion_point(field_get:bridge.AgentSkillEventAck.success)
+  return _internal_success();
+}
+inline void AgentSkillEventAck::_internal_set_success(bool value) {
+  
+  _impl_.success_ = value;
+}
+inline void AgentSkillEventAck::set_success(bool value) {
+  _internal_set_success(value);
+  // @@protoc_insertion_point(field_set:bridge.AgentSkillEventAck.success)
+}
+
+// string error = 2;
+inline void AgentSkillEventAck::clear_error() {
+  _impl_.error_.ClearToEmpty();
+}
+inline const std::string& AgentSkillEventAck::error() const {
+  // @@protoc_insertion_point(field_get:bridge.AgentSkillEventAck.error)
+  return _internal_error();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void AgentSkillEventAck::set_error(ArgT0&& arg0, ArgT... args) {
+ 
+ _impl_.error_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:bridge.AgentSkillEventAck.error)
+}
+inline std::string* AgentSkillEventAck::mutable_error() {
+  std::string* _s = _internal_mutable_error();
+  // @@protoc_insertion_point(field_mutable:bridge.AgentSkillEventAck.error)
+  return _s;
+}
+inline const std::string& AgentSkillEventAck::_internal_error() const {
+  return _impl_.error_.Get();
+}
+inline void AgentSkillEventAck::_internal_set_error(const std::string& value) {
+  
+  _impl_.error_.Set(value, GetArenaForAllocation());
+}
+inline std::string* AgentSkillEventAck::_internal_mutable_error() {
+  
+  return _impl_.error_.Mutable(GetArenaForAllocation());
+}
+inline std::string* AgentSkillEventAck::release_error() {
+  // @@protoc_insertion_point(field_release:bridge.AgentSkillEventAck.error)
+  return _impl_.error_.Release();
+}
+inline void AgentSkillEventAck::set_allocated_error(std::string* error) {
+  if (error != nullptr) {
+    
+  } else {
+    
+  }
+  _impl_.error_.SetAllocated(error, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.error_.IsDefault()) {
+    _impl_.error_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:bridge.AgentSkillEventAck.error)
+}
+
+// string trace_id = 3;
+inline void AgentSkillEventAck::clear_trace_id() {
+  _impl_.trace_id_.ClearToEmpty();
+}
+inline const std::string& AgentSkillEventAck::trace_id() const {
+  // @@protoc_insertion_point(field_get:bridge.AgentSkillEventAck.trace_id)
+  return _internal_trace_id();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void AgentSkillEventAck::set_trace_id(ArgT0&& arg0, ArgT... args) {
+ 
+ _impl_.trace_id_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:bridge.AgentSkillEventAck.trace_id)
+}
+inline std::string* AgentSkillEventAck::mutable_trace_id() {
+  std::string* _s = _internal_mutable_trace_id();
+  // @@protoc_insertion_point(field_mutable:bridge.AgentSkillEventAck.trace_id)
+  return _s;
+}
+inline const std::string& AgentSkillEventAck::_internal_trace_id() const {
+  return _impl_.trace_id_.Get();
+}
+inline void AgentSkillEventAck::_internal_set_trace_id(const std::string& value) {
+  
+  _impl_.trace_id_.Set(value, GetArenaForAllocation());
+}
+inline std::string* AgentSkillEventAck::_internal_mutable_trace_id() {
+  
+  return _impl_.trace_id_.Mutable(GetArenaForAllocation());
+}
+inline std::string* AgentSkillEventAck::release_trace_id() {
+  // @@protoc_insertion_point(field_release:bridge.AgentSkillEventAck.trace_id)
+  return _impl_.trace_id_.Release();
+}
+inline void AgentSkillEventAck::set_allocated_trace_id(std::string* trace_id) {
+  if (trace_id != nullptr) {
+    
+  } else {
+    
+  }
+  _impl_.trace_id_.SetAllocated(trace_id, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.trace_id_.IsDefault()) {
+    _impl_.trace_id_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:bridge.AgentSkillEventAck.trace_id)
+}
+
+// -------------------------------------------------------------------
+
 // RpcMessage
 
 // .bridge.RpcMessage.Type type = 1;
@@ -14172,6 +15161,14 @@ inline void RpcMessage::set_allocated_error_desc(std::string* error_desc) {
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

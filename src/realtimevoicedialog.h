@@ -61,6 +61,8 @@ private:
     int m_userId;
     int m_botId;
     QString m_botName;
+    QString m_ttsProvider;
+    QString m_ttsVoice;
     
     QWebSocket *m_webSocket;
     QString m_webSocketUrl;

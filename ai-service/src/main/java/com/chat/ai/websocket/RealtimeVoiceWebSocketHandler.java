@@ -5,6 +5,7 @@ import com.alibaba.dashscope.audio.asr.recognition.RecognitionParam;
 import com.alibaba.dashscope.audio.asr.recognition.RecognitionResult;
 import com.alibaba.dashscope.audio.qwen_tts_realtime.*;
 import com.alibaba.dashscope.common.ResultCallback;
+import com.chat.ai.client.ExternalTtsClient;
 import com.chat.ai.config.VoiceConfig;
 import com.chat.ai.service.AiPersonaRegistry;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -34,6 +35,7 @@ public class RealtimeVoiceWebSocketHandler extends BinaryWebSocketHandler {
 
     private final VoiceConfig voiceConfig;
     private final ChatClient fastChatClient;
+    private final ExternalTtsClient externalTtsClient;
     private final ObjectMapper objectMapper;
 
     private final Map<String, SessionContext> sessions = new ConcurrentHashMap<>();
@@ -41,9 +43,10 @@ public class RealtimeVoiceWebSocketHandler extends BinaryWebSocketHandler {
     private static final int SAMPLE_RATE = 16000;
     private static final int AUDIO_CHUNK_SIZE = 3200;
 
-    public RealtimeVoiceWebSocketHandler(VoiceConfig voiceConfig, ChatClient fastChatClient) {
+    public RealtimeVoiceWebSocketHandler(VoiceConfig voiceConfig, ChatClient fastChatClient, ExternalTtsClient externalTtsClient) {
         this.voiceConfig = voiceConfig;
         this.fastChatClient = fastChatClient;
+        this.externalTtsClient = externalTtsClient;
         this.objectMapper = new ObjectMapper();
     }
 
@@ -124,8 +127,20 @@ public class RealtimeVoiceWebSocketHandler extends BinaryWebSocketHandler {
         ctx.botId = botId;
         ctx.botName = AiPersonaRegistry.getBotName(botId);
 
-        log.info("[实时语音] 开始会话: sessionId={}, userId={}, botId={}({})",
-            ctx.sessionId, userId, botId, ctx.botName);
+        if (jsonNode.has("asr_config")) {
+            JsonNode asrConfig = jsonNode.get("asr_config");
+            ctx.asrProvider = asrConfig.has("provider") ? asrConfig.get("provider").asText() : "alibaba";
+            ctx.asrModel = asrConfig.has("model") ? asrConfig.get("model").asText() : null;
+        }
+
+        if (jsonNode.has("tts_config")) {
+            JsonNode ttsConfig = jsonNode.get("tts_config");
+            ctx.ttsProvider = ttsConfig.has("provider") ? ttsConfig.get("provider").asText() : "alibaba";
+            ctx.ttsVoice = ttsConfig.has("voice") ? ttsConfig.get("voice").asText() : null;
+        }
+
+        log.info("[实时语音] 开始会话: sessionId={}, userId={}, botId={}({}), asr={}/{}, tts={}/voice={}",
+            ctx.sessionId, userId, botId, ctx.botName, ctx.asrProvider, ctx.asrModel, ctx.ttsProvider, ctx.ttsVoice);
 
         startAsr(ctx);
 
@@ -138,7 +153,7 @@ public class RealtimeVoiceWebSocketHandler extends BinaryWebSocketHandler {
 
     private void startAsr(SessionContext ctx) throws Exception {
         String apiKey = voiceConfig.getAliyun().getApiKey();
-        String asrModel = voiceConfig.getAliyun().getAsrModel();
+        String asrModel = ctx.asrModel != null ? ctx.asrModel : voiceConfig.getAliyun().getAsrModel();
 
         log.info("[实时语音] 启动ASR: model={}, apiKey前缀={}", asrModel,
             apiKey != null && apiKey.length() > 8 ? apiKey.substring(0, 8) + "..." : "null");
@@ -214,102 +229,161 @@ public class RealtimeVoiceWebSocketHandler extends BinaryWebSocketHandler {
             return;
         }
 
+        boolean useAlibabaTts = "alibaba".equals(ctx.ttsProvider);
+
         ctx.executorService.submit(() -> {
             try {
-                log.info("[实时语音] 处理句子: {}", text);
+                log.info("[实时语音] 处理句子: {}, ttsProvider={}", text, ctx.ttsProvider);
 
                 sendJsonMessage(ctx.session, "llm_start", Map.of("text", text));
 
                 SystemMessage systemMessage = AiPersonaRegistry.getPersonaByBotId(ctx.botId);
 
-                Flux<String> responseFlux = fastChatClient.prompt()
-                    .system(systemMessage.getContent())
-                    .user(text)
-                    .stream()
-                    .content();
-
-                StringBuilder fullResponse = new StringBuilder();
-                StringBuilder buffer = new StringBuilder();
-                AtomicBoolean ttsFailed = new AtomicBoolean(false);
-
-                Disposable subscription = responseFlux.subscribe(
-                    chunk -> {
-                        if (ctx.isInterrupted.get() || ctx.isStopped.get()) return;
-                        if (ttsFailed.get()) return;
-
-                        fullResponse.append(chunk);
-                        buffer.append(chunk);
-                        sendJsonMessage(ctx.session, "llm_chunk", Map.of("text", chunk));
-
-                        if (shouldTriggerTts(buffer.toString())) {
-                            String ttsText = buffer.toString();
-                            buffer.setLength(0);
-
-                            if (ctx.ttsRef.get() == null && !ttsFailed.get()) {
-                                try {
-                                    QwenTtsRealtime tts = startTts(ctx);
-                                    ctx.ttsRef.set(tts);
-                                } catch (Exception e) {
-                                    log.error("[实时语音] 启动TTS失败，后续文本将不再发送TTS", e);
-                                    ttsFailed.set(true);
-                                    return;
-                                }
-                            }
-
-                            if (ctx.ttsRef.get() != null && !ttsFailed.get()) {
-                                try {
-                                    ctx.ttsRef.get().appendText(ttsText);
-                                } catch (Exception e) {
-                                    if (e.getMessage() != null && e.getMessage().contains("already closed")) {
-                                        log.error("[实时语音] TTS已关闭，中断后续LLM输出");
-                                        ttsFailed.set(true);
-                                        ctx.ttsRef.set(null);
-                                    } else {
-                                        log.error("[实时语音] 发送TTS文本失败", e);
-                                        ttsFailed.set(true);
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    error -> {
-                        log.error("[实时语音] LLM错误", error);
-                        sendJsonMessage(ctx.session, "error", Map.of("message", error.getMessage()));
-                    },
-                    () -> {
-                        if (ctx.isInterrupted.get() || ctx.isStopped.get()) return;
-
-                        if (!ttsFailed.get()) {
-                            String remaining = buffer.toString();
-                            if (!remaining.isEmpty() && ctx.ttsRef.get() != null) {
-                                try {
-                                    ctx.ttsRef.get().appendText(remaining);
-                                } catch (Exception e) {
-                                    log.warn("[实时语音] 发送剩余TTS文本失败: {}", e.getMessage());
-                                }
-                            }
-
-                            if (ctx.ttsRef.get() != null) {
-                                try {
-                                    ctx.ttsRef.get().finish();
-                                } catch (Exception e) {
-                                    log.warn("[实时语音] 结束TTS失败: {}", e.getMessage());
-                                }
-                            }
-                        }
-
-                        ctx.lastResponse = fullResponse.toString();
-                        sendJsonMessage(ctx.session, "llm_end", Map.of("fullText", fullResponse.toString()));
-                        log.info("[实时语音] LLM完成: {} 字符", fullResponse.length());
-                    }
-                );
-
-                ctx.currentSubscription.set(subscription);
+                if (useAlibabaTts) {
+                    processWithAlibabaTts(ctx, text, systemMessage);
+                } else {
+                    processWithExternalTts(ctx, text, systemMessage);
+                }
 
             } catch (Exception e) {
                 log.error("[实时语音] 处理句子失败", e);
             }
         });
+    }
+
+    private void processWithAlibabaTts(SessionContext ctx, String text, SystemMessage systemMessage) {
+        Flux<String> responseFlux = fastChatClient.prompt()
+            .system(systemMessage.getContent())
+            .user(text)
+            .stream()
+            .content();
+
+        StringBuilder fullResponse = new StringBuilder();
+        StringBuilder buffer = new StringBuilder();
+        AtomicBoolean ttsFailed = new AtomicBoolean(false);
+
+        Disposable subscription = responseFlux.subscribe(
+            chunk -> {
+                if (ctx.isInterrupted.get() || ctx.isStopped.get()) return;
+                if (ttsFailed.get()) return;
+
+                fullResponse.append(chunk);
+                buffer.append(chunk);
+                sendJsonMessage(ctx.session, "llm_chunk", Map.of("text", chunk));
+
+                if (shouldTriggerTts(buffer.toString())) {
+                    String ttsText = buffer.toString();
+                    buffer.setLength(0);
+
+                    if (ctx.ttsRef.get() == null && !ttsFailed.get()) {
+                        try {
+                            QwenTtsRealtime tts = startAlibabaTts(ctx, ctx.ttsVoice != null ? ctx.ttsVoice : voiceConfig.getAliyun().getRealtimeTtsVoice());
+                            ctx.ttsRef.set(tts);
+                        } catch (Exception e) {
+                            log.error("[实时语音] 启动阿里云TTS失败，后续文本将不再发送TTS", e);
+                            ttsFailed.set(true);
+                            return;
+                        }
+                    }
+
+                    if (ctx.ttsRef.get() != null && !ttsFailed.get()) {
+                        try {
+                            ctx.ttsRef.get().appendText(ttsText);
+                        } catch (Exception e) {
+                            if (e.getMessage() != null && e.getMessage().contains("already closed")) {
+                                log.error("[实时语音] TTS已关闭，中断后续LLM输出");
+                                ttsFailed.set(true);
+                                ctx.ttsRef.set(null);
+                            } else {
+                                log.error("[实时语音] 发送TTS文本失败", e);
+                                ttsFailed.set(true);
+                            }
+                        }
+                    }
+                }
+            },
+            error -> {
+                log.error("[实时语音] LLM错误", error);
+                sendJsonMessage(ctx.session, "error", Map.of("message", error.getMessage()));
+            },
+            () -> {
+                if (ctx.isInterrupted.get() || ctx.isStopped.get()) return;
+
+                if (!ttsFailed.get()) {
+                    String remaining = buffer.toString();
+                    if (!remaining.isEmpty() && ctx.ttsRef.get() != null) {
+                        try {
+                            ctx.ttsRef.get().appendText(remaining);
+                        } catch (Exception e) {
+                            log.warn("[实时语音] 发送剩余TTS文本失败: {}", e.getMessage());
+                        }
+                    }
+
+                    if (ctx.ttsRef.get() != null) {
+                        try {
+                            ctx.ttsRef.get().finish();
+                        } catch (Exception e) {
+                            log.warn("[实时语音] 结束TTS失败: {}", e.getMessage());
+                        }
+                    }
+                }
+
+                ctx.lastResponse = fullResponse.toString();
+                sendJsonMessage(ctx.session, "llm_end", Map.of("fullText", fullResponse.toString()));
+                log.info("[实时语音] LLM完成(阿里云TTS): {} 字符", fullResponse.length());
+            }
+        );
+
+        ctx.currentSubscription.set(subscription);
+    }
+
+    private void processWithExternalTts(SessionContext ctx, String text, SystemMessage systemMessage) {
+        log.info("🔥 [兵分两路] 成功进入外部 HTTP TTS 轨道！provider={}, voice={}", ctx.ttsProvider, ctx.ttsVoice);
+
+        String fullText;
+        try {
+            fullText = fastChatClient.prompt()
+                .system(systemMessage.getContent())
+                .user(text)
+                .call()
+                .content();
+        } catch (Exception e) {
+            log.error("[实时语音] LLM调用失败", e);
+            sendJsonMessage(ctx.session, "error", Map.of("message", "AI回复失败"));
+            return;
+        }
+
+        if (fullText == null || fullText.isEmpty()) {
+            sendJsonMessage(ctx.session, "llm_end", Map.of("fullText", ""));
+            return;
+        }
+
+        sendJsonMessage(ctx.session, "llm_chunk", Map.of("text", fullText));
+
+        String provider = ctx.ttsProvider;
+        String voice = ctx.ttsVoice;
+
+        ctx.executorService.submit(() -> {
+            try {
+                log.info("[实时语音] 调用外部TTS: provider={}, voice={}, text长度={}",
+                    provider, voice, fullText.length());
+
+                byte[] audioBytes = externalTtsClient.synthesize(fullText, provider, voice);
+
+                if (audioBytes != null && audioBytes.length > 0 && ctx.session.isOpen()) {
+                    sendBinaryMessage(ctx.session, audioBytes);
+                    log.info("[实时语音] 外部TTS音频已发送: {} bytes", audioBytes.length);
+                } else {
+                    log.warn("[实时语音] 外部TTS未生成音频");
+                }
+            } catch (Exception e) {
+                log.error("[实时语音] 外部TTS合成失败", e);
+            }
+        });
+
+        ctx.lastResponse = fullText;
+        sendJsonMessage(ctx.session, "llm_end", Map.of("fullText", fullText));
+        log.info("[实时语音] LLM完成(外部TTS {}): {} 字符", provider, fullText.length());
     }
 
     private boolean shouldTriggerTts(String text) {
@@ -321,13 +395,11 @@ public class RealtimeVoiceWebSocketHandler extends BinaryWebSocketHandler {
         return false;
     }
 
-    private QwenTtsRealtime startTts(SessionContext ctx) throws Exception {
+    private QwenTtsRealtime startAlibabaTts(SessionContext ctx, String voiceName) throws Exception {
         String apiKey = voiceConfig.getAliyun().getApiKey();
         String ttsModel = voiceConfig.getAliyun().getRealtimeTtsModel();
-        String voiceName = voiceConfig.getAliyun().getRealtimeTtsVoice();
 
-        log.info("[实时语音] 启动TTS: model={}, voice={}, apiKey前缀={}", ttsModel, voiceName,
-            apiKey != null && apiKey.length() > 8 ? apiKey.substring(0, 8) + "..." : "null");
+        log.info("[实时语音] 启动阿里云TTS: model={}, voice={}", ttsModel, voiceName);
 
         QwenTtsRealtimeParam param = QwenTtsRealtimeParam.builder()
             .model(ttsModel)
@@ -537,6 +609,11 @@ public class RealtimeVoiceWebSocketHandler extends BinaryWebSocketHandler {
         int botId;
         String botName;
         String lastResponse;
+
+        String asrProvider = "alibaba";
+        String asrModel;
+        String ttsProvider = "alibaba";
+        String ttsVoice;
 
         Recognition recognizer;
         ResultCallback<RecognitionResult> asrCallback;

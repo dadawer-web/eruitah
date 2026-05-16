@@ -124,6 +124,13 @@ async def handle_swarm_chat(rpc_msg: chat_pb2.RpcMessage):
         yield _make_finish_event("error", "error", "prompt is empty")
         return
 
+    try:
+        user_id = request.user_id if request.user_id else 0
+        if user_id == 0:
+            user_id = int(request.metadata.get("user_id", "0"))
+    except (ValueError, TypeError):
+        user_id = 0
+
     q: Queue = Queue()
     loop = asyncio.get_event_loop()
 

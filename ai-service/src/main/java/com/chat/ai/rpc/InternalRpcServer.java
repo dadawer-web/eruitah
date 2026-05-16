@@ -1,5 +1,6 @@
 package com.chat.ai.rpc;
 
+import com.google.protobuf.ByteString;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
@@ -72,17 +73,25 @@ public class InternalRpcServer {
                 requestHandler.accept(msg);
 
                 try {
-                    ChatProto.InternalForwardRequest request = ChatProto.InternalForwardRequest.parseFrom(msg.getPayload());
+                    String method = msg.getMethodName();
+                    ByteString responsePayload;
 
-                    ChatProto.InternalForwardResponse response = ChatProto.InternalForwardResponse.newBuilder()
-                            .setSuccess(true)
-                            .setTraceId(request.getTraceId())
-                            .build();
+                    if ("UpdateCareerProfile".equals(method)) {
+                        ChatProto.CareerAdviceRequest request = ChatProto.CareerAdviceRequest.parseFrom(msg.getPayload());
+                        responsePayload = ChatProto.CareerAdviceResponse.newBuilder().build().toByteString();
+                    } else {
+                        ChatProto.InternalForwardRequest request = ChatProto.InternalForwardRequest.parseFrom(msg.getPayload());
+                        ChatProto.InternalForwardResponse response = ChatProto.InternalForwardResponse.newBuilder()
+                                .setSuccess(true)
+                                .setTraceId(request.getTraceId())
+                                .build();
+                        responsePayload = response.toByteString();
+                    }
 
                     ChatProto.RpcMessage responseMsg = ChatProto.RpcMessage.newBuilder()
                             .setType(ChatProto.RpcMessage.Type.RESPONSE)
                             .setId(msg.getId())
-                            .setPayload(response.toByteString())
+                            .setPayload(responsePayload)
                             .build();
 
                     ByteBuf buf = ctx.alloc().buffer();

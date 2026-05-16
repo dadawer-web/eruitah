@@ -155,6 +155,7 @@ async def _run_agent_async(
     main_repo_dir: Optional[str] = None,
     auto_approve: bool = False,
     use_swarm: bool = False,
+    user_id: int = 0,
 ):
     """
     双模引擎异步适配器
@@ -203,6 +204,7 @@ async def _run_agent_async(
                     task_id=task_id,
                     main_repo_dir=main_repo_dir,
                     auto_approve=auto_approve,
+                    user_id=user_id,
                 ):
                     loop.call_soon_threadsafe(queue.put_nowait, event)
         except Exception as e:
@@ -931,6 +933,11 @@ async def websocket_coding(websocket: WebSocket):
 
             auto_approve = data.get("auto_approve", False)
             use_swarm = data.get("use_swarm", False)
+            user_id = data.get("user_id") or 0
+            try:
+                user_id = int(user_id)
+            except (ValueError, TypeError):
+                user_id = 0
 
             agent_params = {
                 "user_input": user_input,
@@ -946,6 +953,7 @@ async def websocket_coding(websocket: WebSocket):
                 "start_turn": start_turn,
                 "auto_approve": auto_approve,
                 "use_swarm": use_swarm,
+                "user_id": user_id,
             }
 
             engine_name = "🧠 Swarm (多智能体)" if use_swarm else "⚡ 单体 Agent"

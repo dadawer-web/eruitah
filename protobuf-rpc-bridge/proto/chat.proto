@@ -132,6 +132,8 @@ message SandboxExecuteRequest {
     string base_url = 6;
     string provider = 7;
     string session_id = 8;
+    int64 user_id = 9;
+    map<string, string> metadata = 10;
 }
 
 message SandboxExecuteResponse {
@@ -252,6 +254,7 @@ enum InternalMsgType {
     SANDBOX_EXECUTE = 11;
     EXPERIENCE_UPDATE = 12;
     CAREER_ADVICE = 13;
+    SKILL_EVENT = 14;
 }
 
 message InternalForwardRequest {
@@ -291,7 +294,7 @@ message InternalPushResponse {
     int32 delivered_count = 4;
 }
 
-// ==================== AI 职业导师 ====================
+// ==================== AI 职业导师 (legacy, 保留兼容) ====================
 
 message CareerAdviceRequest {
     int64 user_id = 1;
@@ -303,11 +306,30 @@ message CareerAdviceRequest {
 message CareerAdviceResponse {
 }
 
+// ==================== Agent Skill 事件总线 (可扩展) ====================
+
+message AgentSkillEvent {
+    int64 user_id = 1;
+    string skill_name = 2;
+    string event_type = 3;
+    string payload_json = 4;
+    string trace_id = 5;
+    int64 timestamp = 6;
+    map<string, string> headers = 7;
+}
+
+message AgentSkillEventAck {
+    bool success = 1;
+    string error = 2;
+    string trace_id = 3;
+}
+
 service InternalRouterService {
     rpc ForwardToJava(InternalForwardRequest) returns (InternalForwardResponse);
     rpc PushToClient(InternalPushRequest) returns (InternalPushResponse);
     rpc StreamToClient(InternalPushRequest) returns (stream InternalPushResponse);
     rpc UpdateCareerProfile(CareerAdviceRequest) returns (CareerAdviceResponse);
+    rpc EmitSkillEvent(AgentSkillEvent) returns (AgentSkillEventAck);
 }
 
 // ==================== RPC 消息封装 ====================

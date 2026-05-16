@@ -57,6 +57,39 @@ public class CareerAdviceService {
         }
     }
 
+    public void saveAndPushProfile(int userId, List<String> skills,
+                                    String resumeHighlight, String learningAdvice) {
+        try {
+            lightUpSkillsInNeo4j(userId, skills);
+
+            saveCareerProfile(userId, skills, resumeHighlight, learningAdvice);
+
+            pushCareerAdviceToCpp(userId, skills, resumeHighlight, learningAdvice);
+
+            log.info("[CareerAdvice] Profile saved and pushed for user={}: skills={}", userId, skills.size());
+        } catch (Exception e) {
+            log.error("[CareerAdvice] Error saving/pushing profile for user={}: {}", userId, e.getMessage(), e);
+        }
+    }
+
+    private void lightUpSkillsInNeo4j(int userId, List<String> skills) {
+        String userIdStr = String.valueOf(userId);
+        for (String skill : skills) {
+            try {
+                neo4jClient.query(
+                        "MERGE (s:Skill {name: $skillName}) " +
+                        "MERGE (u:User {userId: $userId}) " +
+                        "MERGE (u)-[:MASTERED]->(s)"
+                    ).bind(skill).to("skillName")
+                    .bind(userIdStr).to("userId")
+                    .run();
+            } catch (Exception e) {
+                log.warn("[CareerAdvice] Failed to light up skill '{}' for user={}: {}", skill, userId, e.getMessage());
+            }
+        }
+        log.info("[CareerAdvice] Lit up {} skills in Neo4j for user={}", skills.size(), userId);
+    }
+
     private Set<String> getMasteredConcepts(long userId) {
         Set<String> concepts = new HashSet<>();
         try {

@@ -10,6 +10,8 @@ RealtimeVoiceDialog::RealtimeVoiceDialog(int userId, int botId, QWidget *parent)
     : QDialog(parent)
     , m_userId(userId)
     , m_botId(botId)
+    , m_ttsProvider("xiaomi")
+    , m_ttsVoice("冰糖")
     , m_webSocket(nullptr)
     , m_webSocketUrl("ws://localhost:8081/api/voice/stream")
     , m_isConnected(false)
@@ -255,10 +257,21 @@ void RealtimeVoiceDialog::onConnected()
     m_isConnected = true;
     m_statusLabel->setText("已连接，正在启动会话...");
     qDebug() << "WebSocket connected";
-    
+
     QVariantMap startData;
     startData["userId"] = m_userId;
     startData["botId"] = m_botId;
+
+    QVariantMap asrConfig;
+    asrConfig["provider"] = "alibaba";
+    asrConfig["model"] = "paraformer-realtime-v2";
+    startData["asr_config"] = asrConfig;
+
+    QVariantMap ttsConfig;
+    ttsConfig["provider"] = m_ttsProvider.isEmpty() ? "alibaba" : m_ttsProvider;
+    ttsConfig["voice"] = m_ttsVoice.isEmpty() ? "Cherry" : m_ttsVoice;
+    startData["tts_config"] = ttsConfig;
+
     sendJsonMessage("start", startData);
 }
 

@@ -1541,6 +1541,7 @@ def run_agent(
     task_id: Optional[str] = None,
     main_repo_dir: Optional[str] = None,
     auto_approve: bool = False,
+    user_id: int = 0,
 ) -> Generator[Dict[str, Any], None, None]:
     """Agent 主循环"""
     if not task_id:
@@ -1687,6 +1688,8 @@ def run_agent(
     consecutive_errors = 0
     MAX_CONSECUTIVE_ERRORS = 5
     format_error_count = 0
+    thinking_mode_detected = False
+    has_code_changes = False
 
     for turn in range(start_turn, max_turns + 1):
         try:
@@ -1749,8 +1752,12 @@ def run_agent(
                             anchor_parts.append(f"  - {d}")
                     anchor_parts.append("请始终基于上述目标和文件上下文进行思考，不要遗忘任务目标！")
                     anchor_system = system_prompt + "\n\n" + "\n".join(anchor_parts)
-                text, tool_calls = _call_anthropic(
-                    messages=injected_messages,
+
+            api_messages = _sanitize_messages_for_api(injected_messages, thinking_mode_detected)
+
+            if provider == "anthropic":
+                text, tool_calls, reasoning_content = _call_anthropic(
+                    messages=api_messages,
                     tools=tools,
                     api_key=api_key,
                     model=model,
@@ -1759,8 +1766,8 @@ def run_agent(
                     force_tool_call=format_error_count >= 2,
                 )
             else:
-                text, tool_calls = _call_openai(
-                    messages=injected_messages,
+                text, tool_calls, reasoning_content = _call_openai(
+                    messages=api_messages,
                     tools=tools,
                     api_key=api_key,
                     model=model,
@@ -1768,10 +1775,16 @@ def run_agent(
                     force_tool_call=format_error_count >= 2,
                 )
 
+            if reasoning_content is not None and not thinking_mode_detected:
+                thinking_mode_detected = True
+                logger.info("🧠 检测到思维链模式 (reasoning_content)，后续请求将保留推理内容")
+
             logger.info(f"🤖 LLM 返回: text 长度={len(text) if text else 0}, tool_calls 数量={len(tool_calls)}")
             if tool_calls:
                 logger.info(f"🔧 工具调用: {[tc.get('name', 'unknown') for tc in tool_calls]}")
                 file_related = any(tc.get('name', '') in ('file_edit', 'file_write', 'bash', 'theseus_rewrite') for tc in tool_calls)
+                if file_related:
+                    has_code_changes = True
                 search_tools = ('semantic_search_code', 'semantic_search', 'glob', 'file_read', 'grep', 'lsp_tool', 'get_code_structure', 'get_function_definition')
                 thinking_tools = ('mcp_sequential-thinking_sequentialthinking', 'mcp_sequential-thinking', 'ask_user')
                 is_searching = any(tc.get('name', '') in search_tools or tc.get('name', '').startswith('mcp_sequential') for tc in tool_calls)
@@ -1804,8 +1817,7 @@ def run_agent(
                 non_space_chars = len([c for c in text if c not in ' \t\n\r"\''])
                 if non_space_chars < len(text) * 0.3:  # 有效字符少于 30%
                     logger.warning(f"⚠️ 检测到模型返回乱码，有效字符比例: {non_space_chars/len(text):.2%}")
-                    # 添加一个提示让模型重试
-                    messages.append({"role": "assistant", "content": text})
+                    messages.append(_build_assistant_msg(text, reasoning_content=reasoning_content))
                     messages.append({
                         "role": "user", 
                         "content": "⚠️ 你的上一次回复格式异常，请重新组织语言并继续执行任务。如果需要创建或修改文件，请使用 file_edit 工具或 Markdown 代码块格式。"
@@ -1863,6 +1875,7 @@ def run_agent(
                             
                             logger.info(f"✅ [Markdown 拦截成功] 已写入文件: {file_path}")
                             markdown_files_written = True
+                            has_code_changes = True
                             
                             yield {
                                 "type": "tool_start",
@@ -1893,7 +1906,7 @@ def run_agent(
 
             # 🚨 关键修复：如果 Markdown 降级成功写入文件，构造 tool_result 并继续循环
             if markdown_files_written:
-                messages.append({"role": "assistant", "content": text})
+                messages.append(_build_assistant_msg(text, reasoning_content=reasoning_content))
                 messages.append({
                     "role": "user",
                     "content": f"✅ 已通过 Markdown 降级模式写入文件。请继续执行任务，如果还有更多文件需要创建或修改，请继续。"
@@ -1924,7 +1937,7 @@ def run_agent(
                     logger.warning(f"🚨 [系统拦截] 模型输出了 {len(text)} 字符的纯文本，无工具调用！强制截断！")
                     yield {"type": "system_alert", "content": "检测到模型输出大量纯文本（无工具调用），正在自动拦截并重试..."}
                     truncated_text = text[:500] + f"\n\n... [系统截断：原文 {len(text)} 字符被丢弃]"
-                    messages.append({"role": "assistant", "content": truncated_text})
+                    messages.append(_build_assistant_msg(truncated_text, reasoning_content=reasoning_content))
                     messages.append({
                         "role": "user",
                         "content": (
@@ -1961,7 +1974,7 @@ def run_agent(
                 if text and ('file_edit' in text or '```' in text or 'def ' in text or 'class ' in text):
                     logger.warning("⚠️ 检测到文本中可能包含代码或工具调用，但格式不正确")
                     yield {"type": "system_alert", "content": "检测到格式错误（代码混入文本），正在自动修正并重试..."}
-                    messages.append({"role": "assistant", "content": text[:2000]})
+                    messages.append(_build_assistant_msg(text[:2000], reasoning_content=reasoning_content))
                     messages.append({
                         "role": "user",
                         "content": (
@@ -2012,6 +2025,30 @@ def run_agent(
                         }
                 except Exception:
                     pass
+
+                if has_code_changes and user_id > 0:
+                    try:
+                        rpc_bridge_dir = os.environ.get(
+                            "RPC_BRIDGE_DIR",
+                            os.path.join(os.path.dirname(work_dir), "protobuf-rpc-bridge", "python"),
+                        )
+                        if rpc_bridge_dir not in sys.path:
+                            sys.path.insert(0, rpc_bridge_dir)
+                        from career_analyzer import spawn_career_analysis
+                        code_content = ""
+                        for root_dir, dirs, files in os.walk(work_dir):
+                            for fn in files:
+                                if fn.endswith(('.py', '.js', '.ts', '.java', '.cpp', '.h', '.c', '.go', '.rs', '.vue', '.jsx', '.tsx', '.html', '.css', '.sql', '.sh')):
+                                    fp = os.path.join(root_dir, fn)
+                                    try:
+                                        with open(fp, 'r', encoding='utf-8', errors='ignore') as f:
+                                            code_content += f"\n# === {fn} ===\n{f.read()}\n"
+                                    except Exception:
+                                        pass
+                        spawn_career_analysis(user_id, code_content)
+                    except Exception as e:
+                        logger.warning(f"⚠️ 职业档案分析触发失败: {e}")
+
                 yield {"type": "finish", "data": text or "任务完成"}
                 break
 
@@ -2252,40 +2289,39 @@ def run_agent(
 
                 if "ask_user" in tool_meta:
                     if provider != "anthropic":
-                        assistant_msg = {
-                            "role": "assistant",
-                            "content": text if text else None,
-                            "tool_calls": [
-                                {
-                                    "id": tc_item["id"],
-                                    "type": "function",
-                                    "function": {
-                                        "name": tc_item["name"],
-                                        "arguments": json.dumps(tc_item["args"], ensure_ascii=False)
-                                    }
+                        tc_list = [
+                            {
+                                "id": tc_item["id"],
+                                "type": "function",
+                                "function": {
+                                    "name": tc_item["name"],
+                                    "arguments": json.dumps(tc_item["args"], ensure_ascii=False)
                                 }
-                                for tc_item in tool_calls
-                            ]
-                        }
-                        messages.append(assistant_msg)
+                            }
+                            for tc_item in tool_calls
+                        ]
+                        messages.append(_build_assistant_msg(
+                            text if text else None,
+                            tool_calls=tc_list,
+                            reasoning_content=reasoning_content,
+                        ))
                     else:
-                        assistant_msg = {
-                            "role": "assistant",
-                            "content": text if text else "",
-                        }
-                        if tool_calls:
-                            assistant_msg["tool_calls"] = [
-                                {
-                                    "id": tc_item["id"],
-                                    "type": "function",
-                                    "function": {
-                                        "name": tc_item["name"],
-                                        "arguments": json.dumps(tc_item["args"], ensure_ascii=False)
-                                    }
+                        tc_list_anthropic = [
+                            {
+                                "id": tc_item["id"],
+                                "type": "function",
+                                "function": {
+                                    "name": tc_item["name"],
+                                    "arguments": json.dumps(tc_item["args"], ensure_ascii=False)
                                 }
-                                for tc_item in tool_calls
-                            ]
-                        messages.append(assistant_msg)
+                            }
+                            for tc_item in tool_calls
+                        ] if tool_calls else None
+                        messages.append(_build_assistant_msg(
+                            text if text else "",
+                            tool_calls=tc_list_anthropic,
+                            reasoning_content=reasoning_content,
+                        ))
 
                     if task_id:
                         try:
@@ -2372,23 +2408,22 @@ def run_agent(
             if tool_results_for_api:
                 # 对于 OpenAI 格式，需要先添加 assistant 消息（带 tool_calls）
                 if provider != "anthropic":
-                    # 构造 assistant 消息
-                    assistant_message = {
-                        "role": "assistant",
-                        "content": text if text else None,
-                        "tool_calls": [
-                            {
-                                "id": tc["id"],
-                                "type": "function",
-                                "function": {
-                                    "name": tc["name"],
-                                    "arguments": json.dumps(tc["args"], ensure_ascii=False)
-                                }
+                    tc_list_main = [
+                        {
+                            "id": tc["id"],
+                            "type": "function",
+                            "function": {
+                                "name": tc["name"],
+                                "arguments": json.dumps(tc["args"], ensure_ascii=False)
                             }
-                            for tc in tool_calls
-                        ]
-                    }
-                    messages.append(assistant_message)
+                        }
+                        for tc in tool_calls
+                    ]
+                    messages.append(_build_assistant_msg(
+                        text if text else None,
+                        tool_calls=tc_list_main,
+                        reasoning_content=reasoning_content,
+                    ))
                 
                 # 添加工具结果
                 messages.extend(tool_results_for_api)
@@ -2497,6 +2532,51 @@ def run_agent(
         "checkpoints": final_checkpoints,
     }
 
+def _build_assistant_msg(
+    content: str | None,
+    tool_calls: list[dict] | None = None,
+    reasoning_content: str | None = None,
+) -> dict:
+    """
+    构建 assistant 消息，兼容思维链模型和非思维链模型。
+    
+    - 思维链模型 (DeepSeek-R1, QwQ 等): reasoning_content 非空时自动保留，
+      API 要求在后续请求中原样传回，否则报 400。
+    - 非思维链模型 (GPT-4o, Claude 等): reasoning_content 为 None，
+      不会添加该字段，不会影响 API 调用。
+    - 空字符串 reasoning_content: 使用 is not None 判断，
+      确保思维链模型即使推理内容为空也会传回（部分 API 强制要求）。
+    """
+    msg: dict = {"role": "assistant", "content": content}
+    if tool_calls:
+        msg["tool_calls"] = tool_calls
+    if reasoning_content is not None:
+        msg["reasoning_content"] = reasoning_content
+    return msg
+
+
+def _sanitize_messages_for_api(
+    messages: list[dict],
+    thinking_mode: bool,
+) -> list[dict]:
+    """
+    清理消息数组中的 reasoning_content 字段，兼容不支持思维链的模型。
+    
+    安全策略:
+    - thinking_mode=True: 保留 reasoning_content
+    - 消息中存在 reasoning_content: 自动保留（说明当前/历史模型是思维链模型，
+      清理会导致 API 400 报错 "reasoning_content must be passed back"）
+    - 仅当 thinking_mode=False 且消息中无 reasoning_content 时: 无需处理
+    """
+    has_reasoning = any("reasoning_content" in m for m in messages)
+    if not has_reasoning:
+        return messages
+    if thinking_mode:
+        return messages
+    logger.warning("⚠️ 消息中存在 reasoning_content 但 thinking_mode=False，为安全起见保留 reasoning_content（清理会导致思维链模型 400 报错）")
+    return messages
+
+
 def _call_anthropic(
     messages: list[dict],
     tools: list[dict],
@@ -2505,7 +2585,7 @@ def _call_anthropic(
     base_url: str | None,
     system_prompt: str = "",
     force_tool_call: bool = False,
-) -> tuple[str, list[dict]]:
+) -> tuple[str, list[dict], str | None]:
     """调用 Anthropic Claude API"""
     import anthropic
 
@@ -2557,9 +2637,14 @@ def _call_anthropic(
 
     text_parts = []
     tool_calls = []
+    thinking_content = None
 
     for block in response.content:
-        if block.type == "text":
+        if block.type == "thinking":
+            thinking_text = getattr(block, 'thinking', None) or getattr(block, 'text', '')
+            if thinking_text:
+                thinking_content = thinking_text
+        elif block.type == "text":
             text_parts.append(block.text)
         elif block.type == "tool_use":
             tool_calls.append({
@@ -2568,7 +2653,7 @@ def _call_anthropic(
                 "args": block.input if isinstance(block.input, dict) else {},
             })
 
-    return "\n".join(text_parts), tool_calls
+    return "\n".join(text_parts), tool_calls, thinking_content
 
 def _call_openai(
     messages: list[dict],
@@ -2578,7 +2663,7 @@ def _call_openai(
     base_url: str | None,
     max_retries: int = 3,
     force_tool_call: bool = False,
-) -> tuple[str, list[dict]]:
+) -> tuple[str, list[dict], str | None]:
     """
     调用 OpenAI 兼容 API (带主备双活 + 指数退避重试 + DashScope 终极防幻觉解析)
     
@@ -2618,7 +2703,8 @@ def _call_openai(
         choice = response.choices[0]
         message = choice.message
 
-        logger.info(f"📥 LLM 原始响应: content 存在={message.content is not None}, tool_calls={message.tool_calls}")
+        reasoning_content = getattr(message, 'reasoning_content', None)
+        logger.info(f"📥 LLM 原始响应: content 存在={message.content is not None}, tool_calls={message.tool_calls}, reasoning_content 存在={reasoning_content is not None}")
 
         text_parts = []
         tool_calls = []
@@ -2816,7 +2902,7 @@ def _call_openai(
                         "args": pc["args"],
                     })
 
-        return "\n".join(text_parts), tool_calls
+        return "\n".join(text_parts), tool_calls, reasoning_content
 
     # ==========================================================
     # 主节点调用逻辑
@@ -2873,7 +2959,7 @@ def _call_openai(
             if attempt < max_retries - 1:
                 time.sleep(2)
             else:
-                return f"❌ LLM 服务不可用: {str(e)}", []
+                return f"❌ LLM 服务不可用: {str(e)}", [], None
     
     # ==========================================================
     # 最后尝试备用节点
@@ -2889,7 +2975,7 @@ def _call_openai(
         return _parse_response(response)
     except Exception as e:
         logger.error(f"❌ 所有节点都不可用: {e}")
-        return "❌ 大模型服务暂时不可用，请稍后重试", []
+        return "❌ 大模型服务暂时不可用，请稍后重试", [], None
 
 def get_session_messages(session_id: str) -> list[dict]:
     """获取会话消息（用于回退工具）"""

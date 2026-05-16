@@ -598,6 +598,7 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     connect(chatClient, &ChatClient::farmHarvestResponse, this, &ChatWindow::onFarmHarvestResponse);
     connect(chatClient, &ChatClient::farmPlotHarvested, this, &ChatWindow::onFarmPlotHarvested);
     connect(chatClient, &ChatClient::farmBroadcastReceived, this, &ChatWindow::onFarmBroadcastReceived);
+    connect(chatClient, &ChatClient::careerAdviceReceived, this, &ChatWindow::onCareerAdviceReceived);
 
     m_farmDialog = nullptr;
     m_realtimeVoiceDialog = nullptr;
@@ -2937,6 +2938,13 @@ void ChatWindow::onOpenCodingAgent()
     }
 }
 
+void ChatWindow::onOpenCareerDashboard()
+{
+    CareerDashboardDialog *dialog = new CareerDashboardDialog(this);
+    dialog->setAttribute(Qt::WA_DeleteOnClose);
+    dialog->exec();
+}
+
 void ChatWindow::onFarmPlantResponse(bool success, int plotId, const QString &message)
 {
     if (m_farmDialog) {
@@ -2991,6 +2999,18 @@ void ChatWindow::onFarmBroadcastReceived(const QString &message)
     if (m_farmDialog) {
         m_farmDialog->handleFarmBroadcast(message);
     }
+}
+
+void ChatWindow::onCareerAdviceReceived(const QString &skills, const QString &resumeHighlight, const QString &learningAdvice)
+{
+    QJsonObject record;
+    record["skills"] = skills;
+    record["resumeHighlight"] = resumeHighlight;
+    record["learningAdvice"] = learningAdvice;
+    CareerHistoryManager::instance().saveRecord(record);
+
+    CareerAdvicePopup *popup = new CareerAdvicePopup(skills, resumeHighlight, learningAdvice);
+    popup->showAtBottomRight();
 }
 
 void ChatWindow::closeEvent(QCloseEvent *event) {
