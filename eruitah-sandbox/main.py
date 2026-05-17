@@ -973,8 +973,9 @@ async def websocket_coding(websocket: WebSocket):
                         except Exception:
                             pass
 
-                    if not await safe_send(event):
-                        return
+                    if event.get("type") != "ask_user":
+                        if not await safe_send(event):
+                            return
 
                     if event.get("type") == "tool_end" and not event.get("is_error"):
                         tool_name = event.get("tool_name", "")

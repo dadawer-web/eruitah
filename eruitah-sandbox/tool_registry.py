@@ -139,6 +139,76 @@ tools: List[Dict[str, Any]] = [
             },
             "required": ["pattern"]
         }
+    },
+    {
+        "name": "browser_vision",
+        "description": "访问指定 URL（本地或远程），使用无头浏览器渲染页面并返回截图。适用于检查网页视觉效果、验证前端布局、调试 Web 应用界面等场景。返回 Base64 编码的 PNG 截图。",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "url": {
+                    "type": "string",
+                    "description": "要访问的 URL（如 http://localhost:3000 或 https://example.com）"
+                },
+                "wait_until": {
+                    "type": "string",
+                    "description": "页面加载等待策略：load（DOM完成）、domcontentloaded（HTML解析完成）、networkidle（网络空闲，默认）",
+                    "enum": ["load", "domcontentloaded", "networkidle"],
+                    "default": "networkidle"
+                },
+                "timeout_ms": {
+                    "type": "integer",
+                    "description": "页面加载超时时间（毫秒）",
+                    "default": 30000
+                }
+            },
+            "required": ["url"]
+        }
+    },
+    {
+        "name": "interactive_debugger",
+        "description": "交互式 Python 调试器（pdb）。启动后保持进程存活，可逐步执行代码、检查变量、设置断点。适用于排查复杂的运行时 Bug，当代码阅读和 print 调试无法定位问题时使用。",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string",
+                    "enum": ["start", "command", "status", "stop"],
+                    "description": "操作类型：start=启动调试会话，command=发送调试命令，status=查看会话状态，stop=终止会话"
+                },
+                "script_path": {
+                    "type": "string",
+                    "description": "要调试的 Python 脚本路径（action=start 时必填）"
+                },
+                "breakpoint_line": {
+                    "type": "integer",
+                    "description": "断点行号（action=start 时可选）"
+                },
+                "breakpoint_func": {
+                    "type": "string",
+                    "description": "断点函数名（action=start 时可选，与 breakpoint_line 二选一）"
+                },
+                "cmd": {
+                    "type": "string",
+                    "description": "pdb 调试命令（action=command 时必填，如 step/next/continue/p 变量名/where/list）"
+                },
+                "work_dir": {
+                    "type": "string",
+                    "description": "工作目录"
+                },
+                "session_id": {
+                    "type": "string",
+                    "description": "调试会话标识（默认 default）",
+                    "default": "default"
+                },
+                "timeout": {
+                    "type": "integer",
+                    "description": "命令超时时间（秒）",
+                    "default": 15
+                }
+            },
+            "required": ["action"]
+        }
     }
 ]
 
@@ -164,6 +234,12 @@ def _get_tool_function(name: str):
     elif name == "grep":
         from grep_tool import grep_search
         return grep_search
+    elif name == "browser_vision":
+        from browser_vision_tool import execute_browser_vision
+        return execute_browser_vision
+    elif name == "interactive_debugger":
+        from interactive_debugger_tool import execute_interactive_debugger
+        return execute_interactive_debugger
     return None
 
 

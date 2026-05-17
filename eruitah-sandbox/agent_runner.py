@@ -350,6 +350,9 @@ BASE_SYSTEM_PROMPT = """你是一个受限沙盒中的「任务型 AI 编码智�
 16. **start_background_service** - 🚀 后台启动长驻服务（Web Server、数据库等，不阻塞 Agent！返回 PID）
 17. **read_service_logs** - 📋 读取后台服务日志（查看服务端输出，排查启动错误）
 18. **kill_service** - 🛑 关闭后台服务（测试完成后必须调用，释放端口和资源）
+19. **interactive_debugger** - 🔬 交互式 Python 调试器（pdb）。启动后进程保持存活，可单步执行、检查变量、设置断点。当 print 调试无法定位 Bug 时使用。
+20. **computer_use** - 🖥️ OS 级别电脑控制！控制鼠标键盘、截取屏幕截图。支持：take_screenshot、mouse_move、left_click、right_click、type_text、press_key、scroll、mouse_drag、hotkey。每次操作后自动返回最新截图。
+21. **browser_vision** - 🌐 浏览器视觉截图！访问 URL 并返回渲染后的网页截图（Base64 PNG）。适用于检查网页视觉效果、验证前端布局。
 
 **MCP 动态工具**: 当你通过 mcp_manager 动态加载了一个 MCP Server 后，该 Server 提供的所有工具会自动出现在你的工具列表中，工具名格式为 `mcp_{server}_{tool}`（如 `mcp_github_list_issues`）。你可以像调用本地工具一样直接调用它们。
 
@@ -425,6 +428,58 @@ dispatch_subtasks(subtasks=[
 
 ## 4. 自愈机制 (Auto-Healing)
 - 如果终端执行报错，允许你在当前任务上下文中进行最多 3 次的尝试修改。超过 3 次请停止尝试并报告错误。
+
+## 4.1 🔬 高级调试策略 (Interactive Debugger Protocol)
+你现在拥有了一个 Interactive Debugger 工具（interactive_debugger）。这是一个有状态的 pdb 调试器，启动后进程保持存活，你可以像在终端中一样逐步调试代码。
+
+**强制触发条件：当你在尝试修复一个复杂的运行时 Bug，且连续两次通过阅读代码和修改未解决问题时，你必须停止盲目猜测。你应当使用 Debugger 在出错的行设置断点，运行代码，并通过发送调试命令来检查实时的内存状态，然后再进行修复。**
+
+**典型调试流程：**
+1. `interactive_debugger(action="start", script_path="main.py", breakpoint_line=42)` → 在第 42 行设置断点并运行到断点处
+2. `interactive_debugger(action="command", cmd="p variable_name")` → 打印变量值
+3. `interactive_debugger(action="command", cmd="p locals()")` → 查看当前作用域所有局部变量
+4. `interactive_debugger(action="command", cmd="step")` → 单步进入函数
+5. `interactive_debugger(action="command", cmd="next")` → 单步跳过（不进入函数）
+6. `interactive_debugger(action="command", cmd="continue")` → 继续运行到下一个断点
+7. `interactive_debugger(action="command", cmd="where")` → 查看调用栈
+8. `interactive_debugger(action="command", cmd="list")` → 查看当前代码上下文
+9. `interactive_debugger(action="stop")` → 调试完毕，终止会话
+
+**关键原则：**
+- **禁止盲目修改**：连续 2 次修改代码后 Bug 仍未解决 → 必须启动 Debugger 观察运行时状态
+- **先观察后行动**：用 `p locals()` 或 `p 变量名` 检查实际值，而非猜测变量内容
+- **断点精准**：在报错行或可疑函数入口设断点，不要在无关代码处浪费时间
+- **及时清理**：调试完成后必须调用 `action="stop"` 终止会话，释放进程资源
+
+## 4.2 🖥️ 手眼协调策略 (Hand-Eye Coordination Protocol)
+你现在运行在一个拥有 GUI 的虚拟桌面系统中（Xvfb 虚拟显示器，分辨率 1024x768）。你拥有 `computer_use` 工具，可以控制鼠标键盘并截取屏幕截图。
+
+**核心原则：先看后动，每动必看。**
+
+当你需要操作 GUI 应用（如浏览器、IDE、终端模拟器）时，必须遵循以下闭环：
+
+1. **观察**：先调用 `computer_use(action="take_screenshot")` 观察当前屏幕状态
+2. **定位**：通过视觉能力分析截图，估算目标元素（按钮/图标/输入框）在 1024x768 屏幕上的 (x, y) 坐标
+3. **操作**：调用 `computer_use(action="mouse_move", x=..., y=...)` 移动鼠标，然后 `computer_use(action="left_click", x=..., y=...)` 点击
+4. **确认**：每次操作后你都会自动获得一张新的截图，检查操作是否生效
+5. **循环**：如果操作未生效，重新分析截图并调整坐标，重复上述步骤
+
+**典型场景：**
+- 测试 Web 应用：先用 `browser_vision` 看网页，再用 `computer_use` 操作桌面浏览器
+- 操作 GUI 程序：截图 → 找按钮 → 点击 → 再截图确认
+- 输入文本：先点击输入框 → `computer_use(action="type_text", text="...")` → 截图确认
+- 按键操作：`computer_use(action="press_key", key="enter")` → 截图确认
+
+**坐标估算技巧：**
+- 屏幕左上角为 (0, 0)，右下角为 (1023, 767)
+- 屏幕中心约为 (512, 384)
+- 典型按钮高度约 30-40px，标题栏约 30px
+- 如果第一次点击不准确，根据截图偏差调整坐标重试
+
+**重要规则：**
+- 绝对不要在没看屏幕的情况下盲目点击！先 take_screenshot 再操作
+- 每次操作后你都会收到最新截图，必须仔细检查再决定下一步
+- 如果连续 3 次点击未命中目标，停下来用 ask_user 请求帮助
 
 ## 5. 记忆系统 (Memory System)
 - 遇到 Bug 时，先调用 read_project_memory 搜索是否有类似的历史经验。
@@ -1473,6 +1528,43 @@ def _execute_tool_local(
             result_str, is_error = execute_auto_test(action, test_file, source_file, directory, work_dir)
             return result_str, is_error, meta
 
+        elif name == "browser_vision":
+            from browser_vision_tool import execute_browser_vision
+            url = args.get("url", "")
+            if not url:
+                return "URL 不能为空", True, meta
+            wait_until = args.get("wait_until", "networkidle")
+            timeout_ms = args.get("timeout_ms", 30000)
+            bv_result = execute_browser_vision(url, wait_until, timeout_ms)
+            if bv_result.get("status") == "success" and bv_result.get("base64_image"):
+                meta["browser_vision_image"] = {
+                    "base64": bv_result["base64_image"],
+                    "url": bv_result.get("url", url),
+                    "title": bv_result.get("title", ""),
+                }
+                return f"[Browser Vision] 已截取页面截图: {bv_result.get('title', url)}", False, meta
+            else:
+                return f"[Browser Vision] 截图失败: {bv_result.get('error', '未知错误')}", True, meta
+
+        elif name == "interactive_debugger":
+            from interactive_debugger_tool import execute_interactive_debugger
+            dbg_action = args.get("action", "")
+            if not dbg_action:
+                return "action 不能为空", True, meta
+            dbg_result = execute_interactive_debugger(
+                action=dbg_action,
+                script_path=args.get("script_path", ""),
+                breakpoint_line=args.get("breakpoint_line", 0),
+                breakpoint_func=args.get("breakpoint_func", ""),
+                cmd=args.get("cmd", ""),
+                work_dir=work_dir,
+                session_id=args.get("session_id", "default"),
+                timeout=args.get("timeout", 15),
+            )
+            is_error = dbg_result.get("status") == "error"
+            result_str = json.dumps(dbg_result, ensure_ascii=False, indent=2)
+            return result_str, is_error, meta
+
         elif name == "run_auto_test":
             test_command = args.get("test_command", "")
             test_file = args.get("test_file", "")
@@ -2376,6 +2468,23 @@ def run_agent(
                             image_base64=cu_result["base64"],
                         )
                         tool_result_content = format_computer_use_result_for_anthropic(cu_obj)
+                    elif "browser_vision_image" in tool_meta:
+                        bv_result = tool_meta["browser_vision_image"]
+                        bv_text = result_str
+                        tool_result_content = [
+                            {
+                                "type": "image",
+                                "source": {
+                                    "type": "base64",
+                                    "media_type": "image/png",
+                                    "data": bv_result["base64"],
+                                },
+                            },
+                            {
+                                "type": "text",
+                                "text": bv_text,
+                            },
+                        ]
 
                     tool_results_for_api.append({
                         "type": "tool_result",
@@ -2396,7 +2505,23 @@ def run_agent(
                             image_base64=cu_result["base64"],
                         )
                         image_parts = format_computer_use_result_for_openai(cu_obj)
-                        tool_result_content = json.dumps(image_parts, ensure_ascii=False)
+                        tool_result_content = image_parts
+                    elif "browser_vision_image" in tool_meta:
+                        bv_result = tool_meta["browser_vision_image"]
+                        bv_text = result_str
+                        tool_result_content = [
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/png;base64,{bv_result['base64']}",
+                                    "detail": "auto",
+                                },
+                            },
+                            {
+                                "type": "text",
+                                "text": bv_text,
+                            },
+                        ]
 
                     tool_results_for_api.append({
                         "role": "tool",

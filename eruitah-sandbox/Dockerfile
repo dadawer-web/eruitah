@@ -23,7 +23,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    xvfb x11vnc xdotool scrot imagemagick \
+    xvfb x11vnc xdotool scrot imagemagick x11-utils wmctrl \
     fonts-noto-cjk fonts-wqy-zenhei \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -57,6 +57,8 @@ ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt \
     -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+RUN pip install playwright && playwright install chromium --with-deps
 
 COPY . .
 
