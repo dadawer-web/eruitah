@@ -9,6 +9,10 @@ export default defineConfig({
     },
   },
   server: {
+    headers: {
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+      'Cross-Origin-Opener-Policy': 'same-origin',
+    },
     proxy: {
       '/ws/simple-ide': {
         target: 'http://127.0.0.1:8001',

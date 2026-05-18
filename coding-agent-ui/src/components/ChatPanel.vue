@@ -8,6 +8,8 @@ const chatContainer = ref(null)
 const showHistory = ref(true)
 const expandedThoughts = ref({})
 const useSwarm = ref(false)
+const pendingImages = ref([])
+const fileInput = ref(null)
 
 const pendingQuestions = computed(() => {
   return store.messages.filter(m => m.isQuestion && !m.answered)
@@ -22,14 +24,16 @@ watch(() => store.messages.length, async () => {
 
 function handleSend() {
   const text = inputText.value.trim()
-  if (!text) return
+  if (!text && !pendingImages.value.length) return
   const pendingQuestion = pendingQuestions.value[0]
   if (pendingQuestion) {
     store.answerQuestion(pendingQuestion.questionId, text)
   } else {
-    store.sendTask(text, { use_swarm: useSwarm.value })
+    const images = pendingImages.value.map(img => img.base64)
+    store.sendTask(text || '请分析上传的图片', { use_swarm: useSwarm.value, images })
   }
   inputText.value = ''
+  pendingImages.value = []
 }
 
 function handleKeydown(e) {
@@ -63,6 +67,52 @@ function getMsgType(msg) {
   if (msg.isFinish) return 'finish'
   if (msg.isQuestion) return 'question'
   return 'default'
+}
+
+function addImageFile(file) {
+  if (!file || !file.type.startsWith('image/')) return
+  if (pendingImages.value.length >= 5) return
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    const base64 = e.target.result
+    pendingImages.value.push({
+      id: Date.now() + Math.random(),
+      name: file.name,
+      dataUrl: base64,
+      base64: base64.split(',')[1] || base64,
+    })
+  }
+  reader.readAsDataURL(file)
+}
+
+function removeImage(index) {
+  pendingImages.value.splice(index, 1)
+}
+
+function triggerFileInput() {
+  fileInput.value?.click()
+}
+
+function handleFileSelect(e) {
+  const files = e.target.files
+  if (files) {
+    Array.from(files).forEach(addImageFile)
+  }
+  e.target.value = ''
+}
+
+function handlePaste(e) {
+  const items = e.clipboardData?.items
+  if (!items) return
+  let hasImage = false
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      e.preventDefault()
+      hasImage = true
+      const file = item.getAsFile()
+      if (file) addImageFile(file)
+    }
+  }
 }
 </script>
 
@@ -240,12 +290,58 @@ function getMsgType(msg) {
         <div class="text-[10px] text-geek-text-dim mb-1.5 truncate" v-if="pendingQuestions.length">
           ⚠️ 有 {{ pendingQuestions.length }} 个问题等待回答
         </div>
+
+        <!-- 图片预览区 -->
+        <div v-if="pendingImages.length" class="flex gap-2 mb-2 flex-wrap">
+          <div
+            v-for="(img, idx) in pendingImages"
+            :key="img.id"
+            class="relative group rounded-lg overflow-hidden border border-geek-accent/30 bg-geek-bg/50"
+          >
+            <img :src="img.dataUrl" class="w-16 h-16 object-cover" :alt="img.name" />
+            <button
+              @click="removeImage(idx)"
+              class="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-red-900/80 text-red-300 text-[9px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-800"
+            >✕</button>
+            <div class="absolute bottom-0 inset-x-0 bg-black/60 text-[8px] text-geek-text-dim px-1 py-0.5 truncate">
+              {{ img.name }}
+            </div>
+          </div>
+          <div
+            v-if="pendingImages.length < 5"
+            class="w-16 h-16 rounded-lg border border-dashed border-geek-border hover:border-geek-accent/50 flex items-center justify-center cursor-pointer transition-colors"
+            @click="triggerFileInput"
+          >
+            <span class="text-geek-text-dim text-lg">+</span>
+          </div>
+        </div>
+
+        <input
+          ref="fileInput"
+          type="file"
+          accept="image/*"
+          multiple
+          class="hidden"
+          @change="handleFileSelect"
+        />
+
         <div class="flex gap-2 items-center">
+          <button
+            @click="triggerFileInput"
+            class="px-2 py-2 rounded text-xs border transition-colors shrink-0"
+            :class="pendingImages.length
+              ? 'bg-geek-accent/10 text-geek-accent border-geek-accent/30'
+              : 'bg-geek-bg/50 text-geek-text-dim border-geek-border hover:text-geek-text hover:border-geek-accent/30'"
+            title="上传图片（UML图/架构图/草图）"
+          >
+            🖼️
+          </button>
           <input
             v-model="inputText"
             @keydown="handleKeydown"
+            @paste="handlePaste"
             type="text"
-            :placeholder="pendingQuestions.length ? '回答问题...' : (store.activeTaskId ? '在当前任务下追问...' : '描述你想要的功能，开启新任务...')"
+            :placeholder="pendingQuestions.length ? '回答问题...' : (store.activeTaskId ? '在当前任务下追问...' : (pendingImages.length ? '描述你想对图片做什么...' : '描述你想要的功能，开启新任务...'))"
             class="flex-1 bg-geek-bg border border-geek-border rounded px-3 py-2 text-xs text-geek-text placeholder-geek-text-dim focus:outline-none focus:border-geek-accent transition-colors"
             :disabled="store.isRunning && !pendingQuestions.length"
           />

@@ -40,13 +40,46 @@ logger = logging.getLogger(__name__)
 WARMUP_BRANCH_PREFIX = "warmup/"
 TASK_BRANCH_PREFIX = "task/"
 
+BASE_REPO_DIR = os.environ.get(
+    "ERUITAH_BASE_REPO", os.path.join(os.path.expanduser("~"), "eruitah_base_repo")
+)
+WORKTREES_ROOT = os.environ.get(
+    "ERUITAH_WORKTREES_ROOT", os.path.join(os.path.expanduser("~"), "agent-worktrees")
+)
+
+
+def _validate_path_not_protected(path: str) -> bool:
+    abs_path = os.path.abspath(path)
+    protected = [
+        os.path.abspath(BASE_REPO_DIR),
+        os.path.abspath(WORKTREES_ROOT),
+        os.path.expanduser("~"),
+        "/",
+    ]
+    for p in protected:
+        if abs_path == p:
+            return False
+        if abs_path.startswith(p) and abs_path == p:
+            return False
+    return True
+
 
 class GitSandboxManager:
-    def __init__(self, workspace_dir: str, pool_size: int = 3):
-        self.workspace_dir = os.path.abspath(workspace_dir)
-        self.worktree_base = os.path.abspath(
-            os.path.join(self.workspace_dir, "..", "agent-worktrees")
-        )
+    def __init__(self, base_repo_dir: Optional[str] = None, worktrees_root: Optional[str] = None, pool_size: int = 3):
+        self.workspace_dir = os.path.abspath(base_repo_dir or BASE_REPO_DIR)
+        self.worktree_base = os.path.abspath(worktrees_root or WORKTREES_ROOT)
+
+        if self.workspace_dir == self.worktree_base:
+            raise ValueError(
+                f"BASE_REPO_DIR 和 WORKTREES_ROOT 不能相同: {self.workspace_dir}"
+            )
+
+        if self.worktree_base.startswith(self.workspace_dir + os.sep):
+            raise ValueError(
+                f"WORKTREES_ROOT 不能是 BASE_REPO_DIR 的子目录! "
+                f"BASE_REPO_DIR={self.workspace_dir}, WORKTREES_ROOT={self.worktree_base}"
+            )
+
         self._worktrees: Dict[str, str] = {}
         self._pool_size = pool_size
         self._warm_pool: List[Dict[str, str]] = []
@@ -57,6 +90,13 @@ class GitSandboxManager:
         self._discover_worktrees()
         self._cleanup_stale_warmups()
         self._start_pool_maintainer()
+
+        logger.info(
+            f"🏗️ GitSandboxManager 初始化完毕\n"
+            f"  BASE_REPO_DIR: {self.workspace_dir}\n"
+            f"  WORKTREES_ROOT: {self.worktree_base}\n"
+            f"  Pool Size: {self._pool_size}"
+        )
 
     def _run_git(
         self, *args, cwd: Optional[str] = None, check: bool = False
@@ -703,6 +743,17 @@ class GitSandboxManager:
         safe_branch = f"{TASK_BRANCH_PREFIX}{task_id}"
         task_dir = self._worktrees.get(task_id) or self._get_worktree_dir(task_id)
 
+        if not _validate_path_not_protected(task_dir):
+            logger.error(
+                f"🚫 安全拦截: 拒绝删除受保护路径 {task_dir} "
+                f"(BASE_REPO={self.workspace_dir}, WORKTREES_ROOT={self.worktree_base})"
+            )
+            return False
+
+        if task_dir == self.workspace_dir:
+            logger.error(f"🚫 安全拦截: 拒绝删除 BASE_REPO_DIR: {task_dir}")
+            return False
+
         worktree_removed = False
         if os.path.exists(task_dir):
             worktree_removed = self._run_git_ok(
@@ -958,9 +1009,39 @@ class GitSandboxManager:
 
 _sandboxes: Dict[str, GitSandboxManager] = {}
 
+_global_sandbox: Optional[GitSandboxManager] = None
+_global_lock = threading.Lock()
 
-def get_sandbox(workspace_dir: str, pool_size: int = 3) -> GitSandboxManager:
-    abs_dir = os.path.abspath(workspace_dir)
+
+def init_global_sandbox(
+    base_repo_dir: Optional[str] = None,
+    worktrees_root: Optional[str] = None,
+    pool_size: int = 3,
+) -> GitSandboxManager:
+    global _global_sandbox
+    with _global_lock:
+        if _global_sandbox is None:
+            _global_sandbox = GitSandboxManager(
+                base_repo_dir=base_repo_dir,
+                worktrees_root=worktrees_root,
+                pool_size=pool_size,
+            )
+            logger.info("🌍 全局 GitSandboxManager 已初始化 (单例)")
+        return _global_sandbox
+
+
+def get_global_sandbox() -> Optional[GitSandboxManager]:
+    return _global_sandbox
+
+
+def get_sandbox(workspace_dir: str = "", pool_size: int = 3) -> GitSandboxManager:
+    if _global_sandbox is not None:
+        return _global_sandbox
+
+    abs_dir = os.path.abspath(workspace_dir or BASE_REPO_DIR)
     if abs_dir not in _sandboxes:
-        _sandboxes[abs_dir] = GitSandboxManager(abs_dir, pool_size=pool_size)
+        _sandboxes[abs_dir] = GitSandboxManager(
+            base_repo_dir=abs_dir,
+            pool_size=pool_size,
+        )
     return _sandboxes[abs_dir]

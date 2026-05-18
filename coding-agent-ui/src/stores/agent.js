@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, shallowRef } from 'vue'
+import { WebContainerManager } from '../utils/webcontainerManager'
 
 const LAST_PATH_KEY = 'coding-agent-last-path'
 
@@ -50,6 +51,15 @@ export const useAgentStore = defineStore('agent', () => {
   const historyStates = ref([])
   const rollbackPreview = ref(null)
   const checkpointView = ref(null)
+
+  const wcPreviewUrl = ref(null)
+  const wcStatus = ref('idle')
+  const wcError = ref(null)
+  const wcOutputBuffer = ref([])
+  const wcShowPreview = ref(false)
+
+  let _wcManager = null
+  let _wcOutputUnsubscribe = null
 
   let rafId = null
   let editorInstance = null
@@ -726,6 +736,15 @@ export const useAgentStore = defineStore('agent', () => {
         console.log('[WS] MCP services listed')
         break
 
+      case 'webcontainer_artifacts':
+        console.log('[WS] 🌐 WebContainer artifacts received:', data.task_id, 'files:', data.file_count)
+        _handleWebContainerArtifacts(data)
+        break
+
+      case 'artifacts_ready':
+        console.log('[WS] 📦 Artifacts ready:', data.execution_env, 'files:', data.file_count)
+        break
+
       case 'swarm_loop_start':
         status.value = data.data || ''
         if (data.role === 'coder') {
@@ -1045,6 +1064,7 @@ export const useAgentStore = defineStore('agent', () => {
         auto_approve: autoApprove.value,
         use_swarm: options.use_swarm || false,
         user_id: userId.value,
+        images: options.images && options.images.length ? options.images : undefined,
       }
 
       pendingBaseTaskId.value = ''
@@ -1173,6 +1193,100 @@ export const useAgentStore = defineStore('agent', () => {
   function revertMergedTask(taskId) {
     if (!taskId) return false
     return sendSystemCommand('revert_merged_task', { target_task_id: taskId })
+  }
+
+  async function _handleWebContainerArtifacts(data) {
+    const vfs = data.vfs
+    if (!vfs || typeof vfs !== 'object') {
+      wcError.value = '无效的 VFS 数据'
+      wcStatus.value = 'error'
+      return
+    }
+
+    try {
+      wcStatus.value = 'booting'
+      wcError.value = null
+      wcOutputBuffer.value = []
+      window.__xterm_write?.('\x1b[36m[WebContainer] 🚀 正在启动浏览器内 Node.js 环境...\x1b[0m\n')
+
+      _wcManager = WebContainerManager.getInstance()
+
+      _wcManager.onOutput((output) => {
+        wcOutputBuffer.value.push(output)
+        if (wcOutputBuffer.value.length > 500) {
+          wcOutputBuffer.value = wcOutputBuffer.value.slice(-300)
+        }
+        window.__xterm_write?.(output)
+      })
+
+      _wcManager.onPreviewUrl((url) => {
+        wcPreviewUrl.value = url
+        wcShowPreview.value = true
+        window.__xterm_write?.(`\x1b[32m[WebContainer] 🟢 预览服务已就绪: ${url}\x1b[0m\n`)
+      })
+
+      _wcManager.onServerReady((port, url) => {
+        wcStatus.value = 'running'
+        console.log(`[WebContainer] Server ready: port=${port}, url=${url}`)
+      })
+
+      await _wcManager.boot()
+      wcStatus.value = 'mounting'
+      window.__xterm_write?.('\x1b[36m[WebContainer] 📁 正在挂载文件到虚拟文件系统...\x1b[0m\n')
+
+      await _wcManager.mountFiles(vfs)
+      wcStatus.value = 'installing'
+      window.__xterm_write?.('\x1b[36m[WebContainer] 📦 正在执行 npm install...\x1b[0m\n')
+
+      const installResult = await _wcManager.installDependencies()
+      if (!installResult.success) {
+        wcError.value = `npm install 失败 (exit code: ${installResult.exitCode})`
+        wcStatus.value = 'error'
+        window.__xterm_write?.(`\x1b[31m[WebContainer] ❌ npm install 失败\x1b[0m\n`)
+        return
+      }
+
+      wcStatus.value = 'starting'
+      window.__xterm_write?.('\x1b[36m[WebContainer] 🏃 正在启动开发服务器 (npm run dev)...\x1b[0m\n')
+
+      _wcManager.startDevServer()
+    } catch (err) {
+      console.error('[WebContainer] Error:', err)
+      wcError.value = err.message || String(err)
+      wcStatus.value = 'error'
+      window.__xterm_write?.(`\x1b[31m[WebContainer] ❌ 启动失败: ${err.message}\x1b[0m\n`)
+    }
+  }
+
+  function stopWebContainer() {
+    if (_wcManager) {
+      _wcManager.killRunningProcess()
+      wcStatus.value = 'idle'
+      wcShowPreview.value = false
+      window.__xterm_write?.('\x1b[33m[WebContainer] 🛑 开发服务器已停止\x1b[0m\n')
+    }
+  }
+
+  function closeWebContainerPreview() {
+    wcShowPreview.value = false
+  }
+
+  function openWebContainerPreview() {
+    if (wcPreviewUrl.value) {
+      wcShowPreview.value = true
+    }
+  }
+
+  function resetWebContainer() {
+    if (_wcManager) {
+      _wcManager.teardown()
+      _wcManager = null
+    }
+    wcPreviewUrl.value = null
+    wcStatus.value = 'idle'
+    wcError.value = null
+    wcOutputBuffer.value = []
+    wcShowPreview.value = false
   }
 
   function addSystemMessage(content) {
@@ -1348,5 +1462,14 @@ export const useAgentStore = defineStore('agent', () => {
     fetchTaskRegistry,
     registerEditor,
     unregisterEditor,
+    wcPreviewUrl,
+    wcStatus,
+    wcError,
+    wcOutputBuffer,
+    wcShowPreview,
+    stopWebContainer,
+    closeWebContainerPreview,
+    openWebContainerPreview,
+    resetWebContainer,
   }
 })

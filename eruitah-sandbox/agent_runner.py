@@ -531,6 +531,12 @@ dispatch_subtasks(subtasks=[
 - 数字参数（如 thoughtNumber, totalThoughts, count, line）必须是整数，绝不能加引号！正确: {"totalThoughts": 2}  错误: {"totalThoughts": "2"}
 - 布尔参数（如 nextThoughtNeeded, staged）必须是原生 true/false，绝不能输出字符串！正确: {"nextThoughtNeeded": false}  错误: {"nextThoughtNeeded": "False"}
 - 违反类型会导致 MCP Server 校验失败，工具调用被拒绝！
+
+🚫 【铁律一：工作区锁定约束】
+你必须且只能在当前分配的工作区目录（即运行环境的根目录）下创建和修改文件。严禁使用 `cd /tmp` 或使用绝对路径去其他地方创建项目！所有文件操作（file_edit、file_write、bash）的目标路径必须是工作区内的相对路径。否则系统将无法保存你的代码，你的工作将丢失！
+
+🚫 【铁律二：视觉工具使用规范】
+如果需要截图或查看网页，严禁使用 `browser_vision` 工具（该工具不存在且已被废弃）。你必须使用 MCP 提供的真实工具：先调用 `mcp_puppeteer_puppeteer_navigate` 打开网址，然后调用 `mcp_puppeteer_puppeteer_screenshot` 获取截图。如果你尝试调用 `browser_vision`，系统将返回错误并要求你重新使用正确的 MCP 工具。
 """
 
 # ============================================================================
@@ -1267,6 +1273,39 @@ def _execute_tool_local(
             if not command:
                 return "命令不能为空", True, meta
 
+            command_stripped = command.strip()
+            _webcontainer_run_patterns = (
+                "npm start", "npm run dev", "npm run start", "npm run serve",
+                "npm run build", "npm run preview",
+                "npx serve", "npx vite", "npx next dev", "npx nuxt dev",
+                "yarn start", "yarn dev", "yarn serve", "yarn build",
+                "pnpm start", "pnpm dev", "pnpm serve", "pnpm build",
+                "bun start", "bun dev", "bun run dev", "bun run start",
+                "vite", "vite dev", "vite serve",
+                "next dev", "nuxt dev",
+            )
+            _is_webcontainer_run = any(
+                command_stripped.startswith(p) or command_stripped == p
+                for p in _webcontainer_run_patterns
+            )
+
+            if _is_webcontainer_run:
+                try:
+                    from artifact_builder import detect_execution_env
+                    _env = detect_execution_env(work_dir)
+                    if _env == "webcontainer":
+                        meta["webcontainer_intercept"] = True
+                        meta["intercepted_command"] = command_stripped
+                        return (
+                            f"✅ 命令已拦截: `{command_stripped}`\n"
+                            f"本项目被判定为 WebContainer 前端项目，运行命令将由前端 WebContainer 接管执行，"
+                            f"无需在后端 Docker 中运行。请继续完成代码编写工作。",
+                            False,
+                            meta,
+                        )
+                except Exception:
+                    pass
+
             bash_result = execute_bash(command, work_dir, allow_warnings=auto_approve)
             
             if bash_result.needs_confirmation and not auto_approve:
@@ -1619,6 +1658,159 @@ def _execute_tool_local(
         logger.error(f"工具执行异常 {name}: {e}")
         return f"工具执行异常: {str(e)}", True, meta
 
+
+def route_task(
+    user_message: str,
+    api_key: Optional[str] = None,
+    model: Optional[str] = None,
+    base_url: Optional[str] = None,
+    provider: str = "openai",
+    images: Optional[list] = None,
+) -> dict:
+    """
+    Supervisor（CTO）路由：调用 LLM 分析用户请求，决定路由给预设专家或动态生成专家。
+    支持多模态：当 images 存在时，CTO LLM 也能看到用户上传的图片。
+
+    Returns:
+        dict: {
+            "is_predefined": bool,
+            "target_agent_name": str,
+            "dynamic_system_prompt": str,
+            "sub_task": str
+        }
+        如果路由失败，返回兜底结果 {"is_predefined": True, "target_agent_name": "general_coder", ...}
+    """
+    from agent_prompts import ROUTER_PROMPT, PREDEFINED_AGENTS
+
+    router_messages = [
+        {"role": "system", "content": ROUTER_PROMPT},
+    ]
+
+    effective_images = images or []
+
+    if effective_images:
+        content_list = [{"type": "text", "text": user_message}]
+        for img_b64 in effective_images:
+            if isinstance(img_b64, str) and img_b64:
+                prefix = "" if img_b64.startswith("data:image") else "data:image/jpeg;base64,"
+                content_list.append({
+                    "type": "image_url",
+                    "image_url": {"url": f"{prefix}{img_b64}"},
+                })
+
+        if provider == "anthropic":
+            anthropic_content = []
+            for item in content_list:
+                if item["type"] == "text":
+                    anthropic_content.append({"type": "text", "text": item["text"]})
+                elif item["type"] == "image_url":
+                    url = item["image_url"]["url"]
+                    if url.startswith("data:image/"):
+                        parts = url.split(";base64,", 1)
+                        media_type = parts[0].replace("data:image/", "image/")
+                        b64_data = parts[1] if len(parts) > 1 else ""
+                        anthropic_content.append({
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": media_type,
+                                "data": b64_data,
+                            },
+                        })
+            router_messages.append({"role": "user", "content": anthropic_content})
+        else:
+            router_messages.append({"role": "user", "content": content_list})
+
+        logger.info(f"📷 route_task: CTO 接收到 {len(effective_images)} 张图片")
+    else:
+        router_messages.append({"role": "user", "content": user_message})
+
+    try:
+        if provider == "anthropic":
+            text, _, _ = _call_anthropic(
+                messages=router_messages,
+                tools=[],
+                api_key=api_key,
+                model=model,
+                base_url=base_url,
+            )
+        else:
+            text, _, _ = _call_openai(
+                messages=router_messages,
+                tools=[],
+                api_key=api_key,
+                model=model,
+                base_url=base_url,
+            )
+
+        text = text.strip()
+
+        json_str = text
+        if "```json" in text:
+            json_str = text.split("```json")[1].split("```")[0].strip()
+        elif "```" in text:
+            json_str = text.split("```")[1].split("```")[0].strip()
+
+        result = json.loads(json_str)
+
+        if not isinstance(result, dict):
+            raise ValueError("路由结果不是 JSON 对象")
+
+        if "is_predefined" not in result:
+            if "target_agent" in result:
+                result["is_predefined"] = True
+                result["target_agent_name"] = result.pop("target_agent")
+                result.setdefault("dynamic_system_prompt", "")
+            else:
+                raise ValueError("路由结果缺少 is_predefined 字段")
+
+        is_predefined = result.get("is_predefined", True)
+
+        if is_predefined:
+            agent_name = result.get("target_agent_name", "general_coder")
+            if agent_name not in PREDEFINED_AGENTS:
+                logger.warning(f"⚠️ 路由返回未知预设专家 '{agent_name}'，降级为 general_coder")
+                result["target_agent_name"] = "general_coder"
+            result["dynamic_system_prompt"] = ""
+            logger.info(f"🔀 路由结果 [预设]: {result['target_agent_name']} | 子任务: {result.get('sub_task', 'N/A')[:80]}")
+        else:
+            dynamic_prompt = result.get("dynamic_system_prompt", "")
+            if not dynamic_prompt or len(dynamic_prompt.strip()) < 20:
+                logger.warning("⚠️ 动态专家的 system_prompt 过短，降级为 general_coder")
+                result["is_predefined"] = True
+                result["target_agent_name"] = "general_coder"
+                result["dynamic_system_prompt"] = ""
+            else:
+                result["target_agent_name"] = "dynamic_expert"
+                logger.info(f"🔀 路由结果 [动态生成]: dynamic_expert | Prompt 长度: {len(dynamic_prompt)} | 子任务: {result.get('sub_task', 'N/A')[:80]}")
+
+        if "sub_task" not in result or not result["sub_task"]:
+            result["sub_task"] = user_message
+
+        result.setdefault("execution_env", "native")
+
+        return result
+
+    except json.JSONDecodeError as e:
+        logger.warning(f"⚠️ 路由结果 JSON 解析失败: {e}, 原始输出: {text[:200]}")
+        return {
+            "is_predefined": True,
+            "target_agent_name": "general_coder",
+            "dynamic_system_prompt": "",
+            "sub_task": user_message,
+            "execution_env": "native",
+        }
+    except Exception as e:
+        logger.error(f"路由任务异常: {e}")
+        return {
+            "is_predefined": True,
+            "target_agent_name": "general_coder",
+            "dynamic_system_prompt": "",
+            "sub_task": user_message,
+            "execution_env": "native",
+        }
+
+
 def run_agent(
     user_input: str,
     work_dir: str = ".",
@@ -1634,6 +1826,8 @@ def run_agent(
     main_repo_dir: Optional[str] = None,
     auto_approve: bool = False,
     user_id: int = 0,
+    override_system_prompt: Optional[str] = None,
+    images: Optional[list] = None,
 ) -> Generator[Dict[str, Any], None, None]:
     """Agent 主循环"""
     if not task_id:
@@ -1671,14 +1865,57 @@ def run_agent(
                 blackboard.work_dir = bb.get("work_dir", work_dir)
     else:
         messages = []
-        system_prompt = build_system_prompt(work_dir)
-        if provider == "anthropic":
-            messages.append({"role": "user", "content": user_input})
+        if override_system_prompt:
+            system_prompt = override_system_prompt
         else:
-            messages = [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_input},
-            ]
+            system_prompt = build_system_prompt(work_dir)
+
+        effective_images = images or []
+
+        if effective_images:
+            content_list = [{"type": "text", "text": user_input}]
+            for img_b64 in effective_images:
+                if isinstance(img_b64, str) and img_b64:
+                    prefix = "" if img_b64.startswith("data:image") else "data:image/jpeg;base64,"
+                    content_list.append({
+                        "type": "image_url",
+                        "image_url": {"url": f"{prefix}{img_b64}"},
+                    })
+
+            if provider == "anthropic":
+                anthropic_content = []
+                for item in content_list:
+                    if item["type"] == "text":
+                        anthropic_content.append({"type": "text", "text": item["text"]})
+                    elif item["type"] == "image_url":
+                        url = item["image_url"]["url"]
+                        if url.startswith("data:image/"):
+                            parts = url.split(";base64,", 1)
+                            media_type = parts[0].replace("data:image/", "image/")
+                            b64_data = parts[1] if len(parts) > 1 else ""
+                            anthropic_content.append({
+                                "type": "image",
+                                "source": {
+                                    "type": "base64",
+                                    "media_type": media_type,
+                                    "data": b64_data,
+                                },
+                            })
+                messages.append({"role": "user", "content": anthropic_content})
+            else:
+                messages = [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": content_list},
+                ]
+            logger.info(f"📷 视觉消息已组装: {len(effective_images)} 张图片, provider={provider}")
+        else:
+            if provider == "anthropic":
+                messages.append({"role": "user", "content": user_input})
+            else:
+                messages = [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_input},
+                ]
 
     rewind_system.create_checkpoint(session_id, 0, messages, f"任务开始前快照 [task={task_id}]")
     logger.info(f"📦 任务 {task_id} 开启，已创建任务前快照 (turn=0)")
@@ -2141,6 +2378,22 @@ def run_agent(
                     except Exception as e:
                         logger.warning(f"⚠️ 职业档案分析触发失败: {e}")
 
+                try:
+                    from artifact_builder import build_artifact_payload
+                    artifact_payload = build_artifact_payload(work_dir)
+                    execution_env = artifact_payload.get("execution_env", "native")
+                    logger.info(
+                        f"📦 任务结算: execution_env={execution_env}, "
+                        f"files={artifact_payload.get('file_count', 0)}, "
+                        f"size={artifact_payload.get('total_size_bytes', 0) // 1024}KB"
+                    )
+                    yield {
+                        "type": "artifacts_ready",
+                        "data": artifact_payload,
+                    }
+                except Exception as e:
+                    logger.warning(f"⚠️ 构建产物打包失败（不影响任务结果）: {e}")
+
                 yield {"type": "finish", "data": text or "任务完成"}
                 break
 
@@ -2169,6 +2422,25 @@ def run_agent(
                 # ==========================================================
                 args = sanitize_llm_args(args)
                 
+                if name == "__invalid_tool__":
+                    error_msg = args.get("_error", f"Error: Tool '{args.get('_original_name', 'unknown')}' is invalid or not found.")
+                    logger.warning(f"⚠️ 无效工具调用反馈: {error_msg}")
+                    yield {"type": "tool_start", "tool_name": args.get("_original_name", "unknown"), "args": args.get("_original_args", {})}
+                    yield {"type": "tool_end", "tool_name": args.get("_original_name", "unknown"), "result": error_msg, "is_error": True}
+                    if provider == "anthropic":
+                        tool_results_for_api.append({
+                            "type": "tool_result",
+                            "tool_use_id": tc_id,
+                            "content": error_msg,
+                            "is_error": True,
+                        })
+                    else:
+                        tool_results_for_api.append({
+                            "role": "tool",
+                            "tool_call_id": tc_id,
+                            "content": error_msg,
+                        })
+                    continue
                 # ==========================================================
                 # 🛡️ 终极防线：提示词补偿机制 (Prompt Compensation)
                 # 当大模型调用工具参数缺失时：
@@ -2533,17 +2805,21 @@ def run_agent(
             if tool_results_for_api:
                 # 对于 OpenAI 格式，需要先添加 assistant 消息（带 tool_calls）
                 if provider != "anthropic":
-                    tc_list_main = [
-                        {
+                    tc_list_main = []
+                    for tc in tool_calls:
+                        tc_name_for_api = tc["name"]
+                        tc_args_for_api = tc["args"]
+                        if tc_name_for_api == "__invalid_tool__":
+                            tc_name_for_api = tc_args_for_api.get("_original_name", "unknown_tool")
+                            tc_args_for_api = tc_args_for_api.get("_original_args", {})
+                        tc_list_main.append({
                             "id": tc["id"],
                             "type": "function",
                             "function": {
-                                "name": tc["name"],
-                                "arguments": json.dumps(tc["args"], ensure_ascii=False)
+                                "name": tc_name_for_api,
+                                "arguments": json.dumps(tc_args_for_api, ensure_ascii=False)
                             }
-                        }
-                        for tc in tool_calls
-                    ]
+                        })
                     messages.append(_build_assistant_msg(
                         text if text else None,
                         tool_calls=tc_list_main,
@@ -3004,8 +3280,22 @@ def _call_openai(
                             tc_name = "record_learning"
                             logger.info(f"🔄 根据参数推断工具名: record_learning")
                         else:
-                            logger.warning(f"⚠️ 无法推断工具名，忽略此工具调用")
-                            continue
+                            logger.warning(f"⚠️ 无法推断工具名: {tc_name}, 将错误反馈给模型以触发自我纠正")
+                            invalid_tool_hints = {
+                                "browser_vision": "browser_vision 不存在且已废弃。如需截图请使用 MCP 工具: mcp_puppeteer_puppeteer_navigate 打开网页, mcp_puppeteer_puppeteer_screenshot 获取截图",
+                                "browser_screenshot": "browser_screenshot 不存在。如需截图请使用 MCP 工具: mcp_puppeteer_puppeteer_navigate + mcp_puppeteer_puppeteer_screenshot",
+                                "web_screenshot": "web_screenshot 不存在。如需截图请使用 MCP 工具: mcp_puppeteer_puppeteer_navigate + mcp_puppeteer_puppeteer_screenshot",
+                                "screenshot": "screenshot 不存在。如需截图请使用 MCP 工具: mcp_puppeteer_puppeteer_navigate + mcp_puppeteer_puppeteer_screenshot",
+                                "navigate": "navigate 不存在。如需打开网页请使用 MCP 工具: mcp_puppeteer_puppeteer_navigate",
+                                "open_browser": "open_browser 不存在。如需打开网页请使用 MCP 工具: mcp_puppeteer_puppeteer_navigate",
+                            }
+                            hint = invalid_tool_hints.get(tc_name, f"该工具不存在。可用工具: bash, file_edit, file_read, glob, grep, ask_user, mcp_puppeteer_puppeteer_navigate, mcp_puppeteer_puppeteer_screenshot 等")
+                            error_msg = f"Error: Tool '{tc_name}' is invalid or not found. {hint}"
+                            tool_calls.append({
+                                "id": tc_id,
+                                "name": "__invalid_tool__",
+                                "args": {"_original_name": tc_name, "_original_args": args_dict, "_error": error_msg},
+                            })
 
                 if tc_name != "unknown_tool":
                     tool_calls.append({

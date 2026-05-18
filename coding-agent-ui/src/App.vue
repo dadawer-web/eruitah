@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onBeforeUnmount } from 'vue'
+import { onMounted, onBeforeUnmount, computed } from 'vue'
 import { useAgentStore } from './stores/agent'
 import FileTree from './components/FileTree.vue'
 import ChatPanel from './components/ChatPanel.vue'
@@ -11,6 +11,32 @@ import PixelPet from './components/PixelPet.vue'
 
 const store = useAgentStore()
 
+const wcStatusLabel = computed(() => {
+  const map = {
+    idle: '',
+    booting: '启动中...',
+    mounting: '挂载文件...',
+    installing: 'npm install...',
+    starting: '启动开发服务器...',
+    running: '运行中',
+    error: '错误',
+  }
+  return map[store.wcStatus] || store.wcStatus
+})
+
+const wcStatusColor = computed(() => {
+  const map = {
+    idle: 'text-geek-text-dim',
+    booting: 'text-yellow-400',
+    mounting: 'text-cyan-400',
+    installing: 'text-blue-400',
+    starting: 'text-purple-400',
+    running: 'text-green-400',
+    error: 'text-red-400',
+  }
+  return map[store.wcStatus] || 'text-geek-text-dim'
+})
+
 onMounted(() => {
   store.connect()
   store.fetchFileTree()
@@ -19,6 +45,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   store.disconnect()
+  store.resetWebContainer()
 })
 </script>
 
@@ -40,11 +67,100 @@ onBeforeUnmount(() => {
       </aside>
 
       <main class="flex-1 flex flex-col min-w-0">
-        <div class="h-[70%] min-h-0 overflow-hidden border-b border-geek-border">
-          <CodeEditor />
-        </div>
-        <div class="h-[30%] min-h-0 overflow-hidden">
-          <TerminalPanel />
+        <div class="flex-1 flex min-h-0">
+          <div
+            class="flex flex-col min-w-0"
+            :class="store.wcShowPreview ? 'w-1/2 border-r border-geek-border' : 'w-full'"
+          >
+            <div class="h-[70%] min-h-0 overflow-hidden border-b border-geek-border">
+              <CodeEditor />
+            </div>
+            <div class="h-[30%] min-h-0 overflow-hidden">
+              <TerminalPanel />
+            </div>
+          </div>
+
+          <div
+            v-if="store.wcShowPreview"
+            class="w-1/2 flex flex-col min-w-0 bg-geek-bg"
+          >
+            <div class="flex items-center justify-between px-3 py-1.5 border-b border-geek-border bg-geek-surface shrink-0">
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-geek-accent">🌐 实时预览</span>
+                <span
+                  v-if="wcStatusLabel"
+                  class="text-[10px] px-1.5 py-0.5 rounded bg-geek-bg border border-geek-border"
+                  :class="wcStatusColor"
+                >{{ wcStatusLabel }}</span>
+              </div>
+              <div class="flex items-center gap-1">
+                <button
+                  v-if="store.wcPreviewUrl"
+                  @click="navigator.clipboard?.writeText(store.wcPreviewUrl)"
+                  class="px-1.5 py-0.5 text-[10px] text-geek-text-dim hover:text-geek-accent transition-colors"
+                  title="复制预览 URL"
+                >📋</button>
+                <button
+                  @click="store.stopWebContainer()"
+                  class="px-1.5 py-0.5 text-[10px] text-red-400 hover:text-red-300 transition-colors"
+                  title="停止服务"
+                >⏹</button>
+                <button
+                  @click="store.closeWebContainerPreview()"
+                  class="px-1.5 py-0.5 text-[10px] text-geek-text-dim hover:text-geek-accent transition-colors"
+                  title="关闭预览"
+                >✕</button>
+              </div>
+            </div>
+
+            <div class="flex-1 min-h-0 relative">
+              <div
+                v-if="store.wcStatus !== 'running' && store.wcStatus !== 'error'"
+                class="absolute inset-0 flex items-center justify-center bg-geek-bg/80 z-10"
+              >
+                <div class="text-center">
+                  <div class="text-2xl mb-2">
+                    <span v-if="store.wcStatus === 'booting'">🚀</span>
+                    <span v-else-if="store.wcStatus === 'mounting'">📁</span>
+                    <span v-else-if="store.wcStatus === 'installing'">📦</span>
+                    <span v-else-if="store.wcStatus === 'starting'">🏃</span>
+                    <span v-else>⏳</span>
+                  </div>
+                  <div class="text-xs text-geek-text-dim">{{ wcStatusLabel }}</div>
+                </div>
+              </div>
+
+              <div
+                v-if="store.wcError"
+                class="absolute inset-0 flex items-center justify-center bg-geek-bg/90 z-10"
+              >
+                <div class="text-center max-w-[80%]">
+                  <div class="text-2xl mb-2">❌</div>
+                  <div class="text-xs text-red-400 mb-2">WebContainer 启动失败</div>
+                  <div class="text-[10px] text-geek-text-dim break-all">{{ store.wcError }}</div>
+                  <button
+                    @click="store.resetWebContainer()"
+                    class="mt-3 px-3 py-1 bg-geek-accent text-black rounded text-[10px] font-bold hover:bg-geek-accent-dim transition-colors"
+                  >重试</button>
+                </div>
+              </div>
+
+              <iframe
+                v-if="store.wcPreviewUrl"
+                :src="store.wcPreviewUrl"
+                class="w-full h-full border-0 bg-white"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
+                allow="cross-origin-isolated"
+              ></iframe>
+
+              <div
+                v-if="!store.wcPreviewUrl && store.wcStatus === 'running'"
+                class="absolute inset-0 flex items-center justify-center"
+              >
+                <div class="text-xs text-geek-text-dim">等待 server-ready 事件...</div>
+              </div>
+            </div>
+          </div>
         </div>
       </main>
     </div>

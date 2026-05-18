@@ -1101,6 +1101,101 @@ def execute_dispatch_subtasks(
     return "\n".join(lines), is_error
 
 
+def start_debate_loop(
+    task: str,
+    dynamic_persona_prompt: str = "",
+    work_dir: str = ".",
+    provider: str = "openai",
+    api_key: str = None,
+    model: str = None,
+    base_url: str = None,
+    max_loops: int = 3,
+    main_repo_dir: str = "",
+    task_id: str = None,
+    session_id: str = None,
+    auto_approve: bool = False,
+    yield_events: bool = True,
+    images: Optional[list] = None,
+):
+    """
+    红蓝对抗引擎 — 高级 API
+
+    当 Supervisor（CTO）决定了专家身份和子任务后，调用此函数启动对抗循环。
+    蓝军（Coder）继承 dynamic_persona_prompt 编写代码，
+    红军（Reviewer）从该领域最佳实践角度进行深度挑刺。
+
+    Args:
+        task: Supervisor 拆解后的子任务描述
+        dynamic_persona_prompt: 专家身份 Prompt（来自 Supervisor 路由结果）
+        work_dir: 工作目录
+        provider: LLM 提供商
+        api_key: API Key
+        model: 模型名称
+        base_url: API Base URL
+        max_loops: 最大对抗轮数（默认3轮）
+        main_repo_dir: 主仓库目录
+        task_id: 任务 ID
+        session_id: 会话 ID
+        auto_approve: 是否自动批准
+        yield_events: 是否流式输出事件
+
+    Returns:
+        如果 yield_events=True，yield 事件流
+        如果 yield_events=False，返回 SwarmResult
+    """
+    custom_coder_prompt = ""
+    custom_reviewer_prompt = ""
+
+    if dynamic_persona_prompt:
+        custom_coder_prompt = (
+            f"{dynamic_persona_prompt}\n\n"
+            "⚠️ Coder 行为规范（附加）：\n"
+            "1. 你的代码写完后，会交由一位极其严苛的架构师（Reviewer）进行审查\n"
+            "2. 请使用工具完成开发，当你认为全部写完且测试通过后，请回复：【提交审查】+ 你的修改总结\n"
+            "3. 如果 Reviewer 打回你的代码，你必须根据 Reviewer 的意见修复问题，然后再次提交审查\n"
+            "4. 你拥有完整的文件编辑和命令执行权限，请善用这些工具写出高质量代码\n"
+            "5. 绝对禁止直接在回复文本中输出大段完整代码！必须通过 file_edit 工具写入文件\n"
+        )
+
+        domain_hint = dynamic_persona_prompt[:200]
+        custom_reviewer_prompt = (
+            f"{REVIEWER_PROMPT}\n\n"
+            f"# 🎯 领域感知审计增强\n"
+            f"上述代码由以下领域的专家编写：\n"
+            f"---\n"
+            f"{domain_hint}\n"
+            f"---\n\n"
+            f"请你从该领域的安全和性能最佳实践角度，进行深度挑刺。"
+            f"例如：如果代码声称是高并发 C++ 专家写的，你必须重点检查内存安全、线程安全、RAII 合规性；"
+            f"如果代码声称是数据库专家写的，你必须重点检查 SQL 注入、索引设计、事务隔离级别等。\n\n"
+            f"但请注意：如果代码确实符合该领域的最佳实践，没有致命问题，请果断 APPROVE，不要过度审查。"
+        )
+
+    logger.info(
+        f"[DebateLoop] 🔥 启动红蓝对抗 | "
+        f"动态专家: {'是' if dynamic_persona_prompt else '否'} | "
+        f"任务: {task[:80]}"
+    )
+
+    return run_swarm(
+        task_description=task,
+        work_dir=work_dir,
+        provider=provider,
+        api_key=api_key,
+        model=model,
+        base_url=base_url,
+        max_loops=max_loops,
+        main_repo_dir=main_repo_dir,
+        task_id=task_id,
+        session_id=session_id,
+        auto_approve=auto_approve,
+        yield_events=yield_events,
+        custom_coder_prompt=custom_coder_prompt,
+        custom_reviewer_prompt=custom_reviewer_prompt,
+        images=images,
+    )
+
+
 _local_client: Optional[SwarmClient] = None
 _local_hub: Optional[SwarmHub] = None
 
@@ -1399,6 +1494,7 @@ def _run_role_agent(
     task_id: str = None,
     session_id: str = None,
     yield_events: bool = False,
+    images: Optional[list] = None,
 ):
     if yield_events:
         yield from _run_role_agent_events(
@@ -1413,6 +1509,7 @@ def _run_role_agent(
             main_repo_dir=main_repo_dir,
             task_id=task_id,
             session_id=session_id,
+            images=images,
         )
         return
 
@@ -1429,6 +1526,7 @@ def _run_role_agent(
         main_repo_dir=main_repo_dir,
         task_id=task_id,
         session_id=session_id,
+        images=images,
     ):
         if event.get("type") == "assistant":
             result_text = event.get("data", result_text)
@@ -1625,22 +1723,70 @@ def _run_role_agent_events(
     task_id: str = None,
     session_id: str = None,
     auto_approve: bool = False,
+    custom_coder_prompt: str = "",
+    custom_reviewer_prompt: str = "",
+    images: Optional[list] = None,
 ):
     from agent_runner import run_agent as _run_agent
 
-    role_prompt = CODER_PROMPT if role == "coder" else REVIEWER_PROMPT
+    if role == "coder" and custom_coder_prompt:
+        role_prompt = custom_coder_prompt
+    elif role == "reviewer" and custom_reviewer_prompt:
+        role_prompt = custom_reviewer_prompt
+    else:
+        role_prompt = CODER_PROMPT if role == "coder" else REVIEWER_PROMPT
     role_session_id = session_id or f"swarm_{role}_{uuid.uuid4().hex[:6]}"
 
+    effective_images = images or []
+
     if provider == "anthropic":
-        initial_messages = [
-            {"role": "user", "content": f"{role_prompt}\n\n---\n\n{instruction}"},
-        ]
-        user_input = instruction
+        if effective_images:
+            anthropic_content = [{"type": "text", "text": f"{role_prompt}\n\n---\n\n{instruction}"}]
+            for img_b64 in effective_images:
+                if isinstance(img_b64, str) and img_b64:
+                    prefix = "" if img_b64.startswith("data:image") else "data:image/jpeg;base64,"
+                    url = f"{prefix}{img_b64}"
+                    if url.startswith("data:image/"):
+                        parts = url.split(";base64,", 1)
+                        media_type = parts[0].replace("data:image/", "image/")
+                        b64_data = parts[1] if len(parts) > 1 else ""
+                        anthropic_content.append({
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": media_type,
+                                "data": b64_data,
+                            },
+                        })
+            initial_messages = [
+                {"role": "user", "content": anthropic_content},
+            ]
+            user_input = ""
+        else:
+            initial_messages = [
+                {"role": "user", "content": f"{role_prompt}\n\n---\n\n{instruction}"},
+            ]
+            user_input = instruction
     else:
-        initial_messages = [
-            {"role": "system", "content": role_prompt},
-        ]
-        user_input = instruction
+        if effective_images:
+            content_list = [{"type": "text", "text": instruction}]
+            for img_b64 in effective_images:
+                if isinstance(img_b64, str) and img_b64:
+                    prefix = "" if img_b64.startswith("data:image") else "data:image/jpeg;base64,"
+                    content_list.append({
+                        "type": "image_url",
+                        "image_url": {"url": f"{prefix}{img_b64}"},
+                    })
+            initial_messages = [
+                {"role": "system", "content": role_prompt},
+                {"role": "user", "content": content_list},
+            ]
+            user_input = ""
+        else:
+            initial_messages = [
+                {"role": "system", "content": role_prompt},
+            ]
+            user_input = instruction
 
     last_assistant_text = ""
     last_thinking_thought = ""
@@ -1741,6 +1887,9 @@ def run_swarm(
     auto_approve: bool = False,
     max_loops: int = 5,
     yield_events: bool = False,
+    custom_coder_prompt: str = "",
+    custom_reviewer_prompt: str = "",
+    images: Optional[list] = None,
 ):
     task_desc = task_description or user_input or ""
     if not task_desc:
@@ -1764,6 +1913,9 @@ def run_swarm(
             task_id=task_id,
             session_id=session_id,
             auto_approve=auto_approve,
+            custom_coder_prompt=custom_coder_prompt,
+            custom_reviewer_prompt=custom_reviewer_prompt,
+            images=images,
         )
         return
 
@@ -1780,6 +1932,9 @@ def run_swarm(
         task_id=task_id,
         session_id=session_id,
         auto_approve=auto_approve,
+        custom_coder_prompt=custom_coder_prompt,
+        custom_reviewer_prompt=custom_reviewer_prompt,
+        images=images,
     ):
         if event.get("type") == "swarm_result":
             result = event.get("result")
@@ -1802,6 +1957,9 @@ def _run_swarm_events(
     task_id: str = None,
     session_id: str = None,
     auto_approve: bool = False,
+    custom_coder_prompt: str = "",
+    custom_reviewer_prompt: str = "",
+    images: Optional[list] = None,
 ):
     loop_count = 0
     coder_instruction = task_description
@@ -1868,6 +2026,9 @@ def _run_swarm_events(
             task_id=task_id,
             session_id=session_id,
             auto_approve=auto_approve,
+            custom_coder_prompt=custom_coder_prompt,
+            custom_reviewer_prompt=custom_reviewer_prompt,
+            images=images,
         ):
             if event.get("type") == "role_finish":
                 coder_text = event.get("data", "")
@@ -2011,6 +2172,9 @@ def _run_swarm_events(
             task_id=task_id,
             session_id=session_id,
             auto_approve=auto_approve,
+            custom_coder_prompt=custom_coder_prompt,
+            custom_reviewer_prompt=custom_reviewer_prompt,
+            images=images,
         ):
             if event.get("type") == "role_finish":
                 reviewer_text = event.get("data", "")
@@ -2358,6 +2522,8 @@ def execute_coder_reviewer_swarm(
     base_url: str = None,
     max_loops: int = 5,
     main_repo_dir: str = "",
+    custom_coder_prompt: str = "",
+    custom_reviewer_prompt: str = "",
 ) -> tuple[str, bool]:
     if not task_description.strip():
         return "❌ 任务描述不能为空", True
@@ -2371,6 +2537,8 @@ def execute_coder_reviewer_swarm(
         base_url=base_url,
         max_loops=max_loops,
         main_repo_dir=main_repo_dir,
+        custom_coder_prompt=custom_coder_prompt,
+        custom_reviewer_prompt=custom_reviewer_prompt,
     )
 
     lines = [

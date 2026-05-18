@@ -304,6 +304,20 @@ onBeforeUnmount(() => {
       <div class="flex items-center justify-between px-3 py-1">
         <div class="flex items-center gap-2">
           <span class="text-geek-text-dim text-xs">{{ store.basePath }}</span>
+          <template v-if="store.wcStatus !== 'idle'">
+            <span class="text-geek-border">|</span>
+            <span
+              class="text-[10px] px-1.5 py-0.5 rounded"
+              :class="{
+                'bg-yellow-900/30 text-yellow-400 border border-yellow-500/30': store.wcStatus === 'booting',
+                'bg-cyan-900/30 text-cyan-400 border border-cyan-500/30': store.wcStatus === 'mounting',
+                'bg-blue-900/30 text-blue-400 border border-blue-500/30': store.wcStatus === 'installing',
+                'bg-purple-900/30 text-purple-400 border border-purple-500/30': store.wcStatus === 'starting',
+                'bg-green-900/30 text-green-400 border border-green-500/30': store.wcStatus === 'running',
+                'bg-red-900/30 text-red-400 border border-red-500/30': store.wcStatus === 'error',
+              }"
+            >🌐 WC: {{ store.wcStatus }}</span>
+          </template>
         </div>
         <div class="flex items-center gap-1">
           <template v-if="getActiveTerminal()?.connected">

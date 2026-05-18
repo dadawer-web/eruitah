@@ -105,7 +105,20 @@ async def lifespan(app: FastAPI):
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     )
     logger.info(f"Eruitah 沙盒服务 v4 启动，工作目录: {SANDBOX_DIR}")
+
+    from sandbox_manager import init_global_sandbox
+    sandbox = init_global_sandbox(pool_size=3)
+    logger.info(
+        f"🏗️ 全局 GitSandboxManager 已在启动时初始化: "
+        f"BASE_REPO={sandbox.workspace_dir}, WORKTREES_ROOT={sandbox.worktree_base}"
+    )
+
     yield
+
+    from sandbox_manager import get_global_sandbox
+    sb = get_global_sandbox()
+    if sb:
+        sb.shutdown()
     logger.info("Eruitah 沙盒服务关闭")
 
 
@@ -156,23 +169,156 @@ async def _run_agent_async(
     auto_approve: bool = False,
     use_swarm: bool = False,
     user_id: int = 0,
+    enable_routing: bool = False,
+    images: Optional[list] = None,
 ):
     """
-    双模引擎异步适配器
+    绝对网关架构 (Absolute Gateway)
 
-    use_swarm=False (默认): ⚡ 闪电模式 - 单体 Agent (run_agent)
-    use_swarm=True:         🧠 深度研发模式 - Coder-Reviewer 对抗博弈 (run_swarm)
-
-    两种模式都通过 asyncio.Queue + 线程池包装为异步迭代器，
-    保证 WebSocket 心跳不被阻塞。
+    ┌────────────────────────────────────────────────────────────────┐
+    │  所有新任务必须先经过 Supervisor（CTO）审题                      │
+    │  Supervisor 决定穿什么"专家外衣"，然后根据模式分发：              │
+    │                                                                │
+    │  极速模式 (use_swarm=False): 单体 Agent 穿专家外衣干活           │
+    │  深度模式 (use_swarm=True):  红蓝对抗，蓝军穿专家外衣写代码       │
+    │                                                                │
+    │  继续任务 (initial_messages 非空): 跳过路由，直接继续             │
+    └────────────────────────────────────────────────────────────────┘
     """
     queue = asyncio.Queue()
     loop = asyncio.get_event_loop()
 
     def _sync_worker():
         try:
-            if use_swarm:
-                logger.info(f"🧠 [Gateway] 路由到: Swarm (多智能体) 模式, task_id={task_id}")
+            is_new_task = not initial_messages
+
+            route_result = None
+            expert_label = ""
+            persona_prompt = ""
+            effective_input = user_input
+            effective_images = images or []
+
+            from agent_runner import build_system_prompt
+
+            if is_new_task and user_input:
+                if effective_images:
+                    from agent_prompts import VISION_ARCHITECT_EXPERT
+
+                    route_result = {
+                        "is_predefined": True,
+                        "target_agent_name": "vision_architect",
+                        "dynamic_system_prompt": "",
+                        "sub_task": user_input if not user_input.startswith("分析图片") else user_input,
+                    }
+                    expert_label = "vision_architect (视觉架构师)"
+                    effective_input = user_input
+
+                    base_prompt = build_system_prompt(work_dir)
+                    persona_prompt = f"{base_prompt}\n\n# 🎯 专家身份激活\n你当前以 **视觉架构师** 专家身份执行任务。以下是你的专家指导原则：\n\n{VISION_ARCHITECT_EXPERT}"
+
+                    logger.info(
+                        f"[Supervisor] 检测到图片输入，直接指定视觉架构师 | 图片数: {len(effective_images)}"
+                    )
+                else:
+                    loop.call_soon_threadsafe(queue.put_nowait, {
+                        "type": "status",
+                        "data": "正在分析任务，选择专家...",
+                    })
+
+                    from agent_runner import route_task
+                    route_result = route_task(
+                        user_message=user_input,
+                        api_key=api_key,
+                        model=model,
+                        base_url=base_url,
+                        provider=provider,
+                        images=effective_images,
+                    )
+
+                    is_predefined = route_result.get("is_predefined", True)
+                    target_agent = route_result.get("target_agent_name", "general_coder")
+                    sub_task = route_result.get("sub_task", user_input)
+                    dynamic_prompt = route_result.get("dynamic_system_prompt", "")
+                    cto_execution_env = route_result.get("execution_env", "native")
+
+                    expert_label = target_agent if is_predefined else "动态生成的专家"
+                    effective_input = sub_task
+
+                    logger.info(
+                        f"[Supervisor] 需求拆解完毕，已生成动态专家设定: {expert_label}，"
+                        f"子任务: {sub_task[:80]}，执行环境: {cto_execution_env}"
+                    )
+
+                    loop.call_soon_threadsafe(queue.put_nowait, {
+                        "type": "task_routed",
+                        "data": {
+                            "is_predefined": is_predefined,
+                            "target_agent": target_agent,
+                            "sub_task": sub_task,
+                            "dynamic_prompt_length": len(dynamic_prompt) if dynamic_prompt else 0,
+                            "mode": "deep" if use_swarm else "fast",
+                            "execution_env": cto_execution_env,
+                        },
+                    })
+
+                    base_prompt = build_system_prompt(work_dir)
+
+                    if dynamic_prompt:
+                        persona_prompt = f"{base_prompt}\n\n# 🎯 专家身份激活\n你当前以 **{expert_label}** 专家身份执行任务。以下是你的专家指导原则：\n\n{dynamic_prompt}"
+                    elif not is_predefined and target_agent == "general_coder":
+                        persona_prompt = ""
+                    else:
+                        from agent_prompts import get_expert_prompt
+                        ep = get_expert_prompt(target_agent)
+                        if ep:
+                            persona_prompt = f"{base_prompt}\n\n# 🎯 专家身份激活\n你当前以 **{target_agent}** 专家身份执行任务。以下是你的专家指导原则：\n\n{ep}"
+                        else:
+                            persona_prompt = ""
+
+            if use_swarm and is_new_task and persona_prompt:
+                logger.info(
+                    f"🧠 [Gateway] 深度模式 → 红蓝对抗 | 专家: {expert_label} | task_id={task_id}"
+                )
+
+                loop.call_soon_threadsafe(queue.put_nowait, {
+                    "type": "debate_loop_start",
+                    "data": {
+                        "expert_label": expert_label,
+                        "sub_task": effective_input,
+                        "dynamic_persona": bool(persona_prompt),
+                    },
+                })
+
+                loop.call_soon_threadsafe(queue.put_nowait, {
+                    "type": "system_alert",
+                    "content": f"⚔️ 红蓝对抗引擎启动！蓝军继承 [{expert_label}] 专家身份，红军从该领域最佳实践角度深度挑刺",
+                })
+
+                from agent_swarm import start_debate_loop
+                for event in start_debate_loop(
+                    task=effective_input,
+                    dynamic_persona_prompt=persona_prompt,
+                    work_dir=work_dir,
+                    provider=provider,
+                    api_key=api_key,
+                    model=model,
+                    base_url=base_url,
+                    max_loops=3,
+                    main_repo_dir=main_repo_dir,
+                    task_id=task_id,
+                    auto_approve=auto_approve,
+                    yield_events=True,
+                    images=effective_images,
+                ):
+                    loop.call_soon_threadsafe(queue.put_nowait, event)
+
+                loop.call_soon_threadsafe(queue.put_nowait, {
+                    "type": "debate_loop_end",
+                    "data": {"expert_label": expert_label},
+                })
+
+            elif use_swarm:
+                logger.info(f"🧠 [Gateway] 深度模式 → 直接红蓝对抗 (继续任务), task_id={task_id}")
                 for event in run_swarm(
                     user_input=user_input,
                     work_dir=work_dir,
@@ -189,10 +335,21 @@ async def _run_agent_async(
                     yield_events=True,
                 ):
                     loop.call_soon_threadsafe(queue.put_nowait, event)
+
             else:
-                logger.info(f"⚡ [Gateway] 路由到: 单体 Agent 模式, task_id={task_id}")
+                mode_tag = f"穿 [{expert_label}] 专家外衣" if persona_prompt else "默认全栈"
+                logger.info(
+                    f"⚡ [Gateway] 极速模式 → 单体 Agent {mode_tag} | task_id={task_id}"
+                )
+
+                if persona_prompt:
+                    loop.call_soon_threadsafe(queue.put_nowait, {
+                        "type": "system_alert",
+                        "content": f"🎯 专家身份激活: {expert_label}，单体极速模式执行",
+                    })
+
                 for event in run_agent(
-                    user_input=user_input,
+                    user_input=effective_input,
                     work_dir=work_dir,
                     max_turns=max_turns,
                     api_key=api_key,
@@ -205,8 +362,11 @@ async def _run_agent_async(
                     main_repo_dir=main_repo_dir,
                     auto_approve=auto_approve,
                     user_id=user_id,
+                    override_system_prompt=persona_prompt if persona_prompt else None,
+                    images=effective_images,
                 ):
                     loop.call_soon_threadsafe(queue.put_nowait, event)
+
         except Exception as e:
             loop.call_soon_threadsafe(
                 queue.put_nowait,
@@ -792,6 +952,9 @@ async def websocket_coding(websocket: WebSocket):
 
             msg_type = data.get("type", "")
             user_input = data.get("task") or data.get("prompt") or data.get("content", "")
+            images = data.get("images") or []
+            if images and not isinstance(images, list):
+                images = [images]
             if not user_input:
                 await safe_send({"type": "error", "data": "task/prompt 不能为空"})
                 continue
@@ -933,6 +1096,7 @@ async def websocket_coding(websocket: WebSocket):
 
             auto_approve = data.get("auto_approve", False)
             use_swarm = data.get("use_swarm", False)
+            enable_routing = data.get("enable_routing", False)
             user_id = data.get("user_id") or 0
             try:
                 user_id = int(user_id)
@@ -954,6 +1118,8 @@ async def websocket_coding(websocket: WebSocket):
                 "auto_approve": auto_approve,
                 "use_swarm": use_swarm,
                 "user_id": user_id,
+                "enable_routing": enable_routing,
+                "images": images,
             }
 
             engine_name = "🧠 Swarm (多智能体)" if use_swarm else "⚡ 单体 Agent"
@@ -992,6 +1158,31 @@ async def websocket_coding(websocket: WebSocket):
                                     })
                             except Exception:
                                 pass
+
+                    if event.get("type") == "artifacts_ready":
+                        artifact_data = event.get("data", {})
+                        execution_env = artifact_data.get("execution_env", "native")
+                        if execution_env == "webcontainer":
+                            await safe_send({
+                                "type": "webcontainer_artifacts",
+                                "task_id": task_id,
+                                "execution_env": execution_env,
+                                "vfs": artifact_data.get("vfs", {}),
+                                "file_count": artifact_data.get("file_count", 0),
+                                "total_size_bytes": artifact_data.get("total_size_bytes", 0),
+                            })
+                            logger.info(
+                                f"🌐 WebContainer 产物已推送: task={task_id}, "
+                                f"files={artifact_data.get('file_count', 0)}"
+                            )
+                        else:
+                            await safe_send({
+                                "type": "artifacts_ready",
+                                "task_id": task_id,
+                                "execution_env": execution_env,
+                                "file_count": artifact_data.get("file_count", 0),
+                                "total_size_bytes": artifact_data.get("total_size_bytes", 0),
+                            })
 
                     if event.get("type") == "ask_user":
                         event_data = event.get("data", {})
