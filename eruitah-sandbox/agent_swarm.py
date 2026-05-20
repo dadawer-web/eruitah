@@ -1101,6 +1101,632 @@ def execute_dispatch_subtasks(
     return "\n".join(lines), is_error
 
 
+# ============================================================================
+# SDD (Subagent-Driven Development) 引擎 — 三角色协作架构
+# ============================================================================
+#
+#  ┌──────────┐  spawn_subagent   ┌──────────────┐   review     ┌──────────────┐
+#  │ LeadAgent │ ──────────────→ │ Implementer   │ ──────────→ │ Reviewer     │
+#  │ (主控)    │ ←────────────── │ Agent (执行者) │ ←────────── │ Agent (审查者)│
+#  │ ask_user  │  status report  │ 全部工具      │  fix/reject │ 只读工具      │
+#  └──────────┘                  └──────────────┘              └──────────────┘
+#
+#  流程: Lead 拆解任务 → Implementer 实现 → Reviewer 审查
+#        → 通过则完成 / 拒绝则打回 Implementer 修改 (最多3次)
+# ============================================================================
+
+SDD_PROMPTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "agent_prompts", "sdd")
+
+IMPLEMENTER_TOOLS = {
+    "file_edit", "file_read", "file_write", "bash", "glob", "grep",
+    "ask_user", "semantic_search", "semantic_search_code",
+    "get_code_structure", "get_function_definition",
+    "lsp_tool", "git_tool", "auto_test", "run_auto_test",
+    "start_background_service", "read_service_logs", "kill_service",
+    "read_project_memory", "record_learning", "meta_tool",
+}
+
+SDD_REVIEWER_TOOLS = {
+    "file_read", "glob", "grep",
+    "semantic_search", "semantic_search_code",
+    "get_code_structure", "get_function_definition",
+    "lsp_tool", "git_tool", "bash",
+    "read_project_memory",
+}
+
+LEAD_AGENT_TOOLS = {
+    "ask_user", "file_read", "glob", "grep",
+    "git_tool", "read_project_memory",
+}
+
+SDD_MAX_REVIEW_RETRIES = 3
+SDD_SUBAGENT_TIMEOUT_S = 600
+
+
+def _load_sdd_prompt(filename: str) -> str:
+    filepath = os.path.join(SDD_PROMPTS_DIR, filename)
+    if os.path.isfile(filepath):
+        with open(filepath, "r", encoding="utf-8") as f:
+            return f.read()
+    logger.warning(f"SDD prompt file not found: {filepath}")
+    return ""
+
+
+def _get_sdd_tools_for_role(role: str, provider: str = "openai") -> list[dict]:
+    from agent_runner import _get_tools_definition
+
+    all_tools = _get_tools_definition(provider)
+
+    if role == "implementer":
+        allowed = IMPLEMENTER_TOOLS
+    elif role == "reviewer":
+        allowed = SDD_REVIEWER_TOOLS
+    elif role == "lead":
+        allowed = LEAD_AGENT_TOOLS
+    else:
+        allowed = IMPLEMENTER_TOOLS
+
+    filtered = []
+    for tool in all_tools:
+        if provider == "anthropic":
+            name = tool.get("name", "")
+        else:
+            name = tool.get("function", {}).get("name", "")
+        if name in allowed:
+            filtered.append(tool)
+
+    return filtered
+
+
+def _run_sdd_subagent(
+    role: str,
+    instruction: str,
+    work_dir: str,
+    provider: str = "openai",
+    api_key: str = None,
+    model: str = None,
+    base_url: str = None,
+    max_turns: int = 20,
+    main_repo_dir: str = "",
+    task_id: str = None,
+    session_id: str = None,
+    yield_events: bool = False,
+    images: Optional[list] = None,
+    timeout_s: float = SDD_SUBAGENT_TIMEOUT_S,
+):
+    if role == "implementer":
+        role_prompt = _load_sdd_prompt("implementer-prompt.md")
+        if not role_prompt:
+            role_prompt = (
+                "You are an Implementer Agent. Your job is to write code, tests, and commit.\n"
+                "Report status: DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT\n"
+                "Follow TDD. Self-review before reporting. Never overbuild."
+            )
+    elif role == "reviewer":
+        role_prompt = _load_sdd_prompt("code-quality-reviewer-prompt.md")
+        if not role_prompt:
+            role_prompt = (
+                "You are a Code Quality Reviewer Agent. Review the code changes below.\n"
+                "You have READ-ONLY access. Never modify files.\n"
+                "Return: APPROVED or REJECTED with specific issues."
+            )
+    else:
+        role_prompt = ""
+
+    TOOL_CALL_ENFORCER = (
+        "\n\n🚨 CRITICAL INSTRUCTION (FATAL IF IGNORED):\n"
+        "1. You MUST NOT output long conversational plans or explanations.\n"
+        "2. You MUST interact with the system EXCLUSIVELY by invoking the provided tool functions "
+        "(e.g., bash, file_edit, file_read, grep, glob, ask_user, etc.).\n"
+        "3. DO NOT wrap your actions in markdown code blocks. Use the native JSON Tool Calling schema.\n"
+        "If you understand, immediately invoke a tool to begin the task without any conversational filler."
+    )
+
+    instruction = instruction.rstrip() + TOOL_CALL_ENFORCER
+
+    role_session_id = session_id or f"sdd_{role}_{uuid.uuid4().hex[:6]}"
+    effective_images = images or []
+
+    if provider == "anthropic":
+        if effective_images:
+            anthropic_content = [{"type": "text", "text": f"{role_prompt}\n\n---\n\n{instruction}"}]
+            for img_b64 in effective_images:
+                if isinstance(img_b64, str) and img_b64:
+                    prefix = "" if img_b64.startswith("data:image") else "data:image/jpeg;base64,"
+                    url = f"{prefix}{img_b64}"
+                    if url.startswith("data:image/"):
+                        parts = url.split(";base64,", 1)
+                        media_type = parts[0].replace("data:image/", "image/")
+                        b64_data = parts[1] if len(parts) > 1 else ""
+                        anthropic_content.append({
+                            "type": "image",
+                            "source": {"type": "base64", "media_type": media_type, "data": b64_data},
+                        })
+            initial_messages = [{"role": "user", "content": anthropic_content}]
+            user_input = ""
+        else:
+            initial_messages = [{"role": "user", "content": f"{role_prompt}\n\n---\n\n{instruction}"}]
+            user_input = instruction
+    else:
+        if effective_images:
+            content_list = [{"type": "text", "text": instruction}]
+            for img_b64 in effective_images:
+                if isinstance(img_b64, str) and img_b64:
+                    prefix = "" if img_b64.startswith("data:image") else "data:image/jpeg;base64,"
+                    content_list.append({
+                        "type": "image_url",
+                        "image_url": {"url": f"{prefix}{img_b64}"},
+                    })
+            initial_messages = [
+                {"role": "system", "content": role_prompt},
+                {"role": "user", "content": content_list},
+            ]
+            user_input = ""
+        else:
+            initial_messages = [{"role": "system", "content": role_prompt}]
+            user_input = instruction
+
+    from agent_runner import run_agent as _run_agent
+
+    last_assistant_text = ""
+    events_collected = []
+
+    start_time = time.time()
+    timed_out = False
+
+    for event in _run_agent(
+        user_input=user_input,
+        work_dir=work_dir,
+        api_key=api_key,
+        model=model,
+        base_url=base_url,
+        provider=provider,
+        max_turns=max_turns,
+        session_id=role_session_id,
+        task_id=task_id,
+        initial_messages=initial_messages if initial_messages else None,
+        main_repo_dir=main_repo_dir,
+        auto_approve=True,
+    ):
+        if time.time() - start_time > timeout_s:
+            timed_out = True
+            logger.warning(f"[SDD] ⏰ Subagent {role} 超时 ({timeout_s}s)，强制终止")
+            break
+
+        if _is_terminal_signal(event):
+            continue
+
+        event_type = event.get("type", "")
+
+        if event_type == "assistant":
+            text = event.get("data", "")
+            if text and isinstance(text, str) and text.strip():
+                last_assistant_text = text.strip()
+
+        if role == "reviewer":
+            if event_type == "tool_start":
+                tool_name = event.get("tool_name", "")
+                if tool_name not in SDD_REVIEWER_TOOLS:
+                    event["data"] = f"🚫 权限拒绝: Reviewer 不能使用 {tool_name} 工具"
+                    event["is_error"] = True
+            elif event_type == "tool_end":
+                tool_name = event.get("tool_name", "")
+                if tool_name == "bash":
+                    tool_data = event.get("data", "")
+                    if tool_data:
+                        first_line = tool_data.split("\n")[0] if "\n" in tool_data else tool_data
+                        is_safe, reason = _check_reviewer_bash_safety(first_line)
+                        if not is_safe:
+                            event["data"] = f"🚫 权限拒绝: {reason}"
+                            event["is_error"] = True
+
+        event["sdd_role"] = role
+        events_collected.append(event)
+
+        if yield_events:
+            yield event
+
+    final_text = last_assistant_text or _get_last_assistant_text(task_id, role_session_id)
+
+    if timed_out:
+        final_text = f"⏰ TIMEOUT: Subagent {role} exceeded {timeout_s}s limit.\n{final_text}"
+
+    result = {
+        "role": role,
+        "status": "timeout" if timed_out else "done",
+        "output": final_text,
+        "events": events_collected,
+    }
+
+    if not yield_events:
+        yield result
+    else:
+        yield {
+            "type": "sdd_subagent_finish",
+            "data": final_text,
+            "role": role,
+            "status": "timeout" if timed_out else "done",
+        }
+
+
+def _extract_sdd_status(text: str) -> str:
+    if not text:
+        return "DONE"
+    upper = text.upper()
+    if "BLOCKED" in upper:
+        return "BLOCKED"
+    if "NEEDS_CONTEXT" in upper:
+        return "NEEDS_CONTEXT"
+    if "DONE_WITH_CONCERNS" in upper:
+        return "DONE_WITH_CONCERNS"
+    return "DONE"
+
+
+def _extract_review_verdict(text: str) -> str:
+    if not text:
+        return "APPROVED"
+    upper = text.upper()
+    if "REJECTED" in upper or "❌" in text or "DENIED" in upper:
+        return "REJECTED"
+    if "APPROVED" in upper or "LGTM" in upper or "✅" in text or "PASS" in upper:
+        return "APPROVED"
+    return "REJECTED"
+
+
+def run_sdd_loop(
+    task: str,
+    work_dir: str = ".",
+    provider: str = "openai",
+    api_key: str = None,
+    model: str = None,
+    base_url: str = None,
+    main_repo_dir: str = "",
+    task_id: str = None,
+    max_review_retries: int = SDD_MAX_REVIEW_RETRIES,
+    yield_events: bool = True,
+    images: Optional[list] = None,
+):
+    """
+    SDD (Subagent-Driven Development) 主循环
+
+    流程:
+      1. Lead Agent 拆解任务 (使用 SKILL.md prompt)
+      2. Implementer Agent 实现 (使用 implementer-prompt.md)
+      3. Reviewer Agent 审查 (使用 code-quality-reviewer-prompt.md)
+      4. 审查通过 → 完成 / 审查拒绝 → 打回 Implementer (最多 max_review_retries 次)
+    """
+    if not task_id:
+        task_id = f"sdd_{uuid.uuid4().hex[:8]}"
+
+    lead_prompt = _load_sdd_prompt("SKILL.md")
+    if not lead_prompt:
+        lead_prompt = "You are a Lead Agent coordinating implementation tasks."
+
+    yield {
+        "type": "sdd_loop_start",
+        "data": {"task_id": task_id, "task": task[:100]},
+    }
+
+    yield {
+        "type": "sdd_status",
+        "data": {
+            "phase": "lead",
+            "message": "🔄 Lead Agent 正在拆解任务...",
+            "task_id": task_id,
+        },
+    }
+
+    lead_instruction = (
+        f"{lead_prompt}\n\n"
+        f"## User Task\n\n{task}\n\n"
+        "Analyze this task and break it down into implementation steps. "
+        "For each step, provide a clear description that an Implementer Agent can follow. "
+        "Output your plan as a numbered list of tasks."
+    )
+
+    lead_output = ""
+    for event in _run_sdd_subagent(
+        role="lead",
+        instruction=lead_instruction,
+        work_dir=work_dir,
+        provider=provider,
+        api_key=api_key,
+        model=model,
+        base_url=base_url,
+        max_turns=5,
+        main_repo_dir=main_repo_dir,
+        task_id=task_id,
+        yield_events=yield_events,
+        images=images,
+    ):
+        if yield_events:
+            if isinstance(event, dict) and event.get("type") == "sdd_subagent_finish":
+                lead_output = event.get("data", "")
+            else:
+                yield event
+        else:
+            if isinstance(event, dict):
+                lead_output = event.get("output", "")
+
+    if not lead_output:
+        lead_output = task
+
+    task_steps = _parse_task_steps(lead_output)
+    if not task_steps:
+        task_steps = [task]
+
+    yield {
+        "type": "sdd_plan_ready",
+        "data": {
+            "task_id": task_id,
+            "steps": task_steps,
+            "total_steps": len(task_steps),
+        },
+    }
+
+    all_results = []
+
+    for step_idx, step in enumerate(task_steps):
+        step_id = f"{task_id}_step{step_idx + 1}"
+
+        yield {
+            "type": "sdd_status",
+            "data": {
+                "phase": "implement",
+                "step": step_idx + 1,
+                "total_steps": len(task_steps),
+                "message": f"👨‍💻 Implementer 正在执行步骤 {step_idx + 1}/{len(task_steps)}: {step[:60]}...",
+                "task_id": task_id,
+            },
+        }
+
+        implementer_instruction = (
+            f"You are implementing: {step}\n\n"
+            f"## Context\nThis is step {step_idx + 1} of {len(task_steps)} "
+            f"for the overall task: {task}\n\n"
+            "## Your Job\n"
+            "1. Implement exactly what the task specifies\n"
+            "2. Write tests and verify\n"
+            "3. Commit your work\n"
+            "4. Self-review\n"
+            "5. Report status: DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT\n\n"
+            f"Work directory: {work_dir}"
+        )
+
+        impl_output = ""
+        for event in _run_sdd_subagent(
+            role="implementer",
+            instruction=implementer_instruction,
+            work_dir=work_dir,
+            provider=provider,
+            api_key=api_key,
+            model=model,
+            base_url=base_url,
+            max_turns=20,
+            main_repo_dir=main_repo_dir,
+            task_id=step_id,
+            yield_events=yield_events,
+            images=images,
+        ):
+            if yield_events:
+                if isinstance(event, dict) and event.get("type") == "sdd_subagent_finish":
+                    impl_output = event.get("data", "")
+                else:
+                    yield event
+            else:
+                if isinstance(event, dict):
+                    impl_output = event.get("output", "")
+
+        impl_status = _extract_sdd_status(impl_output)
+
+        if impl_status in ("BLOCKED", "NEEDS_CONTEXT"):
+            yield {
+                "type": "sdd_step_blocked",
+                "data": {
+                    "step": step_idx + 1,
+                    "status": impl_status,
+                    "output": impl_output[:500],
+                    "task_id": task_id,
+                },
+            }
+            all_results.append({"step": step, "status": impl_status, "output": impl_output})
+            continue
+
+        git_diff = _get_git_diff(work_dir)
+
+        review_retry = 0
+        review_approved = False
+
+        while review_retry < max_review_retries:
+            review_retry += 1
+
+            yield {
+                "type": "sdd_status",
+                "data": {
+                    "phase": "review",
+                    "step": step_idx + 1,
+                    "retry": review_retry,
+                    "message": f"🕵️ Reviewer 正在审查步骤 {step_idx + 1} 的代码 (第 {review_retry} 次审查)...",
+                    "task_id": task_id,
+                },
+            }
+
+            reviewer_instruction = (
+                f"Review the code changes for: {step}\n\n"
+                f"## Implementer Report\n{impl_output[:2000]}\n\n"
+                f"## Git Diff\n{git_diff[:3000]}\n\n"
+                "## Your Job\n"
+                "Review the code quality. Check:\n"
+                "- Does the implementation match the spec?\n"
+                "- Is the code clean and maintainable?\n"
+                "- Are there edge cases or bugs?\n"
+                "- Is test coverage adequate?\n\n"
+                "Return APPROVED or REJECTED with specific issues to fix."
+            )
+
+            review_output = ""
+            for event in _run_sdd_subagent(
+                role="reviewer",
+                instruction=reviewer_instruction,
+                work_dir=work_dir,
+                provider=provider,
+                api_key=api_key,
+                model=model,
+                base_url=base_url,
+                max_turns=10,
+                main_repo_dir=main_repo_dir,
+                task_id=step_id,
+                yield_events=yield_events,
+            ):
+                if yield_events:
+                    if isinstance(event, dict) and event.get("type") == "sdd_subagent_finish":
+                        review_output = event.get("data", "")
+                    else:
+                        yield event
+                else:
+                    if isinstance(event, dict):
+                        review_output = event.get("output", "")
+
+            verdict = _extract_review_verdict(review_output)
+
+            if verdict == "APPROVED":
+                review_approved = True
+                yield {
+                    "type": "sdd_review_approved",
+                    "data": {
+                        "step": step_idx + 1,
+                        "review_output": review_output[:500],
+                        "task_id": task_id,
+                    },
+                }
+                break
+            else:
+                yield {
+                    "type": "sdd_review_rejected",
+                    "data": {
+                        "step": step_idx + 1,
+                        "retry": review_retry,
+                        "review_output": review_output[:500],
+                        "task_id": task_id,
+                    },
+                }
+
+                if review_retry < max_review_retries:
+                    fix_instruction = (
+                        f"The Reviewer REJECTED your implementation for: {step}\n\n"
+                        f"## Reviewer Feedback\n{review_output[:2000]}\n\n"
+                        "## Your Job\n"
+                        "Fix the issues identified by the Reviewer. "
+                        "Then commit and report status again."
+                    )
+
+                    yield {
+                        "type": "sdd_status",
+                        "data": {
+                            "phase": "fix",
+                            "step": step_idx + 1,
+                            "retry": review_retry,
+                            "message": f"🔧 Implementer 正在根据审查意见修复 (第 {review_retry} 次修改)...",
+                            "task_id": task_id,
+                        },
+                    }
+
+                    impl_output = ""
+                    for event in _run_sdd_subagent(
+                        role="implementer",
+                        instruction=fix_instruction,
+                        work_dir=work_dir,
+                        provider=provider,
+                        api_key=api_key,
+                        model=model,
+                        base_url=base_url,
+                        max_turns=15,
+                        main_repo_dir=main_repo_dir,
+                        task_id=step_id,
+                        yield_events=yield_events,
+                        images=images,
+                    ):
+                        if yield_events:
+                            if isinstance(event, dict) and event.get("type") == "sdd_subagent_finish":
+                                impl_output = event.get("data", "")
+                            else:
+                                yield event
+                        else:
+                            if isinstance(event, dict):
+                                impl_output = event.get("output", "")
+
+                    git_diff = _get_git_diff(work_dir)
+
+        step_status = "approved" if review_approved else "max_retries"
+        all_results.append({
+            "step": step,
+            "status": step_status,
+            "output": impl_output,
+            "review_retries": review_retry,
+        })
+
+    yield {
+        "type": "sdd_loop_end",
+        "data": {
+            "task_id": task_id,
+            "total_steps": len(task_steps),
+            "results": all_results,
+        },
+    }
+
+
+def _parse_task_steps(lead_output: str) -> list[str]:
+    if not lead_output:
+        return []
+
+    steps = []
+    lines = lead_output.strip().split("\n")
+
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            continue
+
+        match = re.match(r'^\s*(?:\d+[\.\):]\s*|[-*]\s+)(.+)', stripped)
+        if match:
+            step_text = match.group(1).strip()
+            if len(step_text) > 10:
+                steps.append(step_text)
+
+    if not steps:
+        paragraphs = [p.strip() for p in lead_output.split("\n\n") if p.strip() and len(p.strip()) > 20]
+        if paragraphs:
+            steps = paragraphs[:5]
+
+    return steps
+
+
+def _get_git_diff(work_dir: str) -> str:
+    try:
+        from bash_executor import execute_bash
+        result = execute_bash("git diff HEAD~1 --stat && echo '---FULL---' && git diff HEAD~1", work_dir=work_dir)
+        if result and not result.blocked and result.stdout:
+            diff_text = result.stdout
+            if len(diff_text) > 5000:
+                return diff_text[:5000] + "\n... (truncated)"
+            return diff_text
+    except Exception as e:
+        logger.debug(f"获取 git diff 失败: {e}")
+
+    try:
+        from bash_executor import execute_bash
+        result = execute_bash("git diff --stat && echo '---FULL---' && git diff", work_dir=work_dir)
+        if result and not result.blocked and result.stdout:
+            diff_text = result.stdout
+            if len(diff_text) > 5000:
+                return diff_text[:5000] + "\n... (truncated)"
+            return diff_text
+    except Exception as e:
+        logger.debug(f"获取 unstaged git diff 失败: {e}")
+
+    return "(no git diff available)"
+
+
 def start_debate_loop(
     task: str,
     dynamic_persona_prompt: str = "",

@@ -1,6 +1,7 @@
 <script setup>
-import { ref, nextTick, watch, computed } from 'vue'
+import { ref, nextTick, watch, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useAgentStore } from '../stores/agent'
+import { splitByMermaid, renderMermaid } from '../utils/mermaidRenderer'
 
 const store = useAgentStore()
 const inputText = ref('')
@@ -10,6 +11,134 @@ const expandedThoughts = ref({})
 const useSwarm = ref(false)
 const pendingImages = ref([])
 const fileInput = ref(null)
+const inputEl = ref(null)
+
+const CAPABILITIES = [
+  { id: 'sdd', icon: '🤖', label: '多智能体开发', desc: 'Lead→Implementer→Reviewer 三角色协作', skill: 'sdd' },
+  { id: 'plan', icon: '🤔', label: 'PM需求澄清', desc: '深度理解需求再动手', skill: 'doubt' },
+  { id: 'tdd', icon: '🧪', label: 'TDD测试驱动', desc: '先写测试再写实现', skill: 'tdd' },
+  { id: 'debugging', icon: '🐛', label: '深度排障', desc: '系统化定位 Bug：复现→隔离→假设→验证', skill: 'debugging' },
+  { id: 'visual', icon: '🎨', label: '视觉头脑风暴', desc: 'Mermaid 图表驱动的架构设计与创意发散', skill: 'visual' },
+  { id: 'security', icon: '🛡️', label: '安全审计', desc: '检查越权、注入与并发漏洞', skill: 'security' },
+  { id: 'performance', icon: '⚡', label: '性能优化', desc: '测量→定位→优化→验证', skill: 'performance' },
+]
+
+const SLASH_COMMANDS = [
+  { id: 'plan', slash: '/plan', icon: '🤔', label: 'PM需求澄清', desc: '深度理解需求再动手', skill: 'doubt' },
+  { id: 'sdd', slash: '/sdd', icon: '🤖', label: '多智能体开发', desc: 'Lead→Implementer→Reviewer 三角色协作', skill: 'sdd' },
+  { id: 'tdd', slash: '/tdd', icon: '🧪', label: 'TDD测试驱动', desc: '先写测试再写实现', skill: 'tdd' },
+  { id: 'debugging', slash: '/debug', icon: '🐛', label: '深度排障', desc: '系统化定位 Bug', skill: 'debugging' },
+  { id: 'visual', slash: '/visual', icon: '🎨', label: '视觉头脑风暴', desc: 'Mermaid 图表驱动的创意发散', skill: 'visual' },
+  { id: 'review', slash: '/review', icon: '🛡️', label: '专家代码审查', desc: '安全+性能双维度审计', skill: 'security' },
+  { id: 'perf', slash: '/perf', icon: '⚡', label: '性能优化专家', desc: '测量→定位→优化→验证', skill: 'performance' },
+]
+
+const showCapMenu = ref(false)
+const showSlashMenu = ref(false)
+const slashFilter = ref('')
+const slashSelectedIdx = ref(0)
+const activeTags = ref([])
+
+function toggleCapability(cap) {
+  const existing = activeTags.value.find(t => t.id === cap.id)
+  if (existing) {
+    activeTags.value = activeTags.value.filter(t => t.id !== cap.id)
+  } else {
+    activeTags.value.push({ id: cap.id, icon: cap.icon, label: cap.label, skill: cap.skill })
+  }
+}
+
+function isCapActive(cap) {
+  return activeTags.value.some(t => t.id === cap.id)
+}
+
+const activeCapCount = computed(() => activeTags.value.length)
+
+const filteredCommands = computed(() => {
+  if (!slashFilter.value) return SLASH_COMMANDS
+  const q = slashFilter.value.toLowerCase()
+  return SLASH_COMMANDS.filter(c =>
+    c.slash.includes(q) || c.label.toLowerCase().includes(q) || c.desc.toLowerCase().includes(q)
+  )
+})
+
+function onInputChange() {
+  const text = inputText.value
+  const cursorPos = inputEl.value?.selectionStart ?? text.length
+  const textBeforeCursor = text.substring(0, cursorPos)
+
+  const match = textBeforeCursor.match(/(?:^|\s)\/(\S*)$/)
+  if (match) {
+    slashFilter.value = match[1]
+    slashSelectedIdx.value = 0
+    showSlashMenu.value = true
+  } else {
+    showSlashMenu.value = false
+    slashFilter.value = ''
+  }
+}
+
+function selectCommand(cmd) {
+  showSlashMenu.value = false
+  slashFilter.value = ''
+
+  const cursorPos = inputEl.value?.selectionStart ?? inputText.value.length
+  const textBeforeCursor = inputText.value.substring(0, cursorPos)
+  const textAfterCursor = inputText.value.substring(cursorPos)
+
+  const match = textBeforeCursor.match(/(?:^|\s)\/\S*$/)
+  if (match) {
+    const before = textBeforeCursor.substring(0, match.index)
+    inputText.value = before + textAfterCursor
+  }
+
+  if (!activeTags.value.find(t => t.id === cmd.id)) {
+    activeTags.value.push({ id: cmd.id, icon: cmd.icon, label: cmd.label, skill: cmd.skill })
+  }
+
+  nextTick(() => {
+    inputEl.value?.focus()
+  })
+}
+
+function removeTag(tagId) {
+  activeTags.value = activeTags.value.filter(t => t.id !== tagId)
+}
+
+function closeCapMenu(e) {
+  if (showCapMenu.value && !e.target.closest('.cap-menu-zone')) {
+    showCapMenu.value = false
+  }
+}
+
+onMounted(() => document.addEventListener('click', closeCapMenu))
+onBeforeUnmount(() => document.removeEventListener('click', closeCapMenu))
+
+function onSlashKeydown(e) {
+  if (!showSlashMenu.value) return
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    slashSelectedIdx.value = Math.min(slashSelectedIdx.value + 1, filteredCommands.value.length - 1)
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    slashSelectedIdx.value = Math.max(slashSelectedIdx.value - 1, 0)
+  } else if (e.key === 'Enter' && filteredCommands.value.length > 0) {
+    e.preventDefault()
+    selectCommand(filteredCommands.value[slashSelectedIdx.value])
+  } else if (e.key === 'Escape') {
+    e.preventDefault()
+    showSlashMenu.value = false
+  }
+}
+
+function handleKeydown(e) {
+  if (onSlashKeydown(e)) return
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault()
+    handleSend()
+  }
+}
 
 const pendingQuestions = computed(() => {
   return store.messages.filter(m => m.isQuestion && !m.answered)
@@ -24,23 +153,18 @@ watch(() => store.messages.length, async () => {
 
 function handleSend() {
   const text = inputText.value.trim()
-  if (!text && !pendingImages.value.length) return
+  if (!text && !pendingImages.value.length && !activeTags.value.length) return
   const pendingQuestion = pendingQuestions.value[0]
   if (pendingQuestion) {
     store.answerQuestion(pendingQuestion.questionId, text)
   } else {
     const images = pendingImages.value.map(img => img.base64)
-    store.sendTask(text || '请分析上传的图片', { use_swarm: useSwarm.value, images })
+    const skills = activeTags.value.map(t => t.skill)
+    store.sendTask(text || '请分析上传的图片', { use_swarm: useSwarm.value, images, skills })
   }
   inputText.value = ''
   pendingImages.value = []
-}
-
-function handleKeydown(e) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault()
-    handleSend()
-  }
+  activeTags.value = []
 }
 
 function formatTime(timestamp) {
@@ -49,6 +173,63 @@ function formatTime(timestamp) {
     minute: '2-digit',
   })
 }
+
+const mermaidCache = new Map()
+
+async function renderMsgContent(content) {
+  if (!content || typeof content !== 'string') return content
+  const parts = splitByMermaid(content)
+  if (parts.length === 1 && parts[0].type === 'text') return null
+
+  const htmlParts = []
+  for (const part of parts) {
+    if (part.type === 'mermaid') {
+      const cacheKey = part.code
+      let svg
+      if (mermaidCache.has(cacheKey)) {
+        svg = mermaidCache.get(cacheKey)
+      } else {
+        svg = await renderMermaid(part.code)
+        mermaidCache.set(cacheKey, svg)
+      }
+      htmlParts.push(
+        `<div class="mermaid-chart">` +
+        `<button class="mermaid-expand-btn" onclick="window.__open_mermaid_lightbox&&window.__open_mermaid_lightbox(this.parentElement.querySelector('svg')?.outerHTML||'','Diagram')" title="全屏放大">⛶</button>` +
+        svg +
+        `</div>`
+      )
+      if (window.__add_mermaid_tab) {
+        const title = `Architecture ${window.__mermaid_counter = (window.__mermaid_counter || 0) + 1}`
+        window.__add_mermaid_tab(title, svg)
+      }
+    } else {
+      const escaped = part.content
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+      htmlParts.push(`<div class="mermaid-text">${escaped}</div>`)
+    }
+  }
+  return htmlParts.join('')
+}
+
+const renderedMessages = ref({})
+
+watch(
+  () => store.messages.length,
+  async () => {
+    for (let i = 0; i < store.messages.length; i++) {
+      const msg = store.messages[i]
+      if (msg.content && typeof msg.content === 'string' && msg.content.includes('```mermaid')) {
+        if (!renderedMessages.value[i]) {
+          const html = await renderMsgContent(msg.content)
+          if (html) renderedMessages.value[i] = html
+        }
+      }
+    }
+  },
+  { immediate: true },
+)
 
 function handleUndoToTurn(turn, taskId) {
   store.previewRollback(taskId, 1, turn)
@@ -59,6 +240,8 @@ function toggleThought(idx) {
 }
 
 function getMsgType(msg) {
+  if (msg.msgType === 'sdd_status') return 'sdd_status'
+  if (msg.msgType === 'sdd_review') return 'sdd_review'
   if (msg.msgType === 'agent_state') return 'agent_state'
   if (msg.msgType === 'system_alert') return 'system_alert'
   if (msg.msgType === 'context_update') return 'context_update'
@@ -143,6 +326,53 @@ function handlePaste(e) {
       <div ref="chatContainer" class="flex-1 overflow-y-auto px-4 py-3 space-y-3">
         <template v-for="(msg, idx) in store.messages" :key="idx">
 
+          <!-- ═══ SDD 多智能体状态指示器 ═══ -->
+          <div v-if="getMsgType(msg) === 'sdd_status'" class="sdd-status-card">
+            <div class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-violet-950/40 border border-violet-500/25 backdrop-blur-sm">
+              <span class="text-sm breathing-icon">{{ msg.sddPhase === 'lead' ? '🔄' : msg.sddPhase === 'implement' ? '👨‍💻' : msg.sddPhase === 'review' ? '🕵️' : msg.sddPhase === 'fix' ? '🔧' : '🤖' }}</span>
+              <div class="flex-1 min-w-0">
+                <div class="text-[10px] font-bold text-violet-400/80 mb-0.5">
+                  SDD · {{ msg.sddPhase === 'lead' ? 'Lead Agent' : msg.sddPhase === 'implement' ? 'Implementer' : msg.sddPhase === 'review' ? 'Reviewer' : msg.sddPhase === 'fix' ? 'Implementer (修复)' : '多智能体' }}
+                  <span v-if="msg.sddStep" class="text-violet-300/50 ml-1">步骤 {{ msg.sddStep }}/{{ msg.sddTotal }}</span>
+                  <span v-if="msg.sddRetry && msg.sddRetry > 0" class="text-amber-400/60 ml-1">第 {{ msg.sddRetry }} 次审查</span>
+                </div>
+                <div class="text-[10px] text-violet-200/60 leading-relaxed">{{ msg.content }}</div>
+              </div>
+              <div v-if="msg.sddPhase === 'implement'" class="flex gap-0.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400/40 animate-pulse" style="animation-delay:0.2s"></span>
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400/20 animate-pulse" style="animation-delay:0.4s"></span>
+              </div>
+              <div v-else-if="msg.sddPhase === 'review'" class="flex gap-0.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400/40 animate-pulse" style="animation-delay:0.2s"></span>
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400/20 animate-pulse" style="animation-delay:0.4s"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ═══ SDD 审查结果指示器 ═══ -->
+          <div v-else-if="getMsgType(msg) === 'sdd_review'" class="sdd-review-card">
+            <div class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg border backdrop-blur-sm"
+              :class="msg.sddApproved
+                ? 'bg-emerald-950/30 border-emerald-500/25'
+                : 'bg-red-950/30 border-red-500/25'"
+            >
+              <span class="text-sm">{{ msg.sddApproved ? '✅' : '❌' }}</span>
+              <div class="flex-1 min-w-0">
+                <div class="text-[10px] font-bold mb-0.5"
+                  :class="msg.sddApproved ? 'text-emerald-400/80' : 'text-red-400/80'"
+                >
+                  {{ msg.sddApproved ? '审查通过' : '审查拒绝 · 打回修改' }}
+                  <span v-if="msg.sddStep" class="ml-1 opacity-50">步骤 {{ msg.sddStep }}</span>
+                </div>
+                <div class="text-[10px] leading-relaxed"
+                  :class="msg.sddApproved ? 'text-emerald-200/60' : 'text-red-200/60'"
+                >{{ msg.content }}</div>
+              </div>
+            </div>
+          </div>
+
           <!-- ═══ agent_state: thinking 深度推理折叠面板 ═══ -->
           <div v-if="getMsgType(msg) === 'agent_state' && msg.agentStatus === 'thinking'" class="thinking-panel">
             <button
@@ -204,7 +434,8 @@ function handlePaste(e) {
               <span class="text-geek-text-dim text-[10px]">{{ formatTime(msg.timestamp) }}</span>
               <span class="text-[10px] bg-emerald-900/40 text-emerald-400/80 px-1.5 py-0.5 rounded">回复</span>
             </div>
-            <div class="chat-content-block pl-4 border-l-2 border-emerald-500/30 whitespace-pre-wrap break-words text-geek-text/90">
+            <div v-if="renderedMessages[idx]" class="chat-content-block pl-4 border-l-2 border-emerald-500/30 text-geek-text/90" v-html="renderedMessages[idx]"></div>
+            <div v-else class="chat-content-block pl-4 border-l-2 border-emerald-500/30 whitespace-pre-wrap break-words text-geek-text/90">
               {{ msg.content }}
             </div>
           </div>
@@ -274,7 +505,8 @@ function handlePaste(e) {
                 title="撤销至此消息之前的状态"
               >⏪ 撤销至此</button>
             </div>
-            <div class="whitespace-pre-wrap break-words pl-4 border-l-2 border-geek-border/50 text-geek-text">
+            <div v-if="renderedMessages[idx]" class="pl-4 border-l-2 border-geek-border/50 text-geek-text" v-html="renderedMessages[idx]"></div>
+            <div v-else class="whitespace-pre-wrap break-words pl-4 border-l-2 border-geek-border/50 text-geek-text">
               {{ msg.content }}
             </div>
           </div>
@@ -289,6 +521,21 @@ function handlePaste(e) {
       <div class="p-3 border-t border-geek-border bg-geek-bg/20">
         <div class="text-[10px] text-geek-text-dim mb-1.5 truncate" v-if="pendingQuestions.length">
           ⚠️ 有 {{ pendingQuestions.length }} 个问题等待回答
+        </div>
+
+        <!-- 已激活技能 Tag -->
+        <div v-if="activeTags.length" class="flex flex-wrap gap-1 mb-2">
+          <template v-for="tag in activeTags" :key="tag.id">
+            <span
+              class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-geek-accent/15 text-geek-accent border border-geek-accent/30 select-none whitespace-nowrap"
+            >
+              {{ tag.icon }} {{ tag.label }}
+              <button
+                @click="removeTag(tag.id)"
+                class="ml-0.5 text-geek-accent/50 hover:text-red-400 transition-colors"
+              >✕</button>
+            </span>
+          </template>
         </div>
 
         <!-- 图片预览区 -->
@@ -325,7 +572,53 @@ function handlePaste(e) {
           @change="handleFileSelect"
         />
 
-        <div class="flex gap-2 items-center">
+        <div class="flex gap-2 items-center relative">
+          <!-- ⚡ 技能矩阵下拉菜单 -->
+          <div class="relative cap-menu-zone">
+            <button
+              @click="showCapMenu = !showCapMenu"
+              class="px-2 py-2 rounded text-xs font-bold border transition-all duration-200 shrink-0"
+              :class="activeCapCount > 0
+                ? 'bg-violet-900/30 text-violet-400 border-violet-500/40 shadow-[0_0_10px_rgba(139,92,246,0.15)]'
+                : 'bg-geek-bg/50 text-geek-text-dim border-geek-border hover:text-geek-text hover:border-violet-500/30'"
+              title="技能矩阵"
+            >
+              ⚡ {{ activeCapCount > 0 ? activeCapCount : '' }}
+            </button>
+            <Transition name="slash-menu">
+              <div
+                v-if="showCapMenu"
+                class="absolute bottom-full left-0 mb-1 w-72 bg-geek-surface border border-geek-border rounded-lg shadow-xl shadow-black/50 z-50 overflow-hidden backdrop-blur-sm"
+              >
+                <div class="px-3 py-2 border-b border-geek-border/50 bg-geek-bg/30 flex items-center justify-between">
+                  <span class="text-[10px] text-geek-accent font-bold tracking-widest">⚡ CAPABILITIES</span>
+                  <span class="text-[9px] text-geek-text-dim">已激活 {{ activeCapCount }}</span>
+                </div>
+                <div class="py-0.5 max-h-[280px] overflow-y-auto">
+                  <button
+                    v-for="cap in CAPABILITIES"
+                    :key="cap.id"
+                    @click="toggleCapability(cap)"
+                    class="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors"
+                    :class="isCapActive(cap)
+                      ? 'bg-violet-500/10 text-violet-300'
+                      : 'text-geek-text hover:bg-geek-bg/50'"
+                  >
+                    <span class="text-sm shrink-0">{{ cap.icon }}</span>
+                    <div class="flex-1 min-w-0">
+                      <div class="text-[11px] font-bold" :class="isCapActive(cap) ? 'text-violet-300' : ''">{{ cap.label }}</div>
+                      <div class="text-[9px] text-geek-text-dim truncate">{{ cap.desc }}</div>
+                    </div>
+                    <span
+                      v-if="isCapActive(cap)"
+                      class="w-2 h-2 rounded-full bg-violet-400 animate-pulse shrink-0"
+                    ></span>
+                  </button>
+                </div>
+              </div>
+            </Transition>
+          </div>
+
           <button
             @click="triggerFileInput"
             class="px-2 py-2 rounded text-xs border transition-colors shrink-0"
@@ -336,41 +629,93 @@ function handlePaste(e) {
           >
             🖼️
           </button>
-          <input
-            v-model="inputText"
-            @keydown="handleKeydown"
-            @paste="handlePaste"
-            type="text"
-            :placeholder="pendingQuestions.length ? '回答问题...' : (store.activeTaskId ? '在当前任务下追问...' : (pendingImages.length ? '描述你想对图片做什么...' : '描述你想要的功能，开启新任务...'))"
-            class="flex-1 bg-geek-bg border border-geek-border rounded px-3 py-2 text-xs text-geek-text placeholder-geek-text-dim focus:outline-none focus:border-geek-accent transition-colors"
-            :disabled="store.isRunning && !pendingQuestions.length"
-          />
-          <button
-            @click="handleSend"
-            :disabled="store.isRunning && !pendingQuestions.length"
-            class="px-4 py-2 bg-geek-accent/10 text-geek-accent border border-geek-accent/30 rounded text-xs font-bold hover:bg-geek-accent/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {{ pendingQuestions.length ? '回答' : '发送' }}
-          </button>
+          <div class="flex-1 relative">
+            <div
+              class="flex items-center gap-1 bg-geek-bg border border-geek-border rounded px-3 py-2 focus-within:border-geek-accent transition-colors min-h-[32px] flex-wrap"
+            >
+              <template v-for="tag in activeTags" :key="tag.id">
+                <span
+                  class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-geek-accent/15 text-geek-accent border border-geek-accent/30 select-none whitespace-nowrap"
+                >
+                  {{ tag.icon }} {{ tag.label }}
+                  <button
+                    @click="removeTag(tag.id)"
+                    class="ml-0.5 text-geek-accent/50 hover:text-red-400 transition-colors"
+                  >✕</button>
+                </span>
+              </template>
+              <input
+                ref="inputEl"
+                v-model="inputText"
+                @keydown="handleKeydown"
+                @input="onInputChange"
+                @paste="handlePaste"
+                type="text"
+                :placeholder="activeTags.length ? '继续输入任务描述...' : (pendingQuestions.length ? '回答问题...' : (store.activeTaskId ? '在当前任务下追问...' : (pendingImages.length ? '描述你想对图片做什么...' : '描述你想要的功能，输入 / 开启技能...')))"
+                class="flex-1 bg-transparent border-none outline-none text-xs text-geek-text placeholder-geek-text-dim min-w-[120px]"
+                :disabled="store.isRunning && !pendingQuestions.length"
+              />
+            </div>
+
+            <Transition name="slash-menu">
+              <div
+                v-if="showSlashMenu && filteredCommands.length"
+                class="absolute bottom-full left-0 mb-1 w-64 bg-geek-surface border border-geek-border rounded-lg shadow-xl shadow-black/40 z-50 overflow-hidden backdrop-blur-sm"
+              >
+                <div class="px-2.5 py-1.5 border-b border-geek-border/50 bg-geek-bg/30">
+                  <span class="text-[9px] text-geek-text-dim font-bold tracking-wider">⚡ 斜杠指令</span>
+                </div>
+                <div class="py-0.5 max-h-[200px] overflow-y-auto">
+                  <button
+                    v-for="(cmd, idx) in filteredCommands"
+                    :key="cmd.id"
+                    @click="selectCommand(cmd)"
+                    @mouseenter="slashSelectedIdx = idx"
+                    class="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors"
+                    :class="idx === slashSelectedIdx
+                      ? 'bg-geek-accent/10 text-geek-accent'
+                      : 'text-geek-text hover:bg-geek-bg/50'"
+                  >
+                    <span class="text-sm shrink-0">{{ cmd.icon }}</span>
+                    <div class="flex-1 min-w-0">
+                      <div class="text-[11px] font-bold">{{ cmd.slash }}</div>
+                      <div class="text-[9px] text-geek-text-dim truncate">{{ cmd.desc }}</div>
+                    </div>
+                    <span
+                      v-if="idx === slashSelectedIdx"
+                      class="text-[9px] text-geek-accent/60 border border-geek-accent/20 rounded px-1 py-0.5"
+                    >↵</span>
+                  </button>
+                </div>
+              </div>
+            </Transition>
+          </div>
           <button
             @click="useSwarm = !useSwarm"
-            class="px-2.5 py-2 rounded text-xs font-bold border transition-colors whitespace-nowrap"
+            class="px-2 py-2 rounded text-xs font-bold border transition-colors whitespace-nowrap shrink-0"
             :class="useSwarm
-              ? 'bg-purple-900/30 text-purple-400 border-purple-500/40 hover:bg-purple-900/50'
-              : 'bg-geek-bg/50 text-geek-text-dim border-geek-border hover:text-geek-text hover:border-geek-accent/30'"
-            :title="useSwarm ? '🧠 深度研发模式：Coder-Reviewer 对抗博弈，代码经过严格审查' : '⚡ 闪电模式：单体 Agent 极速响应'"
+              ? 'bg-purple-900/30 text-purple-400 border-purple-500/40 shadow-[0_0_8px_rgba(139,92,246,0.15)]'
+              : 'bg-geek-bg/50 text-geek-text-dim border-geek-border hover:text-geek-text hover:border-purple-500/30'"
+            :title="useSwarm ? '🧠 深度模式：Coder-Reviewer 对抗博弈' : '⚡ 极速模式：单体 Agent'"
           >
-            {{ useSwarm ? '🧠 深度' : '⚡ 极速' }}
+            {{ useSwarm ? '🧠' : '⚡' }}
           </button>
           <button
             @click="store.autoApprove = !store.autoApprove"
-            class="px-2.5 py-2 rounded text-xs font-bold border transition-colors whitespace-nowrap"
+            class="px-2 py-2 rounded text-xs font-bold border transition-colors whitespace-nowrap shrink-0"
             :class="store.autoApprove
               ? 'bg-red-900/30 text-red-400 border-red-500/40 hover:bg-red-900/50'
               : 'bg-green-900/20 text-green-400 border-green-500/30 hover:bg-green-900/40'"
             :title="store.autoApprove ? '自动执行模式：危险命令将自动放行' : '安全模式：危险命令需人工确认'"
           >
-            {{ store.autoApprove ? '🚀 免确认' : '🛡️ 需确认' }}
+            {{ store.autoApprove ? '🚀' : '🛡️' }}
+          </button>
+          <button
+            @click="handleSend"
+            :disabled="store.isRunning && !pendingQuestions.length"
+            class="px-4 py-2 bg-geek-accent/10 text-geek-accent border border-geek-accent/30 rounded text-xs font-bold hover:bg-geek-accent/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+          >
+            {{ pendingQuestions.length ? '回答' : '发送' }}
           </button>
         </div>
       </div>
@@ -778,5 +1123,103 @@ function handlePaste(e) {
   background: rgba(16, 185, 129, 0.03);
   border-radius: 0 6px 6px 0;
   padding: 6px 10px;
+}
+
+.slash-menu-enter-active,
+.slash-menu-leave-active {
+  transition: all 0.15s ease;
+}
+.slash-menu-enter-from,
+.slash-menu-leave-to {
+  opacity: 0;
+  transform: translateY(4px);
+}
+</style>
+
+<style>
+.mermaid-chart {
+  margin: 10px 0;
+  padding: 16px;
+  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+  border: 1px solid rgba(124, 58, 237, 0.25);
+  border-radius: 8px;
+  overflow-x: auto;
+  position: relative;
+}
+
+.mermaid-chart::before {
+  content: '◈ Mermaid';
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  font-size: 9px;
+  font-family: 'JetBrains Mono', monospace;
+  color: rgba(167, 139, 250, 0.4);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.mermaid-expand-btn {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 10;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(124, 58, 237, 0.15);
+  border: 1px solid rgba(124, 58, 237, 0.3);
+  border-radius: 4px;
+  color: rgba(167, 139, 250, 0.7);
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.2s;
+}
+
+.mermaid-chart:hover .mermaid-expand-btn {
+  opacity: 1;
+}
+
+.mermaid-expand-btn:hover {
+  background: rgba(124, 58, 237, 0.3);
+  color: #c4b5fd;
+}
+
+.mermaid-chart svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.mermaid-chart .node rect,
+.mermaid-chart .node circle,
+.mermaid-chart .node polygon {
+  stroke-width: 1.5px;
+}
+
+.mermaid-chart .edgeLabel {
+  font-size: 11px;
+}
+
+.mermaid-chart .label {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 12px;
+}
+
+.mermaid-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.mermaid-error {
+  padding: 8px 12px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
+  color: #fca5a5;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
 }
 </style>

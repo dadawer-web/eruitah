@@ -24,6 +24,8 @@ export const useAgentStore = defineStore('agent', () => {
   const currentFile = ref(null)
   const currentIsDir = ref(false)
   const currentCode = ref('')
+  const openFiles = ref([])
+  const activeFileIdx = ref(0)
   const diagnostics = ref([])
   const typingQueue = ref([])
   const isTyping = ref(false)
@@ -31,6 +33,8 @@ export const useAgentStore = defineStore('agent', () => {
   const status = ref('')
   const currentTool = ref(null)
   const pendingConfirmation = ref(null)
+  const mermaidDiagrams = ref([])
+  const activeMermaidIdx = ref(-1)
   const costInfo = ref(null)
   const lastRollbackInfo = ref(null)
   const contextCompact = ref(null)
@@ -57,6 +61,8 @@ export const useAgentStore = defineStore('agent', () => {
   const wcError = ref(null)
   const wcOutputBuffer = ref([])
   const wcShowPreview = ref(false)
+
+  const selectedSkills = ref([])
 
   let _wcManager = null
   let _wcOutputUnsubscribe = null
@@ -204,6 +210,56 @@ export const useAgentStore = defineStore('agent', () => {
           const idx = systemAlerts.value.findIndex(a => a.content === data.content && a.timestamp === Date.now())
           if (idx !== -1) systemAlerts.value.splice(idx, 1)
         }, 8000)
+        break
+
+      case 'sdd_status':
+        messages.value.push({
+          role: 'agent',
+          content: data.message || '',
+          timestamp: Date.now(),
+          msgType: 'sdd_status',
+          sddPhase: data.phase || '',
+          sddStep: data.step || 0,
+          sddTotal: data.total_steps || 0,
+          sddRetry: data.retry || 0,
+        })
+        window.__xterm_write?.(`\x1b[35m[SDD] ${data.message}\x1b[0m\n`)
+        break
+
+      case 'sdd_review_approved':
+        messages.value.push({
+          role: 'agent',
+          content: data.review_output || '审查通过',
+          timestamp: Date.now(),
+          msgType: 'sdd_review',
+          sddApproved: true,
+          sddStep: data.step || 0,
+        })
+        window.__xterm_write?.(`\x1b[32m[SDD] ✅ 审查通过 - 步骤 ${data.step}\x1b[0m\n`)
+        break
+
+      case 'sdd_review_rejected':
+        messages.value.push({
+          role: 'agent',
+          content: data.review_output || '审查拒绝',
+          timestamp: Date.now(),
+          msgType: 'sdd_review',
+          sddApproved: false,
+          sddStep: data.step || 0,
+        })
+        window.__xterm_write?.(`\x1b[31m[SDD] ❌ 审查拒绝 - 步骤 ${data.step} (第 ${data.retry} 次)\x1b[0m\n`)
+        break
+
+      case 'sdd_plan_ready':
+        window.__xterm_write?.(`\x1b[36m[SDD] 📋 任务计划已就绪: ${data.total_steps} 个步骤\x1b[0m\n`)
+        break
+
+      case 'sdd_loop_start':
+        window.__xterm_write?.(`\x1b[35m[SDD] 🤖 多智能体协作模式启动\x1b[0m\n`)
+        break
+
+      case 'sdd_loop_end':
+        window.__xterm_write?.(`\x1b[35m[SDD] 🏁 多智能体协作完成\x1b[0m\n`)
         break
 
       case 'status':
@@ -402,12 +458,18 @@ export const useAgentStore = defineStore('agent', () => {
           currentFile.value = data.file
           if (data.content !== undefined) {
             currentCode.value = data.content
-            if (editorInstance) {
-              const model = editorInstance.getModel()
-              if (model) {
-                model.setValue(data.content)
-              }
-            }
+          }
+          const openIdx1 = openFiles.value.findIndex(f => f.path === data.file)
+          if (openIdx1 >= 0) {
+            activeFileIdx.value = openIdx1
+            if (data.content !== undefined) openFiles.value[openIdx1].code = data.content
+          } else {
+            openFiles.value.push({ path: data.file, code: data.content || '' })
+            activeFileIdx.value = openFiles.value.length - 1
+          }
+          if (data.content !== undefined && editorInstance) {
+            const model = editorInstance.getModel()
+            if (model) model.setValue(data.content)
           }
         }
         break
@@ -417,11 +479,19 @@ export const useAgentStore = defineStore('agent', () => {
           currentFile.value = data.file_name
           if (data.new_code !== undefined) {
             currentCode.value = data.new_code
-            if (editorInstance) {
-              const model = editorInstance.getModel()
-              if (model) {
-                model.setValue(data.new_code)
-              }
+          }
+          const openIdx2 = openFiles.value.findIndex(f => f.path === data.file_name)
+          if (openIdx2 >= 0) {
+            activeFileIdx.value = openIdx2
+            if (data.new_code !== undefined) openFiles.value[openIdx2].code = data.new_code
+          } else {
+            openFiles.value.push({ path: data.file_name, code: data.new_code || '' })
+            activeFileIdx.value = openFiles.value.length - 1
+          }
+          if (data.new_code !== undefined && editorInstance) {
+            const model = editorInstance.getModel()
+            if (model) {
+              model.setValue(data.new_code)
             }
           }
         }
@@ -816,8 +886,53 @@ export const useAgentStore = defineStore('agent', () => {
     currentIsDir.value = isDir
     diagnostics.value = []
     if (!isDir) {
+      const existing = openFiles.value.findIndex(f => f.path === path)
+      if (existing >= 0) {
+        activeFileIdx.value = existing
+      } else {
+        openFiles.value.push({ path, code: '' })
+        activeFileIdx.value = openFiles.value.length - 1
+      }
       fetchFileContent(path)
     }
+  }
+
+  function switchToFile(idx) {
+    if (idx < 0 || idx >= openFiles.value.length) return
+    activeFileIdx.value = idx
+    const file = openFiles.value[idx]
+    currentFile.value = file.path
+    currentCode.value = file.code
+    diagnostics.value = []
+    if (editorInstance) {
+      const model = editorInstance.getModel()
+      if (model) {
+        model.setValue(file.code || '')
+      }
+    }
+  }
+
+  function closeFile(idx) {
+    if (idx < 0 || idx >= openFiles.value.length) return
+    openFiles.value.splice(idx, 1)
+    if (openFiles.value.length === 0) {
+      currentFile.value = null
+      currentCode.value = ''
+      activeFileIdx.value = 0
+      if (editorInstance) {
+        const model = editorInstance.getModel()
+        if (model) model.setValue('')
+      }
+      return
+    }
+    if (activeFileIdx.value >= openFiles.value.length) {
+      activeFileIdx.value = openFiles.value.length - 1
+    } else if (activeFileIdx.value > idx) {
+      activeFileIdx.value--
+    } else if (activeFileIdx.value === idx) {
+      activeFileIdx.value = Math.min(idx, openFiles.value.length - 1)
+    }
+    switchToFile(activeFileIdx.value)
   }
 
   async function fetchTaskRegistry() {
@@ -937,6 +1052,10 @@ export const useAgentStore = defineStore('agent', () => {
         const data = await resp.json()
         currentFile.value = relativePath
         currentCode.value = data.content || ''
+        const openIdx = openFiles.value.findIndex(f => f.path === relativePath)
+        if (openIdx >= 0) {
+          openFiles.value[openIdx].code = currentCode.value
+        }
         if (editorInstance) {
           const model = editorInstance.getModel()
           if (model) {
@@ -1020,6 +1139,28 @@ export const useAgentStore = defineStore('agent', () => {
     typingQueue.value = []
   }
 
+  function addMermaidDiagram(title, svg) {
+    const existing = mermaidDiagrams.value.findIndex(d => d.title === title)
+    if (existing >= 0) {
+      mermaidDiagrams.value[existing].svg = svg
+      activeMermaidIdx.value = existing
+    } else {
+      mermaidDiagrams.value.push({ title, svg, id: Date.now() })
+      activeMermaidIdx.value = mermaidDiagrams.value.length - 1
+    }
+  }
+
+  function removeMermaidDiagram(idx) {
+    mermaidDiagrams.value.splice(idx, 1)
+    if (activeMermaidIdx.value >= mermaidDiagrams.value.length) {
+      activeMermaidIdx.value = mermaidDiagrams.value.length - 1
+    }
+  }
+
+  function closeMermaidView() {
+    activeMermaidIdx.value = -1
+  }
+
   function sendTask(task, options = {}) {
     if (!ws.value || ws.value.readyState !== WebSocket.OPEN) {
       console.warn('[WS] Not connected, cannot send task')
@@ -1051,6 +1192,11 @@ export const useAgentStore = defineStore('agent', () => {
       currentTaskName.value = task.substring(0, 30) + (task.length > 30 ? '...' : '')
       messages.value = taskMessages.value[tempId]
 
+      const allSkills = [...new Set([
+        ...selectedSkills.value,
+        ...(options.skills || []),
+      ])]
+
       const payload = {
         type: 'chat_new_task',
         task: task,
@@ -1065,6 +1211,7 @@ export const useAgentStore = defineStore('agent', () => {
         use_swarm: options.use_swarm || false,
         user_id: userId.value,
         images: options.images && options.images.length ? options.images : undefined,
+        skills: allSkills.length ? allSkills : undefined,
       }
 
       pendingBaseTaskId.value = ''
@@ -1077,6 +1224,7 @@ export const useAgentStore = defineStore('agent', () => {
 
       console.log('[WS] Sending new task:', payload)
       ws.value.send(JSON.stringify(payload))
+      selectedSkills.value = []
     } else {
       if (!taskMessages.value[activeTaskId.value]) {
         taskMessages.value[activeTaskId.value] = []
@@ -1410,6 +1558,10 @@ export const useAgentStore = defineStore('agent', () => {
     currentFile,
     currentIsDir,
     currentCode,
+    openFiles,
+    activeFileIdx,
+    switchToFile,
+    closeFile,
     diagnostics,
     typingQueue,
     isTyping,
@@ -1417,6 +1569,11 @@ export const useAgentStore = defineStore('agent', () => {
     status,
     currentTool,
     pendingConfirmation,
+    mermaidDiagrams,
+    activeMermaidIdx,
+    addMermaidDiagram,
+    removeMermaidDiagram,
+    closeMermaidView,
     costInfo,
     contextCompact,
     mcpServices,
@@ -1471,5 +1628,6 @@ export const useAgentStore = defineStore('agent', () => {
     closeWebContainerPreview,
     openWebContainerPreview,
     resetWebContainer,
+    selectedSkills,
   }
 })

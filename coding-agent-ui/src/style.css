@@ -18,19 +18,59 @@ html, body, #app {
 }
 
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #111111;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #333333;
-  border-radius: 3px;
+  background: #374151;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555555;
+  background: #4b5563;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.splitpanes.default-theme .splitpanes__splitter {
+  background-color: #1e1e1e !important;
+  border: none !important;
+  position: relative;
+  transition: background-color 0.2s ease;
+}
+
+.splitpanes.default-theme .splitpanes__splitter::before,
+.splitpanes.default-theme .splitpanes__splitter::after {
+  display: none !important;
+}
+
+.splitpanes.default-theme .splitpanes__splitter:hover {
+  background-color: #374151 !important;
+}
+
+.splitpanes--vertical > .splitpanes__splitter {
+  width: 2px !important;
+  min-width: 2px !important;
+  border-left: 1px solid #374151 !important;
+}
+
+.splitpanes--vertical > .splitpanes__splitter:hover {
+  border-left-color: #7c3aed !important;
+}
+
+.splitpanes--horizontal > .splitpanes__splitter {
+  height: 2px !important;
+  min-height: 2px !important;
+  border-top: 1px solid #374151 !important;
+}
+
+.splitpanes--horizontal > .splitpanes__splitter:hover {
+  border-top-color: #7c3aed !important;
 }

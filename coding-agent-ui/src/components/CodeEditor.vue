@@ -209,25 +209,62 @@ onBeforeUnmount(() => {
     editor = null
   }
 })
+
+watch(() => store.activeMermaidIdx, (val) => {
+  if (val < 0 && editor) {
+    nextTick(() => {
+      editor.layout()
+    })
+  }
+})
 </script>
 
 <template>
   <div class="h-full w-full flex flex-col bg-geek-bg">
-    <div class="flex items-center justify-between px-3 py-1.5 bg-geek-surface border-b border-geek-border">
-      <div class="flex items-center gap-2">
-        <span class="text-geek-accent text-xs">◈</span>
-        <span class="text-geek-text-dim text-xs">{{ store.currentFile || 'untitled' }}</span>
-        <span v-if="store.isTyping" class="ml-2 text-geek-accent animate-pulse text-[10px]">● STREAMING</span>
-        <span v-if="store.diagnostics && store.diagnostics.length > 0" class="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-red-900/30 text-red-400 border border-red-800/50">
-          {{ store.diagnostics.filter(d => d.severity === 'error').length }} 错误
-          {{ store.diagnostics.filter(d => d.severity === 'warning').length > 0 ? ' / ' + store.diagnostics.filter(d => d.severity === 'warning').length + ' 警告' : '' }}
-        </span>
+    <!-- Tab 栏 -->
+    <div class="flex items-center bg-[#1e1e1e] border-b border-gray-700 overflow-x-auto shrink-0 shadow-sm z-10 relative font-mono">
+      <div class="flex items-center min-w-0 flex-1">
+        <button
+          v-for="(file, fidx) in store.openFiles"
+          :key="'f'+fidx"
+          @click="store.switchToFile(fidx); store.closeMermaidView()"
+          class="flex items-center gap-1.5 px-3 py-1.5 text-xs border-b-2 transition-colors whitespace-nowrap text-gray-300"
+          :class="store.activeMermaidIdx < 0 && store.activeFileIdx === fidx
+            ? 'border-blue-500 text-blue-400 bg-[#252526]'
+            : 'border-transparent text-gray-500 hover:text-gray-300'"
+        >
+          <span class="text-blue-400">📄</span>
+          <span>{{ file.path?.split('/').pop() || file.path }}</span>
+          <span
+            @click.stop="store.closeFile(fidx)"
+            class="ml-1 text-gray-600 hover:text-red-400 transition-colors text-[10px] cursor-pointer"
+          >✕</span>
+        </button>
+        <button
+          v-for="(diag, idx) in store.mermaidDiagrams"
+          :key="'m'+idx"
+          @click="store.activeMermaidIdx = idx"
+          class="flex items-center gap-1.5 px-3 py-1.5 text-xs border-b-2 transition-colors whitespace-nowrap text-gray-300"
+          :class="store.activeMermaidIdx === idx
+            ? 'border-violet-500 text-violet-400 bg-[#252526]'
+            : 'border-transparent text-gray-500 hover:text-gray-300'"
+        >
+          <span>📊</span>
+          <span>{{ diag.title }}</span>
+          <span
+            @click.stop="store.removeMermaidDiagram(idx)"
+            class="ml-1 text-gray-600 hover:text-red-400 transition-colors text-[10px] cursor-pointer"
+          >✕</span>
+        </button>
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 px-2 shrink-0">
+        <span v-if="store.diagnostics && store.diagnostics.length > 0" class="text-[10px] px-1.5 py-0.5 rounded-full bg-red-900/30 text-red-400 border border-red-800/50">
+          {{ store.diagnostics.filter(d => d.severity === 'error').length }} 错误
+        </span>
         <button
           @click="handleRunCode"
           :disabled="!store.currentFile || !store.connected"
-          class="px-3 py-1 bg-green-600/80 hover:bg-green-600 text-white rounded text-xs font-bold transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="px-3 py-1 bg-green-700/80 hover:bg-green-600 text-green-100 rounded text-xs font-bold transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
           title="运行当前文件"
         >
           <span>▶</span>
@@ -235,6 +272,10 @@ onBeforeUnmount(() => {
         </button>
       </div>
     </div>
-    <div ref="editorContainer" class="flex-1 min-h-0"></div>
+    <!-- 编辑器 / Mermaid 预览 -->
+    <div v-show="store.activeMermaidIdx >= 0 && store.mermaidDiagrams[store.activeMermaidIdx]" class="flex-1 min-h-0 overflow-auto bg-gradient-to-br from-[#0f172a] to-[#1e1b4b] p-6">
+      <div class="mermaid-editor-view" v-html="store.mermaidDiagrams[store.activeMermaidIdx]?.svg || ''"></div>
+    </div>
+    <div v-show="store.activeMermaidIdx < 0" ref="editorContainer" class="flex-1 min-h-0"></div>
   </div>
 </template>

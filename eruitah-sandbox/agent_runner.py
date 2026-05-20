@@ -1239,6 +1239,7 @@ def _execute_tool_local(
     main_repo_dir: Optional[str] = None,
     auto_approve: bool = False,
     current_turn: int = 0,
+    plan_mode: bool = False,
 ) -> tuple[str, bool, dict]:
     """本地执行工具"""
     meta = {}
@@ -1246,6 +1247,18 @@ def _execute_tool_local(
     # =======================================================
     # 🛡️ 终极防御墙：拦截大模型 JSON 幻觉与类型崩塌
     # =======================================================
+    if plan_mode:
+        from prompt_builder import PLAN_MODE_TOOLS
+        if name not in PLAN_MODE_TOOLS and not name.startswith("mcp_"):
+            logger.warning(f"🔒 PM模式拦截: 禁止工具 '{name}'，仅允许 {PLAN_MODE_TOOLS}")
+            return (
+                f"Error: Tool '{name}' is blocked in PM mode. "
+                f"You can only use: {', '.join(sorted(PLAN_MODE_TOOLS))}. "
+                f"Please use ask_user to discuss requirements, or file_edit to write SPEC.md.",
+                True,
+                meta,
+            )
+
     if not isinstance(args, dict):
         logger.warning(f"⚠️ 触发防幻觉拦截！期望 dict，实际收到 {type(args).__name__}: {args}")
         
@@ -1305,6 +1318,13 @@ def _execute_tool_local(
                         )
                 except Exception:
                     pass
+
+            try:
+                from main import check_stop_flag
+                if check_stop_flag(session_id):
+                    return "用户已停止 Agent 执行", False, meta
+            except ImportError:
+                pass
 
             bash_result = execute_bash(command, work_dir, allow_warnings=auto_approve)
             
@@ -1828,6 +1848,7 @@ def run_agent(
     user_id: int = 0,
     override_system_prompt: Optional[str] = None,
     images: Optional[list] = None,
+    plan_mode: bool = False,
 ) -> Generator[Dict[str, Any], None, None]:
     """Agent 主循环"""
     if not task_id:
@@ -2063,6 +2084,17 @@ def run_agent(
         )
 
         tools = _build_tools_with_mcp(provider)
+
+        if plan_mode:
+            from prompt_builder import PLAN_MODE_TOOLS
+            filtered_tools = []
+            for t in tools:
+                func_info = t.get("function", t)
+                name = func_info.get("name", "")
+                if name in PLAN_MODE_TOOLS:
+                    filtered_tools.append(t)
+            logger.info(f"🔒 PM模式: 工具列表已过滤 {len(tools)} → {len(filtered_tools)} (仅保留: {PLAN_MODE_TOOLS})")
+            tools = filtered_tools
 
         try:
             if provider == "anthropic":
@@ -2478,6 +2510,7 @@ def run_agent(
                             main_repo_dir=main_repo_dir,
                             auto_approve=auto_approve,
                             current_turn=turn,
+                            plan_mode=plan_mode,
                         )
                         
                         yield {
@@ -2573,6 +2606,7 @@ def run_agent(
                     main_repo_dir=main_repo_dir,
                     auto_approve=auto_approve,
                     current_turn=turn,
+                    plan_mode=plan_mode,
                 )
 
                 tool_end_event = {

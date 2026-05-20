@@ -28,6 +28,9 @@ logger = logging.getLogger(__name__)
 # 默认命令超时时间（毫秒），对应 TS 源码 getDefaultTimeoutMs()
 DEFAULT_TIMEOUT_MS = 120_000
 
+# 短超时模式（毫秒），用于 TDD 等频繁执行场景
+SHORT_TIMEOUT_MS = 15_000
+
 # 最大命令超时时间（毫秒），对应 TS 源码 getMaxTimeoutMs()
 MAX_TIMEOUT_MS = 600_000
 
@@ -70,6 +73,12 @@ BLOCKED_PATTERNS: list[re.Pattern] = [
     re.compile(r'\bkill\s+-9\s+1\b'),
     re.compile(r'\bmv\s+.*\s+/dev/null\b'),
     re.compile(r'\bformat\s+[A-Z]:', re.IGNORECASE),
+    re.compile(r'\bsudo\s+rm\s+(-[a-zA-Z]*f[a-zA-Z]*\s+)?-r[a-zA-Z]*\s+/', re.IGNORECASE),
+    re.compile(r'\bsudo\s+rm\s+-r[a-zA-Z]*\s+(-[a-zA-Z]*f[a-zA-Z]*\s+)?/', re.IGNORECASE),
+    re.compile(r'\bsudo\s+chmod\s+777\s+/', re.IGNORECASE),
+    re.compile(r'\bsudo\s+tee\s+/etc/', re.IGNORECASE),
+    re.compile(r'\bsudo\s+sh\s+-c', re.IGNORECASE),
+    re.compile(r'\bsudo\s+bash\s+-c', re.IGNORECASE),
 ]
 
 # 需要警告但可由调用方决定是否放行的命令模式
@@ -293,6 +302,40 @@ def truncate_output(output: str, max_chars: int = MAX_OUTPUT_CHARS) -> tuple[str
 # 核心 Bash 执行器 - 对应 TS 源码 BashTool.call() + runShellCommand()
 # ============================================================================
 
+_active_processes: dict[str, subprocess.Popen] = {}
+
+def register_process(session_id: str, process: subprocess.Popen):
+    _active_processes[session_id] = process
+
+def unregister_process(session_id: str):
+    _active_processes.pop(session_id, None)
+
+def kill_active_process(session_id: str):
+    process = _active_processes.get(session_id)
+    if not process:
+        return
+    try:
+        pgid = os.getpgid(process.pid)
+        os.killpg(pgid, signal.SIGTERM)
+        logger.info(f"🛑 已发送 SIGTERM 到进程组 {pgid} (session={session_id})")
+    except (ProcessLookupError, OSError):
+        pass
+    try:
+        process.wait(timeout=2)
+    except subprocess.TimeoutExpired:
+        try:
+            pgid = os.getpgid(process.pid)
+            os.killpg(pgid, signal.SIGKILL)
+            logger.info(f"🛑 已发送 SIGKILL 到进程组 {pgid} (session={session_id})")
+        except (ProcessLookupError, OSError):
+            pass
+        try:
+            process.wait(timeout=1)
+        except subprocess.TimeoutExpired:
+            pass
+    _active_processes.pop(session_id, None)
+
+
 def execute_bash(
     command: str,
     timeout_ms: int = DEFAULT_TIMEOUT_MS,
@@ -388,10 +431,11 @@ def execute_bash(
             env=exec_env,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            # 创建新的进程组，使超时 kill 时能杀掉整个进程树
-            # 对应 TS 源码中 abortController 的进程管理
             start_new_session=True,
         )
+
+        exec_session_id = work_dir
+        register_process(exec_session_id, process)
 
         try:
             # 等待命令完成，带超时
@@ -429,9 +473,11 @@ def execute_bash(
             exit_code = -1
             interrupted = True
 
+        finally:
+            unregister_process(exec_session_id)
+
     except Exception as e:
-        # 执行异常（如命令不存在）
-        # 对应 TS 源码中的 ShellError / isENOENT 处理
+        unregister_process(exec_session_id)
         elapsed = time.time() - start_time
         return BashResult(
             stdout="",

@@ -1,6 +1,8 @@
 <script setup>
-import { onMounted, onBeforeUnmount, computed } from 'vue'
+import { onMounted, onBeforeUnmount, computed, ref, watch } from 'vue'
 import { useAgentStore } from './stores/agent'
+import { Splitpanes, Pane } from 'splitpanes'
+import 'splitpanes/dist/splitpanes.css'
 import FileTree from './components/FileTree.vue'
 import ChatPanel from './components/ChatPanel.vue'
 import CodeEditor from './components/CodeEditor.vue'
@@ -10,6 +12,21 @@ import TaskList from './components/TaskList.vue'
 import PixelPet from './components/PixelPet.vue'
 
 const store = useAgentStore()
+
+const sidebarCollapsed = ref(false)
+const terminalCollapsed = ref(false)
+const mermaidLightbox = ref(null)
+
+const isVisualMode = computed(() => {
+  return store.selectedSkills?.includes('visual') || false
+})
+
+watch(isVisualMode, (val) => {
+  if (val) {
+    sidebarCollapsed.value = true
+    terminalCollapsed.value = true
+  }
+})
 
 const wcStatusLabel = computed(() => {
   const map = {
@@ -37,15 +54,39 @@ const wcStatusColor = computed(() => {
   return map[store.wcStatus] || 'text-geek-text-dim'
 })
 
+function openMermaidLightbox(svg, title) {
+  mermaidLightbox.value = { svg, title: title || 'Diagram', scale: 1 }
+}
+
+function closeMermaidLightbox() {
+  mermaidLightbox.value = null
+}
+
+function zoomLightbox(delta) {
+  if (!mermaidLightbox.value) return
+  const next = mermaidLightbox.value.scale + delta
+  mermaidLightbox.value.scale = Math.max(0.2, Math.min(5, next))
+}
+
+function handleLightboxWheel(e) {
+  e.preventDefault()
+  const delta = e.deltaY > 0 ? -0.1 : 0.1
+  zoomLightbox(delta)
+}
+
 onMounted(() => {
   store.connect()
   store.fetchFileTree()
   store.fetchTaskRegistry()
+  window.__open_mermaid_lightbox = openMermaidLightbox
+  window.__add_mermaid_tab = (title, svg) => store.addMermaidDiagram(title, svg)
 })
 
 onBeforeUnmount(() => {
   store.disconnect()
   store.resetWebContainer()
+  delete window.__open_mermaid_lightbox
+  delete window.__add_mermaid_tab
 })
 </script>
 
@@ -54,115 +95,164 @@ onBeforeUnmount(() => {
     <ToolBar />
 
     <div class="flex-1 flex min-h-0">
-      <aside class="w-1/4 min-w-[250px] max-w-[400px] flex flex-col border-r border-geek-border">
-        <div class="h-1/3 min-h-0 overflow-hidden">
-          <TaskList />
-        </div>
-        <div class="h-1/3 min-h-0 overflow-hidden border-t border-geek-border">
-          <FileTree />
-        </div>
-        <div class="h-1/3 min-h-0 overflow-hidden border-t border-geek-border">
-          <ChatPanel />
-        </div>
-      </aside>
-
-      <main class="flex-1 flex flex-col min-w-0">
-        <div class="flex-1 flex min-h-0">
-          <div
-            class="flex flex-col min-w-0"
-            :class="store.wcShowPreview ? 'w-1/2 border-r border-geek-border' : 'w-full'"
-          >
-            <div class="h-[70%] min-h-0 overflow-hidden border-b border-geek-border">
-              <CodeEditor />
+      <Splitpanes class="default-theme" @resized="() => {}">
+        <!-- ═══ 左侧边栏 ═══ -->
+        <Pane
+          v-if="!sidebarCollapsed"
+          :size="25"
+          :min-size="15"
+          :max-size="40"
+        >
+          <div class="h-full flex flex-col bg-geek-bg">
+            <div class="h-1/3 min-h-0 overflow-hidden">
+              <TaskList />
             </div>
-            <div class="h-[30%] min-h-0 overflow-hidden">
-              <TerminalPanel />
+            <div class="h-1/3 min-h-0 overflow-hidden border-t border-geek-border">
+              <FileTree />
+            </div>
+            <div class="h-1/3 min-h-0 overflow-hidden border-t border-geek-border">
+              <ChatPanel />
             </div>
           </div>
+        </Pane>
 
-          <div
-            v-if="store.wcShowPreview"
-            class="w-1/2 flex flex-col min-w-0 bg-geek-bg"
-          >
-            <div class="flex items-center justify-between px-3 py-1.5 border-b border-geek-border bg-geek-surface shrink-0">
-              <div class="flex items-center gap-2">
-                <span class="text-xs font-bold text-geek-accent">🌐 实时预览</span>
-                <span
-                  v-if="wcStatusLabel"
-                  class="text-[10px] px-1.5 py-0.5 rounded bg-geek-bg border border-geek-border"
-                  :class="wcStatusColor"
-                >{{ wcStatusLabel }}</span>
-              </div>
-              <div class="flex items-center gap-1">
-                <button
-                  v-if="store.wcPreviewUrl"
-                  @click="navigator.clipboard?.writeText(store.wcPreviewUrl)"
-                  class="px-1.5 py-0.5 text-[10px] text-geek-text-dim hover:text-geek-accent transition-colors"
-                  title="复制预览 URL"
-                >📋</button>
-                <button
-                  @click="store.stopWebContainer()"
-                  class="px-1.5 py-0.5 text-[10px] text-red-400 hover:text-red-300 transition-colors"
-                  title="停止服务"
-                >⏹</button>
-                <button
-                  @click="store.closeWebContainerPreview()"
-                  class="px-1.5 py-0.5 text-[10px] text-geek-text-dim hover:text-geek-accent transition-colors"
-                  title="关闭预览"
-                >✕</button>
-              </div>
-            </div>
-
-            <div class="flex-1 min-h-0 relative">
-              <div
-                v-if="store.wcStatus !== 'running' && store.wcStatus !== 'error'"
-                class="absolute inset-0 flex items-center justify-center bg-geek-bg/80 z-10"
+        <!-- ═══ 主工作区 ═══ -->
+        <Pane :size="sidebarCollapsed ? 100 : 75">
+          <div class="h-full flex flex-col bg-geek-bg">
+            <Splitpanes horizontal class="default-theme">
+              <!-- 编辑器区域 -->
+              <Pane
+                :size="terminalCollapsed ? 100 : 70"
+                :min-size="30"
               >
-                <div class="text-center">
-                  <div class="text-2xl mb-2">
-                    <span v-if="store.wcStatus === 'booting'">🚀</span>
-                    <span v-else-if="store.wcStatus === 'mounting'">📁</span>
-                    <span v-else-if="store.wcStatus === 'installing'">📦</span>
-                    <span v-else-if="store.wcStatus === 'starting'">🏃</span>
-                    <span v-else>⏳</span>
-                  </div>
-                  <div class="text-xs text-geek-text-dim">{{ wcStatusLabel }}</div>
+                <div class="h-full flex min-h-0">
+                  <Splitpanes class="default-theme">
+                    <Pane
+                      :size="store.wcShowPreview ? 50 : 100"
+                      :min-size="30"
+                    >
+                      <div class="h-full flex flex-col min-w-0">
+                        <div class="flex items-center gap-1 px-2 py-1 border-b border-gray-700 bg-[#1e1e1e] shrink-0">
+                          <button
+                            @click="sidebarCollapsed = !sidebarCollapsed"
+                            class="px-1.5 py-0.5 text-[10px] text-gray-500 hover:text-blue-400 transition-colors rounded"
+                            :title="sidebarCollapsed ? '展开侧边栏' : '折叠侧边栏'"
+                          >{{ sidebarCollapsed ? '◧' : '◨' }}</button>
+                          <button
+                            @click="terminalCollapsed = !terminalCollapsed"
+                            class="px-1.5 py-0.5 text-[10px] text-gray-500 hover:text-blue-400 transition-colors rounded"
+                            :title="terminalCollapsed ? '展开终端' : '折叠终端'"
+                          >{{ terminalCollapsed ? '⬒' : '⬓' }}</button>
+                          <span class="text-[9px] text-gray-600 ml-auto">编辑器</span>
+                        </div>
+                        <div class="flex-1 min-h-0 overflow-hidden">
+                          <CodeEditor />
+                        </div>
+                      </div>
+                    </Pane>
+
+                    <Pane
+                      v-if="store.wcShowPreview"
+                      :size="50"
+                      :min-size="20"
+                    >
+                      <div class="h-full flex flex-col min-w-0 bg-geek-bg">
+                        <div class="flex items-center justify-between px-3 py-1.5 border-b border-geek-border bg-geek-surface shrink-0">
+                          <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-geek-accent">🌐 实时预览</span>
+                            <span
+                              v-if="wcStatusLabel"
+                              class="text-[10px] px-1.5 py-0.5 rounded bg-geek-bg border border-geek-border"
+                              :class="wcStatusColor"
+                            >{{ wcStatusLabel }}</span>
+                          </div>
+                          <div class="flex items-center gap-1">
+                            <button
+                              v-if="store.wcPreviewUrl"
+                              @click="navigator.clipboard?.writeText(store.wcPreviewUrl)"
+                              class="px-1.5 py-0.5 text-[10px] text-geek-text-dim hover:text-geek-accent transition-colors"
+                              title="复制预览 URL"
+                            >📋</button>
+                            <button
+                              @click="store.stopWebContainer()"
+                              class="px-1.5 py-0.5 text-[10px] text-red-400 hover:text-red-300 transition-colors"
+                              title="停止服务"
+                            >⏹</button>
+                            <button
+                              @click="store.closeWebContainerPreview()"
+                              class="px-1.5 py-0.5 text-[10px] text-geek-text-dim hover:text-geek-accent transition-colors"
+                              title="关闭预览"
+                            >✕</button>
+                          </div>
+                        </div>
+
+                        <div class="flex-1 min-h-0 relative">
+                          <div
+                            v-if="store.wcStatus !== 'running' && store.wcStatus !== 'error'"
+                            class="absolute inset-0 flex items-center justify-center bg-geek-bg/80 z-10"
+                          >
+                            <div class="text-center">
+                              <div class="text-2xl mb-2">
+                                <span v-if="store.wcStatus === 'booting'">🚀</span>
+                                <span v-else-if="store.wcStatus === 'mounting'">📁</span>
+                                <span v-else-if="store.wcStatus === 'installing'">📦</span>
+                                <span v-else-if="store.wcStatus === 'starting'">🏃</span>
+                                <span v-else>⏳</span>
+                              </div>
+                              <div class="text-xs text-geek-text-dim">{{ wcStatusLabel }}</div>
+                            </div>
+                          </div>
+
+                          <div
+                            v-if="store.wcError"
+                            class="absolute inset-0 flex items-center justify-center bg-geek-bg/90 z-10"
+                          >
+                            <div class="text-center max-w-[80%]">
+                              <div class="text-2xl mb-2">❌</div>
+                              <div class="text-xs text-red-400 mb-2">WebContainer 启动失败</div>
+                              <div class="text-[10px] text-geek-text-dim break-all">{{ store.wcError }}</div>
+                              <button
+                                @click="store.resetWebContainer()"
+                                class="mt-3 px-3 py-1 bg-geek-accent text-black rounded text-[10px] font-bold hover:bg-geek-accent-dim transition-colors"
+                              >重试</button>
+                            </div>
+                          </div>
+
+                          <iframe
+                            v-if="store.wcPreviewUrl"
+                            :src="store.wcPreviewUrl"
+                            class="w-full h-full border-0 bg-white"
+                            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
+                            allow="cross-origin-isolated"
+                          ></iframe>
+
+                          <div
+                            v-if="!store.wcPreviewUrl && store.wcStatus === 'running'"
+                            class="absolute inset-0 flex items-center justify-center"
+                          >
+                            <div class="text-xs text-geek-text-dim">等待 server-ready 事件...</div>
+                          </div>
+                        </div>
+                      </div>
+                    </Pane>
+                  </Splitpanes>
                 </div>
-              </div>
+              </Pane>
 
-              <div
-                v-if="store.wcError"
-                class="absolute inset-0 flex items-center justify-center bg-geek-bg/90 z-10"
+              <!-- 终端区域 -->
+              <Pane
+                v-if="!terminalCollapsed"
+                :size="30"
+                :min-size="10"
               >
-                <div class="text-center max-w-[80%]">
-                  <div class="text-2xl mb-2">❌</div>
-                  <div class="text-xs text-red-400 mb-2">WebContainer 启动失败</div>
-                  <div class="text-[10px] text-geek-text-dim break-all">{{ store.wcError }}</div>
-                  <button
-                    @click="store.resetWebContainer()"
-                    class="mt-3 px-3 py-1 bg-geek-accent text-black rounded text-[10px] font-bold hover:bg-geek-accent-dim transition-colors"
-                  >重试</button>
+                <div class="h-full overflow-hidden">
+                  <TerminalPanel />
                 </div>
-              </div>
-
-              <iframe
-                v-if="store.wcPreviewUrl"
-                :src="store.wcPreviewUrl"
-                class="w-full h-full border-0 bg-white"
-                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
-                allow="cross-origin-isolated"
-              ></iframe>
-
-              <div
-                v-if="!store.wcPreviewUrl && store.wcStatus === 'running'"
-                class="absolute inset-0 flex items-center justify-center"
-              >
-                <div class="text-xs text-geek-text-dim">等待 server-ready 事件...</div>
-              </div>
-            </div>
+              </Pane>
+            </Splitpanes>
           </div>
-        </div>
-      </main>
+        </Pane>
+      </Splitpanes>
     </div>
 
     <Teleport to="body">
@@ -245,8 +335,56 @@ onBeforeUnmount(() => {
           >{{ f }}</span>
         </div>
       </div>
+
+      <!-- ═══ Mermaid Lightbox 全屏放大 ═══ -->
+      <Transition name="lightbox">
+        <div
+          v-if="mermaidLightbox"
+          class="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 backdrop-blur-sm"
+          @click.self="closeMermaidLightbox"
+          @keydown.escape="closeMermaidLightbox"
+        >
+          <div class="relative w-[95vw] h-[92vh] flex flex-col">
+            <div class="flex items-center justify-between px-4 py-2 bg-geek-surface border-b border-geek-border rounded-t-lg shrink-0">
+              <div class="flex items-center gap-3">
+                <span class="text-xs font-bold text-violet-400">◈ {{ mermaidLightbox.title }}</span>
+                <span class="text-[10px] text-geek-text-dim">{{ Math.round(mermaidLightbox.scale * 100) }}%</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <button @click="zoomLightbox(-0.2)" class="px-2 py-1 text-xs text-geek-text-dim hover:text-geek-accent border border-geek-border rounded transition-colors">−</button>
+                <button @click="mermaidLightbox.scale = 1" class="px-2 py-1 text-xs text-geek-text-dim hover:text-geek-accent border border-geek-border rounded transition-colors">1:1</button>
+                <button @click="zoomLightbox(0.2)" class="px-2 py-1 text-xs text-geek-text-dim hover:text-geek-accent border border-geek-border rounded transition-colors">+</button>
+                <span class="text-geek-text-dim text-[10px] mx-2">|</span>
+                <button @click="closeMermaidLightbox" class="px-2 py-1 text-xs text-red-400 hover:text-red-300 border border-red-500/30 rounded transition-colors">ESC</button>
+              </div>
+            </div>
+            <div
+              class="flex-1 min-h-0 overflow-auto bg-gradient-to-br from-[#0f172a] to-[#1e1b4b] rounded-b-lg p-8"
+              @wheel.prevent="handleLightboxWheel"
+            >
+              <div
+                class="origin-center transition-transform duration-150"
+                :style="{ transform: `scale(${mermaidLightbox.scale})` }"
+                v-html="mermaidLightbox.svg"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </Transition>
     </Teleport>
 
     <PixelPet />
   </div>
 </template>
+
+<style>
+.lightbox-enter-active,
+.lightbox-leave-active {
+  transition: all 0.25s ease;
+}
+.lightbox-enter-from,
+.lightbox-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+}
+</style>

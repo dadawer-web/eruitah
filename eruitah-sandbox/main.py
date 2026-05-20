@@ -58,19 +58,61 @@ SANDBOX_DIR = os.environ.get("ERUITAH_SANDBOX_DIR", "/tmp/eruitah-sandbox")
 API_PROVIDER = os.environ.get("ERUITAH_API_PROVIDER", "openai")
 DEFAULT_MODEL_OPENAI = os.environ.get("ERUITAH_MODEL_OPENAI", "gpt-4o")
 DEFAULT_MODEL_ANTHROPIC = os.environ.get("ERUITAH_MODEL_ANTHROPIC", "claude-sonnet-4-20250514")
+USE_SUBPROCESS_AGENT = os.environ.get("ERUITAH_USE_SUBPROCESS", "true").lower() == "true"
 
 _stop_agent_flags: dict[str, bool] = {}
+_active_agent_threads: dict[str, dict] = {}
 
 def set_stop_flag(session_id: str, stop: bool = True):
     _stop_agent_flags[session_id] = stop
     if stop:
         logger.info(f"🛑 设置停止标志: session={session_id}")
+        _force_kill_agent_resources(session_id)
 
 def check_stop_flag(session_id: str) -> bool:
     return _stop_agent_flags.get(session_id, False)
 
 def clear_stop_flag(session_id: str):
     _stop_agent_flags.pop(session_id, None)
+
+def register_agent_thread(session_id: str, thread, future=None):
+    _active_agent_threads[session_id] = {
+        "thread": thread,
+        "future": future,
+        "created_at": __import__("time").time(),
+    }
+
+def unregister_agent_thread(session_id: str):
+    _active_agent_threads.pop(session_id, None)
+
+def _force_kill_agent_resources(session_id: str):
+    info = _active_agent_threads.get(session_id)
+    if not info:
+        return
+
+    try:
+        from bash_executor import kill_active_process
+        kill_active_process(session_id)
+        logger.info(f"🛑 已强杀 session={session_id} 的 bash 子进程")
+    except Exception as e:
+        logger.debug(f"强杀 bash 子进程时异常（可能无运行中进程）: {e}")
+
+    if USE_SUBPROCESS_AGENT:
+        try:
+            from agent_process import kill_agent_process
+            kill_agent_process(session_id)
+            logger.info(f"🛑 已强杀 session={session_id} 的 Agent 子进程")
+        except Exception as e:
+            logger.debug(f"强杀 Agent 子进程时异常: {e}")
+
+    future = info.get("future")
+    if future and not future.done():
+        future.cancel()
+        logger.info(f"🛑 已取消 session={session_id} 的 Agent Future")
+
+    thread = info.get("thread")
+    if thread and thread.is_alive():
+        logger.info(f"🛑 session={session_id} 的 Agent 线程仍在运行，已标记为取消")
 
 
 # ============================================================================
@@ -171,6 +213,7 @@ async def _run_agent_async(
     user_id: int = 0,
     enable_routing: bool = False,
     images: Optional[list] = None,
+    skills: Optional[list] = None,
 ):
     """
     绝对网关架构 (Absolute Gateway)
@@ -190,182 +233,276 @@ async def _run_agent_async(
 
     def _sync_worker():
         try:
-            is_new_task = not initial_messages
+            if USE_SUBPROCESS_AGENT:
+                from agent_process import start_agent_process
 
-            route_result = None
-            expert_label = ""
-            persona_prompt = ""
-            effective_input = user_input
-            effective_images = images or []
+                config = {
+                    "user_input": user_input,
+                    "work_dir": work_dir,
+                    "max_turns": max_turns,
+                    "api_key": api_key,
+                    "model": model,
+                    "base_url": base_url,
+                    "provider": provider,
+                    "initial_messages": initial_messages,
+                    "start_turn": start_turn,
+                    "task_id": task_id,
+                    "main_repo_dir": main_repo_dir,
+                    "auto_approve": auto_approve,
+                    "use_swarm": use_swarm,
+                    "user_id": user_id,
+                    "enable_routing": enable_routing,
+                    "images": images or [],
+                    "skills": skills,
+                }
 
-            from agent_runner import build_system_prompt
+                process, event_queue = start_agent_process(
+                    task_id or "default", config
+                )
 
-            if is_new_task and user_input:
-                if effective_images:
-                    from agent_prompts import VISION_ARCHITECT_EXPERT
+                import queue as queue_mod
+                while True:
+                    try:
+                        event = event_queue.get(timeout=1.0)
+                    except queue_mod.Empty:
+                        if not process.is_alive():
+                            try:
+                                event = event_queue.get(timeout=0.5)
+                                if event is None:
+                                    break
+                                loop.call_soon_threadsafe(queue.put_nowait, event)
+                            except queue_mod.Empty:
+                                if process.exitcode and process.exitcode < 0:
+                                    loop.call_soon_threadsafe(queue.put_nowait, {
+                                        "type": "error",
+                                        "data": f"Agent 子进程异常退出 (signal={-process.exitcode})",
+                                    })
+                                break
+                        continue
 
-                    route_result = {
-                        "is_predefined": True,
-                        "target_agent_name": "vision_architect",
-                        "dynamic_system_prompt": "",
-                        "sub_task": user_input if not user_input.startswith("分析图片") else user_input,
-                    }
-                    expert_label = "vision_architect (视觉架构师)"
-                    effective_input = user_input
+                    if event is None:
+                        break
+                    loop.call_soon_threadsafe(queue.put_nowait, event)
 
-                    base_prompt = build_system_prompt(work_dir)
-                    persona_prompt = f"{base_prompt}\n\n# 🎯 专家身份激活\n你当前以 **视觉架构师** 专家身份执行任务。以下是你的专家指导原则：\n\n{VISION_ARCHITECT_EXPERT}"
+            else:
+                is_new_task = not initial_messages
 
-                    logger.info(
-                        f"[Supervisor] 检测到图片输入，直接指定视觉架构师 | 图片数: {len(effective_images)}"
-                    )
-                else:
+                route_result = None
+                expert_label = ""
+                persona_prompt = ""
+                effective_input = user_input
+                effective_images = images or []
+
+                from agent_runner import build_system_prompt
+
+                if is_new_task and user_input:
+                    if effective_images:
+                        from agent_prompts import VISION_ARCHITECT_EXPERT
+
+                        route_result = {
+                            "is_predefined": True,
+                            "target_agent_name": "vision_architect",
+                            "dynamic_system_prompt": "",
+                            "sub_task": user_input if not user_input.startswith("分析图片") else user_input,
+                        }
+                        expert_label = "vision_architect (视觉架构师)"
+                        effective_input = user_input
+
+                        base_prompt = build_system_prompt(work_dir)
+                        persona_prompt = f"{base_prompt}\n\n# 🎯 专家身份激活\n你当前以 **视觉架构师** 专家身份执行任务。以下是你的专家指导原则：\n\n{VISION_ARCHITECT_EXPERT}"
+
+                        logger.info(
+                            f"[Supervisor] 检测到图片输入，直接指定视觉架构师 | 图片数: {len(effective_images)}"
+                        )
+                    else:
+                        loop.call_soon_threadsafe(queue.put_nowait, {
+                            "type": "status",
+                            "data": "正在分析任务，选择专家...",
+                        })
+
+                        from agent_runner import route_task
+                        route_result = route_task(
+                            user_message=user_input,
+                            api_key=api_key,
+                            model=model,
+                            base_url=base_url,
+                            provider=provider,
+                            images=effective_images,
+                        )
+
+                        is_predefined = route_result.get("is_predefined", True)
+                        target_agent = route_result.get("target_agent_name", "general_coder")
+                        sub_task = route_result.get("sub_task", user_input)
+                        dynamic_prompt = route_result.get("dynamic_system_prompt", "")
+                        cto_execution_env = route_result.get("execution_env", "native")
+
+                        expert_label = target_agent if is_predefined else "动态生成的专家"
+                        effective_input = sub_task
+
+                        logger.info(
+                            f"[Supervisor] 需求拆解完毕，已生成动态专家设定: {expert_label}，"
+                            f"子任务: {sub_task[:80]}，执行环境: {cto_execution_env}"
+                        )
+
+                        loop.call_soon_threadsafe(queue.put_nowait, {
+                            "type": "task_routed",
+                            "data": {
+                                "is_predefined": is_predefined,
+                                "target_agent": target_agent,
+                                "sub_task": sub_task,
+                                "dynamic_prompt_length": len(dynamic_prompt) if dynamic_prompt else 0,
+                                "mode": "deep" if use_swarm else "fast",
+                                "execution_env": cto_execution_env,
+                            },
+                        })
+
+                        base_prompt = build_system_prompt(work_dir)
+
+                        if dynamic_prompt:
+                            persona_prompt = f"{base_prompt}\n\n# 🎯 专家身份激活\n你当前以 **{expert_label}** 专家身份执行任务。以下是你的专家指导原则：\n\n{dynamic_prompt}"
+                        elif not is_predefined and target_agent == "general_coder":
+                            persona_prompt = ""
+                        else:
+                            from agent_prompts import get_expert_prompt
+                            ep = get_expert_prompt(target_agent)
+                            if ep:
+                                persona_prompt = f"{base_prompt}\n\n# 🎯 专家身份激活\n你当前以 **{target_agent}** 专家身份执行任务。以下是你的专家指导原则：\n\n{ep}"
+                            else:
+                                persona_prompt = ""
+
+                if skills and is_new_task:
+                    from prompt_builder import get_prompt_builder
+                    builder = get_prompt_builder()
+                    skill_prompt = builder.build_skill_prompt(skills)
+                    if skill_prompt:
+                        if persona_prompt:
+                            persona_prompt = f"{persona_prompt}\n\n{'=' * 60}\n# 🎯 附加技能激活\n{'=' * 60}\n\n{skill_prompt}"
+                        else:
+                            base_prompt = build_system_prompt(work_dir)
+                            persona_prompt = f"{base_prompt}\n\n{'=' * 60}\n# 🎯 技能激活\n{'=' * 60}\n\n{skill_prompt}"
+                        logger.info(f"📋 [Gateway] 技能提示词已注入: {skills}")
+
+                plan_mode = bool(skills and "plan" in skills)
+                if plan_mode:
+                    logger.info(f"🔒 [Gateway] PM需求澄清模式已激活: 工具将被隔离为 ask_user + file_edit/file_write/file_read/glob/grep")
+
+                sdd_mode = bool(skills and "sdd" in skills)
+
+                if sdd_mode and is_new_task:
+                    logger.info(f"🤖 [Gateway] SDD 多智能体协作模式 | task_id={task_id}")
+
                     loop.call_soon_threadsafe(queue.put_nowait, {
-                        "type": "status",
-                        "data": "正在分析任务，选择专家...",
+                        "type": "sdd_loop_start",
+                        "data": {"task_id": task_id, "task": effective_input[:100]},
                     })
 
-                    from agent_runner import route_task
-                    route_result = route_task(
-                        user_message=user_input,
+                    from agent_swarm import run_sdd_loop
+                    for event in run_sdd_loop(
+                        task=effective_input,
+                        work_dir=work_dir,
+                        provider=provider,
+                        api_key=api_key,
+                        model=model,
+                        base_url=base_url,
+                        main_repo_dir=main_repo_dir,
+                        task_id=task_id,
+                        yield_events=True,
+                        images=effective_images,
+                    ):
+                        loop.call_soon_threadsafe(queue.put_nowait, event)
+
+                elif use_swarm and is_new_task and persona_prompt:
+                    logger.info(
+                        f"🧠 [Gateway] 深度模式 → 红蓝对抗 | 专家: {expert_label} | task_id={task_id}"
+                    )
+
+                    loop.call_soon_threadsafe(queue.put_nowait, {
+                        "type": "debate_loop_start",
+                        "data": {
+                            "expert_label": expert_label,
+                            "sub_task": effective_input,
+                            "dynamic_persona": bool(persona_prompt),
+                        },
+                    })
+
+                    loop.call_soon_threadsafe(queue.put_nowait, {
+                        "type": "system_alert",
+                        "content": f"⚔️ 红蓝对抗引擎启动！蓝军继承 [{expert_label}] 专家身份，红军从该领域最佳实践角度深度挑刺",
+                    })
+
+                    from agent_swarm import start_debate_loop
+                    for event in start_debate_loop(
+                        task=effective_input,
+                        dynamic_persona_prompt=persona_prompt,
+                        work_dir=work_dir,
+                        provider=provider,
+                        api_key=api_key,
+                        model=model,
+                        base_url=base_url,
+                        max_loops=3,
+                        main_repo_dir=main_repo_dir,
+                        task_id=task_id,
+                        auto_approve=auto_approve,
+                        yield_events=True,
+                        images=effective_images,
+                    ):
+                        loop.call_soon_threadsafe(queue.put_nowait, event)
+
+                    loop.call_soon_threadsafe(queue.put_nowait, {
+                        "type": "debate_loop_end",
+                        "data": {"expert_label": expert_label},
+                    })
+
+                elif use_swarm:
+                    logger.info(f"🧠 [Gateway] 深度模式 → 直接红蓝对抗 (继续任务), task_id={task_id}")
+                    for event in run_swarm(
+                        user_input=user_input,
+                        work_dir=work_dir,
+                        max_turns=max_turns,
                         api_key=api_key,
                         model=model,
                         base_url=base_url,
                         provider=provider,
-                        images=effective_images,
-                    )
+                        initial_messages=initial_messages,
+                        start_turn=start_turn,
+                        task_id=task_id,
+                        main_repo_dir=main_repo_dir,
+                        auto_approve=auto_approve,
+                        yield_events=True,
+                    ):
+                        loop.call_soon_threadsafe(queue.put_nowait, event)
 
-                    is_predefined = route_result.get("is_predefined", True)
-                    target_agent = route_result.get("target_agent_name", "general_coder")
-                    sub_task = route_result.get("sub_task", user_input)
-                    dynamic_prompt = route_result.get("dynamic_system_prompt", "")
-                    cto_execution_env = route_result.get("execution_env", "native")
-
-                    expert_label = target_agent if is_predefined else "动态生成的专家"
-                    effective_input = sub_task
-
+                else:
+                    mode_tag = f"穿 [{expert_label}] 专家外衣" if persona_prompt else "默认全栈"
                     logger.info(
-                        f"[Supervisor] 需求拆解完毕，已生成动态专家设定: {expert_label}，"
-                        f"子任务: {sub_task[:80]}，执行环境: {cto_execution_env}"
+                        f"⚡ [Gateway] 极速模式 → 单体 Agent {mode_tag} | task_id={task_id}"
                     )
 
-                    loop.call_soon_threadsafe(queue.put_nowait, {
-                        "type": "task_routed",
-                        "data": {
-                            "is_predefined": is_predefined,
-                            "target_agent": target_agent,
-                            "sub_task": sub_task,
-                            "dynamic_prompt_length": len(dynamic_prompt) if dynamic_prompt else 0,
-                            "mode": "deep" if use_swarm else "fast",
-                            "execution_env": cto_execution_env,
-                        },
-                    })
+                    if persona_prompt:
+                        loop.call_soon_threadsafe(queue.put_nowait, {
+                            "type": "system_alert",
+                            "content": f"🎯 专家身份激活: {expert_label}，单体极速模式执行",
+                        })
 
-                    base_prompt = build_system_prompt(work_dir)
-
-                    if dynamic_prompt:
-                        persona_prompt = f"{base_prompt}\n\n# 🎯 专家身份激活\n你当前以 **{expert_label}** 专家身份执行任务。以下是你的专家指导原则：\n\n{dynamic_prompt}"
-                    elif not is_predefined and target_agent == "general_coder":
-                        persona_prompt = ""
-                    else:
-                        from agent_prompts import get_expert_prompt
-                        ep = get_expert_prompt(target_agent)
-                        if ep:
-                            persona_prompt = f"{base_prompt}\n\n# 🎯 专家身份激活\n你当前以 **{target_agent}** 专家身份执行任务。以下是你的专家指导原则：\n\n{ep}"
-                        else:
-                            persona_prompt = ""
-
-            if use_swarm and is_new_task and persona_prompt:
-                logger.info(
-                    f"🧠 [Gateway] 深度模式 → 红蓝对抗 | 专家: {expert_label} | task_id={task_id}"
-                )
-
-                loop.call_soon_threadsafe(queue.put_nowait, {
-                    "type": "debate_loop_start",
-                    "data": {
-                        "expert_label": expert_label,
-                        "sub_task": effective_input,
-                        "dynamic_persona": bool(persona_prompt),
-                    },
-                })
-
-                loop.call_soon_threadsafe(queue.put_nowait, {
-                    "type": "system_alert",
-                    "content": f"⚔️ 红蓝对抗引擎启动！蓝军继承 [{expert_label}] 专家身份，红军从该领域最佳实践角度深度挑刺",
-                })
-
-                from agent_swarm import start_debate_loop
-                for event in start_debate_loop(
-                    task=effective_input,
-                    dynamic_persona_prompt=persona_prompt,
-                    work_dir=work_dir,
-                    provider=provider,
-                    api_key=api_key,
-                    model=model,
-                    base_url=base_url,
-                    max_loops=3,
-                    main_repo_dir=main_repo_dir,
-                    task_id=task_id,
-                    auto_approve=auto_approve,
-                    yield_events=True,
-                    images=effective_images,
-                ):
-                    loop.call_soon_threadsafe(queue.put_nowait, event)
-
-                loop.call_soon_threadsafe(queue.put_nowait, {
-                    "type": "debate_loop_end",
-                    "data": {"expert_label": expert_label},
-                })
-
-            elif use_swarm:
-                logger.info(f"🧠 [Gateway] 深度模式 → 直接红蓝对抗 (继续任务), task_id={task_id}")
-                for event in run_swarm(
-                    user_input=user_input,
-                    work_dir=work_dir,
-                    max_turns=max_turns,
-                    api_key=api_key,
-                    model=model,
-                    base_url=base_url,
-                    provider=provider,
-                    initial_messages=initial_messages,
-                    start_turn=start_turn,
-                    task_id=task_id,
-                    main_repo_dir=main_repo_dir,
-                    auto_approve=auto_approve,
-                    yield_events=True,
-                ):
-                    loop.call_soon_threadsafe(queue.put_nowait, event)
-
-            else:
-                mode_tag = f"穿 [{expert_label}] 专家外衣" if persona_prompt else "默认全栈"
-                logger.info(
-                    f"⚡ [Gateway] 极速模式 → 单体 Agent {mode_tag} | task_id={task_id}"
-                )
-
-                if persona_prompt:
-                    loop.call_soon_threadsafe(queue.put_nowait, {
-                        "type": "system_alert",
-                        "content": f"🎯 专家身份激活: {expert_label}，单体极速模式执行",
-                    })
-
-                for event in run_agent(
-                    user_input=effective_input,
-                    work_dir=work_dir,
-                    max_turns=max_turns,
-                    api_key=api_key,
-                    model=model,
-                    base_url=base_url,
-                    provider=provider,
-                    initial_messages=initial_messages,
-                    start_turn=start_turn,
-                    task_id=task_id,
-                    main_repo_dir=main_repo_dir,
-                    auto_approve=auto_approve,
-                    user_id=user_id,
-                    override_system_prompt=persona_prompt if persona_prompt else None,
-                    images=effective_images,
-                ):
-                    loop.call_soon_threadsafe(queue.put_nowait, event)
+                    for event in run_agent(
+                        user_input=effective_input,
+                        work_dir=work_dir,
+                        max_turns=max_turns,
+                        api_key=api_key,
+                        model=model,
+                        base_url=base_url,
+                        provider=provider,
+                        initial_messages=initial_messages,
+                        start_turn=start_turn,
+                        task_id=task_id,
+                        main_repo_dir=main_repo_dir,
+                        auto_approve=auto_approve,
+                        user_id=user_id,
+                        override_system_prompt=persona_prompt if persona_prompt else None,
+                        images=effective_images,
+                        plan_mode=plan_mode,
+                    ):
+                        loop.call_soon_threadsafe(queue.put_nowait, event)
 
         except Exception as e:
             loop.call_soon_threadsafe(
@@ -378,7 +515,13 @@ async def _run_agent_async(
     # 在线程池中启动同步生成器
     import concurrent.futures
     executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
-    loop.run_in_executor(executor, _sync_worker)
+    agent_future = loop.run_in_executor(executor, _sync_worker)
+
+    import threading
+    for t in threading.enumerate():
+        if t.name.startswith("ThreadPoolExecutor"):
+            register_agent_thread(task_id or "default", t, agent_future)
+            break
 
     # 从队列中消费事件
     while True:
@@ -386,6 +529,8 @@ async def _run_agent_async(
         if event is None:
             break
         yield event
+
+    unregister_agent_thread(task_id or "default")
 
 
 async def _run_swarm_async(
@@ -955,6 +1100,9 @@ async def websocket_coding(websocket: WebSocket):
             images = data.get("images") or []
             if images and not isinstance(images, list):
                 images = [images]
+            skills = data.get("skills") or []
+            if skills and not isinstance(skills, list):
+                skills = [skills]
             if not user_input:
                 await safe_send({"type": "error", "data": "task/prompt 不能为空"})
                 continue
@@ -1120,6 +1268,7 @@ async def websocket_coding(websocket: WebSocket):
                 "user_id": user_id,
                 "enable_routing": enable_routing,
                 "images": images,
+                "skills": skills,
             }
 
             engine_name = "🧠 Swarm (多智能体)" if use_swarm else "⚡ 单体 Agent"
@@ -1196,50 +1345,55 @@ async def websocket_coding(websocket: WebSocket):
 
                         while True:
                             try:
-                                msg = await asyncio.wait_for(client_message_queue.get(), timeout=300)
-                                if msg is None:
-                                    return
-
-                                if msg.get("type") == "system_command" and msg.get("action") == "stop_agent":
-                                    logger.info(f"🛑 用户在 ask_user 等待期间请求停止 Agent")
+                                msg = await asyncio.wait_for(client_message_queue.get(), timeout=2)
+                            except asyncio.TimeoutError:
+                                if check_stop_flag(task_id or "default"):
+                                    logger.info(f"🛑 ask_user 等待期间检测到停止信号，立即终止")
                                     await safe_send({"type": "agent_status", "status": "IDLE"})
                                     await safe_send({"type": "stopped", "data": "用户已停止 Agent 执行"})
                                     return
+                                continue
 
-                                if msg.get("type") == "user_answer" and msg.get("question_id") == question_id:
-                                    user_answer = msg.get("answer", "")
-
-                                    if ask_task_id:
-                                        try:
-                                            from task_manager import get_task_manager
-                                            tm = get_task_manager()
-                                            session = tm.get_session(ask_task_id)
-                                            if session and session.messages:
-                                                history = session.messages_before + session.messages if session.messages_before else session.messages
-                                                history.append({
-                                                    "role": "tool",
-                                                    "tool_call_id": tool_call_id,
-                                                    "name": "ask_user",
-                                                    "content": user_answer,
-                                                })
-                                                tm.update_session_messages(
-                                                    task_id=ask_task_id,
-                                                    messages=session.messages,
-                                                    current_turn=session.current_turn,
-                                                )
-                                                agent_params["initial_messages"] = history
-                                                agent_params["start_turn"] = 1
-                                                agent_params["user_input"] = ""
-                                        except Exception as e:
-                                            logger.error(f"注入 ask_user 工具回复失败: {e}")
-                                            agent_params["user_input"] = f"用户回答: {user_answer}\n请继续执行任务。"
-                                    else:
-                                        agent_params["user_input"] = f"用户回答: {user_answer}\n请继续执行任务。"
-
-                                    break
-                            except asyncio.TimeoutError:
-                                await safe_send({"type": "error", "data": "等待用户回答超时"})
+                            if msg is None:
                                 return
+
+                            if msg.get("type") == "system_command" and msg.get("action") == "stop_agent":
+                                logger.info(f"🛑 用户在 ask_user 等待期间请求停止 Agent")
+                                await safe_send({"type": "agent_status", "status": "IDLE"})
+                                await safe_send({"type": "stopped", "data": "用户已停止 Agent 执行"})
+                                return
+
+                            if msg.get("type") == "user_answer" and msg.get("question_id") == question_id:
+                                user_answer = msg.get("answer", "")
+
+                                if ask_task_id:
+                                    try:
+                                        from task_manager import get_task_manager
+                                        tm = get_task_manager()
+                                        session = tm.get_session(ask_task_id)
+                                        if session and session.messages:
+                                            history = session.messages_before + session.messages if session.messages_before else session.messages
+                                            history.append({
+                                                "role": "tool",
+                                                "tool_call_id": tool_call_id,
+                                                "name": "ask_user",
+                                                "content": user_answer,
+                                            })
+                                            tm.update_session_messages(
+                                                task_id=ask_task_id,
+                                                messages=session.messages,
+                                                current_turn=session.current_turn,
+                                            )
+                                            agent_params["initial_messages"] = history
+                                            agent_params["start_turn"] = 1
+                                            agent_params["user_input"] = ""
+                                    except Exception as e:
+                                        logger.error(f"注入 ask_user 工具回复失败: {e}")
+                                        agent_params["user_input"] = f"用户回答: {user_answer}\n请继续执行任务。"
+                                else:
+                                    agent_params["user_input"] = f"用户回答: {user_answer}\n请继续执行任务。"
+
+                                break
 
                         agent_needs_restart = True
                         break

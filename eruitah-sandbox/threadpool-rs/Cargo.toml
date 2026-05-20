@@ -1,0 +1,8 @@
+[package]
+name = "threadpool-rs"
+version = "0.1.0"
+edition = "2021"
+description = "A memory-safe thread pool library for Rust with Future-like task handles"
+license = "MIT"
+
+[dependencies]
