@@ -174,10 +174,18 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def add_cross_origin_isolation_headers(request, call_next):
+    response = await call_next(request)
+    response.headers["Cross-Origin-Embedder-Policy"] = "require-corp"
+    response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+    return response
 
 # 挂载静态文件目录
 STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
@@ -985,6 +993,7 @@ async def _handle_system_command(websocket, data: dict, safe_send):
 # ============================================================================
 
 @app.websocket("/ws/coding")
+@app.websocket("/ws/simple-ide")
 async def websocket_coding(websocket: WebSocket):
     """
     WebSocket 双向通信 - Agent 的"神经系统"
@@ -1504,6 +1513,7 @@ async def websocket_coding(websocket: WebSocket):
 # ============================================================================
 
 @app.websocket("/ws/coding/persistent")
+@app.websocket("/ws/simple-ide/persistent")
 async def websocket_coding_persistent(websocket: WebSocket):
     """
     持久 WebSocket 连接 - 支持多任务切换

@@ -77,17 +77,22 @@ public class CompanionReadingService {
             selectedText, graphContext
         );
 
-        String result = fastChatClient.prompt()
-            .system("你是「温柔学长」，一位已经成功上岸408考研的热心学长。擅长用生活中的通俗例子来解释抽象的计算机概念。回复控制在100字左右，用纯文本，不要markdown。")
-            .user(prompt)
-            .call()
-            .content();
+        try {
+            String result = fastChatClient.prompt()
+                .system("你是「温柔学长」，一位已经成功上岸408考研的热心学长。擅长用生活中的通俗例子来解释抽象的计算机概念。回复控制在100字左右，用纯文本，不要markdown。")
+                .user(prompt)
+                .call()
+                .content();
 
-        if (result == null || result.trim().isEmpty()) {
-            return "这个概念确实不太好理解，建议多看看教材原文，结合例题来消化~";
+            if (result == null || result.trim().isEmpty()) {
+                return "这个概念确实不太好理解，建议多看看教材原文，结合例题来消化~";
+            }
+
+            return result.trim();
+        } catch (Exception e) {
+            log.error("LLM调用失败，降级返回默认提示", e);
+            return "同学你好~ 这个知识点确实有点抽象，建议结合教材中的例题来理解。如果还是不太明白，可以试试换个角度，或者和同学讨论一下，往往会有新的收获哦~";
         }
-
-        return result.trim();
     }
 
     private String synthesizeAudio(String text) {

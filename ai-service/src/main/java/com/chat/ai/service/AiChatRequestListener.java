@@ -148,16 +148,18 @@ public class AiChatRequestListener {
                 return;
             }
 
-            rpcPushService.publishStreamStart(userId, botId, AiPersonaRegistry.getBotName(botId));
-
-            if (AiPersonaRegistry.isMasterBot(botId)) {
-                handleMasterBotStream(userId, botId, userMessage, conversationId);
-            } else if (AiPersonaRegistry.isProblemSolverBot(botId)) {
+            if (AiPersonaRegistry.isProblemSolverBot(botId)) {
                 handleProblemSolverStream(userId, botId, userMessage, conversationId);
             } else if (AiPersonaRegistry.isCodeReviewerBot(botId)) {
                 handleCodeReviewerStream(userId, botId, userMessage, conversationId);
             } else {
-                handleNormalBotStream(userId, botId, userMessage, conversationId);
+                rpcPushService.publishStreamStart(userId, botId, AiPersonaRegistry.getBotName(botId));
+
+                if (AiPersonaRegistry.isMasterBot(botId)) {
+                    handleMasterBotStream(userId, botId, userMessage, conversationId);
+                } else {
+                    handleNormalBotStream(userId, botId, userMessage, conversationId);
+                }
             }
 
         } catch (Exception e) {
@@ -193,6 +195,14 @@ public class AiChatRequestListener {
             })
             .doOnError(error -> {
                 log.error("[{}] 流式处理异常", botName, error);
+                if (error instanceof org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest) {
+                    log.warn("[{}] 检测到 400 错误，可能是思维链模型记忆不兼容，清除会话记忆: {}", botName, conversationId);
+                    try {
+                        chatMemory.clear(conversationId);
+                    } catch (Exception clearEx) {
+                        log.warn("[{}] 清除记忆失败", botName, clearEx);
+                    }
+                }
                 sendErrorAndEnd(userId, botId, "\n[系统提示：" + botName + " 的思路被打断了，请重试)");
             })
             .doOnComplete(() -> {
@@ -239,8 +249,8 @@ public class AiChatRequestListener {
         
         List<ChatRequest.ImageData> images = extractImagesFromMessage(userMessage);
         String cleanMessage = removeImageTagsFromMessage(userMessage);
-        
-        rpcPushService.publishStreamChunk(userId, "👀 正在努力看图中...\n", botId, "解题大王");
+
+        rpcPushService.publishStreamStart(userId, botId, "解题大王", "👀 正在努力看图中...");
 
         MultimodalChatService.ChatStreamResult result = multimodalChatService.chatStream(
             userId, botId, cleanMessage.isEmpty() ? "请分析这张图片" : cleanMessage, images);
@@ -251,7 +261,7 @@ public class AiChatRequestListener {
     private void handleCodeReviewerStream(int userId, int botId, String userMessage, String conversationId) {
         log.info("[代码审查员] 开始真流式代码 Review");
         
-        rpcPushService.publishStreamChunk(userId, "💻 正在编译并扫描代码坏味道...\n", botId, "代码审查员");
+        rpcPushService.publishStreamStart(userId, botId, "代码审查员", "💻 正在编译并扫描代码坏味道...");
 
         Flux<String> stream = codeReviewerService.reviewCodeStream(userMessage);
 

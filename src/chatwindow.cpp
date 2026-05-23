@@ -1560,18 +1560,78 @@ void ChatWindow::onReceiveMessage(int fromId, const QString &message, const QStr
     
     // 检查是否是流式消息（包含特殊标记）
     bool isStreamChunk = message.startsWith("[STREAM_CHUNK]:");
-    QString actualMessage = isStreamChunk ? message.mid(15) : message; // 移除流式标记（15个字符）
+    QString actualMessage = isStreamChunk ? message.mid(15) : message;
     
-    // 检查是否是流式消息结束标记
     bool isStreamEnd = actualMessage == "[STREAM_END]";
+    bool isStreamClear = actualMessage == "[STREAM_CLEAR]";
+    bool isStreamThinking = actualMessage.startsWith("[STREAM_THINKING]:");
+    QString thinkingHint;
+    if (isStreamThinking) {
+        thinkingHint = actualMessage.mid(18);
+    }
+    
+    if (isStreamClear) {
+        qDebug() << "ChatWindow: Stream clear received, resetting message content for user" << fromId;
+        QList<QListWidgetItem*> items = streamMessageItems.value(fromId);
+        if (!items.isEmpty()) {
+            QListWidgetItem* lastItem = items.last();
+            QListWidget* chatListWidget = findChatListWidgetForUser(fromId);
+            if (chatListWidget && lastItem) {
+                MessageWidget* messageWidget = qobject_cast<MessageWidget*>(chatListWidget->itemWidget(lastItem));
+                if (messageWidget) {
+                    messageWidget->setMarkdownContent("");
+                    lastItem->setSizeHint(messageWidget->sizeHint());
+                    chatListWidget->updateGeometry();
+                }
+            }
+        }
+        return;
+    }
+    
     if (isStreamEnd) {
         qDebug() << "ChatWindow: Stream message ended, clearing stream message items for user" << fromId;
-        // 清除流式消息映射和思考提示
         if (streamMessageItems.contains(fromId)) {
             streamMessageItems.remove(fromId);
         }
         if (thinkingIndicatorItems.contains(fromId)) {
-            thinkingIndicatorItems.remove(fromId);
+            QListWidgetItem* thinkingItem = thinkingIndicatorItems.take(fromId);
+            QListWidget* chatListWidget = findChatListWidgetForUser(fromId);
+            if (chatListWidget) {
+                int row = chatListWidget->row(thinkingItem);
+                if (row >= 0) {
+                    chatListWidget->takeItem(row);
+                    delete thinkingItem;
+                }
+            }
+        }
+        return;
+    }
+    
+    if (isStreamThinking) {
+        QListWidget* chatListWidget = findChatListWidgetForUser(fromId);
+        if (chatListWidget) {
+            if (thinkingIndicatorItems.contains(fromId)) {
+                QListWidgetItem* thinkingItem = thinkingIndicatorItems.value(fromId);
+                MessageWidget* thinkingWidget = qobject_cast<MessageWidget*>(chatListWidget->itemWidget(thinkingItem));
+                if (thinkingWidget) {
+                    thinkingWidget->setMarkdownContent(thinkingHint.isEmpty() ? "🤔 AI正在思考..." : thinkingHint);
+                    thinkingItem->setSizeHint(thinkingWidget->sizeHint());
+                    chatListWidget->updateGeometry();
+                    scrollChatToBottom(chatListWidget);
+                }
+            } else {
+                QListWidgetItem* thinkingItem = new QListWidgetItem();
+                chatListWidget->addItem(thinkingItem);
+                
+                QString senderName = fromName.isEmpty() ? "AI Assistant" : fromName;
+                QString displayText = thinkingHint.isEmpty() ? "🤔 AI正在思考..." : thinkingHint;
+                MessageWidget* thinkingWidget = new MessageWidget(false, displayText, "", senderName, timestamp, this);
+                thinkingItem->setSizeHint(thinkingWidget->sizeHint());
+                chatListWidget->setItemWidget(thinkingItem, thinkingWidget);
+                
+                thinkingIndicatorItems.insert(fromId, thinkingItem);
+                scrollChatToBottom(chatListWidget);
+            }
         }
         return;
     }

@@ -52,20 +52,18 @@ public class RpcPushService {
         message.put("msg", content);
         message.put("timestamp", Instant.now().toEpochMilli());
 
-        pushToCpp(0, groupId, ChatProto.InternalMsgType.CHAT_GROUP, message, true);
+        pushToCpp(0, groupId, ChatProto.InternalMsgType.CHAT_GROUP, message, false);
     }
 
     public void publishGroupMessage(Long groupId, String content, Integer replyTo) {
         Map<String, Object> message = new HashMap<>();
-        message.put("groupId", groupId);
-        message.put("senderId", -1);
-        message.put("senderName", "AI助手");
-        message.put("content", content);
+        message.put("groupid", groupId);
+        message.put("from", -1);
+        message.put("fromName", "AI助手");
+        message.put("msg", content);
         message.put("timestamp", Instant.now().toEpochMilli());
-        message.put("replyTo", replyTo);
-        message.put("type", "AI_SUMMARY");
 
-        pushToCpp(0, groupId, ChatProto.InternalMsgType.CHAT_GROUP, message, true);
+        pushToCpp(0, groupId, ChatProto.InternalMsgType.CHAT_GROUP, message, false);
     }
 
     public void publishGroupMessage(Long groupId, String content) {
@@ -73,11 +71,18 @@ public class RpcPushService {
     }
 
     public void publishStreamStart(Integer userId, int botId, String botName) {
+        publishStreamStart(userId, botId, botName, null);
+    }
+
+    public void publishStreamStart(Integer userId, int botId, String botName, String thinkingHint) {
         Map<String, Object> message = new HashMap<>();
         message.put("msgid", ONE_CHAT_MSG_ID);
         message.put("from", botId);
         message.put("to", userId);
-        message.put("msg", "[STREAM_CHUNK]: ");
+        String msg = (thinkingHint != null && !thinkingHint.isEmpty())
+            ? "[STREAM_CHUNK]:[STREAM_THINKING]:" + thinkingHint
+            : "[STREAM_CHUNK]: ";
+        message.put("msg", msg);
         message.put("name", botName);
         message.put("timestamp", Instant.now().toEpochMilli());
 

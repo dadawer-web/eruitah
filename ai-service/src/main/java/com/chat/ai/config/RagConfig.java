@@ -79,8 +79,13 @@ public class RagConfig {
             Map.of("source", "408考研-操作系统", "topic", "进程线程", "difficulty", "基础")
         );
 
-        vectorStore.add(List.of(tcpDoc, treeDoc, processDoc));
-        log.info("Initialized VectorStore with {} seed knowledge documents", 3);
+        try {
+            vectorStore.add(List.of(tcpDoc, treeDoc, processDoc));
+            log.info("Initialized VectorStore with {} seed knowledge documents", 3);
+        } catch (Exception e) {
+            log.warn("⚠️ Failed to initialize seed knowledge in VectorStore (Redis may be unavailable): {}", e.getMessage());
+            log.warn("Application will start without seed knowledge. RAG search will work once Redis is available.");
+        }
     }
 }
 /**

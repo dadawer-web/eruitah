@@ -1,8 +1,15 @@
-# AI Service 用户手册
+# 智能聊天应用系统 用户手册
 
 ## 1. 项目简介
 
-AI Service 是一个面向 **408计算机考研** 的智能辅导后端服务，基于 Spring Boot 3.2 + Spring AI 构建。系统集成了多个AI角色、RAG知识检索、语音交互、知识图谱、多智能体编排等核心能力，为考研学生提供全方位的AI辅助学习体验。
+智能聊天应用系统是一个面向 **408计算机考研** 的多语言微服务系统，包含以下四大子系统：
+
+| 子系统 | 技术栈 | 核心职责 |
+|--------|--------|----------|
+| **C++/Qt 桌面客户端** | C++17 + Qt 5 + muduo + Material Design | 即时通讯客户端，聊天/群聊/农场/知识图谱/语音 |
+| **Java AI 后端** | Spring Boot 3.2 + Spring AI + Neo4j + Redis | AI角色、RAG知识库、知识图谱、语音交互、多智能体编排 |
+| **Python 编程沙盒** | FastAPI + WebSocket + Agent Loop | AI编程助手、代码编辑/执行/回退、多智能体协同 |
+| **Vue Web IDE** | Vue 3 + Vite + Pinia + Monaco + xterm.js | 浏览器端编程界面、代码编辑、终端、文件树 |
 
 ### 核心特性
 
@@ -15,6 +22,9 @@ AI Service 是一个面向 **408计算机考研** 的智能辅导后端服务，
 - **群聊多智能体**：面试群组智能路由，多位面试官协作追问
 - **伴读功能**：划选文本即可获得语音+文字讲解
 - **考情大屏**：雷达图、活跃度、周报等学习数据分析
+- **AI编程沙盒**：Eruitah 智能编程助手，支持代码编写/执行/回退/多智能体协同
+- **跨语言 RPC**：C++ ↔ Java ↔ Python 三语言 Protobuf RPC 通信
+- **一键部署**：Docker Compose 编排 7 个服务，Nginx 反向代理统一入口
 
 ---
 
@@ -879,7 +889,7 @@ GET http://localhost:8081/dashboard.html?userId=1
 
 ---
 
-## 15. 项目结构
+## 15. Java AI服务项目结构
 
 ```
 ai-service/
@@ -1055,7 +1065,6 @@ const int AI_BOT_ID_MIN = 10000;
 const int AI_BOT_ID_MAX = 10099;
 
 if (toid >= AI_BOT_ID_MIN && toid <= AI_BOT_ID_MAX) {
-    // 投递到Redis Stream: ai_task_stream
     json aiRequest;
     aiRequest["userId"] = fromId;
     aiRequest["botId"] = toid;
@@ -1123,7 +1132,6 @@ C++客户端是基于 **Qt 5** 框架构建的跨平台桌面应用，采用 Mat
 **ChatClient类** 采用事件驱动架构：
 
 ```cpp
-// 连接信号和槽 - 异步事件处理模式
 connect(socket, &QTcpSocket::connected, this, [=]() {
     isConnected = true;
     emit connectionStateChanged(true);
@@ -1136,13 +1144,12 @@ connect(socket, &QTcpSocket::readyRead, this, &ChatClient::onReadyRead);
 
 ```cpp
 void ChatClient::sendJsonMessage(const QJsonObject &message) {
-    // 长度前缀法解决粘包问题
     qint32 length = jsonData.size();
     QByteArray lengthBytes;
     QDataStream stream(&lengthBytes, QIODevice::WriteOnly);
-    stream.setByteOrder(QDataStream::BigEndian);  // 大端字节序
+    stream.setByteOrder(QDataStream::BigEndian);
     stream << length;
-    
+
     QByteArray data = lengthBytes + jsonData;
     socket->write(data);
 }
@@ -1189,7 +1196,7 @@ ChatClient通过Qt信号槽与UI层通信：
 #ifdef _WIN32
     #include <winsock2.h>
     #include <ws2tcpip.h>
-    #undef byte  // 防止与Qt冲突
+    #undef byte
 #else
     #include <arpa/inet.h>
 #endif
@@ -1219,6 +1226,142 @@ ChatClient通过Qt信号槽与UI层通信：
 │   │   └── static/
 │   ├── Dockerfile
 │   └── pom.xml
+│
+├── eruitah-sandbox/                      # Python 编程沙盒
+│   ├── main.py                           # FastAPI Web服务入口
+│   ├── agent_runner.py                   # Agent核心引擎（run_agent生成器）
+│   ├── agent_swarm.py                    # 多智能体协同系统（P2P网络+Coder-Reviewer对抗）
+│   ├── agent_prompts.py                  # 专家身份系统（Supervisor路由+动态专家生成）
+│   ├── agent_process.py                  # Agent子进程管理（进程级沙盒隔离）
+│   ├── bash_executor.py                  # Bash命令执行器（安全沙盒）
+│   ├── file_editor.py                    # 文件编辑器（SEARCH/REPLACE模式）
+│   ├── file_read_tool.py                 # 文件读取工具（行号过滤）
+│   ├── glob_tool.py                      # Glob文件模式匹配
+│   ├── grep_tool.py                      # Grep正则搜索（rg/grep/python三级回退）
+│   ├── tool_registry.py                  # 工具注册表
+│   ├── task_manager.py                   # 任务管理器（创建/切换/删除/会话持久化）
+│   ├── task_registry.py                  # 任务注册表（物理快照管理）
+│   ├── session_storage.py                # 会话持久化存储
+│   ├── rewind_system.py                  # 会话回退系统（Git指针+SQLite混合架构）
+│   ├── rewind_command.py                 # 回退命令处理器
+│   ├── sandbox_manager.py                # Git Worktree沙盒管理器（WarmPool预热池）
+│   ├── shadow_sandbox.py                 # 影子沙盒
+│   ├── interactive_terminal.py           # 交互式终端（PTY + 后台进程管理）
+│   ├── mcp_client.py                     # MCP协议客户端（动态加载第三方工具）
+│   ├── auto_test_tool.py                 # 自动测试工具
+│   ├── browser_vision_tool.py            # 浏览器视觉工具
+│   ├── computer_use_tool.py              # Computer Use工具
+│   ├── lsp_tool.py                       # LSP语言服务工具
+│   ├── lsp_client.py                     # LSP客户端
+│   ├── semantic_search_tool.py           # 语义搜索工具
+│   ├── tree_sitter_index.py              # Tree-sitter代码索引
+│   ├── ast_tool.py                       # AST分析工具
+│   ├── screenshot_tool.py                # 截图工具
+│   ├── notebook_tool.py                  # Notebook工具
+│   ├── cost_guardrails.py                # 成本护栏（Token计费+预算控制）
+│   ├── token_budget.py                   # Token预算管理
+│   ├── artifact_builder.py               # 产物构建器
+│   ├── prompt_caching.py                 # 提示词缓存
+│   ├── self_distill.py                   # 自蒸馏
+│   ├── compute_autonomy.py               # 自主计算
+│   ├── memory_manager.py                 # 记忆管理器
+│   ├── memory_store.py                   # 记忆存储
+│   ├── prompt_builder.py                 # 提示词构建器
+│   ├── meta_tool.py                      # 元工具
+│   ├── git_tool.py                       # Git工具
+│   ├── ask_user_tool.py                  # 用户交互工具
+│   ├── interactive_debugger_tool.py      # 交互式调试器
+│   ├── dynamic_sequentialthinking.py     # 动态顺序思维
+│   ├── theseus_rewrite.py                # Theseus重写引擎
+│   ├── container_pool.py                 # 容器池管理
+│   ├── insertion_sort.py                 # 插入排序示例
+│   ├── requirements.txt                  # Python依赖
+│   ├── Dockerfile                        # Docker构建文件
+│   └── static/
+│       └── coding_lab.html               # Web IDE界面
+│
+├── coding-agent-ui/                      # Vue Web IDE
+│   ├── index.html                        # 入口HTML
+│   ├── package.json                      # 依赖配置
+│   ├── vite.config.js                    # Vite配置（含开发代理）
+│   ├── tailwind.config.js                # Tailwind CSS配置
+│   ├── postcss.config.js                 # PostCSS配置
+│   ├── src/
+│   │   ├── main.js                       # 应用入口
+│   │   ├── App.vue                       # 应用根组件
+│   │   ├── style.css                     # 全局样式
+│   │   ├── components/
+│   │   │   ├── ChatPanel.vue             # AI聊天面板
+│   │   │   ├── CodeEditor.vue            # Monaco代码编辑器
+│   │   │   ├── TerminalPanel.vue         # xterm终端面板
+│   │   │   ├── FileTree.vue              # 文件树
+│   │   │   ├── TaskList.vue              # 任务列表
+│   │   │   ├── ToolBar.vue               # 工具栏
+│   │   │   ├── SkillPanel.vue            # 技能面板
+│   │   │   ├── DirPicker.vue             # 目录选择器
+│   │   │   └── PixelPet.vue              # 像素宠物
+│   │   ├── stores/
+│   │   │   └── agent.js                  # Pinia状态管理
+│   │   ├── utils/
+│   │   │   ├── webcontainerManager.js    # WebContainer管理器
+│   │   │   └── mermaidRenderer.js        # Mermaid图表渲染器
+│   │   └── assets/
+│   │       └── pixel_pet_spritesheet.png # 像素宠物精灵图
+│   └── dist/                             # 构建输出（Nginx/沙盒服务静态文件）
+│
+├── protobuf-rpc-bridge/                  # Protobuf RPC桥接
+│   ├── proto/
+│   │   └── chat.proto                    # Protobuf消息定义
+│   ├── cpp/
+│   │   ├── include/
+│   │   │   ├── rpc_channel.h             # RPC通道
+│   │   │   ├── protobuf_codec.h          # Protobuf编解码器
+│   │   │   ├── chat_server.h             # RPC服务器
+│   │   │   └── proto/
+│   │   │       ├── chat.pb.h             # 生成的Protobuf头文件
+│   │   │       └── chat.pb.cc            # 生成的Protobuf源文件
+│   │   ├── src/
+│   │   │   ├── main.cc                   # C++ RPC入口
+│   │   │   ├── chat_server.cc            # C++ RPC服务器实现
+│   │   │   ├── rpc_channel.cc            # RPC通道实现
+│   │   │   ├── protobuf_codec.cc         # 编解码器实现
+│   │   │   └── crosslang_test.cc         # 跨语言测试
+│   │   └── CMakeLists.txt
+│   ├── java/
+│   │   ├── pom.xml
+│   │   └── src/main/java/com/bridge/
+│   │       ├── server/
+│   │       │   ├── JavaBackendServer.java    # Java RPC服务器
+│   │       │   ├── RpcMessageHandler.java    # RPC消息处理器
+│   │       │   ├── ProtobufEncoder.java      # Protobuf编码器
+│   │       │   └── ProtobufDecoder.java      # Protobuf解码器
+│   │       ├── service/
+│   │       │   ├── ChatService.java          # 聊天服务接口
+│   │       │   └── impl/
+│   │       │       └── AIChatService.java     # 聊天服务实现
+│   │       └── test/
+│   │           ├── JavaRpcClient.java        # Java RPC客户端
+│   │           └── CrossLangTest.java        # 跨语言测试
+│   ├── python/
+│   │   ├── main.py                           # Python RPC入口
+│   │   ├── requirements.txt
+│   │   ├── bridge/
+│   │   │   ├── rpc_server.py                 # RPC服务器
+│   │   │   ├── streaming_rpc_server.py       # 流式RPC服务器
+│   │   │   ├── rpc_client.py                 # RPC客户端
+│   │   │   ├── codec.py                      # 编解码器
+│   │   │   └── proto/
+│   │   │       └── chat_pb2.py               # 生成的Protobuf Python代码
+│   │   └── services/
+│   │       ├── swarm_bridge.py               # Swarm P2P桥接
+│   │       ├── sandbox_bridge.py             # 沙盒桥接
+│   │       └── sandbox_adapter.py            # 沙盒适配器
+│   ├── scripts/
+│   │   ├── generate_proto.sh                 # Protobuf代码生成脚本
+│   │   ├── build.sh                          # 构建脚本
+│   │   ├── start.sh                          # 启动脚本
+│   │   └── test_client.py                    # 测试客户端
+│   └── Dockerfile
 │
 ├── src/                                  # C++源代码
 │   ├── main.cpp                          # 客户端入口
@@ -1271,6 +1414,12 @@ ChatClient通过Qt信号槽与UI层通信：
 │       ├── model/
 │       └── redis/
 │
+├── docker/                               # Docker配置
+│   ├── nginx/
+│   │   └── nginx.conf                    # Nginx反向代理配置
+│   └── mysql/
+│       └── init.sql                      # MySQL初始化脚本
+│
 ├── qt-material-widgets/                  # Material Design UI组件库
 │   ├── components/
 │   │   ├── qtmaterialavatar.cpp/h
@@ -1281,11 +1430,6 @@ ChatClient通过Qt信号槽与UI层通信：
 │   │   ├── qtmaterialsnackbar.cpp/h
 │   │   └── ...
 │   └── examples/
-│
-├── protobuf-rpc-bridge/                  # Protobuf RPC桥接
-│   └── cpp/
-│       ├── include/
-│       └── CMakeLists.txt
 │
 ├── live2d/                               # Live2D虚拟形象资源
 │   ├── core/
@@ -1307,6 +1451,8 @@ ChatClient通过Qt信号槽与UI层通信：
 │
 ├── bin/                                  # 编译输出目录
 ├── CMakeLists.txt                        # 根CMake配置
+├── Dockerfile.chatserver                 # C++ ChatServer Docker构建文件
+├── docker-compose.yml                    # Docker Compose编排
 ├── .env                                  # 环境变量配置文件
 └── *.md                                  # 文档文件
 ```
@@ -1325,7 +1471,7 @@ Eruitah智能编程沙盒是一个基于 **FastAPI + WebSocket** 的AI编程助�
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  ┌──────────────┐    WebSocket     ┌──────────────────┐     API      ┌──────────┐
 │  │ Qt/C++ 客户端 │ <─────────────> │  FastAPI (main)   │ ──────────> │  LLM API  │
-│  │ Monaco Editor │   双向实时通信   │  main.py v4       │ <────────── │  Claude   │
+│  │ Vue Web IDE  │   双向实时通信   │  main.py v4       │ <────────── │  Claude   │
 │  └──────────────┘                  └──────────────────┘              │  GPT-4o   │
 │                                           │                          └──────────┘
 │                                           ▼                                        │
@@ -1348,18 +1494,23 @@ Eruitah智能编程沙盒是一个基于 **FastAPI + WebSocket** 的AI编程助�
 | 功能 | 说明 |
 |------|------|
 | AI编程助手 | 基于Claude/GPT-4o，自动编写、修改、调试代码 |
-| 工具调用 | 5大工具：bash、file_edit、file_read、glob、grep |
+| 工具调用 | 5大基础工具 + 30+扩展工具（MCP/LSP/AST/语义搜索等） |
 | 实时流式 | WebSocket双向通信，实时推送Agent思考过程 |
 | 自愈机制 | 工具执行失败自动分析错误并重试 |
 | 安全沙盒 | 危险命令拦截、路径越权检测、超时保护 |
 | 多模型支持 | OpenAI兼容接口 + Anthropic Claude |
+| 多智能体模式 | 极速/深度/SDD三种模式，红蓝对抗代码审查 |
+| 任务管理 | 独立Git Worktree隔离，任务切换/合并/回退 |
+| 会话回退 | Git指针+SQLite混合架构，支持任务级和步骤级回退 |
+| 交互式终端 | PTY真实shell体验，支持resize和后台进程管理 |
+| MCP客户端 | 动态加载第三方MCP Server工具 |
+| 成本护栏 | Token计费追踪，预算超限自动停止 |
 
 ### 19.3 工具集详解
 
 #### 19.3.1 bash - 命令执行器
 
 ```python
-# 工具定义
 {
     "name": "bash",
     "description": "执行 shell 命令。用于编译代码、运行测试、查看文件等。",
@@ -1382,7 +1533,6 @@ Eruitah智能编程沙盒是一个基于 **FastAPI + WebSocket** 的AI编程助�
 #### 19.3.2 file_edit - 文件编辑器
 
 ```python
-# 工具定义
 {
     "name": "file_edit",
     "description": "使用 SEARCH/REPLACE 模式编辑文件",
@@ -1404,7 +1554,6 @@ Eruitah智能编程沙盒是一个基于 **FastAPI + WebSocket** 的AI编程助�
 #### 19.3.3 file_read - 文件读取
 
 ```python
-# 工具定义
 {
     "name": "file_read",
     "description": "读取文件内容，支持行号范围过滤",
@@ -1425,7 +1574,6 @@ Eruitah智能编程沙盒是一个基于 **FastAPI + WebSocket** 的AI编程助�
 #### 19.3.4 glob - 文件模式匹配
 
 ```python
-# 工具定义
 {
     "name": "glob",
     "description": "使用 glob 模式查找文件",
@@ -1447,7 +1595,6 @@ Eruitah智能编程沙盒是一个基于 **FastAPI + WebSocket** 的AI编程助�
 #### 19.3.5 grep - 正则搜索
 
 ```python
-# 工具定义
 {
     "name": "grep",
     "description": "使用正则表达式搜索代码",
@@ -1498,7 +1645,386 @@ Eruitah智能编程沙盒是一个基于 **FastAPI + WebSocket** 的AI编程助�
 - 将异常堆栈转为字符串 → 作为user消息喂回大模型
 - 大模型分析错误 → 更换策略或修复参数 → 重试
 
-### 19.5 WebSocket协议
+### 19.5 多智能体模式
+
+Eruitah 支持三种智能体运行模式，通过参数控制：
+
+#### 19.5.1 极速模式（use_swarm=False）
+
+单体 Agent 穿上专家外衣干活。Supervisor 路由器分析用户请求后，选择最合适的专家身份（预设或动态生成），Agent 以该专家身份执行任务。
+
+**流程：**
+```
+用户请求 → Supervisor(CTO)审题 → 选择/生成专家身份 → Agent穿专家外衣执行 → 返回结果
+```
+
+**预设专家：**
+
+| 专家ID | 名称 | 适用领域 |
+|--------|------|----------|
+| cpp_network_expert | C++高并发网络编程专家 | Muduo/Epoll/TCP-UDP/Reactor/RAII/智能指针 |
+| db_expert | 数据库专家 | MySQL/Redis/SQL优化/事务/索引/分库分表 |
+| qa_expert | 测试与质量保障专家 | 单元测试/集成测试/CI-CD/代码覆盖率/Mock |
+| general_coder | 通用编程专家 | 常规脚本、Web开发、配置管理 |
+
+**动态专家生成：** 当预设专家无法完美覆盖用户的长尾需求时，Supervisor 现场撰写 `custom_system_prompt`，动态生成最对口的专家。动态生成的专家必须包含：
+1. 专家身份定义（"你是一位资深的 XXX 专家"）
+2. 核心技能清单（3-8条，具体到技术栈和工具）
+3. 工作原则（3-5条，约束代码风格和质量标准）
+4. 与任务直接相关的领域知识提示
+
+**多模态图片处理：** 当用户上传图片时，Supervisor 根据图片类型动态生成专家：
+- 终端报错/IDE飘红 → 高级Debug与系统排错专家
+- 网页UI/设计手稿 → 资深前端页面还原专家
+- UML类图/架构图 → 后端架构师
+- 代码截图 → 根据语言生成对应专家
+
+#### 19.5.2 深度模式（use_swarm=True）
+
+红蓝对抗模式，蓝军穿专家外衣写代码，红军从最佳实践角度挑刺。
+
+**Coder-Reviewer 工作流：**
+
+```
+┌──────────┐    提交审查     ┌──────────┐
+│  Coder   │ ──────────────→ │ Reviewer │
+│ (全权限) │                  │ (只读)   │
+└──────────┘ ←────────────── └──────────┘
+              打回重写 / LGTM
+```
+
+**状态机：**
+```
+CODING → SUBMITTED → REVIEWING → LGTM (终态)
+                              → REJECTED → CODING (循环)
+                              → MAX_LOOPS (终态)
+```
+
+- **Coder（蓝军）**：拥有全部工具权限（bash/file_edit/file_read等），负责编写代码
+- **Reviewer（红军）**：只读权限（file_read/grep/glob），从最佳实践角度审查代码质量
+- **对抗循环**：Reviewer 审查后可打回（REJECTED），Coder 修改后重新提交，直到 LGTM 或达到最大循环次数
+
+#### 19.5.3 SDD模式（skills包含"sdd"）
+
+多智能体协作模式（Skills-Driven Development），通过 Agent Swarm P2P 网络实现多智能体协同工作。
+
+#### 19.5.4 Supervisor路由
+
+所有新任务先经过 Supervisor（CTO级别技术总监）审题，决定：
+- 选择哪个预设专家（is_predefined: true）
+- 还是动态生成专家（is_predefined: false）
+- 判定执行环境（本地后端 vs WebContainer前端）
+- 决定智能体模式（极速/深度/SDD）
+
+### 19.6 任务管理系统
+
+#### 19.6.1 核心设计
+
+```
+用户一句话 = 开启一个平行宇宙（独立任务）
+AI 提炼标题 = 给这个平行宇宙贴个标签
+记忆隔离 = 任务A的对话和代码，绝对不能串台到任务B
+回退隔离 = 撤销任务A，只会把任务A相关的代码回滚，任务B毫发无损
+```
+
+**架构：** SessionManager = TaskRegistry（物理快照）+ TaskManager（会话记忆）的统一入口
+
+#### 19.6.2 任务数据结构
+
+```python
+@dataclass
+class TaskSession:
+    id: str                    # 任务唯一ID
+    summary: str               # AI提炼的任务标题
+    work_dir: str              # 工作目录（独立Worktree）
+    snapshot_path: str         # 物理快照路径
+    messages_before: List[Dict] # 任务前的全局消息
+    messages: List[Dict]       # 任务内对话消息
+    created_at: float          # 创建时间
+    status: str = "active"     # 任务状态：active/completed/rolled_back
+    current_turn: int = 0      # 当前轮次
+```
+
+#### 19.6.3 核心操作
+
+| 操作 | 说明 |
+|------|------|
+| register_task() | 新任务注册 + 强制物理快照 |
+| get_or_create_session() | 获取/创建任务会话 |
+| switch_session() | 切换任务（保存当前 + 加载目标） |
+| rollback_session() | 物理级回滚（文件还原 + 记忆截断） |
+| delete_session() | 删除任务及其Worktree |
+
+#### 19.6.4 会话持久化
+
+- **session_storage.py**：会话持久化存储
+- 任务数据存储在 `.tasks/` 目录
+- 快照数据存储在 `.eruitah_snapshots/` 目录
+- 忽略模式：node_modules, __pycache__, .git, venv, dist, build等
+
+### 19.7 回退系统（Rewind System）
+
+#### 19.7.1 混合指针架构
+
+```
+Git 存肉体，SQLite 存灵魂（指针映射）
+
+❌ 旧方案: 每轮存全量文件快照 → O(N^2) 磁盘 I/O 爆炸
+✅ 新方案: 每轮只存 Git Commit Hash → O(1) 极致轻量
+```
+
+**检查点数据结构：**
+```python
+@dataclass
+class Checkpoint:
+    session_id: str          # 会话ID
+    turn: int                # 轮次
+    timestamp: float         # 时间戳
+    messages: List[Dict]     # 灵魂：对话记忆
+    git_commit: str = ""     # 肉体：Git指针（40字符）
+    diff_stat: str = ""      # 前端展示用diff摘要
+    description: str = ""    # 检查点描述
+    code_diff: str = ""      # 代码差异
+```
+
+**时光倒流：**
+1. 从SQLite查出目标轮次的git_commit
+2. 恢复灵魂：把过去的messages塞回给大模型
+3. 恢复肉体：`git reset --hard <git_commit>`
+
+**优势：**
+- 磁盘：从O(N^2)降到O(N)，不再存文件内容
+- 查询：Git Commit Hash只有40字符
+- 并发：多Agent同时存快照不会击穿I/O
+- 增量：Git内部已经是增量存储（delta compression）
+
+#### 19.7.2 回退操作
+
+| 操作 | 说明 |
+|------|------|
+| rollback_session(task_id) | 任务级回退：恢复到任务创建前的快照 |
+| rollback_step_session(session_id, turn) | 步骤级回退：恢复到指定轮次的检查点 |
+| preview_rollback(session_id, turn) | 预览回退：展示目标检查点的diff，不实际执行 |
+| view_checkpoint(session_id, turn) | 查看检查点：展示指定轮次的代码差异和对话 |
+
+**自动检查点：** 每次文件编辑（file_edit）和bash执行（bash）后自动创建检查点。
+
+**检查点存储：** SQLite数据库 `.checkpoints/rewind.db`
+
+### 19.8 沙盒管理器（Sandbox Manager）
+
+#### 19.8.1 Git Worktree隔离架构
+
+```
+主仓库 (workspace_dir) ── 永远停留在 master/main 分支
+  ├── .git/
+  └── agent-worktrees/         ← 与主仓库同级
+      ├── task_abc123/         ← 任务A的专属物理目录（独立分支 task/task_abc123）
+      ├── task_def456/         ← 任务B的专属物理目录（独立分支 task/task_def456）
+      ├── warmup_a1b2/        ← 预热池中的待命worktree（分支 warmup/a1b2）
+      ├── warmup_c3d4/        ← 预热池中的待命worktree（分支 warmup/c3d4）
+      └── warmup_e5f6/        ← 预热池中的待命worktree（分支 warmup/c3d4）
+```
+
+#### 19.8.2 WarmPool预热池
+
+后台守护线程持续维护 pool_size=3 的预热池。新任务到来时，直接 pop 预热好的 worktree，重命名分支即可，耗时约0ms。缓存击穿时降级为同步创建（Slow Path）。
+
+#### 19.8.3 三级回退
+
+| 级别 | 操作 | 说明 |
+|------|------|------|
+| L1 | rollback_task_step | `git reset --hard HEAD~N`（worktree内） |
+| L2 | remove_task_workspace | `git worktree remove` + `branch -D` |
+| L3 | revert_merged_task | `git revert -m 1 <merge_commit>`（主仓库） |
+
+#### 19.8.4 任务合并
+
+- **merge_session(task_id)**：将任务分支合并到主干（master/main）
+- **冲突检测**：合并前自动检测冲突，有冲突时提示用户
+- **revert_merged_task(task_id)**：撤销已合并的任务（`git revert -m 1`）
+
+### 19.9 系统命令
+
+WebSocket端点支持的系统命令：
+
+| 命令 | 说明 | 参数 |
+|------|------|------|
+| list_tasks | 列出所有任务 | 无 |
+| rollback_task | 回退任务 | task_id |
+| preview_rollback | 预览回退 | task_id, turn |
+| view_checkpoint | 查看检查点 | task_id, turn |
+| stop_agent | 停止Agent | session_id |
+| switch_task | 切换任务 | task_id |
+| merge_task | 合并任务到主干 | task_id |
+| revert_merged_task | 撤销已合并任务 | task_id |
+| delete_task | 删除任务 | task_id |
+| list_checkpoints | 列出检查点 | task_id |
+| list_mcp_services | 列出MCP服务 | 无 |
+
+### 19.10 交互式终端
+
+#### 端点：`/ws/terminal`
+
+提供真正的交互式shell体验，基于PTY（伪终端）实现。
+
+**核心流程：**
+```
+前端 Xterm.js:
+  terminal.onData(data => ws.send({type: 'input', data}))
+       │
+       ▼
+Python 后端:
+  1. 创建 PTY 进程 (bash/zsh)
+  2. 收到前端输入 -> pty.write(data)
+  3. pty 输出 -> ws.send({type: 'output', data})
+       │
+       ▼
+前端 Xterm.js:
+  收到输出 -> terminal.write(data)
+```
+
+**协议：**
+
+| 消息类型 | 方向 | 格式 | 说明 |
+|----------|------|------|------|
+| input | 客户端→服务端 | `{"type": "input", "data": "ls\n"}` | 用户输入 |
+| output | 服务端→客户端 | `{"type": "output", "data": "..."}` | 终端输出 |
+| resize | 客户端→服务端 | `{"type": "resize", "cols": 80, "rows": 24}` | 终端尺寸变更 |
+| started | 服务端→客户端 | `{"type": "started", "pid": 12345}` | 终端启动 |
+
+**后台进程管理：** `BackgroundProcessManager` 支持Agent启动/监控/停止后台服务（如Web Server）。
+
+### 19.11 MCP客户端
+
+#### 19.11.1 架构
+
+MCP（Model Context Protocol）客户端让Agent支持动态加载第三方MCP Server提供的工具。
+
+**核心流程：**
+```
+mcp.json 配置文件
+  → Agent启动时读取
+  → 为每个Server启动子进程（stdio通信）
+  → 发送 initialize + tools/list 请求
+  → 获取Server提供的Tools
+  → 合并到Agent的工具列表中
+```
+
+**动态加载：** Agent运行时根据需求自主开启新的MCP Server：
+```
+用户: "查看我的GitHub提醒"
+→ Agent调用mcp_dynamic_load("github")
+→ 后端拉起GitHub MCP容器
+→ Agent获得GitHub工具能力
+→ 执行查询并返回结果
+```
+
+#### 19.11.2 MCP服务配置
+
+`mcp.json` 定义了多个MCP Server：
+
+| 服务名 | 说明 | 用途 |
+|--------|------|------|
+| filesystem | 文件系统访问 | 读写文件、目录操作 |
+| github | GitHub管理 | 仓库/Issue/PR管理 |
+| puppeteer | 浏览器自动化 | 网页截图、表单填写、爬虫 |
+| postgres | PostgreSQL查询 | 数据库查询和管理 |
+| memory | 知识图谱持久化记忆 | 跨会话知识存储和检索 |
+| sequential-thinking | 结构化推理 | 复杂问题的分步推理 |
+
+### 19.12 其他工具
+
+| 工具 | 文件 | 说明 |
+|------|------|------|
+| 自动测试 | auto_test_tool.py | 自动生成和运行测试用例 |
+| 浏览器视觉 | browser_vision_tool.py | 浏览器截图和视觉分析（依赖虚拟桌面） |
+| Computer Use | computer_use_tool.py | 桌面操作自动化（依赖虚拟桌面） |
+| LSP语言服务 | lsp_tool.py / lsp_client.py | 代码补全、跳转定义、诊断 |
+| 语义搜索 | semantic_search_tool.py | 基于向量的代码语义搜索 |
+| Tree-sitter索引 | tree_sitter_index.py | 基于Tree-sitter的代码结构索引 |
+| AST分析 | ast_tool.py | Python AST语法树分析 |
+| 截图 | screenshot_tool.py | 屏幕截图工具 |
+| Notebook | notebook_tool.py | Jupyter Notebook交互 |
+| 成本护栏 | cost_guardrails.py | Token计费追踪，预算超限自动停止 |
+| Token预算 | token_budget.py | Token预算管理和分配 |
+| 产物构建 | artifact_builder.py | 代码产物构建和打包 |
+| 提示词缓存 | prompt_caching.py | 提示词缓存优化 |
+| 自蒸馏 | self_distill.py | 模型自蒸馏优化 |
+| 自主计算 | compute_autonomy.py | Agent自主计算调度 |
+| Git工具 | git_tool.py | Git操作封装 |
+| 用户交互 | ask_user_tool.py | Agent主动向用户提问 |
+| 交互式调试 | interactive_debugger_tool.py | 交互式代码调试 |
+| 元工具 | meta_tool.py | 工具元信息管理 |
+| 记忆管理 | memory_manager.py / memory_store.py | 对话记忆管理 |
+| 提示词构建 | prompt_builder.py | 动态提示词构建 |
+| 动态顺序思维 | dynamic_sequentialthinking.py | 动态分步推理 |
+| Theseus重写 | theseus_rewrite.py | 代码重写引擎 |
+| 容器池 | container_pool.py | Docker容器池管理 |
+| 影子沙盒 | shadow_sandbox.py | 影子沙盒隔离执行 |
+
+### 19.13 Agent子进程模式
+
+#### 19.13.1 架构
+
+```
+┌──────────────────┐  asyncio.Queue  ┌──────────────┐  multiprocessing.Queue  ┌──────────────────┐
+│  WebSocket (async) │ ◄──────────── │  Bridge 线程  │ ◄──────────────────── │  Agent 子进程     │
+│  主进程 - 不变      │ ────────────► │  轻量级转发    │                        │  run_agent()     │
+└──────────────────┘                 └──────────────┘                         └──────────────────┘
+```
+
+**核心优势：**
+- 进程可被SIGKILL瞬间强杀，不受GIL和网络阻塞影响
+- 沙盒隔离：Agent崩溃不会影响主进程
+- 令行禁止：点停止 → SIGTERM(1s) → SIGKILL，灰飞烟灭
+
+**关键设计：**
+- `run_agent()` 在 yield ask_user 后直接return（生成器终止）
+- 子进程不需要双向IPC，ask_user后子进程自然结束
+- 父进程处理用户回答后，启动新子进程继续执行
+
+**启用方式：** 环境变量 `ERUITAH_USE_SUBPROCESS=true`（默认开启）
+
+### 19.14 VNC/屏幕功能
+
+Eruitah 支持虚拟桌面环境，为 `computer_use_tool.py` 和 `browser_vision_tool.py` 提供图形界面操作能力。
+
+**架构：**
+```
+Xvfb (虚拟X11显示) → x11vnc (可选VNC服务器) → 浏览器/客户端远程查看
+```
+
+**环境变量：**
+
+| 变量 | 默认值 | 说明 |
+|------|--------|------|
+| ERUITAH_ENABLE_VNC | false | 是否启用VNC服务器 |
+| ERUITAH_SCREEN_WIDTH | 1280 | 虚拟屏幕宽度 |
+| ERUITAH_SCREEN_HEIGHT | 720 | 虚拟屏幕高度 |
+
+**Docker端口：** VNC服务默认映射到5900端口。
+
+### 19.15 成本护栏
+
+`cost_guardrails.py` 提供Token级别的成本追踪和预算控制：
+
+**支持模型定价：**
+
+| 模型 | 输入价格（$/1K tokens） | 输出价格（$/1K tokens） |
+|------|------------------------|------------------------|
+| gpt-4o | 0.0025 | 0.01 |
+| claude-sonnet-4 | 0.003 | 0.015 |
+| deepseek-chat | 0.00014 | 0.00028 |
+| qwen-plus | 0.0008 | 0.002 |
+
+**SessionCostTracker：**
+- 默认预算上限：5.0 USD
+- 每次LLM调用后自动累计成本
+- 超过预算自动停止Agent执行
+- 记录成本历史，支持查询
+
+### 19.16 WebSocket协议
 
 #### 端点：`/ws/coding`（单任务模式）
 
@@ -1532,13 +2058,8 @@ Eruitah智能编程沙盒是一个基于 **FastAPI + WebSocket** 的AI编程助�
 **客户端发送：**
 
 ```json
-// 运行任务
 {"action": "run", "task": "写一个二叉树", "model": "gpt-4o"}
-
-// 心跳
 {"action": "ping"}
-
-// 关闭连接
 {"action": "close"}
 ```
 
@@ -1549,7 +2070,7 @@ Eruitah智能编程沙盒是一个基于 **FastAPI + WebSocket** 的AI编程助�
 {"type": "finish", "data": "...", "task_id": "xxx"}
 ```
 
-### 19.6 REST API
+### 19.17 REST API
 
 #### 同步执行：`POST /api/v1/execute`
 
@@ -1619,7 +2140,7 @@ GET /api/v1/file?path=/tmp/eruitah-sandbox/main.py
 }
 ```
 
-### 19.7 Qt客户端对接示例
+### 19.18 Qt客户端对接示例
 
 ```cpp
 void CodingLabWindow::onTextMessageReceived(QString message) {
@@ -1640,12 +2161,10 @@ void CodingLabWindow::onTextMessageReceived(QString message) {
         }
     }
     else if (type == "code_stream") {
-        // 打字机效果
         QString chunk = obj["content"].toString();
         ui->codeEditor->insertPlainText(chunk);
     }
     else if (type == "file_updated") {
-        // 完整文件内容
         QString newCode = obj["new_code"].toString();
         QString language = obj["language"].toString();
         ui->codeEditor->setPlainText(newCode);
@@ -1657,22 +2176,431 @@ void CodingLabWindow::onTextMessageReceived(QString message) {
 }
 ```
 
-### 19.8 项目结构
+---
+
+## 20. Coding Agent UI（Vue Web IDE）
+
+### 20.1 技术栈
+
+| 技术 | 版本 | 用途 |
+|------|------|------|
+| Vue 3 | ^3.4.0 | 前端框架（Composition API） |
+| Vite | ^5.4.0 | 构建工具 |
+| Pinia | ^2.1.7 | 状态管理 |
+| Monaco Editor | ^0.45.0 | 代码编辑器 |
+| @guolao/vue-monaco-editor | ^1.5.4 | Monaco Vue组件封装 |
+| @xterm/xterm | ^5.5.0 | 终端模拟器 |
+| @xterm/addon-fit | ^0.10.0 | 终端自适应尺寸 |
+| Mermaid | ^11.15.0 | 图表渲染（流程图/时序图等） |
+| @webcontainer/api | ^1.3.0 | 浏览器端Node.js运行时 |
+| Tailwind CSS | ^3.4.0 | 原子化CSS框架 |
+
+### 20.2 组件说明
+
+| 组件 | 文件 | 说明 |
+|------|------|------|
+| App.vue | src/App.vue | 应用根组件，布局编排 |
+| ChatPanel.vue | src/components/ChatPanel.vue | AI聊天面板，与Agent对话交互 |
+| CodeEditor.vue | src/components/CodeEditor.vue | Monaco代码编辑器，语法高亮+代码补全 |
+| TerminalPanel.vue | src/components/TerminalPanel.vue | xterm终端面板，交互式shell |
+| FileTree.vue | src/components/FileTree.vue | 文件树，浏览和打开项目文件 |
+| TaskList.vue | src/components/TaskList.vue | 任务列表，管理多个编程任务 |
+| ToolBar.vue | src/components/ToolBar.vue | 工具栏，快捷操作入口 |
+| SkillPanel.vue | src/components/SkillPanel.vue | 技能面板，Agent技能展示和触发 |
+| DirPicker.vue | src/components/DirPicker.vue | 目录选择器，选择工作目录 |
+| PixelPet.vue | src/components/PixelPet.vue | 像素宠物，Agent状态可视化（精灵图动画） |
+
+### 20.3 状态管理
+
+**stores/agent.js** 使用Pinia管理全局状态：
+
+| 状态 | 类型 | 说明 |
+|------|------|------|
+| ws | shallowRef | WebSocket连接实例 |
+| connected | ref | 连接状态 |
+| messages | ref | 聊天消息列表 |
+| files | ref | 文件树数据 |
+| basePath | ref | 当前工作目录 |
+| currentFile | ref | 当前打开的文件 |
+| currentCode | ref | 当前文件代码内容 |
+| openFiles | ref | 已打开的文件标签页 |
+| isRunning | ref | Agent是否正在运行 |
+| status | ref | 当前状态文本 |
+| currentTool | ref | 当前执行的工具 |
+| mermaidDiagrams | ref | Mermaid图表列表 |
+| costInfo | ref | 成本信息 |
+| taskList | ref | 任务列表 |
+| currentTaskId | ref | 当前任务ID |
+| petStatus | ref | 像素宠物状态（IDLE/RUNNING/THINKING等） |
+| agentState | ref | Agent状态 |
+| checkpointList | ref | 检查点列表 |
+| mcpServices | ref | MCP服务列表 |
+
+### 20.4 工具类
+
+#### webcontainerManager.js
+
+WebContainer管理器，单例模式，负责在浏览器端启动Node.js运行时：
+
+- **boot()**：启动WebContainer实例
+- **runCommand()**：在WebContainer中执行命令
+- **onPreviewUrl**：监听预览URL（前端项目实时预览）
+- **onServerReady**：监听服务就绪事件
+
+**用途：** 前端项目（Vue/React/HTML）可在浏览器端直接运行，无需后端Docker。
+
+#### mermaidRenderer.js
+
+Mermaid图表渲染器，提供暗色主题配置：
+
+- **renderMermaid(code)**：渲染Mermaid代码为SVG
+- 主题：dark，紫色系配色
+- 字体：JetBrains Mono / Fira Code
+- 支持流程图、时序图、甘特图等
+
+### 20.5 开发代理配置
+
+**vite.config.js** 配置了开发环境的反向代理：
+
+| 代理路径 | 目标 | 说明 |
+|----------|------|------|
+| /ws/simple-ide | http://127.0.0.1:8001/ws/coding | 简化IDE WebSocket（重写路径） |
+| /ws/coding | http://127.0.0.1:8001 | 编码Agent WebSocket |
+| /ws/terminal | http://127.0.0.1:8001 | 交互式终端WebSocket |
+| /api | http://127.0.0.1:8001 | REST API代理 |
+
+**COOP/COEP头：** 配置了 `Cross-Origin-Embedder-Policy: require-corp` 和 `Cross-Origin-Opener-Policy: same-origin`，以支持WebContainer的SharedArrayBuffer需求。
+
+**构建优化：**
+- Monaco Editor 和 xterm.js 独立分包（manualChunks）
+- chunk大小警告阈值：1500KB
+
+---
+
+## 21. Protobuf RPC Bridge
+
+### 21.1 架构概述
+
+Protobuf RPC Bridge 实现了 C++ ↔ Java ↔ Python 三语言的高性能RPC通信，替代部分Redis Pub/Sub通信：
 
 ```
-eruitah-sandbox/
-├── main.py                    # FastAPI Web服务入口
-├── agent_runner.py            # Agent核心引擎（run_agent生成器）
-├── bash_executor.py           # Bash命令执行器（安全沙盒）
-├── file_editor.py             # 文件编辑器（SEARCH/REPLACE模式）
-├── file_read_tool.py          # 文件读取工具（行号过滤）
-├── glob_tool.py               # Glob文件模式匹配
-├── grep_tool.py               # Grep正则搜索（rg/grep/python三级回退）
-├── tool_registry.py           # 工具注册表
-├── memory_manager.py          # 记忆管理器
-├── requirements.txt           # Python依赖
-├── Dockerfile                 # Docker构建文件
-├── venv/                      # Python虚拟环境
-└── static/
-    └── coding_lab.html        # Web IDE界面
+┌──────────────┐     TCP/Protobuf      ┌──────────────┐     TCP/Protobuf      ┌──────────────┐
+│  C++ ChatServer│ ◄──────────────────► │  Java AI服务  │ ◄──────────────────► │ Python 沙盒   │
+│  (rpc_channel) │                      │ (InternalRpc) │                      │ (rpc_server)  │
+│  (protobuf_    │                      │ (ProtobufRpc) │                      │ (streaming_   │
+│   codec)       │                      │ (RouterHandler)│                     │  rpc_server)  │
+└──────────────┘                       └──────────────┘                      └──────────────┘
 ```
+
+### 21.2 Proto定义（chat.proto）
+
+#### 21.2.1 聊天核心
+
+| 消息类型 | 说明 |
+|----------|------|
+| ChatRequest | 聊天请求（userId, botId, message, voiceUrl, metadata等） |
+| ChatResponse | 聊天响应（message, voiceUrl, msgType, metadata等） |
+
+#### 21.2.2 群聊
+
+| 消息类型 | 说明 |
+|----------|------|
+| GroupChatRequest | 群聊请求（groupId, senderId, content, aiBotIds） |
+| GroupChatResponse | 群聊响应（groupId, botId, content） |
+
+#### 21.2.3 伴读服务
+
+| 消息类型 | 说明 |
+|----------|------|
+| CompanionReadRequest | 伴读请求（userId, action, text） |
+| CompanionReadResponse | 伴读响应（audioUrl, explanationText） |
+
+#### 21.2.4 考情大屏
+
+| 消息类型 | 说明 |
+|----------|------|
+| DashboardRequest/Response | 雷达图+活跃度数据 |
+| DashboardSummaryRequest/Response | 考情摘要（avgMastery, strongestSubject等） |
+| WeeklyReportRequest/Response | AI周报 |
+
+#### 21.2.5 PDF解析
+
+| 消息类型 | 说明 |
+|----------|------|
+| PdfParseRequest | PDF解析请求（pdf_data bytes, filename） |
+| PdfParseResponse | PDF解析响应（content, pageCount） |
+
+#### 21.2.6 编程沙盒
+
+| 消息类型 | 说明 |
+|----------|------|
+| SandboxExecuteRequest | 沙盒执行请求（prompt, workDir, model, provider, apiKey等） |
+| SandboxExecuteResponse | 沙盒执行响应（sessionId, turnsUsed, finalResult） |
+| SandboxTaskRequest | 沙盒任务请求（action, taskId, workDir） |
+| SandboxTaskResponse | 沙盒任务响应（action, taskId, data） |
+| SandboxToolEvent | 沙盒工具事件（eventType, toolName, argsJson, result等） |
+
+#### 21.2.7 Agent Swarm P2P网络
+
+| 消息类型 | 说明 |
+|----------|------|
+| SwarmMessage | P2P网络消息（REGISTER/HEARTBEAT/BROADCAST/DIRECT/HELP_REQUEST等） |
+| SwarmAgentNode | 智能体节点信息（agentId, capabilities, specialties, status） |
+| SwarmRegisterRequest/Response | 节点注册 |
+| SwarmHelpRequest/Response | 跨节点求助 |
+| SwarmNodeListResponse | 节点列表 |
+
+#### 21.2.8 内部路由服务
+
+**InternalRouterService** 定义了5个RPC方法：
+
+| 方法 | 说明 |
+|------|------|
+| ForwardToJava | C++→Java请求转发（同步RPC） |
+| PushToClient | Java→C++消息推送（私聊/群聊/通知） |
+| StreamToClient | Java→C++流式推送（流式聊天） |
+| UpdateCareerProfile | 更新职业档案 |
+| EmitSkillEvent | 发射技能事件 |
+
+**InternalMsgType枚举：**
+
+| 类型值 | 说明 |
+|--------|------|
+| CHAT_PRIVATE | 私聊消息 |
+| CHAT_GROUP | 群聊消息 |
+| AI_AT_MENTION | AI@提及 |
+| COMPANION_READ | 伴读服务 |
+| DASHBOARD_QUERY/PUSH | 考情大屏查询/推送 |
+| VOICE_CHAT | 语音聊天 |
+| SANDBOX_EXECUTE | 沙盒执行 |
+| SKILL_EVENT | 技能事件 |
+
+#### 21.2.9 RPC消息封装
+
+**RpcMessage** 是所有RPC通信的统一封装：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| type | enum | REQUEST/RESPONSE/ERROR/STREAM/STREAM_END |
+| id | int64 | 消息唯一ID |
+| service_name | string | 服务名称 |
+| method_name | string | 方法名称 |
+| payload | bytes | Protobuf序列化的业务数据 |
+| error_code | int32 | 错误码 |
+| error_desc | string | 错误描述 |
+
+### 21.3 C++端
+
+| 文件 | 说明 |
+|------|------|
+| rpc_channel.h / rpc_channel.cc | RPC通道，管理连接和请求分发 |
+| protobuf_codec.h / protobuf_codec.cc | Protobuf编解码器，处理消息序列化/反序列化 |
+| chat_server.h / chat_server.cc | C++ RPC服务器，处理来自Java/Python的RPC请求 |
+| main.cc | C++ RPC入口 |
+| crosslang_test.cc | 跨语言测试 |
+
+### 21.4 Java端
+
+| 文件 | 说明 |
+|------|------|
+| JavaBackendServer.java | Java RPC服务器（Netty实现） |
+| RpcMessageHandler.java | RPC消息分发处理器 |
+| ProtobufEncoder.java | Protobuf编码器（Netty ChannelHandler） |
+| ProtobufDecoder.java | Protobuf解码器（Netty ChannelHandler） |
+| ChatService.java | 聊天服务接口 |
+| AIChatService.java | 聊天服务实现 |
+
+### 21.5 Python端
+
+| 文件 | 说明 |
+|------|------|
+| bridge/rpc_server.py | Python RPC服务器（async实现） |
+| bridge/streaming_rpc_server.py | 流式RPC服务器（支持Server Streaming） |
+| bridge/rpc_client.py | Python RPC客户端 |
+| bridge/codec.py | 编解码器 |
+| services/swarm_bridge.py | Swarm P2P桥接服务 |
+| services/sandbox_bridge.py | 沙盒桥接服务 |
+| services/sandbox_adapter.py | 沙盒适配器 |
+| main.py | Python RPC入口 |
+
+---
+
+## 22. Docker Compose 部署
+
+### 22.1 服务架构
+
+系统通过 Docker Compose 编排 7 个服务：
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                          Docker Compose                                 │
+│                                                                         │
+│  ┌─────────┐  ┌─────────┐  ┌─────────┐                                 │
+│  │  MySQL  │  │  Redis  │  │  Neo4j  │     基础设施层                    │
+│  │ :3306   │  │ :6379   │  │ :7474   │                                 │
+│  └─────────┘  └─────────┘  └─────────┘                                 │
+│       │            │            │                                       │
+│       ▼            ▼            ▼                                       │
+│  ┌──────────────────────────────────────┐                               │
+│  │        ChatServer (C++)              │     通讯网关层                  │
+│  │        :6000(TCP) :8888(RPC)         │                               │
+│  └──────────────────────────────────────┘                               │
+│       │            │                                                    │
+│       ▼            ▼                                                    │
+│  ┌─────────────────────┐  ┌─────────────────────┐                      │
+│  │   AI Service (Java) │  │   Sandbox (Python)   │   业务服务层          │
+│  │   :8081 :9999(RPC)  │  │   :8001 :5900(VNC)   │                      │
+│  └─────────────────────┘  └─────────────────────┘                      │
+│       │            │            │                                       │
+│       ▼            ▼            ▼                                       │
+│  ┌──────────────────────────────────────┐                               │
+│  │          Nginx (反向代理)             │     统一入口层                  │
+│  │          :80(HTTP) :8000(TCP)        │                               │
+│  └──────────────────────────────────────┘                               │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### 22.2 服务清单
+
+| 服务 | 镜像/构建 | 端口映射 | 依赖 |
+|------|-----------|----------|------|
+| mysql | mysql:8.0 | 3306:3306 | 无 |
+| redis | redis/redis-stack:latest | 6379:6379 | 无 |
+| neo4j | neo4j:latest | 7474:7474, 7687:7687 | 无 |
+| chatserver | Dockerfile.chatserver | 6000:6000, 8888:8888 | mysql, redis |
+| sandbox | eruitah-sandbox/Dockerfile | 8001:8001, 5900:5900 | 无 |
+| ai-service | ai-service/Dockerfile | 8081:8081, 9999:9999 | mysql, redis, neo4j, sandbox, chatserver |
+| nginx | nginx:1.25-alpine | 80:80, 8000:8000 | chatserver, ai-service, sandbox |
+
+### 22.3 一键部署
+
+```bash
+# 克隆项目
+cd /home/xmy/code
+
+# 配置环境变量（可选，有默认值）
+cp .env.example .env
+# 编辑 .env 填入 API Key 等
+
+# 启动所有服务
+docker-compose up -d
+
+# 查看服务状态
+docker-compose ps
+
+# 查看日志
+docker-compose logs -f ai-service
+docker-compose logs -f sandbox
+```
+
+### 22.4 关键环境变量
+
+| 变量 | 默认值 | 说明 |
+|------|--------|------|
+| MYSQL_ROOT_PASSWORD | xieming562 | MySQL root密码 |
+| REDIS_PASSWORD | 123456 | Redis密码 |
+| NEO4J_PASSWORD | 12345678 | Neo4j密码 |
+| OPENAI_API_KEY | （空） | OpenAI/兼容API密钥 |
+| OPENAI_BASE_URL | https://token-plan-cn.xiaomimimo.com/v1 | API基础URL |
+| ERUITAH_API_PROVIDER | openai | 沙盒API提供商 |
+| ERUITAH_MODEL_OPENAI | mimo-v2.5 | 沙盒OpenAI模型 |
+| ERUITAH_MODEL_ANTHROPIC | claude-sonnet-4-20250514 | 沙盒Anthropic模型 |
+| ERUITAH_ENABLE_VNC | false | 是否启用VNC |
+| ERUITAH_SCREEN_WIDTH | 1280 | 虚拟屏幕宽度 |
+| ERUITAH_SCREEN_HEIGHT | 720 | 虚拟屏幕高度 |
+
+### 22.5 数据持久化
+
+Docker Compose 使用命名卷持久化数据：
+
+| 卷名 | 挂载点 | 说明 |
+|------|--------|------|
+| mysql-data | /var/lib/mysql | MySQL数据 |
+| redis-data | /data | Redis数据 |
+| neo4j-data | /data | Neo4j数据 |
+| neo4j-logs | /logs | Neo4j日志 |
+| audio-storage | /tmp/audio | 语音文件存储 |
+
+**主机目录挂载：**
+
+| 主机路径 | 容器路径 | 说明 |
+|----------|----------|------|
+| /tmp/eruitah-sandbox | /tmp/eruitah-sandbox | 沙盒工作目录 |
+| /tmp/agent-worktrees | /tmp/agent-worktrees | Agent Worktree目录 |
+| ./coding-agent-ui/dist | /app/coding-agent-ui/dist:ro | Web IDE静态文件（只读） |
+| ./docker/mysql/init.sql | /docker-entrypoint-initdb.d/init.sql | MySQL初始化脚本 |
+| ./docker/nginx/nginx.conf | /etc/nginx/nginx.conf:ro | Nginx配置（只读） |
+
+### 22.6 健康检查
+
+| 服务 | 检查方式 | 间隔 | 超时 | 重试 |
+|------|----------|------|------|------|
+| mysql | mysqladmin ping | 10s | 5s | 10 |
+| redis | redis-cli ping | 10s | 5s | 5 |
+| neo4j | service_started | - | - | - |
+
+---
+
+## 23. Nginx 反向代理
+
+### 23.1 架构概述
+
+Nginx 作为统一入口，将外部请求路由到后端各服务：
+
+```
+客户端 → Nginx(:80/:8000) → AI Service(:8081) / Sandbox(:8001) / ChatServer(:6000)
+```
+
+### 23.2 路由规则
+
+#### HTTP路由（端口80）
+
+| 路径 | 后端 | 说明 |
+|------|------|------|
+| /api/ | ai-service:8081 | Java AI服务REST API |
+| /audio/ | ai-service:8081 | 语音文件访问 |
+| /ws/ai/ | ai-service:8081 | AI WebSocket（升级） |
+| /ws/voice/ | ai-service:8081 | 语音WebSocket（升级） |
+| /ws/ | ai-service:8081 | 通用WebSocket（升级） |
+| /sandbox/ws/coding | sandbox:8001 | 沙盒编码WebSocket（升级） |
+| /sandbox/ws/terminal | sandbox:8001 | 沙盒终端WebSocket（升级） |
+| /sandbox/ | sandbox:8001 | 沙盒REST API和静态文件 |
+| /ide | sandbox:8001 | Web IDE页面 |
+| /assets/ | sandbox:8001 | 静态资源（缓存30天） |
+| /api/v1/ | sandbox:8001 | 沙盒REST API |
+
+#### TCP路由（端口8000）
+
+| 端口 | 后端 | 说明 |
+|------|------|------|
+| 8000 | chatserver:6000 | C++ ChatServer TCP连接 |
+
+### 23.3 WebSocket配置
+
+所有WebSocket路径均配置了升级头：
+
+```nginx
+proxy_http_version 1.1;
+proxy_set_header Upgrade $http_upgrade;
+proxy_set_header Connection "upgrade";
+proxy_read_timeout 3600s;
+proxy_send_timeout 3600s;
+```
+
+- **读写超时**：3600秒（1小时），防止长时间WebSocket连接被断开
+- **Connection升级映射**：通过 `map $http_upgrade $connection_upgrade` 动态设置
+
+### 23.4 超时配置
+
+| 场景 | 读写超时 | 说明 |
+|------|----------|------|
+| REST API | 300s | 普通HTTP请求 |
+| WebSocket | 3600s | 长连接WebSocket |
+| TCP代理 | 300s | ChatServer TCP连接 |
+| TCP连接超时 | 5s | TCP连接建立超时 |
+
+### 23.5 其他配置
+
+- **client_max_body_size**: 50m（支持大文件上传，如PDF/音频）
+- **tcp_nodelay**: on（TCP代理禁用Nagle算法，降低延迟）
+- **静态资源缓存**: /assets/ 路径设置30天过期，Cache-Control: public, immutable
