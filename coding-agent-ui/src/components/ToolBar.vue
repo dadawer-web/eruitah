@@ -1,6 +1,8 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useAgentStore } from '../stores/agent'
+import CareerDashboard from './CareerDashboard.vue'
+import KnowledgeGraph from './KnowledgeGraph.vue'
 
 const store = useAgentStore()
 
@@ -8,6 +10,8 @@ const showGitPanel = ref(false)
 const showRewindPanel = ref(false)
 const showCostPanel = ref(false)
 const showMcpPanel = ref(false)
+const showCareerPanel = ref(false)
+const showKnowledgePanel = ref(false)
 
 const gitAction = ref('status')
 const gitFilePath = ref('')
@@ -127,6 +131,15 @@ function listMcpServers() {
     <button @click="listMcpServers" :disabled="!store.connected" class="px-2 py-1 bg-geek-bg hover:bg-blue-500/10 text-geek-text-dim hover:text-blue-400 border border-geek-border rounded text-[10px] transition-colors disabled:opacity-30 whitespace-nowrap" :class="{ 'bg-blue-500/10 text-blue-400 border-blue-500/30': showMcpPanel }" title="MCP 服务（不走 Agent）">🔌 MCP</button>
 
     <button @click="listCheckpoints" :disabled="!store.connected || store.isRunning" class="px-2 py-1 bg-geek-bg hover:bg-cyan-500/10 text-geek-text-dim hover:text-cyan-400 border border-geek-border rounded text-[10px] transition-colors disabled:opacity-30 whitespace-nowrap" title="检查点列表">📌 检查点</button>
+
+    <div class="w-px h-4 bg-geek-border"></div>
+
+    <button @click="showCareerPanel = !showCareerPanel; store.hasNewCareerAdvice = false" class="relative px-2 py-1 bg-geek-bg hover:bg-emerald-500/10 text-geek-text-dim hover:text-emerald-400 border border-geek-border rounded text-[10px] transition-colors whitespace-nowrap" :class="{ 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30': showCareerPanel }" title="职业档案 & 简历素材">
+      🎓 档案
+      <span v-if="store.hasNewCareerAdvice" class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full shadow-[0_0_6px_rgba(239,68,68,0.7)] animate-pulse"></span>
+    </button>
+
+    <button @click="showKnowledgePanel = !showKnowledgePanel" class="px-2 py-1 bg-geek-bg hover:bg-cyan-500/10 text-geek-text-dim hover:text-cyan-400 border border-geek-border rounded text-[10px] transition-colors whitespace-nowrap" :class="{ 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30': showKnowledgePanel }" title="知识图谱 & 技能脉络">🌳 图谱</button>
 
     <div class="flex-1"></div>
 
@@ -308,5 +321,8 @@ function listMcpServers() {
         </div>
       </div>
     </Teleport>
+
+    <CareerDashboard :visible="showCareerPanel" @close="showCareerPanel = false" />
+    <KnowledgeGraph :visible="showKnowledgePanel" @close="showKnowledgePanel = false" />
   </div>
 </template>

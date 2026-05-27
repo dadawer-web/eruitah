@@ -134,6 +134,16 @@ def read_file(
     abs_file_path = os.path.expanduser(abs_file_path)
 
     # ------------------------------------------------------------------
+    # 沙盒路径隔离校验
+    # ------------------------------------------------------------------
+    if work_dir and work_dir != ".":
+        try:
+            from sandbox_isolation import enforce_sandbox_path
+            abs_file_path = enforce_sandbox_path(abs_file_path, work_dir)
+        except PermissionError as e:
+            return FileReadResult(error=str(e))
+
+    # ------------------------------------------------------------------
     # 文件存在性检查 - 对应 TS 源码 isENOENT 检查
     # ------------------------------------------------------------------
     if not os.path.exists(abs_file_path):

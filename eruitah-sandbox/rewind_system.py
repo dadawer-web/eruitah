@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
 
 CHECKPOINT_DB = os.environ.get(
     "ERUITAH_CHECKPOINT_DB",
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), ".checkpoints", "rewind.db"),
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), ".user_data", "rewind.db"),
 )
 
 
@@ -95,13 +95,20 @@ class Checkpoint:
 
 
 class RewindSystem:
-    def __init__(self):
+    def __init__(self, user_id: int = 0, session_id: str = ""):
         self._lock = threading.Lock()
-        os.makedirs(os.path.dirname(CHECKPOINT_DB), exist_ok=True)
+        self._user_id = user_id
+        self._session_id = session_id
+        if user_id and session_id:
+            from sandbox_isolation import get_user_checkpoint_db
+            self._db_path = get_user_checkpoint_db(user_id, session_id)
+        else:
+            self._db_path = CHECKPOINT_DB
+        os.makedirs(os.path.dirname(self._db_path), exist_ok=True)
         self._init_db()
 
     def _init_db(self):
-        conn = sqlite3.connect(CHECKPOINT_DB)
+        conn = sqlite3.connect(self._db_path)
         conn.executescript("""
             CREATE TABLE IF NOT EXISTS checkpoints (
                 session_id TEXT NOT NULL,
@@ -124,7 +131,7 @@ class RewindSystem:
         conn.close()
 
     def _get_conn(self) -> sqlite3.Connection:
-        return sqlite3.connect(CHECKPOINT_DB)
+        return sqlite3.connect(self._db_path)
 
     def _sanitize_value(self, v) -> Any:
         if isinstance(v, (str, int, float, bool, type(None))):
@@ -967,10 +974,16 @@ class RewindSystem:
 
 
 _rewind_system: Optional[RewindSystem] = None
+_rewind_instances: dict = {}
 
 
-def get_rewind_system() -> RewindSystem:
-    global _rewind_system
+def get_rewind_system(user_id: int = 0, session_id: str = "") -> RewindSystem:
+    global _rewind_system, _rewind_instances
+    if user_id and session_id:
+        key = f"{user_id}_{session_id}"
+        if key not in _rewind_instances:
+            _rewind_instances[key] = RewindSystem(user_id=user_id, session_id=session_id)
+        return _rewind_instances[key]
     if _rewind_system is None:
         _rewind_system = RewindSystem()
     return _rewind_system
@@ -1044,7 +1057,12 @@ REWIND_TOOL_DEFINITION_OPENAI = {
 def execute_rewind_tool(**kwargs) -> tuple[str, bool]:
     action = kwargs.get("action", "")
     session_id = kwargs.get("session_id", "")
-    system = get_rewind_system()
+    user_id = kwargs.get("user_id", 0)
+    try:
+        user_id = int(user_id)
+    except (ValueError, TypeError):
+        user_id = 0
+    system = get_rewind_system(user_id=user_id, session_id=session_id)
 
     if not session_id:
         return "缺少必要参数: session_id", True

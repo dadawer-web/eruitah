@@ -294,16 +294,19 @@ message InternalPushResponse {
     int32 delivered_count = 4;
 }
 
-// ==================== AI 职业导师 (legacy, 保留兼容) ====================
+// ==================== AI 职业导师 ====================
 
 message CareerAdviceRequest {
     int64 user_id = 1;
     repeated string skills = 2;
     string resume_highlight = 3;
     string learning_advice = 4;
+    repeated string extracted_skills = 5;
+    string next_suggestion = 6;
 }
 
 message CareerAdviceResponse {
+    bool success = 1;
 }
 
 // ==================== Agent Skill 事件总线 (可扩展) ====================
@@ -324,12 +327,36 @@ message AgentSkillEventAck {
     string trace_id = 3;
 }
 
+// ==================== Python 沙盒 RPC 服务 (Java -> Python) ====================
+
+message RunCodeRequest {
+    int64 user_id = 1;
+    string session_id = 2;
+    string task_prompt = 3;
+    repeated string skills = 4;
+}
+
+message RunCodeResponse {
+    string log_stream = 1;
+    bool is_finished = 2;
+}
+
+// ==================== 服务定义 ====================
+
 service InternalRouterService {
     rpc ForwardToJava(InternalForwardRequest) returns (InternalForwardResponse);
     rpc PushToClient(InternalPushRequest) returns (InternalPushResponse);
     rpc StreamToClient(InternalPushRequest) returns (stream InternalPushResponse);
     rpc UpdateCareerProfile(CareerAdviceRequest) returns (CareerAdviceResponse);
     rpc EmitSkillEvent(AgentSkillEvent) returns (AgentSkillEventAck);
+}
+
+service SandboxService {
+    rpc RunAgentTask(RunCodeRequest) returns (stream RunCodeResponse);
+}
+
+service CareerAdviceService {
+    rpc SendCareerAdvice(CareerAdviceRequest) returns (CareerAdviceResponse);
 }
 
 // ==================== RPC 消息封装 ====================

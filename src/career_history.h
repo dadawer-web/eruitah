@@ -17,8 +17,13 @@ class CareerHistoryManager : public QObject {
 public:
     static CareerHistoryManager& instance();
 
-    void saveRecord(const QJsonObject& msgData);
+    void appendRecord(const QJsonObject& record);
+    void deleteRecord(int index);
+    void clearAllRecords();
     QJsonArray getAllRecords();
+
+signals:
+    void careerDataUpdated();
 
 private:
     CareerHistoryManager(QObject* parent = nullptr);

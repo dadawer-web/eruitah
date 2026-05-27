@@ -237,8 +237,7 @@ def check_command_security(command: str, work_dir: str = ".") -> SecurityCheckRe
             message="命令使用 'fc -e'，可通过编辑器执行任意命令"
         )
 
-    # 5. 路径越权检测 - 确保命令操作在工作目录范围内
-    # 提取命令中出现的路径参数，检查是否越界
+    # 5. 路径越权检测 - 确保命令操作在沙盒工作目录范围内
     abs_work_dir = os.path.abspath(work_dir)
     path_patterns = [
         re.compile(r'(?:^|\s)(/[^\s;|&><]+)'),
@@ -248,18 +247,24 @@ def check_command_security(command: str, work_dir: str = ".") -> SecurityCheckRe
     for p in path_patterns:
         for match in p.finditer(command):
             path = match.group(1)
-            # 展开路径
             expanded = os.path.abspath(os.path.expanduser(path))
-            # 允许 /tmp 和 /dev/null 等安全路径
-            safe_prefixes = ['/tmp', '/dev/null', '/dev/zero', '/dev/urandom', '/proc/self/fd']
-            if any(expanded.startswith(sp) for sp in safe_prefixes):
-                continue
-            # 检查是否在工作目录内
-            if not expanded.startswith(abs_work_dir):
-                return SecurityCheckResult(
-                    behavior='ask',
-                    message=f'命令访问路径 "{path}" 超出工作目录范围'
-                )
+            try:
+                from sandbox_isolation import validate_path_in_sandbox
+                ok, reason = validate_path_in_sandbox(expanded, abs_work_dir)
+                if not ok:
+                    return SecurityCheckResult(
+                        behavior='deny',
+                        message=f'🚫 沙盒隔离拦截: {reason}'
+                    )
+            except ImportError:
+                safe_prefixes = ['/tmp', '/dev/null', '/dev/zero', '/dev/urandom', '/proc/self/fd']
+                if any(expanded.startswith(sp) for sp in safe_prefixes):
+                    continue
+                if not expanded.startswith(abs_work_dir):
+                    return SecurityCheckResult(
+                        behavior='deny',
+                        message=f'🚫 命令访问路径 "{path}" 超出沙盒工作目录范围'
+                    )
 
     return SecurityCheckResult(behavior='allow', message='命令通过安全检查')
 

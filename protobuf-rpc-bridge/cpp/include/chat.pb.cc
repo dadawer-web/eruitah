@@ -606,8 +606,10 @@ PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORIT
 PROTOBUF_CONSTEXPR CareerAdviceRequest::CareerAdviceRequest(
     ::_pbi::ConstantInitialized): _impl_{
     /*decltype(_impl_.skills_)*/{}
+  , /*decltype(_impl_.extracted_skills_)*/{}
   , /*decltype(_impl_.resume_highlight_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
   , /*decltype(_impl_.learning_advice_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_.next_suggestion_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
   , /*decltype(_impl_.user_id_)*/int64_t{0}
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct CareerAdviceRequestDefaultTypeInternal {
@@ -620,7 +622,9 @@ struct CareerAdviceRequestDefaultTypeInternal {
 };
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 CareerAdviceRequestDefaultTypeInternal _CareerAdviceRequest_default_instance_;
 PROTOBUF_CONSTEXPR CareerAdviceResponse::CareerAdviceResponse(
-    ::_pbi::ConstantInitialized) {}
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_.success_)*/false
+  , /*decltype(_impl_._cached_size_)*/{}} {}
 struct CareerAdviceResponseDefaultTypeInternal {
   PROTOBUF_CONSTEXPR CareerAdviceResponseDefaultTypeInternal()
       : _instance(::_pbi::ConstantInitialized{}) {}
@@ -675,6 +679,36 @@ struct AgentSkillEventAckDefaultTypeInternal {
   };
 };
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 AgentSkillEventAckDefaultTypeInternal _AgentSkillEventAck_default_instance_;
+PROTOBUF_CONSTEXPR RunCodeRequest::RunCodeRequest(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_.skills_)*/{}
+  , /*decltype(_impl_.session_id_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_.task_prompt_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_.user_id_)*/int64_t{0}
+  , /*decltype(_impl_._cached_size_)*/{}} {}
+struct RunCodeRequestDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR RunCodeRequestDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~RunCodeRequestDefaultTypeInternal() {}
+  union {
+    RunCodeRequest _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 RunCodeRequestDefaultTypeInternal _RunCodeRequest_default_instance_;
+PROTOBUF_CONSTEXPR RunCodeResponse::RunCodeResponse(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_.log_stream_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_.is_finished_)*/false
+  , /*decltype(_impl_._cached_size_)*/{}} {}
+struct RunCodeResponseDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR RunCodeResponseDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~RunCodeResponseDefaultTypeInternal() {}
+  union {
+    RunCodeResponse _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 RunCodeResponseDefaultTypeInternal _RunCodeResponse_default_instance_;
 PROTOBUF_CONSTEXPR RpcMessage::RpcMessage(
     ::_pbi::ConstantInitialized): _impl_{
     /*decltype(_impl_.service_name_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
@@ -695,7 +729,7 @@ struct RpcMessageDefaultTypeInternal {
 };
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 RpcMessageDefaultTypeInternal _RpcMessage_default_instance_;
 }  // namespace bridge
-static ::_pb::Metadata file_level_metadata_chat_2eproto[42];
+static ::_pb::Metadata file_level_metadata_chat_2eproto[44];
 static const ::_pb::EnumDescriptor* file_level_enum_descriptors_chat_2eproto[3];
 static constexpr ::_pb::ServiceDescriptor const** file_level_service_descriptors_chat_2eproto = nullptr;
 
@@ -1104,12 +1138,15 @@ const uint32_t TableStruct_chat_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(pro
   PROTOBUF_FIELD_OFFSET(::bridge::CareerAdviceRequest, _impl_.skills_),
   PROTOBUF_FIELD_OFFSET(::bridge::CareerAdviceRequest, _impl_.resume_highlight_),
   PROTOBUF_FIELD_OFFSET(::bridge::CareerAdviceRequest, _impl_.learning_advice_),
+  PROTOBUF_FIELD_OFFSET(::bridge::CareerAdviceRequest, _impl_.extracted_skills_),
+  PROTOBUF_FIELD_OFFSET(::bridge::CareerAdviceRequest, _impl_.next_suggestion_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::bridge::CareerAdviceResponse, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::bridge::CareerAdviceResponse, _impl_.success_),
   PROTOBUF_FIELD_OFFSET(::bridge::AgentSkillEvent_HeadersEntry_DoNotUse, _has_bits_),
   PROTOBUF_FIELD_OFFSET(::bridge::AgentSkillEvent_HeadersEntry_DoNotUse, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -1142,6 +1179,24 @@ const uint32_t TableStruct_chat_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(pro
   PROTOBUF_FIELD_OFFSET(::bridge::AgentSkillEventAck, _impl_.success_),
   PROTOBUF_FIELD_OFFSET(::bridge::AgentSkillEventAck, _impl_.error_),
   PROTOBUF_FIELD_OFFSET(::bridge::AgentSkillEventAck, _impl_.trace_id_),
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::bridge::RunCodeRequest, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::bridge::RunCodeRequest, _impl_.user_id_),
+  PROTOBUF_FIELD_OFFSET(::bridge::RunCodeRequest, _impl_.session_id_),
+  PROTOBUF_FIELD_OFFSET(::bridge::RunCodeRequest, _impl_.task_prompt_),
+  PROTOBUF_FIELD_OFFSET(::bridge::RunCodeRequest, _impl_.skills_),
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::bridge::RunCodeResponse, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::bridge::RunCodeResponse, _impl_.log_stream_),
+  PROTOBUF_FIELD_OFFSET(::bridge::RunCodeResponse, _impl_.is_finished_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::bridge::RpcMessage, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -1194,11 +1249,13 @@ static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protode
   { 369, -1, -1, sizeof(::bridge::InternalPushRequest)},
   { 384, -1, -1, sizeof(::bridge::InternalPushResponse)},
   { 394, -1, -1, sizeof(::bridge::CareerAdviceRequest)},
-  { 404, -1, -1, sizeof(::bridge::CareerAdviceResponse)},
-  { 410, 418, -1, sizeof(::bridge::AgentSkillEvent_HeadersEntry_DoNotUse)},
-  { 420, -1, -1, sizeof(::bridge::AgentSkillEvent)},
-  { 433, -1, -1, sizeof(::bridge::AgentSkillEventAck)},
-  { 442, -1, -1, sizeof(::bridge::RpcMessage)},
+  { 406, -1, -1, sizeof(::bridge::CareerAdviceResponse)},
+  { 413, 421, -1, sizeof(::bridge::AgentSkillEvent_HeadersEntry_DoNotUse)},
+  { 423, -1, -1, sizeof(::bridge::AgentSkillEvent)},
+  { 436, -1, -1, sizeof(::bridge::AgentSkillEventAck)},
+  { 445, -1, -1, sizeof(::bridge::RunCodeRequest)},
+  { 455, -1, -1, sizeof(::bridge::RunCodeResponse)},
+  { 463, -1, -1, sizeof(::bridge::RpcMessage)},
 };
 
 static const ::_pb::Message* const file_default_instances[] = {
@@ -1243,6 +1300,8 @@ static const ::_pb::Message* const file_default_instances[] = {
   &::bridge::_AgentSkillEvent_HeadersEntry_DoNotUse_default_instance_._instance,
   &::bridge::_AgentSkillEvent_default_instance_._instance,
   &::bridge::_AgentSkillEventAck_default_instance_._instance,
+  &::bridge::_RunCodeRequest_default_instance_._instance,
+  &::bridge::_RunCodeResponse_default_instance_._instance,
   &::bridge::_RpcMessage_default_instance_._instance,
 };
 
@@ -1355,49 +1414,59 @@ const char descriptor_table_protodef_chat_2eproto[] PROTOBUF_SECTION_VARIABLE(pr
   "\t\022\r\n\005value\030\002 \001(\t:\0028\001\"a\n\024InternalPushResp"
   "onse\022\017\n\007success\030\001 \001(\010\022\r\n\005error\030\002 \001(\t\022\020\n\010"
   "trace_id\030\003 \001(\t\022\027\n\017delivered_count\030\004 \001(\005\""
-  "i\n\023CareerAdviceRequest\022\017\n\007user_id\030\001 \001(\003\022"
-  "\016\n\006skills\030\002 \003(\t\022\030\n\020resume_highlight\030\003 \001("
-  "\t\022\027\n\017learning_advice\030\004 \001(\t\"\026\n\024CareerAdvi"
-  "ceResponse\"\354\001\n\017AgentSkillEvent\022\017\n\007user_i"
-  "d\030\001 \001(\003\022\022\n\nskill_name\030\002 \001(\t\022\022\n\nevent_typ"
-  "e\030\003 \001(\t\022\024\n\014payload_json\030\004 \001(\t\022\020\n\010trace_i"
-  "d\030\005 \001(\t\022\021\n\ttimestamp\030\006 \001(\003\0225\n\007headers\030\007 "
-  "\003(\0132$.bridge.AgentSkillEvent.HeadersEntr"
-  "y\032.\n\014HeadersEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030"
-  "\002 \001(\t:\0028\001\"F\n\022AgentSkillEventAck\022\017\n\007succe"
-  "ss\030\001 \001(\010\022\r\n\005error\030\002 \001(\t\022\020\n\010trace_id\030\003 \001("
-  "\t\"\355\001\n\nRpcMessage\022%\n\004type\030\001 \001(\0162\027.bridge."
-  "RpcMessage.Type\022\n\n\002id\030\002 \001(\003\022\024\n\014service_n"
-  "ame\030\003 \001(\t\022\023\n\013method_name\030\004 \001(\t\022\017\n\007payloa"
-  "d\030\005 \001(\014\022\022\n\nerror_code\030\006 \001(\005\022\022\n\nerror_des"
-  "c\030\007 \001(\t\"H\n\004Type\022\013\n\007REQUEST\020\000\022\014\n\010RESPONSE"
-  "\020\001\022\t\n\005ERROR\020\002\022\n\n\006STREAM\020\003\022\016\n\nSTREAM_END\020"
-  "\004*\307\002\n\017InternalMsgType\022!\n\035INTERNAL_MSG_TY"
-  "PE_UNSPECIFIED\020\000\022\020\n\014CHAT_PRIVATE\020\001\022\016\n\nCH"
-  "AT_GROUP\020\002\022\021\n\rAI_AT_MENTION\020\003\022\021\n\rPOINTS_"
-  "UPDATE\020\004\022\023\n\017AI_GRADE_RESULT\020\005\022\022\n\016COMPANI"
-  "ON_READ\020\006\022\023\n\017DASHBOARD_QUERY\020\007\022\022\n\016DASHBO"
-  "ARD_PUSH\020\010\022\016\n\nVOICE_CHAT\020\t\022\027\n\023SYSTEM_NOT"
-  "IFICATION\020\n\022\023\n\017SANDBOX_EXECUTE\020\013\022\025\n\021EXPE"
-  "RIENCE_UPDATE\020\014\022\021\n\rCAREER_ADVICE\020\r\022\017\n\013SK"
-  "ILL_EVENT\020\0162\234\003\n\025InternalRouterService\022P\n"
-  "\rForwardToJava\022\036.bridge.InternalForwardR"
-  "equest\032\037.bridge.InternalForwardResponse\022"
-  "I\n\014PushToClient\022\033.bridge.InternalPushReq"
-  "uest\032\034.bridge.InternalPushResponse\022M\n\016St"
-  "reamToClient\022\033.bridge.InternalPushReques"
-  "t\032\034.bridge.InternalPushResponse0\001\022P\n\023Upd"
-  "ateCareerProfile\022\033.bridge.CareerAdviceRe"
-  "quest\032\034.bridge.CareerAdviceResponse\022E\n\016E"
-  "mitSkillEvent\022\027.bridge.AgentSkillEvent\032\032"
-  ".bridge.AgentSkillEventAckB\034\n\017com.chat.a"
-  "i.rpcB\tChatProtob\006proto3"
+  "\234\001\n\023CareerAdviceRequest\022\017\n\007user_id\030\001 \001(\003"
+  "\022\016\n\006skills\030\002 \003(\t\022\030\n\020resume_highlight\030\003 \001"
+  "(\t\022\027\n\017learning_advice\030\004 \001(\t\022\030\n\020extracted"
+  "_skills\030\005 \003(\t\022\027\n\017next_suggestion\030\006 \001(\t\"\'"
+  "\n\024CareerAdviceResponse\022\017\n\007success\030\001 \001(\010\""
+  "\354\001\n\017AgentSkillEvent\022\017\n\007user_id\030\001 \001(\003\022\022\n\n"
+  "skill_name\030\002 \001(\t\022\022\n\nevent_type\030\003 \001(\t\022\024\n\014"
+  "payload_json\030\004 \001(\t\022\020\n\010trace_id\030\005 \001(\t\022\021\n\t"
+  "timestamp\030\006 \001(\003\0225\n\007headers\030\007 \003(\0132$.bridg"
+  "e.AgentSkillEvent.HeadersEntry\032.\n\014Header"
+  "sEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001\"F"
+  "\n\022AgentSkillEventAck\022\017\n\007success\030\001 \001(\010\022\r\n"
+  "\005error\030\002 \001(\t\022\020\n\010trace_id\030\003 \001(\t\"Z\n\016RunCod"
+  "eRequest\022\017\n\007user_id\030\001 \001(\003\022\022\n\nsession_id\030"
+  "\002 \001(\t\022\023\n\013task_prompt\030\003 \001(\t\022\016\n\006skills\030\004 \003"
+  "(\t\":\n\017RunCodeResponse\022\022\n\nlog_stream\030\001 \001("
+  "\t\022\023\n\013is_finished\030\002 \001(\010\"\355\001\n\nRpcMessage\022%\n"
+  "\004type\030\001 \001(\0162\027.bridge.RpcMessage.Type\022\n\n\002"
+  "id\030\002 \001(\003\022\024\n\014service_name\030\003 \001(\t\022\023\n\013method"
+  "_name\030\004 \001(\t\022\017\n\007payload\030\005 \001(\014\022\022\n\nerror_co"
+  "de\030\006 \001(\005\022\022\n\nerror_desc\030\007 \001(\t\"H\n\004Type\022\013\n\007"
+  "REQUEST\020\000\022\014\n\010RESPONSE\020\001\022\t\n\005ERROR\020\002\022\n\n\006ST"
+  "REAM\020\003\022\016\n\nSTREAM_END\020\004*\307\002\n\017InternalMsgTy"
+  "pe\022!\n\035INTERNAL_MSG_TYPE_UNSPECIFIED\020\000\022\020\n"
+  "\014CHAT_PRIVATE\020\001\022\016\n\nCHAT_GROUP\020\002\022\021\n\rAI_AT"
+  "_MENTION\020\003\022\021\n\rPOINTS_UPDATE\020\004\022\023\n\017AI_GRAD"
+  "E_RESULT\020\005\022\022\n\016COMPANION_READ\020\006\022\023\n\017DASHBO"
+  "ARD_QUERY\020\007\022\022\n\016DASHBOARD_PUSH\020\010\022\016\n\nVOICE"
+  "_CHAT\020\t\022\027\n\023SYSTEM_NOTIFICATION\020\n\022\023\n\017SAND"
+  "BOX_EXECUTE\020\013\022\025\n\021EXPERIENCE_UPDATE\020\014\022\021\n\r"
+  "CAREER_ADVICE\020\r\022\017\n\013SKILL_EVENT\020\0162\234\003\n\025Int"
+  "ernalRouterService\022P\n\rForwardToJava\022\036.br"
+  "idge.InternalForwardRequest\032\037.bridge.Int"
+  "ernalForwardResponse\022I\n\014PushToClient\022\033.b"
+  "ridge.InternalPushRequest\032\034.bridge.Inter"
+  "nalPushResponse\022M\n\016StreamToClient\022\033.brid"
+  "ge.InternalPushRequest\032\034.bridge.Internal"
+  "PushResponse0\001\022P\n\023UpdateCareerProfile\022\033."
+  "bridge.CareerAdviceRequest\032\034.bridge.Care"
+  "erAdviceResponse\022E\n\016EmitSkillEvent\022\027.bri"
+  "dge.AgentSkillEvent\032\032.bridge.AgentSkillE"
+  "ventAck2S\n\016SandboxService\022A\n\014RunAgentTas"
+  "k\022\026.bridge.RunCodeRequest\032\027.bridge.RunCo"
+  "deResponse0\0012d\n\023CareerAdviceService\022M\n\020S"
+  "endCareerAdvice\022\033.bridge.CareerAdviceReq"
+  "uest\032\034.bridge.CareerAdviceResponseB\034\n\017co"
+  "m.chat.ai.rpcB\tChatProtob\006proto3"
   ;
 static ::_pbi::once_flag descriptor_table_chat_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_chat_2eproto = {
-    false, false, 5784, descriptor_table_protodef_chat_2eproto,
+    false, false, 6192, descriptor_table_protodef_chat_2eproto,
     "chat.proto",
-    &descriptor_table_chat_2eproto_once, nullptr, 0, 42,
+    &descriptor_table_chat_2eproto_once, nullptr, 0, 44,
     schemas, file_default_instances, TableStruct_chat_2eproto::offsets,
     file_level_metadata_chat_2eproto, file_level_enum_descriptors_chat_2eproto,
     file_level_service_descriptors_chat_2eproto,
@@ -12718,8 +12787,10 @@ CareerAdviceRequest::CareerAdviceRequest(const CareerAdviceRequest& from)
   CareerAdviceRequest* const _this = this; (void)_this;
   new (&_impl_) Impl_{
       decltype(_impl_.skills_){from._impl_.skills_}
+    , decltype(_impl_.extracted_skills_){from._impl_.extracted_skills_}
     , decltype(_impl_.resume_highlight_){}
     , decltype(_impl_.learning_advice_){}
+    , decltype(_impl_.next_suggestion_){}
     , decltype(_impl_.user_id_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
@@ -12740,6 +12811,14 @@ CareerAdviceRequest::CareerAdviceRequest(const CareerAdviceRequest& from)
     _this->_impl_.learning_advice_.Set(from._internal_learning_advice(), 
       _this->GetArenaForAllocation());
   }
+  _impl_.next_suggestion_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.next_suggestion_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (!from._internal_next_suggestion().empty()) {
+    _this->_impl_.next_suggestion_.Set(from._internal_next_suggestion(), 
+      _this->GetArenaForAllocation());
+  }
   _this->_impl_.user_id_ = from._impl_.user_id_;
   // @@protoc_insertion_point(copy_constructor:bridge.CareerAdviceRequest)
 }
@@ -12750,8 +12829,10 @@ inline void CareerAdviceRequest::SharedCtor(
   (void)is_message_owned;
   new (&_impl_) Impl_{
       decltype(_impl_.skills_){arena}
+    , decltype(_impl_.extracted_skills_){arena}
     , decltype(_impl_.resume_highlight_){}
     , decltype(_impl_.learning_advice_){}
+    , decltype(_impl_.next_suggestion_){}
     , decltype(_impl_.user_id_){int64_t{0}}
     , /*decltype(_impl_._cached_size_)*/{}
   };
@@ -12762,6 +12843,10 @@ inline void CareerAdviceRequest::SharedCtor(
   _impl_.learning_advice_.InitDefault();
   #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
     _impl_.learning_advice_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  _impl_.next_suggestion_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.next_suggestion_.Set("", GetArenaForAllocation());
   #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
 }
 
@@ -12777,8 +12862,10 @@ CareerAdviceRequest::~CareerAdviceRequest() {
 inline void CareerAdviceRequest::SharedDtor() {
   GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
   _impl_.skills_.~RepeatedPtrField();
+  _impl_.extracted_skills_.~RepeatedPtrField();
   _impl_.resume_highlight_.Destroy();
   _impl_.learning_advice_.Destroy();
+  _impl_.next_suggestion_.Destroy();
 }
 
 void CareerAdviceRequest::SetCachedSize(int size) const {
@@ -12792,8 +12879,10 @@ void CareerAdviceRequest::Clear() {
   (void) cached_has_bits;
 
   _impl_.skills_.Clear();
+  _impl_.extracted_skills_.Clear();
   _impl_.resume_highlight_.ClearToEmpty();
   _impl_.learning_advice_.ClearToEmpty();
+  _impl_.next_suggestion_.ClearToEmpty();
   _impl_.user_id_ = int64_t{0};
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
@@ -12844,6 +12933,31 @@ const char* CareerAdviceRequest::_InternalParse(const char* ptr, ::_pbi::ParseCo
           ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
           CHK_(ptr);
           CHK_(::_pbi::VerifyUTF8(str, "bridge.CareerAdviceRequest.learning_advice"));
+        } else
+          goto handle_unusual;
+        continue;
+      // repeated string extracted_skills = 5;
+      case 5:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 42)) {
+          ptr -= 1;
+          do {
+            ptr += 1;
+            auto str = _internal_add_extracted_skills();
+            ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
+            CHK_(ptr);
+            CHK_(::_pbi::VerifyUTF8(str, "bridge.CareerAdviceRequest.extracted_skills"));
+            if (!ctx->DataAvailable(ptr)) break;
+          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<42>(ptr));
+        } else
+          goto handle_unusual;
+        continue;
+      // string next_suggestion = 6;
+      case 6:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 50)) {
+          auto str = _internal_mutable_next_suggestion();
+          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+          CHK_(::_pbi::VerifyUTF8(str, "bridge.CareerAdviceRequest.next_suggestion"));
         } else
           goto handle_unusual;
         continue;
@@ -12912,6 +13026,26 @@ uint8_t* CareerAdviceRequest::_InternalSerialize(
         4, this->_internal_learning_advice(), target);
   }
 
+  // repeated string extracted_skills = 5;
+  for (int i = 0, n = this->_internal_extracted_skills_size(); i < n; i++) {
+    const auto& s = this->_internal_extracted_skills(i);
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      s.data(), static_cast<int>(s.length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "bridge.CareerAdviceRequest.extracted_skills");
+    target = stream->WriteString(5, s, target);
+  }
+
+  // string next_suggestion = 6;
+  if (!this->_internal_next_suggestion().empty()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_next_suggestion().data(), static_cast<int>(this->_internal_next_suggestion().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "bridge.CareerAdviceRequest.next_suggestion");
+    target = stream->WriteStringMaybeAliased(
+        6, this->_internal_next_suggestion(), target);
+  }
+
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
     target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
         _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
@@ -12936,6 +13070,14 @@ size_t CareerAdviceRequest::ByteSizeLong() const {
       _impl_.skills_.Get(i));
   }
 
+  // repeated string extracted_skills = 5;
+  total_size += 1 *
+      ::PROTOBUF_NAMESPACE_ID::internal::FromIntSize(_impl_.extracted_skills_.size());
+  for (int i = 0, n = _impl_.extracted_skills_.size(); i < n; i++) {
+    total_size += ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+      _impl_.extracted_skills_.Get(i));
+  }
+
   // string resume_highlight = 3;
   if (!this->_internal_resume_highlight().empty()) {
     total_size += 1 +
@@ -12948,6 +13090,13 @@ size_t CareerAdviceRequest::ByteSizeLong() const {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
         this->_internal_learning_advice());
+  }
+
+  // string next_suggestion = 6;
+  if (!this->_internal_next_suggestion().empty()) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->_internal_next_suggestion());
   }
 
   // int64 user_id = 1;
@@ -12974,11 +13123,15 @@ void CareerAdviceRequest::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, co
   (void) cached_has_bits;
 
   _this->_impl_.skills_.MergeFrom(from._impl_.skills_);
+  _this->_impl_.extracted_skills_.MergeFrom(from._impl_.extracted_skills_);
   if (!from._internal_resume_highlight().empty()) {
     _this->_internal_set_resume_highlight(from._internal_resume_highlight());
   }
   if (!from._internal_learning_advice().empty()) {
     _this->_internal_set_learning_advice(from._internal_learning_advice());
+  }
+  if (!from._internal_next_suggestion().empty()) {
+    _this->_internal_set_next_suggestion(from._internal_next_suggestion());
   }
   if (from._internal_user_id() != 0) {
     _this->_internal_set_user_id(from._internal_user_id());
@@ -13003,6 +13156,7 @@ void CareerAdviceRequest::InternalSwap(CareerAdviceRequest* other) {
   auto* rhs_arena = other->GetArenaForAllocation();
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
   _impl_.skills_.InternalSwap(&other->_impl_.skills_);
+  _impl_.extracted_skills_.InternalSwap(&other->_impl_.extracted_skills_);
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
       &_impl_.resume_highlight_, lhs_arena,
       &other->_impl_.resume_highlight_, rhs_arena
@@ -13010,6 +13164,10 @@ void CareerAdviceRequest::InternalSwap(CareerAdviceRequest* other) {
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
       &_impl_.learning_advice_, lhs_arena,
       &other->_impl_.learning_advice_, rhs_arena
+  );
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &_impl_.next_suggestion_, lhs_arena,
+      &other->_impl_.next_suggestion_, rhs_arena
   );
   swap(_impl_.user_id_, other->_impl_.user_id_);
 }
@@ -13028,31 +13186,169 @@ class CareerAdviceResponse::_Internal {
 
 CareerAdviceResponse::CareerAdviceResponse(::PROTOBUF_NAMESPACE_ID::Arena* arena,
                          bool is_message_owned)
-  : ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase(arena, is_message_owned) {
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
   // @@protoc_insertion_point(arena_constructor:bridge.CareerAdviceResponse)
 }
 CareerAdviceResponse::CareerAdviceResponse(const CareerAdviceResponse& from)
-  : ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase() {
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
   CareerAdviceResponse* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_.success_){}
+    , /*decltype(_impl_._cached_size_)*/{}};
+
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  _this->_impl_.success_ = from._impl_.success_;
   // @@protoc_insertion_point(copy_constructor:bridge.CareerAdviceResponse)
 }
 
+inline void CareerAdviceResponse::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_.success_){false}
+    , /*decltype(_impl_._cached_size_)*/{}
+  };
+}
 
+CareerAdviceResponse::~CareerAdviceResponse() {
+  // @@protoc_insertion_point(destructor:bridge.CareerAdviceResponse)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
+  SharedDtor();
+}
 
+inline void CareerAdviceResponse::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+}
 
+void CareerAdviceResponse::SetCachedSize(int size) const {
+  _impl_._cached_size_.Set(size);
+}
+
+void CareerAdviceResponse::Clear() {
+// @@protoc_insertion_point(message_clear_start:bridge.CareerAdviceResponse)
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  _impl_.success_ = false;
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+const char* CareerAdviceResponse::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
+      // bool success = 1;
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
+          _impl_.success_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
+    }
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  return ptr;
+failure:
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
+}
+
+uint8_t* CareerAdviceResponse::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
+  // @@protoc_insertion_point(serialize_to_array_start:bridge.CareerAdviceResponse)
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // bool success = 1;
+  if (this->_internal_success() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteBoolToArray(1, this->_internal_success(), target);
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:bridge.CareerAdviceResponse)
+  return target;
+}
+
+size_t CareerAdviceResponse::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:bridge.CareerAdviceResponse)
+  size_t total_size = 0;
+
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  // bool success = 1;
+  if (this->_internal_success() != 0) {
+    total_size += 1 + 1;
+  }
+
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
+}
 
 const ::PROTOBUF_NAMESPACE_ID::Message::ClassData CareerAdviceResponse::_class_data_ = {
-    ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase::CopyImpl,
-    ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase::MergeImpl,
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    CareerAdviceResponse::MergeImpl
 };
 const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*CareerAdviceResponse::GetClassData() const { return &_class_data_; }
 
 
+void CareerAdviceResponse::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<CareerAdviceResponse*>(&to_msg);
+  auto& from = static_cast<const CareerAdviceResponse&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:bridge.CareerAdviceResponse)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
 
+  if (from._internal_success() != 0) {
+    _this->_internal_set_success(from._internal_success());
+  }
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+}
 
+void CareerAdviceResponse::CopyFrom(const CareerAdviceResponse& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:bridge.CareerAdviceResponse)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
 
+bool CareerAdviceResponse::IsInitialized() const {
+  return true;
+}
 
+void CareerAdviceResponse::InternalSwap(CareerAdviceResponse* other) {
+  using std::swap;
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  swap(_impl_.success_, other->_impl_.success_);
+}
 
 ::PROTOBUF_NAMESPACE_ID::Metadata CareerAdviceResponse::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
@@ -13837,6 +14133,555 @@ void AgentSkillEventAck::InternalSwap(AgentSkillEventAck* other) {
 
 // ===================================================================
 
+class RunCodeRequest::_Internal {
+ public:
+};
+
+RunCodeRequest::RunCodeRequest(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:bridge.RunCodeRequest)
+}
+RunCodeRequest::RunCodeRequest(const RunCodeRequest& from)
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  RunCodeRequest* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_.skills_){from._impl_.skills_}
+    , decltype(_impl_.session_id_){}
+    , decltype(_impl_.task_prompt_){}
+    , decltype(_impl_.user_id_){}
+    , /*decltype(_impl_._cached_size_)*/{}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  _impl_.session_id_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.session_id_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (!from._internal_session_id().empty()) {
+    _this->_impl_.session_id_.Set(from._internal_session_id(), 
+      _this->GetArenaForAllocation());
+  }
+  _impl_.task_prompt_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.task_prompt_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (!from._internal_task_prompt().empty()) {
+    _this->_impl_.task_prompt_.Set(from._internal_task_prompt(), 
+      _this->GetArenaForAllocation());
+  }
+  _this->_impl_.user_id_ = from._impl_.user_id_;
+  // @@protoc_insertion_point(copy_constructor:bridge.RunCodeRequest)
+}
+
+inline void RunCodeRequest::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_.skills_){arena}
+    , decltype(_impl_.session_id_){}
+    , decltype(_impl_.task_prompt_){}
+    , decltype(_impl_.user_id_){int64_t{0}}
+    , /*decltype(_impl_._cached_size_)*/{}
+  };
+  _impl_.session_id_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.session_id_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  _impl_.task_prompt_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.task_prompt_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+}
+
+RunCodeRequest::~RunCodeRequest() {
+  // @@protoc_insertion_point(destructor:bridge.RunCodeRequest)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
+  SharedDtor();
+}
+
+inline void RunCodeRequest::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+  _impl_.skills_.~RepeatedPtrField();
+  _impl_.session_id_.Destroy();
+  _impl_.task_prompt_.Destroy();
+}
+
+void RunCodeRequest::SetCachedSize(int size) const {
+  _impl_._cached_size_.Set(size);
+}
+
+void RunCodeRequest::Clear() {
+// @@protoc_insertion_point(message_clear_start:bridge.RunCodeRequest)
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  _impl_.skills_.Clear();
+  _impl_.session_id_.ClearToEmpty();
+  _impl_.task_prompt_.ClearToEmpty();
+  _impl_.user_id_ = int64_t{0};
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+const char* RunCodeRequest::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
+      // int64 user_id = 1;
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
+          _impl_.user_id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // string session_id = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 18)) {
+          auto str = _internal_mutable_session_id();
+          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+          CHK_(::_pbi::VerifyUTF8(str, "bridge.RunCodeRequest.session_id"));
+        } else
+          goto handle_unusual;
+        continue;
+      // string task_prompt = 3;
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 26)) {
+          auto str = _internal_mutable_task_prompt();
+          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+          CHK_(::_pbi::VerifyUTF8(str, "bridge.RunCodeRequest.task_prompt"));
+        } else
+          goto handle_unusual;
+        continue;
+      // repeated string skills = 4;
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 34)) {
+          ptr -= 1;
+          do {
+            ptr += 1;
+            auto str = _internal_add_skills();
+            ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
+            CHK_(ptr);
+            CHK_(::_pbi::VerifyUTF8(str, "bridge.RunCodeRequest.skills"));
+            if (!ctx->DataAvailable(ptr)) break;
+          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<34>(ptr));
+        } else
+          goto handle_unusual;
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
+    }
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  return ptr;
+failure:
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
+}
+
+uint8_t* RunCodeRequest::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
+  // @@protoc_insertion_point(serialize_to_array_start:bridge.RunCodeRequest)
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // int64 user_id = 1;
+  if (this->_internal_user_id() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt64ToArray(1, this->_internal_user_id(), target);
+  }
+
+  // string session_id = 2;
+  if (!this->_internal_session_id().empty()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_session_id().data(), static_cast<int>(this->_internal_session_id().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "bridge.RunCodeRequest.session_id");
+    target = stream->WriteStringMaybeAliased(
+        2, this->_internal_session_id(), target);
+  }
+
+  // string task_prompt = 3;
+  if (!this->_internal_task_prompt().empty()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_task_prompt().data(), static_cast<int>(this->_internal_task_prompt().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "bridge.RunCodeRequest.task_prompt");
+    target = stream->WriteStringMaybeAliased(
+        3, this->_internal_task_prompt(), target);
+  }
+
+  // repeated string skills = 4;
+  for (int i = 0, n = this->_internal_skills_size(); i < n; i++) {
+    const auto& s = this->_internal_skills(i);
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      s.data(), static_cast<int>(s.length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "bridge.RunCodeRequest.skills");
+    target = stream->WriteString(4, s, target);
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:bridge.RunCodeRequest)
+  return target;
+}
+
+size_t RunCodeRequest::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:bridge.RunCodeRequest)
+  size_t total_size = 0;
+
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  // repeated string skills = 4;
+  total_size += 1 *
+      ::PROTOBUF_NAMESPACE_ID::internal::FromIntSize(_impl_.skills_.size());
+  for (int i = 0, n = _impl_.skills_.size(); i < n; i++) {
+    total_size += ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+      _impl_.skills_.Get(i));
+  }
+
+  // string session_id = 2;
+  if (!this->_internal_session_id().empty()) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->_internal_session_id());
+  }
+
+  // string task_prompt = 3;
+  if (!this->_internal_task_prompt().empty()) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->_internal_task_prompt());
+  }
+
+  // int64 user_id = 1;
+  if (this->_internal_user_id() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int64SizePlusOne(this->_internal_user_id());
+  }
+
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
+}
+
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData RunCodeRequest::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    RunCodeRequest::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*RunCodeRequest::GetClassData() const { return &_class_data_; }
+
+
+void RunCodeRequest::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<RunCodeRequest*>(&to_msg);
+  auto& from = static_cast<const RunCodeRequest&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:bridge.RunCodeRequest)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  _this->_impl_.skills_.MergeFrom(from._impl_.skills_);
+  if (!from._internal_session_id().empty()) {
+    _this->_internal_set_session_id(from._internal_session_id());
+  }
+  if (!from._internal_task_prompt().empty()) {
+    _this->_internal_set_task_prompt(from._internal_task_prompt());
+  }
+  if (from._internal_user_id() != 0) {
+    _this->_internal_set_user_id(from._internal_user_id());
+  }
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+}
+
+void RunCodeRequest::CopyFrom(const RunCodeRequest& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:bridge.RunCodeRequest)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool RunCodeRequest::IsInitialized() const {
+  return true;
+}
+
+void RunCodeRequest::InternalSwap(RunCodeRequest* other) {
+  using std::swap;
+  auto* lhs_arena = GetArenaForAllocation();
+  auto* rhs_arena = other->GetArenaForAllocation();
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  _impl_.skills_.InternalSwap(&other->_impl_.skills_);
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &_impl_.session_id_, lhs_arena,
+      &other->_impl_.session_id_, rhs_arena
+  );
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &_impl_.task_prompt_, lhs_arena,
+      &other->_impl_.task_prompt_, rhs_arena
+  );
+  swap(_impl_.user_id_, other->_impl_.user_id_);
+}
+
+::PROTOBUF_NAMESPACE_ID::Metadata RunCodeRequest::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_chat_2eproto_getter, &descriptor_table_chat_2eproto_once,
+      file_level_metadata_chat_2eproto[41]);
+}
+
+// ===================================================================
+
+class RunCodeResponse::_Internal {
+ public:
+};
+
+RunCodeResponse::RunCodeResponse(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:bridge.RunCodeResponse)
+}
+RunCodeResponse::RunCodeResponse(const RunCodeResponse& from)
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  RunCodeResponse* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_.log_stream_){}
+    , decltype(_impl_.is_finished_){}
+    , /*decltype(_impl_._cached_size_)*/{}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  _impl_.log_stream_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.log_stream_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (!from._internal_log_stream().empty()) {
+    _this->_impl_.log_stream_.Set(from._internal_log_stream(), 
+      _this->GetArenaForAllocation());
+  }
+  _this->_impl_.is_finished_ = from._impl_.is_finished_;
+  // @@protoc_insertion_point(copy_constructor:bridge.RunCodeResponse)
+}
+
+inline void RunCodeResponse::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_.log_stream_){}
+    , decltype(_impl_.is_finished_){false}
+    , /*decltype(_impl_._cached_size_)*/{}
+  };
+  _impl_.log_stream_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.log_stream_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+}
+
+RunCodeResponse::~RunCodeResponse() {
+  // @@protoc_insertion_point(destructor:bridge.RunCodeResponse)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
+  SharedDtor();
+}
+
+inline void RunCodeResponse::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+  _impl_.log_stream_.Destroy();
+}
+
+void RunCodeResponse::SetCachedSize(int size) const {
+  _impl_._cached_size_.Set(size);
+}
+
+void RunCodeResponse::Clear() {
+// @@protoc_insertion_point(message_clear_start:bridge.RunCodeResponse)
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  _impl_.log_stream_.ClearToEmpty();
+  _impl_.is_finished_ = false;
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+const char* RunCodeResponse::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
+      // string log_stream = 1;
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 10)) {
+          auto str = _internal_mutable_log_stream();
+          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+          CHK_(::_pbi::VerifyUTF8(str, "bridge.RunCodeResponse.log_stream"));
+        } else
+          goto handle_unusual;
+        continue;
+      // bool is_finished = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 16)) {
+          _impl_.is_finished_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
+    }
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  return ptr;
+failure:
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
+}
+
+uint8_t* RunCodeResponse::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
+  // @@protoc_insertion_point(serialize_to_array_start:bridge.RunCodeResponse)
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // string log_stream = 1;
+  if (!this->_internal_log_stream().empty()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_log_stream().data(), static_cast<int>(this->_internal_log_stream().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "bridge.RunCodeResponse.log_stream");
+    target = stream->WriteStringMaybeAliased(
+        1, this->_internal_log_stream(), target);
+  }
+
+  // bool is_finished = 2;
+  if (this->_internal_is_finished() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteBoolToArray(2, this->_internal_is_finished(), target);
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:bridge.RunCodeResponse)
+  return target;
+}
+
+size_t RunCodeResponse::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:bridge.RunCodeResponse)
+  size_t total_size = 0;
+
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  // string log_stream = 1;
+  if (!this->_internal_log_stream().empty()) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->_internal_log_stream());
+  }
+
+  // bool is_finished = 2;
+  if (this->_internal_is_finished() != 0) {
+    total_size += 1 + 1;
+  }
+
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
+}
+
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData RunCodeResponse::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    RunCodeResponse::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*RunCodeResponse::GetClassData() const { return &_class_data_; }
+
+
+void RunCodeResponse::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<RunCodeResponse*>(&to_msg);
+  auto& from = static_cast<const RunCodeResponse&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:bridge.RunCodeResponse)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (!from._internal_log_stream().empty()) {
+    _this->_internal_set_log_stream(from._internal_log_stream());
+  }
+  if (from._internal_is_finished() != 0) {
+    _this->_internal_set_is_finished(from._internal_is_finished());
+  }
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+}
+
+void RunCodeResponse::CopyFrom(const RunCodeResponse& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:bridge.RunCodeResponse)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool RunCodeResponse::IsInitialized() const {
+  return true;
+}
+
+void RunCodeResponse::InternalSwap(RunCodeResponse* other) {
+  using std::swap;
+  auto* lhs_arena = GetArenaForAllocation();
+  auto* rhs_arena = other->GetArenaForAllocation();
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &_impl_.log_stream_, lhs_arena,
+      &other->_impl_.log_stream_, rhs_arena
+  );
+  swap(_impl_.is_finished_, other->_impl_.is_finished_);
+}
+
+::PROTOBUF_NAMESPACE_ID::Metadata RunCodeResponse::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_chat_2eproto_getter, &descriptor_table_chat_2eproto_once,
+      file_level_metadata_chat_2eproto[42]);
+}
+
+// ===================================================================
+
 class RpcMessage::_Internal {
  public:
 };
@@ -14267,7 +15112,7 @@ void RpcMessage::InternalSwap(RpcMessage* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata RpcMessage::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_chat_2eproto_getter, &descriptor_table_chat_2eproto_once,
-      file_level_metadata_chat_2eproto[41]);
+      file_level_metadata_chat_2eproto[43]);
 }
 
 // @@protoc_insertion_point(namespace_scope)
@@ -14436,6 +15281,14 @@ Arena::CreateMaybeMessage< ::bridge::AgentSkillEvent >(Arena* arena) {
 template<> PROTOBUF_NOINLINE ::bridge::AgentSkillEventAck*
 Arena::CreateMaybeMessage< ::bridge::AgentSkillEventAck >(Arena* arena) {
   return Arena::CreateMessageInternal< ::bridge::AgentSkillEventAck >(arena);
+}
+template<> PROTOBUF_NOINLINE ::bridge::RunCodeRequest*
+Arena::CreateMaybeMessage< ::bridge::RunCodeRequest >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::bridge::RunCodeRequest >(arena);
+}
+template<> PROTOBUF_NOINLINE ::bridge::RunCodeResponse*
+Arena::CreateMaybeMessage< ::bridge::RunCodeResponse >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::bridge::RunCodeResponse >(arena);
 }
 template<> PROTOBUF_NOINLINE ::bridge::RpcMessage*
 Arena::CreateMaybeMessage< ::bridge::RpcMessage >(Arena* arena) {

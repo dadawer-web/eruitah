@@ -1529,7 +1529,7 @@ void ChatClient::processMessage(const QJsonObject &message) {
     }
     
     default: {
-        if (msgType >= 70 && msgType <= 78) {
+        if (msgType >= 70 && msgType <= 80) {
             switch (msgType) {
             case MsgType::FARM_PLANT_MSG_ACK: {
                 int errno_val = message["errno"].toInt();

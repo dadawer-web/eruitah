@@ -9,16 +9,41 @@
 #include <QDesktopServices>
 #include <QUrl>
 #include <QStandardPaths>
+#include <QNetworkRequest>
+#include <QJsonDocument>
+#include <QTimer>
+#include <QWebEnginePage>
 
-CareerDashboardDialog::CareerDashboardDialog(QWidget *parent)
+CareerDashboardDialog::CareerDashboardDialog(int userId, QWidget *parent)
     : QDialog(parent, Qt::FramelessWindowHint | Qt::Dialog)
+    , m_userId(userId)
+    , m_networkManager(new QNetworkAccessManager(this))
+    , m_isWebViewLoaded(false)
+    , m_dataRequestSent(false)
 {
     setAttribute(Qt::WA_TranslucentBackground);
     setupUI();
-    loadSkillBadges();
-    loadTimeline();
 
     connect(m_btnExport, &QPushButton::clicked, this, &CareerDashboardDialog::onExportClicked);
+    connect(m_btnReset, &QPushButton::clicked, this, &CareerDashboardDialog::onResetClicked);
+    connect(m_networkManager, &QNetworkAccessManager::finished, this, &CareerDashboardDialog::onServerDataReceived);
+    connect(&CareerHistoryManager::instance(), &CareerHistoryManager::careerDataUpdated,
+            this, &CareerDashboardDialog::refreshData);
+
+    connect(m_webView, &QWebEngineView::loadFinished, this, [this](bool ok) {
+        if (ok) {
+            m_isWebViewLoaded = true;
+            qDebug() << "🎓 [CareerDashboard] WebView loadFinished, pending=" << !m_pendingChartData.isEmpty();
+            if (!m_pendingChartData.isEmpty()) {
+                m_webView->page()->runJavaScript(m_pendingChartData);
+                m_pendingChartData.clear();
+            }
+        }
+    });
+
+    m_webView->load(QUrl("qrc:/html/career_radar.html"));
+
+    initData();
 }
 
 CareerDashboardDialog::~CareerDashboardDialog()
@@ -43,12 +68,12 @@ void CareerDashboardDialog::mouseMoveEvent(QMouseEvent *event)
 
 void CareerDashboardDialog::setupUI()
 {
-    setFixedSize(700, 500);
+    setFixedSize(860, 560);
     setWindowTitle(QString::fromUtf8("职业档案"));
 
     QWidget *root = new QWidget(this);
     root->setObjectName("dialogRoot");
-    root->setGeometry(0, 0, 700, 500);
+    root->setGeometry(0, 0, 860, 560);
 
     QVBoxLayout *rootLayout = new QVBoxLayout(root);
     rootLayout->setContentsMargins(1, 1, 1, 1);
@@ -74,7 +99,19 @@ void CareerDashboardDialog::setupUI()
     m_btnExport = new QPushButton(QString::fromUtf8("📁 导出为简历"));
     m_btnExport->setObjectName("btnExport");
     m_btnExport->setFixedSize(130, 32);
+    m_btnExport->setEnabled(false);
     headerLayout->addWidget(m_btnExport);
+
+    m_btnReset = new QPushButton(QString::fromUtf8("🗑️ 重置档案"));
+    m_btnReset->setObjectName("btnReset");
+    m_btnReset->setFixedSize(110, 32);
+    headerLayout->addWidget(m_btnReset);
+
+    m_statusLabel = new QLabel("");
+    m_statusLabel->setObjectName("statusLabel");
+    m_statusLabel->setStyleSheet("color: #64748B; font-size: 11px;");
+    m_statusLabel->hide();
+    headerLayout->addWidget(m_statusLabel);
 
     m_btnClose = new QPushButton("✕");
     m_btnClose->setObjectName("btnClose");
@@ -96,10 +133,20 @@ void CareerDashboardDialog::setupUI()
 
     QWidget *leftPanel = new QWidget;
     leftPanel->setObjectName("leftPanel");
-    leftPanel->setFixedWidth(180);
+    leftPanel->setFixedWidth(340);
     QVBoxLayout *leftLayout = new QVBoxLayout(leftPanel);
     leftLayout->setContentsMargins(8, 8, 8, 8);
     leftLayout->setSpacing(6);
+
+    QLabel *radarHeader = new QLabel(QString::fromUtf8("⚡ 技能星图"));
+    radarHeader->setObjectName("sectionHeader");
+    leftLayout->addWidget(radarHeader);
+
+    m_webView = new QWebEngineView;
+    m_webView->setObjectName("radarWebView");
+    m_webView->setMinimumHeight(350);
+    m_webView->setStyleSheet("QWebEngineView { background: transparent; border: 1px solid rgba(56, 189, 248, 25); border-radius: 10px; }");
+    leftLayout->addWidget(m_webView);
 
     QLabel *skillHeader = new QLabel(QString::fromUtf8("🏆 已解锁技能"));
     skillHeader->setObjectName("sectionHeader");
@@ -109,6 +156,7 @@ void CareerDashboardDialog::setupUI()
     m_skillList->setObjectName("skillList");
     m_skillList->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_skillList->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    m_skillList->setMaximumHeight(120);
     leftLayout->addWidget(m_skillList);
 
     splitter->addWidget(leftPanel);
@@ -145,119 +193,70 @@ void CareerDashboardDialog::setupUI()
     mainLayout->addWidget(splitter);
 
     root->setStyleSheet(R"(
-        #dialogRoot {
-            background: transparent;
-        }
+        #dialogRoot { background: transparent; }
         #container {
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                stop:0 #0f0c29, stop:0.5 #1a1a3e, stop:1 #0f0c29);
-            border: 1px solid #2a2a5a;
-            border-radius: 14px;
+            background: #0F172A;
+            border: 1px solid rgba(56, 189, 248, 30);
+            border-radius: 16px;
         }
         #titleLabel {
-            color: #00f2fe;
-            font-size: 20px;
-            font-weight: bold;
+            color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                stop:0 #38BDF8, stop:0.5 #818CF8, stop:1 #38BDF8);
+            font-size: 22px; font-weight: bold; letter-spacing: 2px;
         }
         #btnExport {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                stop:0 #00b894, stop:1 #00cec9);
-            color: #0a0a1a;
-            border: none;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: bold;
+            background: transparent; color: #38BDF8;
+            border: 1.5px solid #38BDF8; border-radius: 6px;
+            font-size: 12px; font-weight: bold; padding: 4px 16px;
         }
-        #btnExport:hover {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                stop:0 #00cec9, stop:1 #00f2fe);
+        #btnExport:hover { background: #0EA5E9; color: #0F172A; border-color: #0EA5E9; }
+        #btnExport:disabled { color: #334155; border-color: #1E293B; background: transparent; }
+        #btnReset {
+            background: transparent; color: #EF4444;
+            border: 1.5px solid #EF4444; border-radius: 6px;
+            font-size: 12px; font-weight: bold; padding: 4px 16px;
         }
+        #btnReset:hover { background: #EF4444; color: #0F172A; border-color: #EF4444; }
         #btnClose {
-            background: transparent;
-            color: #666;
-            border: 1px solid #333;
-            border-radius: 16px;
-            font-size: 14px;
+            background: transparent; color: #475569;
+            border: 1px solid #1E293B; border-radius: 16px;
+            font-size: 16px; font-weight: bold;
         }
-        #btnClose:hover {
-            background: #e74c3c;
-            color: white;
-            border-color: #e74c3c;
-        }
+        #btnClose:hover { background: #EF4444; color: white; border-color: #EF4444; }
         #headerLine {
             background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                stop:0 transparent, stop:0.2 #00f2fe, stop:0.8 #00f2fe, stop:1 transparent);
+                stop:0 transparent, stop:0.15 #38BDF8, stop:0.5 #818CF8, stop:0.85 #38BDF8, stop:1 transparent);
             max-height: 1px;
         }
-        #splitter::handle {
-            background: #2a2a5a;
-        }
+        #splitter::handle { background: rgba(56, 189, 248, 20); width: 1px; }
         #leftPanel {
-            background: rgba(15, 12, 41, 180);
-            border-right: 1px solid #1a1a4a;
-            border-radius: 10px;
+            background: rgba(30, 41, 59, 70);
+            border: 1px solid rgba(255, 255, 255, 10); border-radius: 12px;
         }
         #sectionHeader {
-            color: #64ffda;
-            font-size: 13px;
-            font-weight: bold;
-            padding: 4px 0;
+            color: #38BDF8; font-size: 14px; font-weight: bold;
+            padding: 6px 4px; letter-spacing: 1px;
         }
-        #skillList {
-            background: transparent;
-            border: none;
-            outline: none;
-        }
+        #skillList { background: transparent; border: none; outline: none; }
         #skillList::item {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                stop:0 rgba(0, 242, 254, 20), stop:1 rgba(0, 206, 201, 10));
-            color: #64ffda;
-            border: 1px solid rgba(0, 242, 254, 40);
-            border-radius: 12px;
-            padding: 5px 10px;
-            margin: 3px 2px;
-            font-size: 11px;
-            font-weight: bold;
+            background: rgba(56, 189, 248, 12); color: #38BDF8;
+            border: 1px solid rgba(56, 189, 248, 30); border-radius: 10px;
+            padding: 4px 10px; margin: 2px 1px; font-size: 11px; font-weight: bold;
+            font-family: 'Consolas', 'Courier New', monospace;
         }
-        #skillList::item:hover {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                stop:0 rgba(0, 242, 254, 50), stop:1 rgba(0, 206, 201, 30));
-            border-color: rgba(0, 242, 254, 80);
-        }
-        #skillList::item:selected {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                stop:0 rgba(0, 242, 254, 70), stop:1 rgba(0, 206, 201, 40));
-            border-color: #00f2fe;
-        }
+        #skillList::item:hover { background: rgba(56, 189, 248, 25); border-color: rgba(56, 189, 248, 60); }
+        #skillList::item:selected { background: rgba(56, 189, 248, 35); border-color: #38BDF8; }
         #rightPanel {
-            background: transparent;
+            background: rgba(30, 41, 59, 50);
+            border: 1px solid rgba(255, 255, 255, 10); border-radius: 12px;
         }
-        #timelineArea {
-            background: transparent;
-            border: none;
-        }
-        #timelineContent {
-            background: transparent;
-        }
-        QScrollBar:vertical {
-            background: transparent;
-            width: 6px;
-            margin: 0;
-        }
-        QScrollBar::handle:vertical {
-            background: rgba(100, 255, 218, 60);
-            border-radius: 3px;
-            min-height: 30px;
-        }
-        QScrollBar::handle:vertical:hover {
-            background: rgba(100, 255, 218, 120);
-        }
-        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-            height: 0;
-        }
-        QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
-            background: none;
-        }
+        #timelineArea { background: transparent; border: none; }
+        #timelineContent { background: transparent; }
+        QScrollBar:vertical { background: transparent; width: 4px; margin: 0; }
+        QScrollBar::handle:vertical { background: rgba(56, 189, 248, 40); border-radius: 2px; min-height: 30px; }
+        QScrollBar::handle:vertical:hover { background: rgba(56, 189, 248, 80); }
+        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
+        QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: none; }
     )");
 }
 
@@ -276,7 +275,6 @@ QString CareerDashboardDialog::extractSkills(const QJsonObject &record) const
 
 void CareerDashboardDialog::loadSkillBadges()
 {
-    m_records = CareerHistoryManager::instance().getAllRecords();
     m_uniqueSkills.clear();
     m_skillList->clear();
 
@@ -307,9 +305,14 @@ void CareerDashboardDialog::loadSkillBadges()
 
 void CareerDashboardDialog::loadTimeline()
 {
+    m_cards.clear();
+
     QLayoutItem *child;
     while ((child = m_timelineLayout->takeAt(0)) != nullptr) {
-        delete child->widget();
+        if (child->widget()) {
+            child->widget()->hide();
+            child->widget()->deleteLater();
+        }
         delete child;
     }
 
@@ -317,133 +320,350 @@ void CareerDashboardDialog::loadTimeline()
         QLabel *emptyLabel = new QLabel(QString::fromUtf8("暂无职业档案记录\n完成编程任务后将自动生成"));
         emptyLabel->setObjectName("emptyLabel");
         emptyLabel->setAlignment(Qt::AlignCenter);
-        emptyLabel->setStyleSheet("color: #555; font-size: 14px; padding: 40px;");
+        emptyLabel->setStyleSheet("color: #475569; font-size: 14px; padding: 40px;");
         m_timelineLayout->addWidget(emptyLabel);
         m_timelineLayout->addStretch();
         return;
     }
 
-    int index = 0;
-    for (const QJsonValue &val : m_records) {
-        QJsonObject rec = val.toObject();
-        QWidget *card = createTimelineCard(rec, index);
+    for (int i = 0; i < m_records.size(); ++i) {
+        QJsonObject rec = m_records[i].toObject();
+        CareerCardWidget *card = new CareerCardWidget(rec, i);
+        connect(card, &CareerCardWidget::deleteRequested,
+                this, &CareerDashboardDialog::onDeleteCard);
+        m_cards.append(card);
         m_timelineLayout->addWidget(card);
-        index++;
     }
     m_timelineLayout->addStretch();
 }
 
-QWidget* CareerDashboardDialog::createTimelineCard(const QJsonObject &record, int index)
+void CareerDashboardDialog::initData()
 {
-    QWidget *card = new QWidget;
-    card->setObjectName("timelineCard");
+    m_records = CareerHistoryManager::instance().getAllRecords();
+    loadSkillBadges();
+    loadTimeline();
 
-    QVBoxLayout *cardLayout = new QVBoxLayout(card);
-    cardLayout->setContentsMargins(14, 12, 14, 12);
-    cardLayout->setSpacing(8);
+    if (!m_records.isEmpty()) {
+        QJsonObject latest = m_records[0].toObject();
+        QJsonArray skills;
+        QJsonValue skillsVal = latest.value("skills");
+        if (skillsVal.isArray()) {
+            skills = skillsVal.toArray();
+        } else {
+            for (const QString &p : skillsVal.toString().split(",", Qt::SkipEmptyParts)) {
+                QString t = p.trimmed();
+                if (!t.isEmpty()) skills.append(t);
+            }
+        }
+        if (!skills.isEmpty()) {
+            m_latestSkills = skills;
+            injectRadarChart();
+        }
+        m_btnExport->setEnabled(true);
+    }
 
-    QString timestamp = record.value("timestamp").toString(QString::fromUtf8("未知时间"));
-    QString category = record.value("category").toString(QString::fromUtf8("代码分析"));
+    if (m_userId > 0 && !m_dataRequestSent) {
+        m_dataRequestSent = true;
 
-    QHBoxLayout *topRow = new QHBoxLayout;
-    topRow->setSpacing(8);
+        m_statusLabel->setText(QString::fromUtf8("⏳ 同步服务端数据..."));
+        m_statusLabel->setStyleSheet("color: #38BDF8; font-size: 11px;");
+        m_statusLabel->show();
 
-    QLabel *dotLabel = new QLabel("●");
-    dotLabel->setObjectName("timelineDot");
-    dotLabel->setFixedSize(10, 10);
-    dotLabel->setStyleSheet("color: #00f2fe; font-size: 10px;");
-    topRow->addWidget(dotLabel);
+        QString url = QString("http://127.0.0.1:8081/api/analysis/career-advice/profile?userId=%1")
+                         .arg(m_userId);
+        QUrl requestUrl(url);
+        QNetworkRequest request(requestUrl);
+        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+        request.setTransferTimeout(10000);
+        m_networkManager->get(request);
 
-    QLabel *timeLabel = new QLabel(timestamp);
-    timeLabel->setObjectName("timeLabel");
-    timeLabel->setStyleSheet("color: #888; font-size: 11px;");
-    topRow->addWidget(timeLabel);
+        QTimer::singleShot(12000, this, [this]() {
+            if (m_statusLabel && m_statusLabel->isVisible()) {
+                m_statusLabel->setText(QString::fromUtf8("服务端暂不可用"));
+                m_statusLabel->setStyleSheet("color: #64748B; font-size: 11px;");
+                QTimer::singleShot(3000, m_statusLabel, &QLabel::hide);
+            }
+        });
+    }
+}
 
-    topRow->addStretch();
+void CareerDashboardDialog::injectRadarChart()
+{
+    QJsonDocument doc(m_latestSkills);
+    QString jsonString = doc.toJson(QJsonDocument::Compact);
 
-    QLabel *catLabel = new QLabel(category);
-    catLabel->setObjectName("catLabel");
-    catLabel->setStyleSheet(
-        "color: #00f2fe; font-size: 10px; font-weight: bold;"
-        "background: rgba(0, 242, 254, 15);"
-        "border: 1px solid rgba(0, 242, 254, 40);"
-        "border-radius: 8px; padding: 2px 8px;"
-    );
-    topRow->addWidget(catLabel);
+    QString jsCode;
 
-    cardLayout->addLayout(topRow);
+    if (m_latestSkills.isEmpty()) {
+        jsCode = QString(
+            "if (typeof window.updateSkillsData === 'function') {"
+            "  window.updateSkillsData([]);"
+            "}"
+        );
+    } else {
+        jsCode = QString(
+            "if (typeof window.updateSkillsData === 'function') {"
+            "  window.updateSkillsData(%1);"
+            "}"
+        ).arg(jsonString);
+    }
 
-    QString resumeHighlight = record.value("resume_highlight").toString();
+    qDebug() << "🎓 [CareerDashboard] injectRadarChart: webViewLoaded=" << m_isWebViewLoaded
+             << "skills=" << m_latestSkills.size();
+
+    if (m_isWebViewLoaded) {
+        m_webView->page()->runJavaScript(jsCode);
+    } else {
+        m_pendingChartData = jsCode;
+    }
+}
+
+void CareerDashboardDialog::applyCareerData(const QString &highlight, const QJsonArray &skills, const QString &advice)
+{
+    qDebug() << "⚡ [CareerDashboard] applyCareerData: highlightLen=" << highlight.length()
+             << "skills=" << skills.size();
+
+    QJsonObject record;
+    record["resume_highlight"] = highlight;
+    record["next_suggestion"] = advice;
+    record["skills"] = skills;
+    record["category"] = QString::fromUtf8("职业档案");
+    record["timestamp"] = QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm");
+
+    CareerHistoryManager::instance().appendRecord(record);
+
+    m_records = CareerHistoryManager::instance().getAllRecords();
+    loadSkillBadges();
+    loadTimeline();
+
+    m_latestSkills = skills;
+    injectRadarChart();
+
+    m_btnExport->setEnabled(true);
+}
+
+void CareerDashboardDialog::refreshData()
+{
+    qDebug() << "🔄 [CareerDashboard] refreshData triggered";
+
+    m_records = CareerHistoryManager::instance().getAllRecords();
+    loadSkillBadges();
+    loadTimeline();
+
+    if (!m_records.isEmpty()) {
+        QJsonObject latest = m_records[0].toObject();
+        QJsonArray skills;
+        QJsonValue skillsVal = latest.value("skills");
+        if (skillsVal.isArray()) {
+            skills = skillsVal.toArray();
+        } else {
+            for (const QString &p : skillsVal.toString().split(",", Qt::SkipEmptyParts)) {
+                QString t = p.trimmed();
+                if (!t.isEmpty()) skills.append(t);
+            }
+        }
+        if (!skills.isEmpty()) {
+            m_latestSkills = skills;
+            injectRadarChart();
+        }
+        m_btnExport->setEnabled(true);
+    } else {
+        m_latestSkills = QJsonArray();
+        injectRadarChart();
+        m_btnExport->setEnabled(false);
+    }
+}
+
+void CareerDashboardDialog::onDeleteCard(int index, const QString &highlightText)
+{
+    if (index < 0 || index >= m_cards.size()) {
+        return;
+    }
+
+    CareerCardWidget *card = m_cards.at(index);
+    QPushButton *btn = card->findChild<QPushButton*>("btnDeleteCard");
+    if (btn) {
+        btn->setEnabled(false);
+        btn->setText("⏳");
+    }
+
+    if (m_userId > 0) {
+        QString encodedHighlight = QUrl::toPercentEncoding(highlightText);
+        QString url = QString("http://127.0.0.1:8081/api/v1/career-advice/record?userId=%1&highlightText=%2")
+                         .arg(m_userId).arg(encodedHighlight);
+        QUrl deleteUrl(url);
+        QNetworkRequest request(deleteUrl);
+        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+        request.setTransferTimeout(5000);
+        request.setAttribute(QNetworkRequest::User, "single_record_delete");
+
+        qDebug() << "🗑️ [CareerDashboard] DELETE record:" << url;
+        m_networkManager->deleteResource(request);
+    } else {
+        CareerHistoryManager::instance().deleteRecord(index);
+        refreshData();
+    }
+}
+
+void CareerDashboardDialog::onServerDataReceived(QNetworkReply *reply)
+{
+    if (!m_statusLabel) return;
+
+    int httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    QNetworkAccessManager::Operation op = reply->operation();
+
+    if (op == QNetworkAccessManager::DeleteOperation) {
+        reply->deleteLater();
+        m_btnReset->setEnabled(true);
+
+        if (reply->error() != QNetworkReply::NoError || httpStatus >= 500) {
+            qDebug() << "❌ [CareerDashboard] DELETE failed";
+            m_statusLabel->setText(QString::fromUtf8("删除失败"));
+            m_statusLabel->setStyleSheet("color: #EF4444; font-size: 11px;");
+            m_statusLabel->show();
+            QTimer::singleShot(3000, m_statusLabel, &QLabel::hide);
+            return;
+        }
+
+        QVariant attr = reply->request().attribute(QNetworkRequest::User);
+        bool isSingleDelete = (attr.toString() == "single_record_delete");
+
+        if (isSingleDelete) {
+            qDebug() << "🗑️ [CareerDashboard] Single record DELETE success, re-fetching profile...";
+            m_statusLabel->setText(QString::fromUtf8("⏳ 刷新中..."));
+            m_statusLabel->setStyleSheet("color: #38BDF8; font-size: 11px;");
+            m_statusLabel->show();
+
+            QString url = QString("http://127.0.0.1:8081/api/analysis/career-advice/profile?userId=%1")
+                             .arg(m_userId);
+            QUrl requestUrl(url);
+            QNetworkRequest request(requestUrl);
+            request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+            request.setTransferTimeout(10000);
+            m_networkManager->get(request);
+            return;
+        }
+
+        qDebug() << "🗑️ [CareerDashboard] Full profile DELETE success, clearing local data";
+
+        CareerHistoryManager::instance().clearAllRecords();
+
+        m_records = QJsonArray();
+        m_latestSkills = QJsonArray();
+        m_uniqueSkills.clear();
+        m_skillList->clear();
+        loadTimeline();
+        injectRadarChart();
+        m_btnExport->setEnabled(false);
+
+        m_statusLabel->setText(QString::fromUtf8("✅ 档案已重置"));
+        m_statusLabel->setStyleSheet("color: #34D399; font-size: 11px;");
+        m_statusLabel->show();
+        QTimer::singleShot(3000, m_statusLabel, &QLabel::hide);
+        return;
+    }
+
+    if (reply->error() != QNetworkReply::NoError) {
+        m_statusLabel->setText(QString::fromUtf8("网络请求失败"));
+        m_statusLabel->setStyleSheet("color: #EF4444; font-size: 11px;");
+        m_statusLabel->show();
+        QTimer::singleShot(5000, m_statusLabel, &QLabel::hide);
+        reply->deleteLater();
+        return;
+    }
+
+    QByteArray data = reply->readAll();
+    reply->deleteLater();
+
+    QJsonParseError parseError;
+    QJsonDocument doc = QJsonDocument::fromJson(data, &parseError);
+    if (parseError.error != QJsonParseError::NoError || !doc.isObject()) {
+        m_statusLabel->setText(QString::fromUtf8("数据解析失败"));
+        m_statusLabel->setStyleSheet("color: #EF4444; font-size: 11px;");
+        m_statusLabel->show();
+        QTimer::singleShot(3000, m_statusLabel, &QLabel::hide);
+        return;
+    }
+
+    QJsonObject serverObj = doc.object();
+
+    if (serverObj.contains("code") && serverObj.contains("data")) {
+        int code = serverObj.value("code").toInt();
+        if (code != 200) {
+            m_statusLabel->setText(QString::fromUtf8("服务端返回错误"));
+            m_statusLabel->setStyleSheet("color: #EF4444; font-size: 11px;");
+            m_statusLabel->show();
+            QTimer::singleShot(3000, m_statusLabel, &QLabel::hide);
+            return;
+        }
+        QJsonValue dataVal = serverObj.value("data");
+        if (dataVal.isObject()) {
+            serverObj = dataVal.toObject();
+        }
+    }
+
+    QString source = serverObj.value("source").toString();
+    if (source == "default" || source == "fallback") {
+        m_statusLabel->setText(QString::fromUtf8("📭 暂无档案，请多和 AI 交流"));
+        m_statusLabel->setStyleSheet("color: #FBBF24; font-size: 11px;");
+        m_statusLabel->show();
+        QTimer::singleShot(5000, m_statusLabel, &QLabel::hide);
+        return;
+    }
+
+    QString resumeHighlight = serverObj.value("resumeHighlight").toString();
     if (resumeHighlight.isEmpty()) {
-        resumeHighlight = record.value("resumeHighlight").toString();
+        resumeHighlight = serverObj.value("resume_highlight").toString();
     }
-    if (!resumeHighlight.isEmpty()) {
-        QLabel *resumeHeader = new QLabel(QString::fromUtf8("📝 简历亮点 (STAR法则)"));
-        resumeHeader->setObjectName("cardSectionHeader");
-        resumeHeader->setStyleSheet("color: #64ffda; font-size: 11px; font-weight: bold;");
-        cardLayout->addWidget(resumeHeader);
+    QString learningAdvice = serverObj.value("learningAdvice").toString();
+    if (learningAdvice.isEmpty()) {
+        learningAdvice = serverObj.value("next_suggestion").toString();
+    }
+    QJsonArray skillsArr = serverObj.value("skills").toArray();
 
-        QLabel *resumeContent = new QLabel(resumeHighlight);
-        resumeContent->setObjectName("resumeContent");
-        resumeContent->setWordWrap(true);
-        resumeContent->setStyleSheet(
-            "color: #e0e0e0; font-size: 12px; line-height: 1.5;"
-            "background: rgba(100, 255, 218, 8);"
-            "border-left: 3px solid #64ffda;"
-            "border-radius: 0 6px 6px 0;"
-            "padding: 8px 10px;"
-        );
-        cardLayout->addWidget(resumeContent);
+    if (resumeHighlight.isEmpty() && learningAdvice.isEmpty() && skillsArr.isEmpty()) {
+        m_statusLabel->setText(QString::fromUtf8("暂无数据"));
+        m_statusLabel->setStyleSheet("color: #FBBF24; font-size: 11px;");
+        m_statusLabel->show();
+        QTimer::singleShot(3000, m_statusLabel, &QLabel::hide);
+        return;
     }
 
-    QString nextSuggestion = record.value("next_suggestion").toString();
-    if (nextSuggestion.isEmpty()) {
-        nextSuggestion = record.value("learningAdvice").toString();
-    }
-    if (!nextSuggestion.isEmpty()) {
-        QLabel *adviceHeader = new QLabel(QString::fromUtf8("🎯 导师进阶建议"));
-        adviceHeader->setObjectName("cardSectionHeader");
-        adviceHeader->setStyleSheet("color: #ffd54f; font-size: 11px; font-weight: bold;");
-        cardLayout->addWidget(adviceHeader);
+    applyCareerData(resumeHighlight, skillsArr, learningAdvice);
 
-        QLabel *adviceContent = new QLabel(nextSuggestion);
-        adviceContent->setObjectName("adviceContent");
-        adviceContent->setWordWrap(true);
-        adviceContent->setStyleSheet(
-            "color: #ccc; font-size: 12px; line-height: 1.5;"
-            "background: rgba(255, 213, 79, 8);"
-            "border-left: 3px solid #ffd54f;"
-            "border-radius: 0 6px 6px 0;"
-            "padding: 8px 10px;"
-        );
-        cardLayout->addWidget(adviceContent);
-    }
+    m_statusLabel->setText(QString::fromUtf8("✅ 同步完成"));
+    m_statusLabel->setStyleSheet("color: #34D399; font-size: 11px;");
+    m_statusLabel->show();
+    QTimer::singleShot(3000, m_statusLabel, &QLabel::hide);
+}
 
-    QString skillsStr = extractSkills(record);
-    if (!skillsStr.isEmpty()) {
-        QLabel *skillsLabel = new QLabel("🛠 " + skillsStr);
-        skillsLabel->setObjectName("skillsInCard");
-        skillsLabel->setWordWrap(true);
-        skillsLabel->setStyleSheet(
-            "color: #64ffda; font-size: 10px;"
-            "background: rgba(0, 242, 254, 10);"
-            "border: 1px solid rgba(0, 242, 254, 25);"
-            "border-radius: 10px; padding: 3px 10px;"
-        );
-        cardLayout->addWidget(skillsLabel);
+void CareerDashboardDialog::onResetClicked()
+{
+    QMessageBox::StandardButton confirm = QMessageBox::warning(
+        this,
+        QString::fromUtf8("⚠️ 重置职业档案"),
+        QString::fromUtf8("警告：此操作将清空您所有的实战档案与技能雷达图，是否继续？"),
+        QMessageBox::Yes | QMessageBox::No,
+        QMessageBox::No
+    );
+
+    if (confirm != QMessageBox::Yes) {
+        return;
     }
 
-    QString borderAccent = (index % 2 == 0) ? "#00f2fe" : "#7c4dff";
-    card->setStyleSheet(QString(
-        "#timelineCard {"
-        "   background: qlineargradient(x1:0, y1:0, x2:1, y2:0,"
-        "       stop:0 rgba(26, 26, 62, 200), stop:1 rgba(15, 12, 41, 200));"
-        "   border: 1px solid %1;"
-        "   border-radius: 10px;"
-        "}"
-    ).arg(borderAccent));
+    m_btnReset->setEnabled(false);
+    m_statusLabel->setText(QString::fromUtf8("⏳ 正在重置..."));
+    m_statusLabel->setStyleSheet("color: #EF4444; font-size: 11px;");
+    m_statusLabel->show();
 
-    return card;
+    QString url = QString("http://127.0.0.1:8081/api/analysis/career-advice/profile?userId=%1")
+                     .arg(m_userId);
+    QUrl deleteUrl(url);
+    QNetworkRequest request(deleteUrl);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    request.setTransferTimeout(10000);
+
+    m_networkManager->deleteResource(request);
 }
 
 void CareerDashboardDialog::onExportClicked()
@@ -468,7 +688,7 @@ void CareerDashboardDialog::onExportClicked()
     for (const QJsonValue &val : m_records) {
         QJsonObject rec = val.toObject();
 
-        QString category = rec.value("category").toString(QString::fromUtf8("代码分析"));
+        QString category = rec.value("category").toString(QString::fromUtf8("职业档案"));
         QString timestamp = rec.value("timestamp").toString(QString::fromUtf8("未知时间"));
 
         content += "---\n\n";

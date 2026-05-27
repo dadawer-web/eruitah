@@ -19,7 +19,8 @@ async function browse(path) {
   loading.value = true
   error.value = ''
   try {
-    const resp = await fetch(`/api/v1/browse?path=${encodeURIComponent(path)}`)
+    const uid = store.userId || 0
+    const resp = await fetch(`/api/v1/browse?path=${encodeURIComponent(path)}&user_id=${uid}`)
     if (resp.ok) {
       const data = await resp.json()
       folders.value = data.folders || []

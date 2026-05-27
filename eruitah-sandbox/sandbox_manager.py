@@ -330,13 +330,16 @@ class GitSandboxManager:
         result = self._run_git("branch", "--list", branch_name)
         return bool(result.stdout.strip())
 
-    def _get_worktree_dir(self, task_id: str) -> str:
+    def _get_worktree_dir(self, task_id: str, user_id: int = 0, session_id: str = "") -> str:
+        if user_id and session_id:
+            from sandbox_isolation import get_user_work_dir
+            return os.path.abspath(get_user_work_dir(user_id, session_id))
         return os.path.abspath(os.path.join(self.worktree_base, task_id))
 
-    def get_worktree_path(self, task_id: str) -> str:
+    def get_worktree_path(self, task_id: str, user_id: int = 0, session_id: str = "") -> str:
         if task_id in self._worktrees:
             return self._worktrees[task_id]
-        task_dir = self._get_worktree_dir(task_id)
+        task_dir = self._get_worktree_dir(task_id, user_id, session_id)
         if os.path.exists(task_dir) and os.path.exists(
             os.path.join(task_dir, ".git")
         ):
@@ -382,14 +385,15 @@ class GitSandboxManager:
         except Exception as e:
             logger.warning(f"⚠️ 修复 worktree gitdir 失败: {e}")
 
-    def create_task_workspace(self, task_id: str, base_task_id: str = "") -> str:
+    def create_task_workspace(self, task_id: str, base_task_id: str = "", user_id: int = 0, session_id: str = "") -> str:
         safe_branch = f"{TASK_BRANCH_PREFIX}{task_id}"
-        task_dir = self._get_worktree_dir(task_id)
+        task_dir = self._get_worktree_dir(task_id, user_id=user_id, session_id=session_id)
 
         if task_id in self._worktrees and os.path.exists(self._worktrees[task_id]):
             logger.info(f"🌿 任务 {task_id} 的 worktree 已存在: {self._worktrees[task_id]}")
             return self._worktrees[task_id]
 
+        os.makedirs(os.path.dirname(task_dir), exist_ok=True)
         os.makedirs(self.worktree_base, exist_ok=True)
 
         if base_task_id:

@@ -1858,7 +1858,7 @@ def run_agent(
 
     reset_budget(session_id)
     cost_tracker = reset_cost_tracker(session_id, limit_usd=5.0)
-    rewind_system = get_rewind_system()
+    rewind_system = get_rewind_system(user_id=user_id, session_id=session_id)
     rewind_system.load_checkpoints(session_id)
 
     blackboard = StateBlackboard()
@@ -1871,7 +1871,7 @@ def run_agent(
             task_data = None
             try:
                 from task_manager import get_task_manager
-                tm = get_task_manager()
+                tm = get_task_manager(user_id=user_id)
                 session = tm.get_session(task_id)
                 if session:
                     task_data = session.to_dict()
@@ -1944,7 +1944,7 @@ def run_agent(
     task_name = user_input[:50] + ("..." if len(user_input) > 50 else "") if user_input else f"任务 {task_id[:8]}"
 
     from task_manager import get_session_manager
-    sm = get_session_manager()
+    sm = get_session_manager(user_id=user_id)
     session = sm.get_or_create_session(
         task_id=task_id,
         first_prompt=user_input or task_name,
@@ -2275,7 +2275,7 @@ def run_agent(
                 _cp_desc = f"第 {turn} 轮 (Markdown写入)"
                 try:
                     from rewind_system import get_rewind_system as _get_rewind
-                    _rewind = _get_rewind()
+                    _rewind = _get_rewind(user_id=user_id, session_id=session_id)
                     _cp = _rewind.create_checkpoint(session_id, turn, messages, _cp_desc, work_dir=work_dir)
                     if _cp:
                         yield {
@@ -2316,7 +2316,7 @@ def run_agent(
                     _cp_desc = f"第 {turn} 轮 (长文本拦截)"
                     try:
                         from rewind_system import get_rewind_system as _get_rewind
-                        _rewind = _get_rewind()
+                        _rewind = _get_rewind(user_id=user_id, session_id=session_id)
                         _cp = _rewind.create_checkpoint(session_id, turn, messages, _cp_desc, work_dir=work_dir)
                         if _cp:
                             yield {
@@ -2353,7 +2353,7 @@ def run_agent(
                     _cp_desc = f"第 {turn} 轮 (格式错误重试)"
                     try:
                         from rewind_system import get_rewind_system as _get_rewind
-                        _rewind = _get_rewind()
+                        _rewind = _get_rewind(user_id=user_id, session_id=session_id)
                         _cp = _rewind.create_checkpoint(session_id, turn, messages, _cp_desc, work_dir=work_dir)
                         if _cp:
                             yield {
@@ -2372,7 +2372,7 @@ def run_agent(
                 _cp_desc = f"第 {turn} 轮 (完成)"
                 try:
                     from rewind_system import get_rewind_system as _get_rewind
-                    _rewind = _get_rewind()
+                    _rewind = _get_rewind(user_id=user_id, session_id=session_id)
                     _cp = _rewind.create_checkpoint(session_id, turn, messages, _cp_desc, work_dir=work_dir)
                     if _cp:
                         yield {
@@ -2389,24 +2389,21 @@ def run_agent(
 
                 if has_code_changes and user_id > 0:
                     try:
-                        rpc_bridge_dir = os.environ.get(
-                            "RPC_BRIDGE_DIR",
-                            os.path.join(os.path.dirname(work_dir), "protobuf-rpc-bridge", "python"),
+                        sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "protobuf-rpc-bridge", "python"))
+                        from career_analyzer import analyze_career_sync
+                        analysis = analyze_career_sync(
+                            user_id=user_id,
+                            work_dir=work_dir,
+                            session_messages=None,
                         )
-                        if rpc_bridge_dir not in sys.path:
-                            sys.path.insert(0, rpc_bridge_dir)
-                        from career_analyzer import spawn_career_analysis
-                        code_content = ""
-                        for root_dir, dirs, files in os.walk(work_dir):
-                            for fn in files:
-                                if fn.endswith(('.py', '.js', '.ts', '.java', '.cpp', '.h', '.c', '.go', '.rs', '.vue', '.jsx', '.tsx', '.html', '.css', '.sql', '.sh')):
-                                    fp = os.path.join(root_dir, fn)
-                                    try:
-                                        with open(fp, 'r', encoding='utf-8', errors='ignore') as f:
-                                            code_content += f"\n# === {fn} ===\n{f.read()}\n"
-                                    except Exception:
-                                        pass
-                        spawn_career_analysis(user_id, code_content)
+                        if analysis and (analysis.get("skills") or analysis.get("resume_highlight")):
+                            from rpc_entry import report_career_advice
+                            report_career_advice(
+                                user_id=user_id,
+                                extracted_skills=analysis.get("skills", []),
+                                resume_highlight=analysis.get("resume_highlight", ""),
+                                next_suggestion=analysis.get("next_suggestion", ""),
+                            )
                     except Exception as e:
                         logger.warning(f"⚠️ 职业档案分析触发失败: {e}")
 
@@ -2724,7 +2721,7 @@ def run_agent(
                     if task_id:
                         try:
                             from task_manager import get_task_manager
-                            tm = get_task_manager()
+                            tm = get_task_manager(user_id=user_id)
                             tm.update_session_messages(
                                 task_id=task_id,
                                 messages=messages,
@@ -2869,7 +2866,7 @@ def run_agent(
             _cp_git_commit = ""
             try:
                 from rewind_system import get_rewind_system as _get_rewind
-                _rewind = _get_rewind()
+                _rewind = _get_rewind(user_id=user_id, session_id=session_id)
                 _cp = _rewind.create_checkpoint(session_id, turn, messages, checkpoint_desc, work_dir=work_dir)
                 if _cp:
                     _cp_code_diff = _cp.code_diff or ""
@@ -2923,7 +2920,7 @@ def run_agent(
             if task_id:
                 try:
                     from task_manager import get_task_manager
-                    tm = get_task_manager()
+                    tm = get_task_manager(user_id=user_id)
                     tm.update_session_messages(
                         task_id=task_id,
                         messages=messages,
@@ -3426,9 +3423,9 @@ def _call_openai(
         logger.error(f"❌ 所有节点都不可用: {e}")
         return "❌ 大模型服务暂时不可用，请稍后重试", [], None
 
-def get_session_messages(session_id: str) -> list[dict]:
+def get_session_messages(session_id: str, user_id: int = 0) -> list[dict]:
     """获取会话消息（用于回退工具）"""
-    rewind_system = get_rewind_system()
+    rewind_system = get_rewind_system(user_id=user_id, session_id=session_id)
     checkpoints = rewind_system.list_checkpoints(session_id)
     if not checkpoints:
         return []

@@ -6,6 +6,7 @@ Eruitah 智能编程沙盒 - SessionManager (会话管理器)
   AI 提炼标题 = 给这个平行宇宙贴个标签
   记忆隔离 = 任务 A 的对话和代码，绝对不能串台到任务 B
   回退隔离 = 撤销任务 A，只会把任务 A 相关的代码回滚，任务 B 毫发无损
+  多租户隔离 = 每个用户的任务元数据、快照、检查点物理隔离
 
 架构:
   SessionManager = TaskRegistry (物理快照) + TaskManager (会话记忆) 的统一入口
@@ -30,20 +31,11 @@ logger = logging.getLogger(__name__)
 COMPACT_THRESHOLD = 999
 COMPACT_KEEP_RECENT = 4
 
-TASK_STORAGE_DIR = os.environ.get(
-    "ERUITAH_TASK_DIR",
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), ".tasks"),
-)
-
-SNAPSHOT_BASE_DIR = os.environ.get(
-    "ERUITAH_SNAPSHOT_DIR",
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), ".eruitah_snapshots"),
-)
-
 IGNORE_PATTERNS = {
     "node_modules", "__pycache__", ".git", "venv", ".venv",
     "dist", "build", ".next", ".nuxt", "target", ".gradle",
     ".eruitah_snapshots", ".checkpoints", ".eruitah_cache", ".tasks",
+    ".user_data",
 }
 
 
@@ -100,12 +92,15 @@ class TaskSession:
 
 
 class SessionManager:
-    def __init__(self):
+    def __init__(self, user_id: int):
+        if not user_id:
+            logger.warning("SessionManager created with user_id=0, falling back to 1 for tenant isolation")
+            user_id = 1
+        self._user_id = user_id
         self._sessions: Dict[str, TaskSession] = {}
         self.current_task_id: Optional[str] = None
         self._lock = threading.Lock()
         self._sandboxes: Dict[str, Any] = {}
-        os.makedirs(TASK_STORAGE_DIR, exist_ok=True)
         self._load_all()
 
     def _get_sandbox(self, work_dir: str):
@@ -113,19 +108,27 @@ class SessionManager:
         return get_sandbox(work_dir)
 
     def _task_filepath(self, task_id: str) -> str:
-        return os.path.join(TASK_STORAGE_DIR, f"{task_id}.json")
+        from sandbox_isolation import get_user_task_filepath
+        return get_user_task_filepath(self._user_id, task_id)
 
     def _snapshot_path(self, task_id: str) -> str:
-        return os.path.join(SNAPSHOT_BASE_DIR, f"{task_id}_pre")
+        from sandbox_isolation import get_user_snapshot_path
+        return get_user_snapshot_path(self._user_id, task_id)
+
+    def _task_dir(self) -> str:
+        from sandbox_isolation import get_user_task_dir
+        return get_user_task_dir(self._user_id)
 
     def _ignore_filter(self, directory: str, contents: list) -> list:
         return [name for name in contents if name in IGNORE_PATTERNS]
 
     def _load_all(self):
-        if os.path.exists(TASK_STORAGE_DIR):
-            for filename in os.listdir(TASK_STORAGE_DIR):
+        from sandbox_isolation import get_user_task_dir
+        task_dir = get_user_task_dir(self._user_id)
+        if os.path.exists(task_dir):
+            for filename in os.listdir(task_dir):
                 if filename.endswith(".json"):
-                    filepath = os.path.join(TASK_STORAGE_DIR, filename)
+                    filepath = os.path.join(task_dir, filename)
                     try:
                         with open(filepath, "r", encoding="utf-8") as f:
                             data = json.load(f)
@@ -133,11 +136,12 @@ class SessionManager:
                         self._sessions[session.id] = session
                     except Exception as e:
                         logger.error(f"加载任务失败 {filename}: {e}")
-        logger.info(f"SessionManager 已加载 {len(self._sessions)} 个任务会话")
+        logger.info(f"SessionManager(user={self._user_id}) 已加载 {len(self._sessions)} 个任务会话")
 
     def _save_session(self, session: TaskSession):
         filepath = self._task_filepath(session.id)
         try:
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
             with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(session.to_dict(), f, ensure_ascii=False, indent=2)
         except Exception as e:
@@ -146,6 +150,7 @@ class SessionManager:
     def _create_physical_snapshot(self, task_id: str, work_dir: str) -> str:
         snapshot_path = self._snapshot_path(task_id)
         if os.path.exists(work_dir):
+            os.makedirs(os.path.dirname(snapshot_path), exist_ok=True)
             if os.path.exists(snapshot_path):
                 shutil.rmtree(snapshot_path, ignore_errors=True)
             shutil.copytree(
@@ -182,7 +187,12 @@ class SessionManager:
             worktree_dir = ""
             if use_worktree:
                 sandbox = self._get_sandbox(work_dir)
-                worktree_dir = sandbox.create_task_workspace(new_id, base_task_id=base_task_id)
+                worktree_dir = sandbox.create_task_workspace(
+                    new_id,
+                    base_task_id=base_task_id,
+                    user_id=self._user_id,
+                    session_id=new_id,
+                )
             else:
                 worktree_dir = work_dir
                 logger.info(f"📦 直通模式: 任务 {new_id} 直接在用户目录 {work_dir} 工作")
@@ -232,7 +242,7 @@ class SessionManager:
 
             try:
                 from rewind_system import get_rewind_system
-                rewind = get_rewind_system()
+                rewind = get_rewind_system(user_id=self._user_id, session_id=task_id)
 
                 rewind_result = rewind.rewind(
                     session_id=task_id,
@@ -585,7 +595,7 @@ class SessionManager:
 
             try:
                 from rewind_system import get_rewind_system
-                rewind = get_rewind_system()
+                rewind = get_rewind_system(user_id=self._user_id, session_id=task_id)
 
                 rewind_result = rewind.rewind(
                     session_id=task_id,
@@ -657,15 +667,24 @@ class SessionManager:
             return result
 
 
-_session_manager: Optional[SessionManager] = None
+_session_managers: Dict[int, SessionManager] = {}
+_managers_lock = threading.Lock()
 
 
-def get_session_manager() -> SessionManager:
-    global _session_manager
-    if _session_manager is None:
-        _session_manager = SessionManager()
-    return _session_manager
+def get_session_manager(user_id: int = 0) -> SessionManager:
+    if not user_id:
+        user_id = int(os.environ.get("ERUITAH_DEFAULT_USER_ID", "0"))
+    if not user_id:
+        user_id = 1
+        logger.warning(
+            "get_session_manager() called without user_id, falling back to 1. "
+            "This breaks tenant isolation! Pass user_id explicitly or set ERUITAH_DEFAULT_USER_ID."
+        )
+    with _managers_lock:
+        if user_id not in _session_managers:
+            _session_managers[user_id] = SessionManager(user_id=user_id)
+        return _session_managers[user_id]
 
 
-def get_task_manager() -> SessionManager:
-    return get_session_manager()
+def get_task_manager(user_id: int = 0) -> SessionManager:
+    return get_session_manager(user_id=user_id)

@@ -213,6 +213,9 @@ void MainWindow::onServerStopped() {
 }
 
 void MainWindow::handleLoginSuccess(int userId, const QString &userName) {
+    // 保存当前登录的 userId
+    m_userId = userId;
+
     // 将调试信息写入文件，便于在无图形界面环境下诊断
     QString logFilePath = QCoreApplication::applicationDirPath() + "/login_debug.log";
     QFile logFile(logFilePath);
@@ -280,9 +283,9 @@ void MainWindow::onOpenCodingAgent() {
     QString hostEnv = qEnvironmentVariable("ERUITAH_SANDBOX_HOST", "");
     QString url;
     if (!hostEnv.isEmpty()) {
-        url = QString("http://%1/ide").arg(hostEnv);
+        url = QString("http://%1/ide?userId=%2").arg(hostEnv).arg(m_userId);
     } else {
-        url = "http://127.0.0.1:8001/ide";
+        url = QString("http://127.0.0.1:8001/ide?userId=%1").arg(m_userId);
     }
 
     bool success = QDesktopServices::openUrl(QUrl(url));

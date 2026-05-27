@@ -76,9 +76,10 @@ public class InternalRpcServer {
                     String method = msg.getMethodName();
                     ByteString responsePayload;
 
-                    if ("UpdateCareerProfile".equals(method)) {
-                        ChatProto.CareerAdviceRequest request = ChatProto.CareerAdviceRequest.parseFrom(msg.getPayload());
-                        responsePayload = ChatProto.CareerAdviceResponse.newBuilder().build().toByteString();
+                    if ("UpdateCareerProfile".equals(method) || "SendCareerAdvice".equals(method)) {
+                        responsePayload = ChatProto.CareerAdviceResponse.newBuilder().setSuccess(true).build().toByteString();
+                    } else if ("EmitSkillEvent".equals(method)) {
+                        responsePayload = ChatProto.AgentSkillEventAck.newBuilder().setSuccess(true).build().toByteString();
                     } else {
                         ChatProto.InternalForwardRequest request = ChatProto.InternalForwardRequest.parseFrom(msg.getPayload());
                         ChatProto.InternalForwardResponse response = ChatProto.InternalForwardResponse.newBuilder()

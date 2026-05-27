@@ -76,30 +76,102 @@ bool CareerHistoryManager::writeToFile(const QJsonArray& records) const
     return true;
 }
 
-void CareerHistoryManager::saveRecord(const QJsonObject& msgData)
+void CareerHistoryManager::appendRecord(const QJsonObject& record)
 {
     static QMutex mutex;
     QMutexLocker locker(&mutex);
 
-    QJsonObject record;
-    record["category"] = msgData.value("category").toString(QString::fromUtf8("代码分析"));
-    record["skills"] = msgData.value("skills");
-    record["resume_highlight"] = msgData.value("resume_highlight").toString(
-        msgData.value("resumeHighlight").toString());
-    record["next_suggestion"] = msgData.value("next_suggestion").toString(
-        msgData.value("learningAdvice").toString());
-    record["timestamp"] = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
-
     QJsonArray records = readFromFile();
-    records.prepend(record);
 
-    const int MAX_RECORDS = 500;
+    QString newHighlight = record.value("resume_highlight").toString();
+    if (newHighlight.isEmpty()) {
+        newHighlight = record.value("resumeHighlight").toString();
+    }
+
+    bool replaced = false;
+    if (!newHighlight.isEmpty()) {
+        for (int i = 0; i < records.size(); ++i) {
+            QJsonObject existing = records[i].toObject();
+            QString existingHighlight = existing.value("resume_highlight").toString();
+            if (existingHighlight.isEmpty()) {
+                existingHighlight = existing.value("resumeHighlight").toString();
+            }
+            if (!existingHighlight.isEmpty() && existingHighlight.trimmed() == newHighlight.trimmed()) {
+                QJsonObject merged = existing;
+                if (record.contains("skills")) {
+                    merged["skills"] = record.value("skills");
+                }
+                if (record.contains("timestamp")) {
+                    merged["timestamp"] = record.value("timestamp");
+                } else {
+                    merged["timestamp"] = QDateTime::currentDateTime().toString(Qt::ISODate);
+                }
+                if (record.contains("learningAdvice") || record.contains("next_suggestion")) {
+                    merged["learningAdvice"] = record.value("learningAdvice").toString().isEmpty()
+                        ? record.value("next_suggestion").toString()
+                        : record.value("learningAdvice").toString();
+                }
+                if (record.contains("resumeHighlight") && !record.value("resumeHighlight").toString().isEmpty()) {
+                    merged["resumeHighlight"] = record.value("resumeHighlight");
+                }
+                if (record.contains("resume_highlight") && !record.value("resume_highlight").toString().isEmpty()) {
+                    merged["resume_highlight"] = record.value("resume_highlight");
+                }
+                records.removeAt(i);
+                records.prepend(merged);
+                replaced = true;
+                qDebug() << "[CareerHistory] Refreshed existing record at index" << i
+                         << "with new skills/timestamp, highlight=" << newHighlight.left(40);
+                break;
+            }
+        }
+    }
+
+    if (!replaced) {
+        records.prepend(record);
+    }
+
+    const int MAX_RECORDS = 50;
     while (records.size() > MAX_RECORDS) {
         records.removeLast();
     }
 
     if (writeToFile(records)) {
-        qDebug() << "[CareerHistory] Saved record, total:" << records.size();
+        qDebug() << "[CareerHistory] Appended: total=" << records.size()
+                 << "replaced=" << replaced;
+        emit careerDataUpdated();
+    }
+}
+
+void CareerHistoryManager::deleteRecord(int index)
+{
+    static QMutex mutex;
+    QMutexLocker locker(&mutex);
+
+    QJsonArray records = readFromFile();
+
+    if (index < 0 || index >= records.size()) {
+        qWarning() << "[CareerHistory] deleteRecord: invalid index" << index;
+        return;
+    }
+
+    records.removeAt(index);
+
+    if (writeToFile(records)) {
+        qDebug() << "[CareerHistory] Deleted index" << index << ", remaining=" << records.size();
+        emit careerDataUpdated();
+    }
+}
+
+void CareerHistoryManager::clearAllRecords()
+{
+    static QMutex mutex;
+    QMutexLocker locker(&mutex);
+
+    QJsonArray empty;
+    if (writeToFile(empty)) {
+        qDebug() << "[CareerHistory] All records cleared";
+        emit careerDataUpdated();
     }
 }
 

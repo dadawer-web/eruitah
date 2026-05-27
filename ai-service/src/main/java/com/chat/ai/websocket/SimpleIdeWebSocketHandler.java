@@ -119,9 +119,32 @@ public class SimpleIdeWebSocketHandler extends TextWebSocketHandler {
         if (request.has("api_key")) reqBuilder.setApiKey(request.get("api_key").asText());
         if (request.has("base_url")) reqBuilder.setBaseUrl(request.get("base_url").asText());
         if (request.has("provider")) reqBuilder.setProvider(request.get("provider").asText());
-        if (request.has("user_id")) reqBuilder.setUserId(request.get("user_id").asLong());
+
+        long rpcUserId = 0;
+        if (request.has("user_id") && request.get("user_id").asLong() > 0) {
+            rpcUserId = request.get("user_id").asLong();
+        }
+        if (rpcUserId == 0 && request.has("userId") && request.get("userId").asLong() > 0) {
+            rpcUserId = request.get("userId").asLong();
+        }
+        if (rpcUserId <= 0) {
+            log.warn("SandboxExecuteRequest missing user_id for session={}, using fallback=1. " +
+                     "Python sandbox requires user_id for tenant isolation!", sessionId);
+            rpcUserId = 1;
+        }
+        reqBuilder.setUserId(rpcUserId);
+
+        String rpcSessionId = reqBuilder.getSessionId();
+        if (rpcSessionId == null || rpcSessionId.isEmpty()) {
+            log.error("SandboxExecuteRequest missing session_id for session={}, this will break " +
+                      "Python sandbox tenant isolation!", sessionId);
+            reqBuilder.setSessionId(taskId);
+        }
 
         ChatProto.SandboxExecuteRequest rpcRequest = reqBuilder.build();
+
+        log.info("SandboxExecuteRequest built: userId={}, sessionId={}, taskId={}, promptLen={}",
+                 rpcUserId, rpcRequest.getSessionId(), taskId, prompt.length());
 
         rpcClient.callStream(
                 rpcRequest,

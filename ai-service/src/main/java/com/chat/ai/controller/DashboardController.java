@@ -1,10 +1,13 @@
 package com.chat.ai.controller;
 
+import com.chat.ai.service.CareerAdviceService;
 import com.chat.ai.service.GraphExamService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.neo4j.core.Neo4jClient;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,17 +21,29 @@ import java.util.*;
 @RequestMapping("/api/analysis")
 public class DashboardController {
 
+    private static final String CAREER_PROFILE_KEY = "career:profile:";
+    private static final String IDEMPOTENT_LOCK_KEY = "lock:career:advice:";
+
     private final GraphExamService graphExamService;
     private final Neo4jClient neo4jClient;
     private final ChatClient fastChatClient;
+    private final CareerAdviceService careerAdviceService;
+    private final StringRedisTemplate redisTemplate;
+    private final ObjectMapper objectMapper;
 
     public DashboardController(
             GraphExamService graphExamService,
             Neo4jClient neo4jClient,
-            @Qualifier("fastChatClient") ChatClient fastChatClient) {
+            @Qualifier("fastChatClient") ChatClient fastChatClient,
+            CareerAdviceService careerAdviceService,
+            StringRedisTemplate redisTemplate,
+            ObjectMapper objectMapper) {
         this.graphExamService = graphExamService;
         this.neo4jClient = neo4jClient;
         this.fastChatClient = fastChatClient;
+        this.careerAdviceService = careerAdviceService;
+        this.redisTemplate = redisTemplate;
+        this.objectMapper = objectMapper;
     }
 
     @GetMapping("/dashboard/{userId}")
@@ -263,5 +278,153 @@ public class DashboardController {
         summary.put("subjectDetails", subjectMastery);
 
         return ResponseEntity.ok(summary);
+    }
+
+    @GetMapping("/career-advice/profile")
+    public ResponseEntity<Map<String, Object>> getCareerProfile(@RequestParam("userId") int userId) {
+        log.info("🎓 获取职业档案: userId={}", userId);
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("userId", userId);
+
+        try {
+            String json = redisTemplate.opsForValue().get(CAREER_PROFILE_KEY + userId);
+
+            if (json != null && !json.isBlank()) {
+                Map<String, Object> profile = objectMapper.readValue(json, Map.class);
+
+                response.put("skills", profile.getOrDefault("skills", List.of()));
+                response.put("resumeHighlight", profile.getOrDefault("resumeHighlight", ""));
+                response.put("learningAdvice", profile.getOrDefault("learningAdvice", ""));
+                response.put("updatedAt", profile.getOrDefault("updatedAt", 0));
+                response.put("source", "server");
+
+                log.info("🎓 职业档案命中: userId={}, skills={}", userId, profile.get("skills"));
+            } else {
+                response.put("skills", List.of());
+                response.put("resumeHighlight", "");
+                response.put("learningAdvice", "");
+                response.put("nextSuggestion", "");
+                response.put("updatedAt", 0);
+                response.put("source", "default");
+
+                log.info("🎓 用户 userId={} 暂无档案，返回空数据结构", userId);
+            }
+        } catch (Exception e) {
+            log.warn("🎓 职业档案查询失败: userId={}, error={}", userId, e.getMessage());
+
+            response.put("skills", List.of());
+            response.put("resumeHighlight", "");
+            response.put("learningAdvice", "");
+            response.put("nextSuggestion", "");
+            response.put("updatedAt", 0);
+            response.put("source", "fallback");
+            response.put("error", e.getMessage());
+        }
+
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/v1/career-advice/record")
+    public ResponseEntity<Map<String, Object>> deleteCareerRecordByHighlight(
+            @RequestParam("userId") int userId,
+            @RequestParam("highlightText") String highlightText) {
+        log.info("🗑️ 按高亮文本精准删除职业档案记录: userId={}, highlightText={}...", userId, 
+                 highlightText != null && highlightText.length() > 30 ? highlightText.substring(0, 30) : highlightText);
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("userId", userId);
+
+        try {
+            boolean deleted = careerAdviceService.deleteRecordByHighlightText(userId, highlightText);
+
+            if (deleted) {
+                response.put("code", 200);
+                response.put("message", "记录已删除");
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("code", 404);
+                response.put("message", "未找到匹配的记录");
+                return ResponseEntity.status(404).body(response);
+            }
+        } catch (Exception e) {
+            log.error("🗑️ 按高亮文本删除记录失败: userId={}, error={}", userId, e.getMessage(), e);
+            response.put("code", 500);
+            response.put("message", "删除失败: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+
+    @DeleteMapping("/career-advice/record")
+    public ResponseEntity<Map<String, Object>> deleteCareerRecord(
+            @RequestParam("userId") int userId,
+            @RequestParam("recordIndex") int recordIndex) {
+        log.info("🗑️ 删除单条职业档案记录: userId={}, recordIndex={}", userId, recordIndex);
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("userId", userId);
+        response.put("recordIndex", recordIndex);
+
+        try {
+            boolean deleted = careerAdviceService.deleteRecord(userId, recordIndex);
+
+            if (deleted) {
+                response.put("code", 200);
+                response.put("message", "记录已删除");
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("code", 404);
+                response.put("message", "记录不存在或索引无效");
+                return ResponseEntity.status(404).body(response);
+            }
+        } catch (Exception e) {
+            log.error("🗑️ 删除单条记录失败: userId={}, recordIndex={}, error={}", userId, recordIndex, e.getMessage(), e);
+            response.put("code", 500);
+            response.put("message", "删除失败: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+
+    @DeleteMapping("/career-advice/profile")
+    public ResponseEntity<Map<String, Object>> resetCareerProfile(@RequestParam("userId") int userId) {
+        log.info("🗑️ 重置职业档案: userId={}", userId);
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("userId", userId);
+
+        try {
+            redisTemplate.delete(CAREER_PROFILE_KEY + userId);
+            log.info("🗑️ Redis profile deleted for user={}", userId);
+
+            String userIdStr = String.valueOf(userId);
+            neo4jClient.query(
+                    "MATCH (u:User {userId: $userId})-[r:MASTERED]->(s:Skill) " +
+                    "DELETE r"
+                ).bind(userIdStr).to("userId")
+                .run();
+            log.info("🗑️ Neo4j MASTERED relationships deleted for user={}", userId);
+
+            neo4jClient.query(
+                    "MATCH (u:User {userId: $userId}) " +
+                    "DELETE u"
+                ).bind(userIdStr).to("userId")
+                .run();
+            log.info("🗑️ Neo4j User node deleted for user={}", userId);
+
+            Set<String> lockKeys = redisTemplate.keys(IDEMPOTENT_LOCK_KEY + userId + ":*");
+            if (lockKeys != null && !lockKeys.isEmpty()) {
+                redisTemplate.delete(lockKeys);
+                log.info("🗑️ Cleared {} idempotent locks for user={}", lockKeys.size(), userId);
+            }
+
+            response.put("code", 200);
+            response.put("message", "职业档案已重置");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("🗑️ 重置职业档案失败: userId={}, error={}", userId, e.getMessage(), e);
+            response.put("code", 500);
+            response.put("message", "重置失败: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(response);
+        }
     }
 }

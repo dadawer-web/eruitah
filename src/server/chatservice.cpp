@@ -206,6 +206,10 @@ void ChatService::handleRpcPushMessage(int receiverId, int64_t groupId,
         }
     }
 
+    if (msgType == static_cast<int>(bridge::InternalMsgType::CAREER_ADVICE)) {
+        LOG_INFO << "[RPC Push] CAREER_ADVICE for user " << receiverId;
+    }
+
     if (broadcast) {
         lock_guard<mutex> lock(_connMutex);
         for (auto& pair : _userConnMap) {

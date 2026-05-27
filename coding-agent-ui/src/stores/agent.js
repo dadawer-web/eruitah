@@ -12,6 +12,14 @@ function getLastPath() {
   }
 }
 
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0
+    const v = c === 'x' ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
+}
+
 export const useAgentStore = defineStore('agent', () => {
   const ws = shallowRef(null)
   const connected = ref(false)
@@ -70,6 +78,9 @@ export const useAgentStore = defineStore('agent', () => {
   let rafId = null
   let editorInstance = null
   const userId = ref(null)
+  const sessionId = ref(generateUUID())
+  const hasNewCareerAdvice = ref(false)
+  const careerAdviceData = ref(null)
   let wsRetryCount = 0
   const WS_MAX_RETRY = 20
 
@@ -78,6 +89,9 @@ export const useAgentStore = defineStore('agent', () => {
     const fromUrl = params.get('user_id') || params.get('userId')
     if (fromUrl) {
       userId.value = parseInt(fromUrl, 10) || null
+      if (userId.value) {
+        try { localStorage.setItem('eruitah_user_id', String(userId.value)) } catch {}
+      }
       return
     }
     try {
@@ -86,8 +100,43 @@ export const useAgentStore = defineStore('agent', () => {
         userId.value = parseInt(stored, 10) || null
       }
     } catch {}
+    if (!userId.value) {
+      userId.value = 9527
+      try { localStorage.setItem('eruitah_user_id', '9527') } catch {}
+    }
   }
   _initUserId()
+
+  function _initSessionId() {
+    try {
+      const stored = localStorage.getItem('eruitah_session_id')
+      if (stored) {
+        sessionId.value = stored
+      } else {
+        sessionId.value = generateUUID()
+        try { localStorage.setItem('eruitah_session_id', sessionId.value) } catch {}
+      }
+    } catch {
+      sessionId.value = generateUUID()
+    }
+  }
+  _initSessionId()
+
+  function newSession() {
+    sessionId.value = generateUUID()
+    try { localStorage.setItem('eruitah_session_id', sessionId.value) } catch {}
+    messages.value = []
+    activeTaskId.value = null
+    currentTaskId.value = null
+    currentTaskName.value = ''
+    historyStates.value = []
+  }
+
+  function _injectIdentity(payload) {
+    payload.user_id = userId.value
+    payload.session_id = sessionId.value
+    return payload
+  }
 
   function pushMessage(msg) {
     messages.value.push(msg)
@@ -108,7 +157,8 @@ export const useAgentStore = defineStore('agent', () => {
     }
 
     const wsProto = location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const socket = new WebSocket(`${wsProto}//${location.host}/ws/simple-ide`)
+    const uid = userId.value || 0
+    const socket = new WebSocket(`${wsProto}//${location.host}/ws/simple-ide?user_id=${uid}`)
 
     socket.onopen = () => {
       connected.value = true
@@ -192,6 +242,31 @@ export const useAgentStore = defineStore('agent', () => {
         break
 
       case 'chat':
+        break
+
+      case 'NOTIFY_CAREER_UPDATE':
+        hasNewCareerAdvice.value = true
+        careerAdviceData.value = {
+          skills: data.skills || '',
+          resumeHighlight: data.resume_highlight || data.resumeHighlight || '',
+          learningAdvice: data.learning_advice || data.learningAdvice || '',
+          nextSuggestion: data.next_suggestion || data.nextSuggestion || '',
+          extractedSkills: data.extracted_skills || data.extractedSkills || [],
+          timestamp: Date.now(),
+        }
+        try {
+          const history = JSON.parse(localStorage.getItem('career_history') || '[]')
+          history.unshift({
+            skills: data.skills || '',
+            resume_highlight: data.resume_highlight || data.resumeHighlight || '',
+            learning_advice: data.learning_advice || data.learningAdvice || '',
+            next_suggestion: data.next_suggestion || data.nextSuggestion || '',
+            extracted_skills: data.extracted_skills || data.extractedSkills || [],
+            timestamp: Date.now(),
+          })
+          localStorage.setItem('career_history', JSON.stringify(history.slice(0, 500)))
+        } catch (e) {}
+        console.log('[WS] Career advice notification received')
         break
 
       case 'system_alert':
@@ -937,7 +1012,8 @@ export const useAgentStore = defineStore('agent', () => {
 
   async function fetchTaskRegistry() {
     try {
-      const resp = await fetch('/api/v1/task-registry')
+      const uid = userId.value || 0
+      const resp = await fetch(`/api/v1/task-registry?user_id=${uid}`)
       if (!resp.ok) {
         console.warn('[API] fetchTaskRegistry HTTP error:', resp.status)
         _loadTasksFromCache()
@@ -1034,7 +1110,8 @@ export const useAgentStore = defineStore('agent', () => {
 
   async function fetchFileTree() {
     try {
-      const resp = await fetch(`/api/v1/files?path=${encodeURIComponent(basePath.value)}`)
+      const uid = userId.value || 0
+      const resp = await fetch(`/api/v1/files?path=${encodeURIComponent(basePath.value)}&user_id=${uid}`)
       if (resp.ok) {
         const data = await resp.json()
         files.value = data.files || []
@@ -1047,7 +1124,8 @@ export const useAgentStore = defineStore('agent', () => {
   async function fetchFileContent(relativePath) {
     try {
       const fullPath = basePath.value + '/' + relativePath
-      const resp = await fetch(`/api/v1/file?path=${encodeURIComponent(fullPath)}`)
+      const uid = userId.value || 0
+      const resp = await fetch(`/api/v1/file?path=${encodeURIComponent(fullPath)}&user_id=${uid}`)
       if (resp.ok) {
         const data = await resp.json()
         currentFile.value = relativePath
@@ -1197,7 +1275,7 @@ export const useAgentStore = defineStore('agent', () => {
         ...(options.skills || []),
       ])]
 
-      const payload = {
+      const payload = _injectIdentity({
         type: 'chat_new_task',
         task: task,
         work_dir: basePath.value,
@@ -1209,10 +1287,9 @@ export const useAgentStore = defineStore('agent', () => {
         base_task_id: options.base_task_id || pendingBaseTaskId.value || '',
         auto_approve: autoApprove.value,
         use_swarm: options.use_swarm || false,
-        user_id: userId.value,
         images: options.images && options.images.length ? options.images : undefined,
         skills: allSkills.length ? allSkills : undefined,
-      }
+      })
 
       pendingBaseTaskId.value = ''
 
@@ -1232,7 +1309,7 @@ export const useAgentStore = defineStore('agent', () => {
       taskMessages.value[activeTaskId.value].push({ role: 'user', content: task, timestamp: Date.now() })
       messages.value = taskMessages.value[activeTaskId.value]
 
-      const payload = {
+      const payload = _injectIdentity({
         type: 'chat_continue',
         task: task,
         work_dir: basePath.value,
@@ -1244,8 +1321,7 @@ export const useAgentStore = defineStore('agent', () => {
         provider: options.provider,
         auto_approve: autoApprove.value,
         use_swarm: options.use_swarm || false,
-        user_id: userId.value,
-      }
+      })
 
       Object.keys(payload).forEach(key => {
         if (payload[key] === undefined || payload[key] === null) {
@@ -1268,13 +1344,13 @@ export const useAgentStore = defineStore('agent', () => {
       return false
     }
 
-    const payload = {
+    const payload = _injectIdentity({
       type: 'system_command',
       action: action,
       task_id: currentTaskId.value || undefined,
       work_dir: basePath.value,
       ...params,
-    }
+    })
 
     Object.keys(payload).forEach(key => {
       if (payload[key] === undefined || payload[key] === null) {
@@ -1462,7 +1538,8 @@ export const useAgentStore = defineStore('agent', () => {
     }
     if (taskMessages.value[taskId].length === 0) {
       try {
-        const resp = await fetch(`/api/v1/tasks/${encodeURIComponent(taskId)}/messages`)
+        const uid = userId.value || 0
+        const resp = await fetch(`/api/v1/tasks/${encodeURIComponent(taskId)}/messages?user_id=${uid}`)
         if (resp.ok) {
           const data = await resp.json()
           const backendMsgs = data.messages || []
@@ -1504,11 +1581,11 @@ export const useAgentStore = defineStore('agent', () => {
       return false
     }
 
-    ws.value.send(JSON.stringify({
+    ws.value.send(JSON.stringify(_injectIdentity({
       type: 'user_answer',
       question_id: questionId,
       answer: answer,
-    }))
+    })))
 
     const msgIndex = messages.value.findIndex(m => m.questionId === questionId)
     if (msgIndex !== -1) {
@@ -1530,11 +1607,11 @@ export const useAgentStore = defineStore('agent', () => {
       return false
     }
 
-    ws.value.send(JSON.stringify({
+    ws.value.send(JSON.stringify(_injectIdentity({
       type: 'command_confirm',
       confirmation_id: pendingConfirmation.value.confirmationId,
       approved: approved,
-    }))
+    })))
 
     window.__xterm_write?.(`\x1b[36m[用户${approved ? '已授权' : '拒绝'}] ${pendingConfirmation.value.command}\x1b[0m\n`)
     pendingConfirmation.value = null
@@ -1589,6 +1666,10 @@ export const useAgentStore = defineStore('agent', () => {
     activeTaskId,
     autoApprove,
     userId,
+    sessionId,
+    hasNewCareerAdvice,
+    careerAdviceData,
+    newSession,
     historyStates,
     rollbackPreview,
     checkpointView,

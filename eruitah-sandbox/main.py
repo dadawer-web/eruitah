@@ -23,6 +23,8 @@ WebSocket 事件 (直接从 run_agent yield 出来):
 """
 
 import os
+import sys
+import subprocess
 import json
 import time
 import asyncio
@@ -603,8 +605,16 @@ async def _handle_system_command(websocket, data: dict, safe_send):
     action = data.get("action", "")
     task_id = data.get("task_id", "")
     work_dir = data.get("work_dir", SANDBOX_DIR)
+    user_id = data.get("user_id", 0)
+    try:
+        user_id = int(user_id)
+    except (ValueError, TypeError):
+        user_id = 0
+    if not user_id:
+        user_id = 1
+        logger.warning(f"_handle_system_command: user_id missing in message, falling back to 1")
 
-    sm = get_session_manager()
+    sm = get_session_manager(user_id=user_id)
 
     if action == "list_tasks":
         tasks = sm.list_sessions(work_dir=work_dir)
@@ -663,7 +673,7 @@ async def _handle_system_command(websocket, data: dict, safe_send):
                 })
                 try:
                     from rewind_system import get_rewind_system
-                    rewind = get_rewind_system()
+                    rewind = get_rewind_system(user_id=user_id, session_id=target_task_id)
                     remaining_cps = rewind.list_checkpoints(target_task_id)
                     await safe_send({
                         "type": "checkpoints_updated",
@@ -715,7 +725,7 @@ async def _handle_system_command(websocket, data: dict, safe_send):
         work_dir = session.worktree_dir or session.work_dir
 
         from rewind_system import get_rewind_system
-        rewind = get_rewind_system()
+        rewind = get_rewind_system(user_id=user_id, session_id=target_task_id)
         preview = rewind.preview_rollback(
             session_id=target_task_id,
             steps=steps,
@@ -761,7 +771,7 @@ async def _handle_system_command(websocket, data: dict, safe_send):
         work_dir = session.worktree_dir or session.work_dir
 
         from rewind_system import get_rewind_system
-        rewind = get_rewind_system()
+        rewind = get_rewind_system(user_id=user_id, session_id=target_task_id)
         view = rewind.view_checkpoint(
             session_id=target_task_id,
             turn=view_turn,
@@ -810,7 +820,7 @@ async def _handle_system_command(websocket, data: dict, safe_send):
             checkpoints = []
             try:
                 from rewind_system import get_rewind_system
-                rewind = get_rewind_system()
+                rewind = get_rewind_system(user_id=user_id, session_id=target_task_id)
                 checkpoints = rewind.list_checkpoints(target_task_id)
             except Exception:
                 pass
@@ -852,7 +862,7 @@ async def _handle_system_command(websocket, data: dict, safe_send):
         if not target_task_id:
             await safe_send({"type": "checkpoint_list", "data": []})
             return
-        rm = get_rewind_system()
+        rm = get_rewind_system(user_id=user_id, session_id=target_task_id)
         rm.load_checkpoints(target_task_id)
         checkpoints = rm.list_checkpoints(target_task_id)
         await safe_send({"type": "checkpoint_list", "data": checkpoints})
@@ -864,7 +874,7 @@ async def _handle_system_command(websocket, data: dict, safe_send):
         if not target_task_id:
             await safe_send({"type": "system_msg", "content": "❌ 未指定任务 ID"})
             return
-        rm = get_rewind_system()
+        rm = get_rewind_system(user_id=user_id, session_id=target_task_id)
         rm.clear_checkpoints(target_task_id)
         await safe_send({"type": "system_msg", "content": f"🗑️ 任务 {target_task_id} 的检查点已清除"})
         return
@@ -988,13 +998,68 @@ async def _handle_system_command(websocket, data: dict, safe_send):
         return
 
 
+async def _shielded_career_analysis(user_id: int, task_id: str, work_dir: str):
+    """
+    后台护盾协程：无论 WebSocket 是否断开，都独立完成职业档案分析并推送 Java 中台。
+    使用 career_analyzer 的 LLM 深度分析 + 关键词 fallback 双保险机制。
+    绝对安全：任何异常只打日志，不影响主引擎。
+    """
+    await asyncio.sleep(2)
+
+    try:
+        if not user_id or user_id <= 0:
+            logger.debug(f"🛡️ 护盾跳过: user_id={user_id} 无效")
+            return
+
+        if not task_id:
+            logger.debug("🛡️ 护盾跳过: task_id 为空")
+            return
+
+        logger.info(f"🛡️ 护盾开始职业分析: user={user_id}, task={task_id}")
+
+        from task_manager import get_session_manager
+        sm = get_session_manager(user_id=user_id)
+        session = sm.get_session(task_id)
+
+        session_messages = []
+        if session:
+            session_messages = (session.messages_before or []) + (session.messages or [])
+
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "protobuf-rpc-bridge", "python"))
+        from career_analyzer import analyze_career
+
+        result = await analyze_career(
+            user_id=user_id,
+            work_dir=work_dir,
+            session_messages=session_messages,
+        )
+
+        if result and (result.get("skills") or result.get("resume_highlight")):
+            from rpc_entry import report_career_advice
+            report_career_advice(
+                user_id=user_id,
+                extracted_skills=result.get("skills", []),
+                resume_highlight=result.get("resume_highlight", ""),
+                next_suggestion=result.get("next_suggestion", ""),
+            )
+            logger.info(
+                f"🛡️ 护盾职业分析完成并推送 Java: user={user_id}, "
+                f"skills={result.get('skills', [])}, highlight_len={len(result.get('resume_highlight', ''))}"
+            )
+        else:
+            logger.info(f"🛡️ 护盾分析完成但无有效数据可推送: user={user_id}, task={task_id}")
+
+    except Exception as e:
+        logger.error(f"🛡️ 护盾职业分析失败 (非致命): {e}")
+
+
 # ============================================================================
 # WebSocket 端点 - /ws/coding
 # ============================================================================
 
 @app.websocket("/ws/coding")
 @app.websocket("/ws/simple-ide")
-async def websocket_coding(websocket: WebSocket):
+async def websocket_coding(websocket: WebSocket, user_id: int = 0):
     """
     WebSocket 双向通信 - Agent 的"神经系统"
 
@@ -1033,7 +1098,24 @@ async def websocket_coding(websocket: WebSocket):
     await websocket.accept()
     
     ws_connected = True
-    
+    effective_user_id = user_id if user_id else 0
+    has_analyzed = False
+
+    async def safe_trigger_analysis(uid: int, tid: str, wdir: str):
+        nonlocal has_analyzed
+        if has_analyzed:
+            return
+        has_analyzed = True
+        if not uid or uid <= 0 or not tid:
+            return
+        logger.info(f"🛡️ 启动全量代码增量分析，用户: {uid}, 任务: {tid}")
+        try:
+            asyncio.create_task(
+                _shielded_career_analysis(user_id=uid, task_id=tid, work_dir=wdir)
+            )
+        except Exception as shield_err:
+            logger.error(f"🛡️ 护盾启动失败 (非致命): {shield_err}")
+
     async def safe_send(data: dict):
         nonlocal ws_connected
         if not ws_connected:
@@ -1138,7 +1220,7 @@ async def websocket_coding(websocket: WebSocket):
             use_worktree = True
 
             from task_manager import get_session_manager
-            sm = get_session_manager()
+            sm = get_session_manager(user_id=effective_user_id)
             task_id = data.get("task_id")
 
             initial_messages = None
@@ -1254,11 +1336,15 @@ async def websocket_coding(websocket: WebSocket):
             auto_approve = data.get("auto_approve", False)
             use_swarm = data.get("use_swarm", False)
             enable_routing = data.get("enable_routing", False)
-            user_id = data.get("user_id") or 0
+            msg_user_id = data.get("user_id") or 0
             try:
-                user_id = int(user_id)
+                msg_user_id = int(msg_user_id)
             except (ValueError, TypeError):
-                user_id = 0
+                msg_user_id = 0
+            effective_user_id = user_id or msg_user_id or 0
+            if not effective_user_id:
+                effective_user_id = 1
+                logger.warning(f"WebSocket message missing user_id, falling back to 1")
 
             agent_params = {
                 "user_input": user_input,
@@ -1274,7 +1360,7 @@ async def websocket_coding(websocket: WebSocket):
                 "start_turn": start_turn,
                 "auto_approve": auto_approve,
                 "use_swarm": use_swarm,
-                "user_id": user_id,
+                "user_id": effective_user_id,
                 "enable_routing": enable_routing,
                 "images": images,
                 "skills": skills,
@@ -1291,7 +1377,7 @@ async def websocket_coding(websocket: WebSocket):
                         event["work_dir"] = work_dir
                         try:
                             from rewind_system import get_rewind_system
-                            rewind = get_rewind_system()
+                            rewind = get_rewind_system(user_id=effective_user_id, session_id=event.get("task_id", task_id or ""))
                             cps = rewind.list_checkpoints(event.get("task_id", task_id or ""))
                             event["checkpoints"] = cps
                         except Exception:
@@ -1306,7 +1392,7 @@ async def websocket_coding(websocket: WebSocket):
                         if tool_name and ("file_edit" in tool_name or "file_write" in tool_name or "bash" in tool_name):
                             try:
                                 from rewind_system import get_rewind_system
-                                rewind = get_rewind_system()
+                                rewind = get_rewind_system(user_id=effective_user_id, session_id=task_id or "")
                                 cps = rewind.list_checkpoints(task_id or "")
                                 if cps:
                                     await safe_send({
@@ -1378,7 +1464,7 @@ async def websocket_coding(websocket: WebSocket):
                                 if ask_task_id:
                                     try:
                                         from task_manager import get_task_manager
-                                        tm = get_task_manager()
+                                        tm = get_task_manager(user_id=effective_user_id)
                                         session = tm.get_session(ask_task_id)
                                         if session and session.messages:
                                             history = session.messages_before + session.messages if session.messages_before else session.messages
@@ -1488,11 +1574,14 @@ async def websocket_coding(websocket: WebSocket):
 
             if task_id:
                 logger.info(f"💾 任务 {task_id} Agent 循环结束 (消息已由 run_agent 内部每轮保存)")
+                await safe_trigger_analysis(effective_user_id, task_id, work_dir)
 
             task_id = None
 
     except WebSocketDisconnect:
         logger.info("WebSocket 客户端断开连接")
+        if task_id:
+            await safe_trigger_analysis(effective_user_id, task_id, work_dir)
     except Exception as e:
         logger.error(f"WebSocket 异常: {e}")
         await safe_send({"type": "error", "data": str(e)})
@@ -1502,6 +1591,7 @@ async def websocket_coding(websocket: WebSocket):
         cancel_all_questions()
         if task_id:
             logger.info(f"💾 任务 {task_id} Agent 循环结束 (finally, 消息已由 run_agent 内部保存)")
+            await safe_trigger_analysis(effective_user_id, task_id, work_dir)
         try:
             await websocket.close()
         except Exception:
@@ -1544,8 +1634,9 @@ async def websocket_coding_persistent(websocket: WebSocket):
     
     from task_manager import get_task_manager
     from rewind_system import get_rewind_system
-    task_manager = get_task_manager()
-    rewind_system = get_rewind_system()
+    persistent_user_id = 0
+    task_manager = get_task_manager(user_id=persistent_user_id or 1)
+    rewind_system = get_rewind_system(user_id=1, session_id="persistent")
     
     current_messages = []
     current_active_files = set()
@@ -1840,9 +1931,9 @@ async def read_file_content(path: str):
 # ============================================================================
 
 @app.get("/api/v1/tasks")
-async def list_tasks(project_path: str = ""):
+async def list_tasks(project_path: str = "", user_id: int = 0):
     from task_manager import get_session_manager
-    sm = get_session_manager()
+    sm = get_session_manager(user_id=user_id)
     tasks = sm.list_sessions(work_dir=project_path)
     for t in tasks:
         if "task_id" in t:
@@ -1853,9 +1944,9 @@ async def list_tasks(project_path: str = ""):
 
 
 @app.get("/api/v1/task-registry")
-async def list_task_registry(work_dir: str = ""):
+async def list_task_registry(work_dir: str = "", user_id: int = 0):
     from task_manager import get_session_manager
-    sm = get_session_manager()
+    sm = get_session_manager(user_id=user_id)
     tasks = sm.list_sessions(work_dir="")
     return {"tasks": tasks}
 
@@ -1863,18 +1954,22 @@ async def list_task_registry(work_dir: str = ""):
 @app.post("/api/v1/tasks")
 async def create_task(request: dict):
     from task_manager import get_task_manager
-    tm = get_task_manager()
+    user_id = request.get("user_id", 0)
+    try:
+        user_id = int(user_id)
+    except (ValueError, TypeError):
+        user_id = 0
+    tm = get_task_manager(user_id=user_id)
     task_id = request.get("task_id") or str(uuid.uuid4())[:8]
     project_path = request.get("project_path", SANDBOX_DIR)
     task_name = request.get("task_name", "新任务")
-    task_data = tm.create_task(task_id, task_name, project_path)
     return {"task_id": task_id, "task_name": task_name, "project_path": project_path}
 
 
 @app.get("/api/v1/tasks/{task_id}")
-async def get_task(task_id: str):
+async def get_task(task_id: str, user_id: int = 0):
     from task_manager import get_task_manager
-    tm = get_task_manager()
+    tm = get_task_manager(user_id=user_id)
     session = tm.get_session(task_id)
     if not session:
         return {"error": "任务不存在"}
@@ -1882,9 +1977,9 @@ async def get_task(task_id: str):
 
 
 @app.get("/api/v1/tasks/{task_id}/messages")
-async def get_task_messages(task_id: str):
+async def get_task_messages(task_id: str, user_id: int = 0):
     from task_manager import get_task_manager
-    tm = get_task_manager()
+    tm = get_task_manager(user_id=user_id)
     session = tm.get_session(task_id)
     if not session:
         return {"messages": [], "count": 0}
@@ -1895,7 +1990,12 @@ async def get_task_messages(task_id: str):
 @app.put("/api/v1/tasks/{task_id}/status")
 async def update_task_status(task_id: str, request: dict):
     from task_manager import get_task_manager
-    tm = get_task_manager()
+    user_id = request.get("user_id", 0)
+    try:
+        user_id = int(user_id)
+    except (ValueError, TypeError):
+        user_id = 0
+    tm = get_task_manager(user_id=user_id)
     tm.set_session_status(task_id, request.get("status", "active"))
     session = tm.get_session(task_id)
     return {"task_id": task_id, "status": session.status if session else "unknown"}
@@ -1905,8 +2005,13 @@ async def update_task_status(task_id: str, request: dict):
 async def switch_task(task_id: str, request: dict):
     from task_manager import get_task_manager
     from rewind_system import get_rewind_system
-    tm = get_task_manager()
-    rewind_system = get_rewind_system()
+    user_id = request.get("user_id", 0)
+    try:
+        user_id = int(user_id)
+    except (ValueError, TypeError):
+        user_id = 0
+    tm = get_task_manager(user_id=user_id)
+    rewind_system = get_rewind_system(user_id=user_id, session_id=task_id)
     
     work_dir = request.get("work_dir", SANDBOX_DIR)
     
@@ -1970,7 +2075,11 @@ async def ide_page():
     from fastapi.responses import FileResponse
     vue_index = os.path.join(_vue_dist_dir_resolved, "index.html") if os.path.isdir(_vue_dist_dir_resolved) else ""
     if vue_index and os.path.isfile(vue_index):
-        return FileResponse(vue_index, media_type="text/html")
+        return FileResponse(
+            vue_index,
+            media_type="text/html",
+            headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"},
+        )
     html_path = os.path.join(STATIC_DIR, "coding_lab.html")
     if os.path.isfile(html_path):
         return FileResponse(html_path, media_type="text/html")

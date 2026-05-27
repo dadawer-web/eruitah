@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <title>Skill Graph</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            overflow: hidden;
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+        }
+        #graph {
+            width: 100%;
+            height: 100%;
+        }
+        #empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #737373;
+            font-size: 13px;
+        }
+        #empty-state .icon {
+            font-size: 36px;
+            margin-bottom: 12px;
+            opacity: 0.3;
+        }
+        #fallback-list {
+            display: none;
+            padding: 16px;
+            color: #38bdf8;
+            font-size: 12px;
+            line-height: 2;
+        }
+        #fallback-list span {
+            display: inline-block;
+            background: rgba(56, 189, 248, 0.12);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 8px;
+            padding: 2px 10px;
+            margin: 3px 4px;
+            font-weight: bold;
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div id="graph"></div>
+    <div id="empty-state" style="display:none;">
+        <div class="icon">&#x1f512;</div>
+        <div>完成任务后解锁技能星图</div>
+    </div>
+    <div id="fallback-list"></div>
+
+    <script>
+        var skillChart = null;
+        var echartsReady = false;
+
+        var COLORS = [
+            { fill: 'rgba(56, 189, 248, 0.55)', border: '#38bdf8', glow: 'rgba(56, 189, 248, 0.8)' },
+            { fill: 'rgba(129, 140, 248, 0.50)', border: '#818cf8', glow: 'rgba(129, 140, 248, 0.8)' },
+            { fill: 'rgba(52, 211, 153, 0.50)', border: '#34d399', glow: 'rgba(52, 211, 153, 0.8)' },
+            { fill: 'rgba(251, 191, 36, 0.45)', border: '#fbbf24', glow: 'rgba(251, 191, 36, 0.7)' },
+            { fill: 'rgba(244, 114, 182, 0.45)', border: '#f472b6', glow: 'rgba(244, 114, 182, 0.7)' },
+            { fill: 'rgba(167, 139, 250, 0.50)', border: '#a78bfa', glow: 'rgba(167, 139, 250, 0.8)' },
+        ];
+
+        function hashCode(str) {
+            var hash = 0;
+            for (var i = 0; i < str.length; i++) {
+                hash = ((hash << 5) - hash) + str.charCodeAt(i);
+                hash |= 0;
+            }
+            return hash;
+        }
+
+        function tryInitECharts() {
+            if (typeof echarts === 'undefined') {
+                return false;
+            }
+            if (skillChart) {
+                return true;
+            }
+            try {
+                var dom = document.getElementById('graph');
+                if (!dom) return false;
+                skillChart = echarts.init(dom, null, { renderer: 'canvas' });
+                window.addEventListener('resize', function() {
+                    if (skillChart) skillChart.resize();
+                });
+                echartsReady = true;
+                return true;
+            } catch (e) {
+                console.error('[SkillGraph] echarts.init failed:', e);
+                return false;
+            }
+        }
+
+        function renderFallbackList(skills) {
+            var container = document.getElementById('fallback-list');
+            if (!container) return;
+            container.innerHTML = '';
+            if (!skills || skills.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+            skills.forEach(function(name) {
+                var span = document.createElement('span');
+                span.textContent = '\u26a1 ' + name;
+                container.appendChild(span);
+            });
+            container.style.display = 'block';
+        }
+
+        function updateSkillsData(skillsArray) {
+            var skills = [];
+            if (typeof skillsArray === 'string') {
+                try { skills = JSON.parse(skillsArray); } catch(e) {
+                    console.error('[SkillGraph] JSON parse error:', e);
+                    return;
+                }
+            } else if (Array.isArray(skillsArray)) {
+                skills = skillsArray;
+            }
+
+            if (!skills || skills.length === 0) {
+                document.getElementById('graph').style.display = 'none';
+                document.getElementById('fallback-list').style.display = 'none';
+                document.getElementById('empty-state').style.display = 'flex';
+                return;
+            }
+
+            document.getElementById('empty-state').style.display = 'none';
+
+            if (!tryInitECharts()) {
+                document.getElementById('graph').style.display = 'none';
+                renderFallbackList(skills);
+                return;
+            }
+
+            document.getElementById('graph').style.display = 'block';
+            document.getElementById('fallback-list').style.display = 'none';
+
+            var nodes = skills.map(function(name, idx) {
+                var h = Math.abs(hashCode(name));
+                var size = 40 + (h % 41);
+                var colorSet = COLORS[idx % COLORS.length];
+                return {
+                    name: name,
+                    symbolSize: size,
+                    category: idx % COLORS.length,
+                    itemStyle: {
+                        color: new echarts.graphic.RadialGradient(0.3, 0.3, 1, [
+                            { offset: 0, color: colorSet.border },
+                            { offset: 1, color: colorSet.fill }
+                        ]),
+                        borderColor: colorSet.border,
+                        borderWidth: 2,
+                        shadowColor: colorSet.glow,
+                        shadowBlur: 16
+                    },
+                    label: {
+                        show: true,
+                        formatter: '{b}',
+                        color: '#ffffff',
+                        fontSize: name.length > 6 ? 10 : 12,
+                        fontWeight: 'bold',
+                        fontFamily: 'Microsoft YaHei, sans-serif',
+                        textShadowColor: 'rgba(0, 0, 0, 0.6)',
+                        textShadowBlur: 4
+                    }
+                };
+            });
+
+            skillChart.setOption({
+                backgroundColor: 'transparent',
+                animation: true,
+                animationDuration: 1200,
+                animationEasing: 'elasticOut',
+                series: [{
+                    type: 'graph',
+                    layout: 'force',
+                    data: nodes,
+                    links: [],
+                    categories: COLORS.map(function(c, i) {
+                        return { name: 'cat' + i };
+                    }),
+                    roam: true,
+                    draggable: true,
+                    force: {
+                        repulsion: 220,
+                        edgeLength: [60, 120],
+                        gravity: 0.08,
+                        friction: 0.6,
+                        layoutAnimation: true
+                    },
+                    emphasis: {
+                        focus: 'adjacency',
+                        itemStyle: {
+                            shadowBlur: 30,
+                            borderWidth: 3
+                        },
+                        label: {
+                            fontSize: 14
+                        }
+                    },
+                    tooltip: {
+                        show: true,
+                        backgroundColor: 'rgba(10, 10, 10, 0.9)',
+                        borderColor: '#1e3a8a',
+                        borderWidth: 1,
+                        textStyle: {
+                            color: '#e2e8f0',
+                            fontSize: 12,
+                            fontFamily: 'Microsoft YaHei, sans-serif'
+                        },
+                        formatter: function(params) {
+                            if (!params.data || !params.data.name) return '';
+                            return '<span style="color:#38bdf8;font-weight:bold">\u26a1 ' + params.data.name + '</span>';
+                        }
+                    }
+                }]
+            }, true);
+        }
+
+        window.updateSkillsData = updateSkillsData;
+        window.updateRadarChart = updateSkillsData;
+
+        function loadEChartsScript() {
+            var script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js';
+            script.onload = function() {
+                console.log('[SkillGraph] ECharts CDN loaded successfully');
+                echartsReady = true;
+            };
+            script.onerror = function() {
+                console.warn('[SkillGraph] ECharts CDN failed, fallback to text list');
+                echartsReady = false;
+            };
+            document.head.appendChild(script);
+        }
+
+        loadEChartsScript();
+    </script>
+</body>
+</html>

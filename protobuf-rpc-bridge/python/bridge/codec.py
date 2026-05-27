@@ -37,6 +37,12 @@ _TYPE_MAP = {
     "bridge.InternalForwardResponse": chat_pb2.InternalForwardResponse,
     "bridge.InternalPushRequest": chat_pb2.InternalPushRequest,
     "bridge.InternalPushResponse": chat_pb2.InternalPushResponse,
+    "bridge.CareerAdviceRequest": chat_pb2.CareerAdviceRequest,
+    "bridge.CareerAdviceResponse": chat_pb2.CareerAdviceResponse,
+    "bridge.AgentSkillEvent": chat_pb2.AgentSkillEvent,
+    "bridge.AgentSkillEventAck": chat_pb2.AgentSkillEventAck,
+    "bridge.RunCodeRequest": chat_pb2.RunCodeRequest,
+    "bridge.RunCodeResponse": chat_pb2.RunCodeResponse,
     "bridge.RpcMessage": chat_pb2.RpcMessage,
 }
 

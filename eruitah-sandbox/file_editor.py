@@ -545,6 +545,20 @@ def edit_file(
     abs_file_path = os.path.abspath(os.path.expanduser(file_path))
 
     # ------------------------------------------------------------------
+    # 沙盒路径隔离校验
+    # ------------------------------------------------------------------
+    if work_dir and work_dir != ".":
+        try:
+            from sandbox_isolation import enforce_sandbox_path
+            abs_file_path = enforce_sandbox_path(abs_file_path, work_dir)
+        except PermissionError as e:
+            return EditResult(
+                success=False,
+                file_path=file_path,
+                error=str(e),
+            )
+
+    # ------------------------------------------------------------------
     # 第一步: 读取文件 - 对应 TS 源码 readFileForEdit()
     # ------------------------------------------------------------------
     is_new_file = not os.path.exists(abs_file_path)

@@ -14,7 +14,7 @@ class CodingAgentDialog : public QDialog {
     Q_OBJECT
 
 public:
-    explicit CodingAgentDialog(QWidget *parent = nullptr);
+    explicit CodingAgentDialog(int userId = 0, QWidget *parent = nullptr);
     ~CodingAgentDialog();
 
 private slots:
@@ -27,6 +27,7 @@ private:
     void setupUI();
     QString resolveSandboxUrl();
 
+    int m_userId;
     QWebEngineView *m_webView;
     QLabel *m_statusLabel;
     QProgressBar *m_progressBar;

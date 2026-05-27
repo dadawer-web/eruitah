@@ -4,7 +4,7 @@
 #include <QWebEngineProfile>
 #include <QWebEngineSettings>
 
-CodingAgentDialog::CodingAgentDialog(QWidget *parent) : QDialog(parent) {
+CodingAgentDialog::CodingAgentDialog(int userId, QWidget *parent) : QDialog(parent), m_userId(userId) {
     setupUI();
 }
 
@@ -16,15 +16,27 @@ QString CodingAgentDialog::resolveSandboxUrl() {
     QString url = settings.value("agent/vue_url", "").toString();
 
     if (!url.isEmpty()) {
+        if (m_userId > 0) {
+            QString sep = url.contains('?') ? "&" : "?";
+            url += sep + QString("user_id=%1").arg(m_userId);
+        }
         return url;
     }
 
     QString hostEnv = qEnvironmentVariable("ERUITAH_SANDBOX_HOST", "");
     if (!hostEnv.isEmpty()) {
-        return QString("http://%1/ide").arg(hostEnv);
+        QString base = QString("http://%1/ide").arg(hostEnv);
+        if (m_userId > 0) {
+            base += QString("?user_id=%1").arg(m_userId);
+        }
+        return base;
     }
 
-    return "http://127.0.0.1:8001/ide";
+    QString base = "http://127.0.0.1:8001/ide";
+    if (m_userId > 0) {
+        base += QString("?user_id=%1").arg(m_userId);
+    }
+    return base;
 }
 
 void CodingAgentDialog::setupUI() {

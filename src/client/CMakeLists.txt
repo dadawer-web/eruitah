@@ -103,6 +103,7 @@ set(CLIENT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/../career_history.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../career_dashboard_dialog.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../career_dashboard_dialog.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../career_card_widget.h
     # 服务器相关的核心文件（为了支持MainWindow中的服务器功能）
     ${CMAKE_CURRENT_SOURCE_DIR}/../server/db/db.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../server/model/usermodel.cpp
@@ -150,6 +151,7 @@ set(QT_CHAT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/../career_history.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../career_dashboard_dialog.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../career_dashboard_dialog.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../career_card_widget.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../qtchat.qrc
     # 服务器相关的核心文件
     ${CMAKE_CURRENT_SOURCE_DIR}/../server/db/db.cpp

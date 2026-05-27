@@ -52,6 +52,7 @@ private:
     ChatServer *server;
     QThread *serverThread;
     bool serverRunning;
+    int m_userId = 0;
 
     LoginWindow *loginWindow;
 

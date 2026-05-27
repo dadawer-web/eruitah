@@ -23,7 +23,6 @@
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/arena.h>
 #include <google/protobuf/arenastring.h>
-#include <google/protobuf/generated_message_bases.h>
 #include <google/protobuf/generated_message_util.h>
 #include <google/protobuf/metadata_lite.h>
 #include <google/protobuf/generated_message_reflection.h>
@@ -131,6 +130,12 @@ extern PdfParseResponseDefaultTypeInternal _PdfParseResponse_default_instance_;
 class RpcMessage;
 struct RpcMessageDefaultTypeInternal;
 extern RpcMessageDefaultTypeInternal _RpcMessage_default_instance_;
+class RunCodeRequest;
+struct RunCodeRequestDefaultTypeInternal;
+extern RunCodeRequestDefaultTypeInternal _RunCodeRequest_default_instance_;
+class RunCodeResponse;
+struct RunCodeResponseDefaultTypeInternal;
+extern RunCodeResponseDefaultTypeInternal _RunCodeResponse_default_instance_;
 class SandboxExecuteRequest;
 struct SandboxExecuteRequestDefaultTypeInternal;
 extern SandboxExecuteRequestDefaultTypeInternal _SandboxExecuteRequest_default_instance_;
@@ -205,6 +210,8 @@ template<> ::bridge::InternalPushResponse* Arena::CreateMaybeMessage<::bridge::I
 template<> ::bridge::PdfParseRequest* Arena::CreateMaybeMessage<::bridge::PdfParseRequest>(Arena*);
 template<> ::bridge::PdfParseResponse* Arena::CreateMaybeMessage<::bridge::PdfParseResponse>(Arena*);
 template<> ::bridge::RpcMessage* Arena::CreateMaybeMessage<::bridge::RpcMessage>(Arena*);
+template<> ::bridge::RunCodeRequest* Arena::CreateMaybeMessage<::bridge::RunCodeRequest>(Arena*);
+template<> ::bridge::RunCodeResponse* Arena::CreateMaybeMessage<::bridge::RunCodeResponse>(Arena*);
 template<> ::bridge::SandboxExecuteRequest* Arena::CreateMaybeMessage<::bridge::SandboxExecuteRequest>(Arena*);
 template<> ::bridge::SandboxExecuteRequest_MetadataEntry_DoNotUse* Arena::CreateMaybeMessage<::bridge::SandboxExecuteRequest_MetadataEntry_DoNotUse>(Arena*);
 template<> ::bridge::SandboxExecuteResponse* Arena::CreateMaybeMessage<::bridge::SandboxExecuteResponse>(Arena*);
@@ -7111,8 +7118,10 @@ class CareerAdviceRequest final :
 
   enum : int {
     kSkillsFieldNumber = 2,
+    kExtractedSkillsFieldNumber = 5,
     kResumeHighlightFieldNumber = 3,
     kLearningAdviceFieldNumber = 4,
+    kNextSuggestionFieldNumber = 6,
     kUserIdFieldNumber = 1,
   };
   // repeated string skills = 2;
@@ -7137,6 +7146,30 @@ class CareerAdviceRequest final :
   private:
   const std::string& _internal_skills(int index) const;
   std::string* _internal_add_skills();
+  public:
+
+  // repeated string extracted_skills = 5;
+  int extracted_skills_size() const;
+  private:
+  int _internal_extracted_skills_size() const;
+  public:
+  void clear_extracted_skills();
+  const std::string& extracted_skills(int index) const;
+  std::string* mutable_extracted_skills(int index);
+  void set_extracted_skills(int index, const std::string& value);
+  void set_extracted_skills(int index, std::string&& value);
+  void set_extracted_skills(int index, const char* value);
+  void set_extracted_skills(int index, const char* value, size_t size);
+  std::string* add_extracted_skills();
+  void add_extracted_skills(const std::string& value);
+  void add_extracted_skills(std::string&& value);
+  void add_extracted_skills(const char* value);
+  void add_extracted_skills(const char* value, size_t size);
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string>& extracted_skills() const;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string>* mutable_extracted_skills();
+  private:
+  const std::string& _internal_extracted_skills(int index) const;
+  std::string* _internal_add_extracted_skills();
   public:
 
   // string resume_highlight = 3;
@@ -7167,6 +7200,20 @@ class CareerAdviceRequest final :
   std::string* _internal_mutable_learning_advice();
   public:
 
+  // string next_suggestion = 6;
+  void clear_next_suggestion();
+  const std::string& next_suggestion() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_next_suggestion(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_next_suggestion();
+  PROTOBUF_NODISCARD std::string* release_next_suggestion();
+  void set_allocated_next_suggestion(std::string* next_suggestion);
+  private:
+  const std::string& _internal_next_suggestion() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_next_suggestion(const std::string& value);
+  std::string* _internal_mutable_next_suggestion();
+  public:
+
   // int64 user_id = 1;
   void clear_user_id();
   int64_t user_id() const;
@@ -7185,8 +7232,10 @@ class CareerAdviceRequest final :
   typedef void DestructorSkippable_;
   struct Impl_ {
     ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string> skills_;
+    ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string> extracted_skills_;
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr resume_highlight_;
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr learning_advice_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr next_suggestion_;
     int64_t user_id_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
@@ -7196,9 +7245,10 @@ class CareerAdviceRequest final :
 // -------------------------------------------------------------------
 
 class CareerAdviceResponse final :
-    public ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase /* @@protoc_insertion_point(class_definition:bridge.CareerAdviceResponse) */ {
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:bridge.CareerAdviceResponse) */ {
  public:
   inline CareerAdviceResponse() : CareerAdviceResponse(nullptr) {}
+  ~CareerAdviceResponse() override;
   explicit PROTOBUF_CONSTEXPR CareerAdviceResponse(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
 
   CareerAdviceResponse(const CareerAdviceResponse& from);
@@ -7271,15 +7321,29 @@ class CareerAdviceResponse final :
   CareerAdviceResponse* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
     return CreateMaybeMessage<CareerAdviceResponse>(arena);
   }
-  using ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase::CopyFrom;
-  inline void CopyFrom(const CareerAdviceResponse& from) {
-    ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase::CopyImpl(*this, from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const CareerAdviceResponse& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const CareerAdviceResponse& from) {
+    CareerAdviceResponse::MergeImpl(*this, from);
   }
-  using ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase::MergeFrom;
-  void MergeFrom(const CareerAdviceResponse& from) {
-    ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase::MergeImpl(*this, from);
-  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
   public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(CareerAdviceResponse* other);
 
   private:
   friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
@@ -7300,6 +7364,18 @@ class CareerAdviceResponse final :
 
   // accessors -------------------------------------------------------
 
+  enum : int {
+    kSuccessFieldNumber = 1,
+  };
+  // bool success = 1;
+  void clear_success();
+  bool success() const;
+  void set_success(bool value);
+  private:
+  bool _internal_success() const;
+  void _internal_set_success(bool value);
+  public:
+
   // @@protoc_insertion_point(class_scope:bridge.CareerAdviceResponse)
  private:
   class _Internal;
@@ -7308,7 +7384,10 @@ class CareerAdviceResponse final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
+    bool success_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
+  union { Impl_ _impl_; };
   friend struct ::TableStruct_chat_2eproto;
 };
 // -------------------------------------------------------------------
@@ -7770,6 +7849,376 @@ class AgentSkillEventAck final :
 };
 // -------------------------------------------------------------------
 
+class RunCodeRequest final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:bridge.RunCodeRequest) */ {
+ public:
+  inline RunCodeRequest() : RunCodeRequest(nullptr) {}
+  ~RunCodeRequest() override;
+  explicit PROTOBUF_CONSTEXPR RunCodeRequest(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  RunCodeRequest(const RunCodeRequest& from);
+  RunCodeRequest(RunCodeRequest&& from) noexcept
+    : RunCodeRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline RunCodeRequest& operator=(const RunCodeRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline RunCodeRequest& operator=(RunCodeRequest&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const RunCodeRequest& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const RunCodeRequest* internal_default_instance() {
+    return reinterpret_cast<const RunCodeRequest*>(
+               &_RunCodeRequest_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    41;
+
+  friend void swap(RunCodeRequest& a, RunCodeRequest& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(RunCodeRequest* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(RunCodeRequest* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  RunCodeRequest* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<RunCodeRequest>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const RunCodeRequest& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const RunCodeRequest& from) {
+    RunCodeRequest::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(RunCodeRequest* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "bridge.RunCodeRequest";
+  }
+  protected:
+  explicit RunCodeRequest(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kSkillsFieldNumber = 4,
+    kSessionIdFieldNumber = 2,
+    kTaskPromptFieldNumber = 3,
+    kUserIdFieldNumber = 1,
+  };
+  // repeated string skills = 4;
+  int skills_size() const;
+  private:
+  int _internal_skills_size() const;
+  public:
+  void clear_skills();
+  const std::string& skills(int index) const;
+  std::string* mutable_skills(int index);
+  void set_skills(int index, const std::string& value);
+  void set_skills(int index, std::string&& value);
+  void set_skills(int index, const char* value);
+  void set_skills(int index, const char* value, size_t size);
+  std::string* add_skills();
+  void add_skills(const std::string& value);
+  void add_skills(std::string&& value);
+  void add_skills(const char* value);
+  void add_skills(const char* value, size_t size);
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string>& skills() const;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string>* mutable_skills();
+  private:
+  const std::string& _internal_skills(int index) const;
+  std::string* _internal_add_skills();
+  public:
+
+  // string session_id = 2;
+  void clear_session_id();
+  const std::string& session_id() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_session_id(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_session_id();
+  PROTOBUF_NODISCARD std::string* release_session_id();
+  void set_allocated_session_id(std::string* session_id);
+  private:
+  const std::string& _internal_session_id() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_session_id(const std::string& value);
+  std::string* _internal_mutable_session_id();
+  public:
+
+  // string task_prompt = 3;
+  void clear_task_prompt();
+  const std::string& task_prompt() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_task_prompt(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_task_prompt();
+  PROTOBUF_NODISCARD std::string* release_task_prompt();
+  void set_allocated_task_prompt(std::string* task_prompt);
+  private:
+  const std::string& _internal_task_prompt() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_task_prompt(const std::string& value);
+  std::string* _internal_mutable_task_prompt();
+  public:
+
+  // int64 user_id = 1;
+  void clear_user_id();
+  int64_t user_id() const;
+  void set_user_id(int64_t value);
+  private:
+  int64_t _internal_user_id() const;
+  void _internal_set_user_id(int64_t value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:bridge.RunCodeRequest)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string> skills_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr session_id_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr task_prompt_;
+    int64_t user_id_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_chat_2eproto;
+};
+// -------------------------------------------------------------------
+
+class RunCodeResponse final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:bridge.RunCodeResponse) */ {
+ public:
+  inline RunCodeResponse() : RunCodeResponse(nullptr) {}
+  ~RunCodeResponse() override;
+  explicit PROTOBUF_CONSTEXPR RunCodeResponse(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  RunCodeResponse(const RunCodeResponse& from);
+  RunCodeResponse(RunCodeResponse&& from) noexcept
+    : RunCodeResponse() {
+    *this = ::std::move(from);
+  }
+
+  inline RunCodeResponse& operator=(const RunCodeResponse& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline RunCodeResponse& operator=(RunCodeResponse&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const RunCodeResponse& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const RunCodeResponse* internal_default_instance() {
+    return reinterpret_cast<const RunCodeResponse*>(
+               &_RunCodeResponse_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    42;
+
+  friend void swap(RunCodeResponse& a, RunCodeResponse& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(RunCodeResponse* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(RunCodeResponse* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  RunCodeResponse* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<RunCodeResponse>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const RunCodeResponse& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const RunCodeResponse& from) {
+    RunCodeResponse::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(RunCodeResponse* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "bridge.RunCodeResponse";
+  }
+  protected:
+  explicit RunCodeResponse(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kLogStreamFieldNumber = 1,
+    kIsFinishedFieldNumber = 2,
+  };
+  // string log_stream = 1;
+  void clear_log_stream();
+  const std::string& log_stream() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_log_stream(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_log_stream();
+  PROTOBUF_NODISCARD std::string* release_log_stream();
+  void set_allocated_log_stream(std::string* log_stream);
+  private:
+  const std::string& _internal_log_stream() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_log_stream(const std::string& value);
+  std::string* _internal_mutable_log_stream();
+  public:
+
+  // bool is_finished = 2;
+  void clear_is_finished();
+  bool is_finished() const;
+  void set_is_finished(bool value);
+  private:
+  bool _internal_is_finished() const;
+  void _internal_set_is_finished(bool value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:bridge.RunCodeResponse)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr log_stream_;
+    bool is_finished_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_chat_2eproto;
+};
+// -------------------------------------------------------------------
+
 class RpcMessage final :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:bridge.RpcMessage) */ {
  public:
@@ -7818,7 +8267,7 @@ class RpcMessage final :
                &_RpcMessage_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    41;
+    43;
 
   friend void swap(RpcMessage& a, RpcMessage& b) {
     a.Swap(&b);
@@ -14491,9 +14940,154 @@ inline void CareerAdviceRequest::set_allocated_learning_advice(std::string* lear
   // @@protoc_insertion_point(field_set_allocated:bridge.CareerAdviceRequest.learning_advice)
 }
 
+// repeated string extracted_skills = 5;
+inline int CareerAdviceRequest::_internal_extracted_skills_size() const {
+  return _impl_.extracted_skills_.size();
+}
+inline int CareerAdviceRequest::extracted_skills_size() const {
+  return _internal_extracted_skills_size();
+}
+inline void CareerAdviceRequest::clear_extracted_skills() {
+  _impl_.extracted_skills_.Clear();
+}
+inline std::string* CareerAdviceRequest::add_extracted_skills() {
+  std::string* _s = _internal_add_extracted_skills();
+  // @@protoc_insertion_point(field_add_mutable:bridge.CareerAdviceRequest.extracted_skills)
+  return _s;
+}
+inline const std::string& CareerAdviceRequest::_internal_extracted_skills(int index) const {
+  return _impl_.extracted_skills_.Get(index);
+}
+inline const std::string& CareerAdviceRequest::extracted_skills(int index) const {
+  // @@protoc_insertion_point(field_get:bridge.CareerAdviceRequest.extracted_skills)
+  return _internal_extracted_skills(index);
+}
+inline std::string* CareerAdviceRequest::mutable_extracted_skills(int index) {
+  // @@protoc_insertion_point(field_mutable:bridge.CareerAdviceRequest.extracted_skills)
+  return _impl_.extracted_skills_.Mutable(index);
+}
+inline void CareerAdviceRequest::set_extracted_skills(int index, const std::string& value) {
+  _impl_.extracted_skills_.Mutable(index)->assign(value);
+  // @@protoc_insertion_point(field_set:bridge.CareerAdviceRequest.extracted_skills)
+}
+inline void CareerAdviceRequest::set_extracted_skills(int index, std::string&& value) {
+  _impl_.extracted_skills_.Mutable(index)->assign(std::move(value));
+  // @@protoc_insertion_point(field_set:bridge.CareerAdviceRequest.extracted_skills)
+}
+inline void CareerAdviceRequest::set_extracted_skills(int index, const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  _impl_.extracted_skills_.Mutable(index)->assign(value);
+  // @@protoc_insertion_point(field_set_char:bridge.CareerAdviceRequest.extracted_skills)
+}
+inline void CareerAdviceRequest::set_extracted_skills(int index, const char* value, size_t size) {
+  _impl_.extracted_skills_.Mutable(index)->assign(
+    reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:bridge.CareerAdviceRequest.extracted_skills)
+}
+inline std::string* CareerAdviceRequest::_internal_add_extracted_skills() {
+  return _impl_.extracted_skills_.Add();
+}
+inline void CareerAdviceRequest::add_extracted_skills(const std::string& value) {
+  _impl_.extracted_skills_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add:bridge.CareerAdviceRequest.extracted_skills)
+}
+inline void CareerAdviceRequest::add_extracted_skills(std::string&& value) {
+  _impl_.extracted_skills_.Add(std::move(value));
+  // @@protoc_insertion_point(field_add:bridge.CareerAdviceRequest.extracted_skills)
+}
+inline void CareerAdviceRequest::add_extracted_skills(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  _impl_.extracted_skills_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add_char:bridge.CareerAdviceRequest.extracted_skills)
+}
+inline void CareerAdviceRequest::add_extracted_skills(const char* value, size_t size) {
+  _impl_.extracted_skills_.Add()->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_add_pointer:bridge.CareerAdviceRequest.extracted_skills)
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string>&
+CareerAdviceRequest::extracted_skills() const {
+  // @@protoc_insertion_point(field_list:bridge.CareerAdviceRequest.extracted_skills)
+  return _impl_.extracted_skills_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string>*
+CareerAdviceRequest::mutable_extracted_skills() {
+  // @@protoc_insertion_point(field_mutable_list:bridge.CareerAdviceRequest.extracted_skills)
+  return &_impl_.extracted_skills_;
+}
+
+// string next_suggestion = 6;
+inline void CareerAdviceRequest::clear_next_suggestion() {
+  _impl_.next_suggestion_.ClearToEmpty();
+}
+inline const std::string& CareerAdviceRequest::next_suggestion() const {
+  // @@protoc_insertion_point(field_get:bridge.CareerAdviceRequest.next_suggestion)
+  return _internal_next_suggestion();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void CareerAdviceRequest::set_next_suggestion(ArgT0&& arg0, ArgT... args) {
+ 
+ _impl_.next_suggestion_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:bridge.CareerAdviceRequest.next_suggestion)
+}
+inline std::string* CareerAdviceRequest::mutable_next_suggestion() {
+  std::string* _s = _internal_mutable_next_suggestion();
+  // @@protoc_insertion_point(field_mutable:bridge.CareerAdviceRequest.next_suggestion)
+  return _s;
+}
+inline const std::string& CareerAdviceRequest::_internal_next_suggestion() const {
+  return _impl_.next_suggestion_.Get();
+}
+inline void CareerAdviceRequest::_internal_set_next_suggestion(const std::string& value) {
+  
+  _impl_.next_suggestion_.Set(value, GetArenaForAllocation());
+}
+inline std::string* CareerAdviceRequest::_internal_mutable_next_suggestion() {
+  
+  return _impl_.next_suggestion_.Mutable(GetArenaForAllocation());
+}
+inline std::string* CareerAdviceRequest::release_next_suggestion() {
+  // @@protoc_insertion_point(field_release:bridge.CareerAdviceRequest.next_suggestion)
+  return _impl_.next_suggestion_.Release();
+}
+inline void CareerAdviceRequest::set_allocated_next_suggestion(std::string* next_suggestion) {
+  if (next_suggestion != nullptr) {
+    
+  } else {
+    
+  }
+  _impl_.next_suggestion_.SetAllocated(next_suggestion, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.next_suggestion_.IsDefault()) {
+    _impl_.next_suggestion_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:bridge.CareerAdviceRequest.next_suggestion)
+}
+
 // -------------------------------------------------------------------
 
 // CareerAdviceResponse
+
+// bool success = 1;
+inline void CareerAdviceResponse::clear_success() {
+  _impl_.success_ = false;
+}
+inline bool CareerAdviceResponse::_internal_success() const {
+  return _impl_.success_;
+}
+inline bool CareerAdviceResponse::success() const {
+  // @@protoc_insertion_point(field_get:bridge.CareerAdviceResponse.success)
+  return _internal_success();
+}
+inline void CareerAdviceResponse::_internal_set_success(bool value) {
+  
+  _impl_.success_ = value;
+}
+inline void CareerAdviceResponse::set_success(bool value) {
+  _internal_set_success(value);
+  // @@protoc_insertion_point(field_set:bridge.CareerAdviceResponse.success)
+}
 
 // -------------------------------------------------------------------
 
@@ -14896,6 +15490,279 @@ inline void AgentSkillEventAck::set_allocated_trace_id(std::string* trace_id) {
 
 // -------------------------------------------------------------------
 
+// RunCodeRequest
+
+// int64 user_id = 1;
+inline void RunCodeRequest::clear_user_id() {
+  _impl_.user_id_ = int64_t{0};
+}
+inline int64_t RunCodeRequest::_internal_user_id() const {
+  return _impl_.user_id_;
+}
+inline int64_t RunCodeRequest::user_id() const {
+  // @@protoc_insertion_point(field_get:bridge.RunCodeRequest.user_id)
+  return _internal_user_id();
+}
+inline void RunCodeRequest::_internal_set_user_id(int64_t value) {
+  
+  _impl_.user_id_ = value;
+}
+inline void RunCodeRequest::set_user_id(int64_t value) {
+  _internal_set_user_id(value);
+  // @@protoc_insertion_point(field_set:bridge.RunCodeRequest.user_id)
+}
+
+// string session_id = 2;
+inline void RunCodeRequest::clear_session_id() {
+  _impl_.session_id_.ClearToEmpty();
+}
+inline const std::string& RunCodeRequest::session_id() const {
+  // @@protoc_insertion_point(field_get:bridge.RunCodeRequest.session_id)
+  return _internal_session_id();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void RunCodeRequest::set_session_id(ArgT0&& arg0, ArgT... args) {
+ 
+ _impl_.session_id_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:bridge.RunCodeRequest.session_id)
+}
+inline std::string* RunCodeRequest::mutable_session_id() {
+  std::string* _s = _internal_mutable_session_id();
+  // @@protoc_insertion_point(field_mutable:bridge.RunCodeRequest.session_id)
+  return _s;
+}
+inline const std::string& RunCodeRequest::_internal_session_id() const {
+  return _impl_.session_id_.Get();
+}
+inline void RunCodeRequest::_internal_set_session_id(const std::string& value) {
+  
+  _impl_.session_id_.Set(value, GetArenaForAllocation());
+}
+inline std::string* RunCodeRequest::_internal_mutable_session_id() {
+  
+  return _impl_.session_id_.Mutable(GetArenaForAllocation());
+}
+inline std::string* RunCodeRequest::release_session_id() {
+  // @@protoc_insertion_point(field_release:bridge.RunCodeRequest.session_id)
+  return _impl_.session_id_.Release();
+}
+inline void RunCodeRequest::set_allocated_session_id(std::string* session_id) {
+  if (session_id != nullptr) {
+    
+  } else {
+    
+  }
+  _impl_.session_id_.SetAllocated(session_id, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.session_id_.IsDefault()) {
+    _impl_.session_id_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:bridge.RunCodeRequest.session_id)
+}
+
+// string task_prompt = 3;
+inline void RunCodeRequest::clear_task_prompt() {
+  _impl_.task_prompt_.ClearToEmpty();
+}
+inline const std::string& RunCodeRequest::task_prompt() const {
+  // @@protoc_insertion_point(field_get:bridge.RunCodeRequest.task_prompt)
+  return _internal_task_prompt();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void RunCodeRequest::set_task_prompt(ArgT0&& arg0, ArgT... args) {
+ 
+ _impl_.task_prompt_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:bridge.RunCodeRequest.task_prompt)
+}
+inline std::string* RunCodeRequest::mutable_task_prompt() {
+  std::string* _s = _internal_mutable_task_prompt();
+  // @@protoc_insertion_point(field_mutable:bridge.RunCodeRequest.task_prompt)
+  return _s;
+}
+inline const std::string& RunCodeRequest::_internal_task_prompt() const {
+  return _impl_.task_prompt_.Get();
+}
+inline void RunCodeRequest::_internal_set_task_prompt(const std::string& value) {
+  
+  _impl_.task_prompt_.Set(value, GetArenaForAllocation());
+}
+inline std::string* RunCodeRequest::_internal_mutable_task_prompt() {
+  
+  return _impl_.task_prompt_.Mutable(GetArenaForAllocation());
+}
+inline std::string* RunCodeRequest::release_task_prompt() {
+  // @@protoc_insertion_point(field_release:bridge.RunCodeRequest.task_prompt)
+  return _impl_.task_prompt_.Release();
+}
+inline void RunCodeRequest::set_allocated_task_prompt(std::string* task_prompt) {
+  if (task_prompt != nullptr) {
+    
+  } else {
+    
+  }
+  _impl_.task_prompt_.SetAllocated(task_prompt, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.task_prompt_.IsDefault()) {
+    _impl_.task_prompt_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:bridge.RunCodeRequest.task_prompt)
+}
+
+// repeated string skills = 4;
+inline int RunCodeRequest::_internal_skills_size() const {
+  return _impl_.skills_.size();
+}
+inline int RunCodeRequest::skills_size() const {
+  return _internal_skills_size();
+}
+inline void RunCodeRequest::clear_skills() {
+  _impl_.skills_.Clear();
+}
+inline std::string* RunCodeRequest::add_skills() {
+  std::string* _s = _internal_add_skills();
+  // @@protoc_insertion_point(field_add_mutable:bridge.RunCodeRequest.skills)
+  return _s;
+}
+inline const std::string& RunCodeRequest::_internal_skills(int index) const {
+  return _impl_.skills_.Get(index);
+}
+inline const std::string& RunCodeRequest::skills(int index) const {
+  // @@protoc_insertion_point(field_get:bridge.RunCodeRequest.skills)
+  return _internal_skills(index);
+}
+inline std::string* RunCodeRequest::mutable_skills(int index) {
+  // @@protoc_insertion_point(field_mutable:bridge.RunCodeRequest.skills)
+  return _impl_.skills_.Mutable(index);
+}
+inline void RunCodeRequest::set_skills(int index, const std::string& value) {
+  _impl_.skills_.Mutable(index)->assign(value);
+  // @@protoc_insertion_point(field_set:bridge.RunCodeRequest.skills)
+}
+inline void RunCodeRequest::set_skills(int index, std::string&& value) {
+  _impl_.skills_.Mutable(index)->assign(std::move(value));
+  // @@protoc_insertion_point(field_set:bridge.RunCodeRequest.skills)
+}
+inline void RunCodeRequest::set_skills(int index, const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  _impl_.skills_.Mutable(index)->assign(value);
+  // @@protoc_insertion_point(field_set_char:bridge.RunCodeRequest.skills)
+}
+inline void RunCodeRequest::set_skills(int index, const char* value, size_t size) {
+  _impl_.skills_.Mutable(index)->assign(
+    reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:bridge.RunCodeRequest.skills)
+}
+inline std::string* RunCodeRequest::_internal_add_skills() {
+  return _impl_.skills_.Add();
+}
+inline void RunCodeRequest::add_skills(const std::string& value) {
+  _impl_.skills_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add:bridge.RunCodeRequest.skills)
+}
+inline void RunCodeRequest::add_skills(std::string&& value) {
+  _impl_.skills_.Add(std::move(value));
+  // @@protoc_insertion_point(field_add:bridge.RunCodeRequest.skills)
+}
+inline void RunCodeRequest::add_skills(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  _impl_.skills_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add_char:bridge.RunCodeRequest.skills)
+}
+inline void RunCodeRequest::add_skills(const char* value, size_t size) {
+  _impl_.skills_.Add()->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_add_pointer:bridge.RunCodeRequest.skills)
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string>&
+RunCodeRequest::skills() const {
+  // @@protoc_insertion_point(field_list:bridge.RunCodeRequest.skills)
+  return _impl_.skills_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string>*
+RunCodeRequest::mutable_skills() {
+  // @@protoc_insertion_point(field_mutable_list:bridge.RunCodeRequest.skills)
+  return &_impl_.skills_;
+}
+
+// -------------------------------------------------------------------
+
+// RunCodeResponse
+
+// string log_stream = 1;
+inline void RunCodeResponse::clear_log_stream() {
+  _impl_.log_stream_.ClearToEmpty();
+}
+inline const std::string& RunCodeResponse::log_stream() const {
+  // @@protoc_insertion_point(field_get:bridge.RunCodeResponse.log_stream)
+  return _internal_log_stream();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void RunCodeResponse::set_log_stream(ArgT0&& arg0, ArgT... args) {
+ 
+ _impl_.log_stream_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:bridge.RunCodeResponse.log_stream)
+}
+inline std::string* RunCodeResponse::mutable_log_stream() {
+  std::string* _s = _internal_mutable_log_stream();
+  // @@protoc_insertion_point(field_mutable:bridge.RunCodeResponse.log_stream)
+  return _s;
+}
+inline const std::string& RunCodeResponse::_internal_log_stream() const {
+  return _impl_.log_stream_.Get();
+}
+inline void RunCodeResponse::_internal_set_log_stream(const std::string& value) {
+  
+  _impl_.log_stream_.Set(value, GetArenaForAllocation());
+}
+inline std::string* RunCodeResponse::_internal_mutable_log_stream() {
+  
+  return _impl_.log_stream_.Mutable(GetArenaForAllocation());
+}
+inline std::string* RunCodeResponse::release_log_stream() {
+  // @@protoc_insertion_point(field_release:bridge.RunCodeResponse.log_stream)
+  return _impl_.log_stream_.Release();
+}
+inline void RunCodeResponse::set_allocated_log_stream(std::string* log_stream) {
+  if (log_stream != nullptr) {
+    
+  } else {
+    
+  }
+  _impl_.log_stream_.SetAllocated(log_stream, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.log_stream_.IsDefault()) {
+    _impl_.log_stream_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:bridge.RunCodeResponse.log_stream)
+}
+
+// bool is_finished = 2;
+inline void RunCodeResponse::clear_is_finished() {
+  _impl_.is_finished_ = false;
+}
+inline bool RunCodeResponse::_internal_is_finished() const {
+  return _impl_.is_finished_;
+}
+inline bool RunCodeResponse::is_finished() const {
+  // @@protoc_insertion_point(field_get:bridge.RunCodeResponse.is_finished)
+  return _internal_is_finished();
+}
+inline void RunCodeResponse::_internal_set_is_finished(bool value) {
+  
+  _impl_.is_finished_ = value;
+}
+inline void RunCodeResponse::set_is_finished(bool value) {
+  _internal_set_is_finished(value);
+  // @@protoc_insertion_point(field_set:bridge.RunCodeResponse.is_finished)
+}
+
+// -------------------------------------------------------------------
+
 // RpcMessage
 
 // .bridge.RpcMessage.Type type = 1;
@@ -15161,6 +16028,10 @@ inline void RpcMessage::set_allocated_error_desc(std::string* error_desc) {
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

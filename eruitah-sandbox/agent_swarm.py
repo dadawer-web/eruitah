@@ -30,6 +30,7 @@ import socket as _socket
 import threading
 import logging
 import asyncio
+import subprocess
 from dataclasses import dataclass, field
 from typing import Optional, Callable
 from collections import defaultdict
@@ -40,6 +41,76 @@ DEFAULT_HUB_HOST = os.environ.get("ERUITAH_SWARM_HOST", "127.0.0.1")
 DEFAULT_HUB_PORT = int(os.environ.get("ERUITAH_SWARM_PORT", "9000"))
 BUFFER_SIZE = 65536
 MESSAGE_DELIMITER = b"\n"
+
+
+def _try_report_career_advice(user_id, reviewer_output, work_dir, task_description):
+    if not user_id or user_id <= 0:
+        return
+    try:
+        from rpc_entry import report_career_advice
+
+        extracted_skills = _extract_tech_skills_from_review(reviewer_output)
+        resume_highlight = _generate_resume_highlight(extracted_skills, task_description)
+        next_suggestion = _extract_learning_suggestion(reviewer_output)
+
+        if extracted_skills or resume_highlight:
+            report_career_advice(
+                user_id=user_id,
+                extracted_skills=extracted_skills,
+                resume_highlight=resume_highlight,
+                next_suggestion=next_suggestion,
+            )
+            logger.info(f"[Swarm] Career advice reported to Java for user={user_id}")
+    except Exception as e:
+        logger.debug(f"[Swarm] Career advice report failed (non-blocking): {e}")
+
+
+def _extract_tech_skills_from_review(review_text: str) -> list:
+    if not review_text:
+        return []
+    tech_keywords = [
+        "epoll", "muduo", "reactor", "proactor", "thread pool", "thread_pool",
+        "mutex", "semaphore", "condition variable", "atomic", "lock-free",
+        "redis", "mysql", "postgresql", "mongodb", "kafka", "rabbitmq",
+        "docker", "kubernetes", "k8s", "grpc", "protobuf", "rest api",
+        "avl", "red-black", "b-tree", "b+tree", "hash table", "skip list",
+        "dfs", "bfs", "dynamic programming", "greedy", "backtracking",
+        "tcp", "udp", "http", "websocket", "rpc", "cdn", "dns",
+        "spring", "mybatis", "netty", "muduo", "django", "flask", "fastapi",
+        "react", "vue", "typescript", "javascript", "python", "java", "cpp", "rust", "go",
+        "multi-thread", "concurrent", "async", "coroutine", "io_uring",
+        "design pattern", "singleton", "factory", "observer", "strategy",
+        "unit test", "integration test", "tdd", "ci/cd",
+        "git", "linux", "shell", "awk", "sed",
+    ]
+    found = set()
+    text_lower = review_text.lower()
+    for kw in tech_keywords:
+        if kw in text_lower:
+            label = kw.replace("_", " ").title()
+            found.add(label)
+    return list(found)[:8]
+
+
+def _generate_resume_highlight(skills: list, task_desc: str) -> str:
+    if not skills and not task_desc:
+        return ""
+    skill_str = ", ".join(skills[:5]) if skills else "编程实践"
+    return f"通过实现{task_desc[:30]}项目，掌握了{skill_str}等核心技术，具备独立完成中等复杂度系统开发的能力"
+
+
+def _extract_learning_suggestion(review_text: str) -> str:
+    if not review_text:
+        return ""
+    suggestion_patterns = [
+        r"(?:建议|推荐|可以|应该|下一步|进阶)[：:]\s*(.+?)(?:\n|$)",
+        r"(?:improve|suggest|recommend|next step)[：:]\s*(.+?)(?:\n|$)",
+    ]
+    for pattern in suggestion_patterns:
+        matches = re.findall(pattern, review_text, re.IGNORECASE)
+        if matches:
+            return matches[0].strip()[:200]
+    return ""
 
 
 @dataclass
@@ -2239,10 +2310,10 @@ def _extract_review_from_text(text: str) -> tuple:
     return None, ""
 
 
-def _get_last_assistant_text(task_id: str, session_id: str) -> str:
+def _get_last_assistant_text(task_id: str, session_id: str, user_id: int = 0) -> str:
     try:
         from task_manager import get_task_manager
-        tm = get_task_manager()
+        tm = get_task_manager(user_id=user_id)
         session = tm.get_session(task_id)
         if session:
             all_messages = (session.messages_before or []) + session.messages
@@ -2516,6 +2587,7 @@ def run_swarm(
     custom_coder_prompt: str = "",
     custom_reviewer_prompt: str = "",
     images: Optional[list] = None,
+    user_id: int = 0,
 ):
     task_desc = task_description or user_input or ""
     if not task_desc:
@@ -2542,6 +2614,7 @@ def run_swarm(
             custom_coder_prompt=custom_coder_prompt,
             custom_reviewer_prompt=custom_reviewer_prompt,
             images=images,
+            user_id=user_id,
         )
         return
 
@@ -2561,6 +2634,7 @@ def run_swarm(
         custom_coder_prompt=custom_coder_prompt,
         custom_reviewer_prompt=custom_reviewer_prompt,
         images=images,
+        user_id=user_id,
     ):
         if event.get("type") == "swarm_result":
             result = event.get("result")
@@ -2586,6 +2660,7 @@ def _run_swarm_events(
     custom_coder_prompt: str = "",
     custom_reviewer_prompt: str = "",
     images: Optional[list] = None,
+    user_id: int = 0,
 ):
     loop_count = 0
     coder_instruction = task_description
@@ -2671,7 +2746,7 @@ def _run_swarm_events(
         if task_id:
             try:
                 from task_manager import get_task_manager
-                tm = get_task_manager()
+                tm = get_task_manager(user_id=user_id)
                 session = tm.get_session(task_id)
                 if session:
                     session_messages = (session.messages_before or []) + session.messages
@@ -2848,6 +2923,13 @@ def _run_swarm_events(
                 "result": swarm_result,
             }
 
+            _try_report_career_advice(
+                user_id=user_id,
+                reviewer_output=all_reviewer_output,
+                work_dir=work_dir,
+                task_description=task_description,
+            )
+
             try:
                 from self_distill import auto_distill
                 distill_work_dir = main_repo_dir or work_dir
@@ -2893,7 +2975,7 @@ def _run_swarm_events(
         if task_id:
             try:
                 from task_manager import get_task_manager
-                tm = get_task_manager()
+                tm = get_task_manager(user_id=user_id)
                 session = tm.get_session(task_id)
                 if session:
                     session_messages = (session.messages_before or []) + session.messages
@@ -2947,6 +3029,13 @@ def _run_swarm_events(
                 "data": f"✅ Reviewer 审核通过！经过 {loop_count} 轮审查。",
                 "result": swarm_result,
             }
+
+            _try_report_career_advice(
+                user_id=user_id,
+                reviewer_output=all_reviewer_output,
+                work_dir=work_dir,
+                task_description=task_description,
+            )
 
             try:
                 from self_distill import auto_distill

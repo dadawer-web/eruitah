@@ -33112,6 +33112,43 @@ java.lang.String defaultValue) {
      */
     com.google.protobuf.ByteString
         getLearningAdviceBytes();
+
+    /**
+     * <code>repeated string extracted_skills = 5;</code>
+     * @return A list containing the extractedSkills.
+     */
+    java.util.List<java.lang.String>
+        getExtractedSkillsList();
+    /**
+     * <code>repeated string extracted_skills = 5;</code>
+     * @return The count of extractedSkills.
+     */
+    int getExtractedSkillsCount();
+    /**
+     * <code>repeated string extracted_skills = 5;</code>
+     * @param index The index of the element to return.
+     * @return The extractedSkills at the given index.
+     */
+    java.lang.String getExtractedSkills(int index);
+    /**
+     * <code>repeated string extracted_skills = 5;</code>
+     * @param index The index of the value to return.
+     * @return The bytes of the extractedSkills at the given index.
+     */
+    com.google.protobuf.ByteString
+        getExtractedSkillsBytes(int index);
+
+    /**
+     * <code>string next_suggestion = 6;</code>
+     * @return The nextSuggestion.
+     */
+    java.lang.String getNextSuggestion();
+    /**
+     * <code>string next_suggestion = 6;</code>
+     * @return The bytes for nextSuggestion.
+     */
+    com.google.protobuf.ByteString
+        getNextSuggestionBytes();
   }
   /**
    * Protobuf type {@code bridge.CareerAdviceRequest}
@@ -33129,6 +33166,8 @@ java.lang.String defaultValue) {
       skills_ = com.google.protobuf.LazyStringArrayList.EMPTY;
       resumeHighlight_ = "";
       learningAdvice_ = "";
+      extractedSkills_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      nextSuggestion_ = "";
     }
 
     @java.lang.Override
@@ -33281,6 +33320,81 @@ java.lang.String defaultValue) {
       }
     }
 
+    public static final int EXTRACTED_SKILLS_FIELD_NUMBER = 5;
+    @SuppressWarnings("serial")
+    private com.google.protobuf.LazyStringList extractedSkills_;
+    /**
+     * <code>repeated string extracted_skills = 5;</code>
+     * @return A list containing the extractedSkills.
+     */
+    public com.google.protobuf.ProtocolStringList
+        getExtractedSkillsList() {
+      return extractedSkills_;
+    }
+    /**
+     * <code>repeated string extracted_skills = 5;</code>
+     * @return The count of extractedSkills.
+     */
+    public int getExtractedSkillsCount() {
+      return extractedSkills_.size();
+    }
+    /**
+     * <code>repeated string extracted_skills = 5;</code>
+     * @param index The index of the element to return.
+     * @return The extractedSkills at the given index.
+     */
+    public java.lang.String getExtractedSkills(int index) {
+      return extractedSkills_.get(index);
+    }
+    /**
+     * <code>repeated string extracted_skills = 5;</code>
+     * @param index The index of the value to return.
+     * @return The bytes of the extractedSkills at the given index.
+     */
+    public com.google.protobuf.ByteString
+        getExtractedSkillsBytes(int index) {
+      return extractedSkills_.getByteString(index);
+    }
+
+    public static final int NEXT_SUGGESTION_FIELD_NUMBER = 6;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object nextSuggestion_ = "";
+    /**
+     * <code>string next_suggestion = 6;</code>
+     * @return The nextSuggestion.
+     */
+    @java.lang.Override
+    public java.lang.String getNextSuggestion() {
+      java.lang.Object ref = nextSuggestion_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        nextSuggestion_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string next_suggestion = 6;</code>
+     * @return The bytes for nextSuggestion.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getNextSuggestionBytes() {
+      java.lang.Object ref = nextSuggestion_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        nextSuggestion_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -33306,6 +33420,12 @@ java.lang.String defaultValue) {
       }
       if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(learningAdvice_)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 4, learningAdvice_);
+      }
+      for (int i = 0; i < extractedSkills_.size(); i++) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 5, extractedSkills_.getRaw(i));
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(nextSuggestion_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 6, nextSuggestion_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -33334,6 +33454,17 @@ java.lang.String defaultValue) {
       if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(learningAdvice_)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, learningAdvice_);
       }
+      {
+        int dataSize = 0;
+        for (int i = 0; i < extractedSkills_.size(); i++) {
+          dataSize += computeStringSizeNoTag(extractedSkills_.getRaw(i));
+        }
+        size += dataSize;
+        size += 1 * getExtractedSkillsList().size();
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(nextSuggestion_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, nextSuggestion_);
+      }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
       return size;
@@ -33357,6 +33488,10 @@ java.lang.String defaultValue) {
           .equals(other.getResumeHighlight())) return false;
       if (!getLearningAdvice()
           .equals(other.getLearningAdvice())) return false;
+      if (!getExtractedSkillsList()
+          .equals(other.getExtractedSkillsList())) return false;
+      if (!getNextSuggestion()
+          .equals(other.getNextSuggestion())) return false;
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
     }
@@ -33379,6 +33514,12 @@ java.lang.String defaultValue) {
       hash = (53 * hash) + getResumeHighlight().hashCode();
       hash = (37 * hash) + LEARNING_ADVICE_FIELD_NUMBER;
       hash = (53 * hash) + getLearningAdvice().hashCode();
+      if (getExtractedSkillsCount() > 0) {
+        hash = (37 * hash) + EXTRACTED_SKILLS_FIELD_NUMBER;
+        hash = (53 * hash) + getExtractedSkillsList().hashCode();
+      }
+      hash = (37 * hash) + NEXT_SUGGESTION_FIELD_NUMBER;
+      hash = (53 * hash) + getNextSuggestion().hashCode();
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -33513,6 +33654,9 @@ java.lang.String defaultValue) {
         bitField0_ = (bitField0_ & ~0x00000002);
         resumeHighlight_ = "";
         learningAdvice_ = "";
+        extractedSkills_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000010);
+        nextSuggestion_ = "";
         return this;
       }
 
@@ -33551,6 +33695,11 @@ java.lang.String defaultValue) {
           bitField0_ = (bitField0_ & ~0x00000002);
         }
         result.skills_ = skills_;
+        if (((bitField0_ & 0x00000010) != 0)) {
+          extractedSkills_ = extractedSkills_.getUnmodifiableView();
+          bitField0_ = (bitField0_ & ~0x00000010);
+        }
+        result.extractedSkills_ = extractedSkills_;
       }
 
       private void buildPartial0(com.chat.ai.rpc.ChatProto.CareerAdviceRequest result) {
@@ -33563,6 +33712,9 @@ java.lang.String defaultValue) {
         }
         if (((from_bitField0_ & 0x00000008) != 0)) {
           result.learningAdvice_ = learningAdvice_;
+        }
+        if (((from_bitField0_ & 0x00000020) != 0)) {
+          result.nextSuggestion_ = nextSuggestion_;
         }
       }
 
@@ -33633,6 +33785,21 @@ java.lang.String defaultValue) {
           bitField0_ |= 0x00000008;
           onChanged();
         }
+        if (!other.extractedSkills_.isEmpty()) {
+          if (extractedSkills_.isEmpty()) {
+            extractedSkills_ = other.extractedSkills_;
+            bitField0_ = (bitField0_ & ~0x00000010);
+          } else {
+            ensureExtractedSkillsIsMutable();
+            extractedSkills_.addAll(other.extractedSkills_);
+          }
+          onChanged();
+        }
+        if (!other.getNextSuggestion().isEmpty()) {
+          nextSuggestion_ = other.nextSuggestion_;
+          bitField0_ |= 0x00000020;
+          onChanged();
+        }
         this.mergeUnknownFields(other.getUnknownFields());
         onChanged();
         return this;
@@ -33680,6 +33847,17 @@ java.lang.String defaultValue) {
                 bitField0_ |= 0x00000008;
                 break;
               } // case 34
+              case 42: {
+                java.lang.String s = input.readStringRequireUtf8();
+                ensureExtractedSkillsIsMutable();
+                extractedSkills_.add(s);
+                break;
+              } // case 42
+              case 50: {
+                nextSuggestion_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000020;
+                break;
+              } // case 50
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -33976,6 +34154,182 @@ java.lang.String defaultValue) {
         onChanged();
         return this;
       }
+
+      private com.google.protobuf.LazyStringList extractedSkills_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      private void ensureExtractedSkillsIsMutable() {
+        if (!((bitField0_ & 0x00000010) != 0)) {
+          extractedSkills_ = new com.google.protobuf.LazyStringArrayList(extractedSkills_);
+          bitField0_ |= 0x00000010;
+         }
+      }
+      /**
+       * <code>repeated string extracted_skills = 5;</code>
+       * @return A list containing the extractedSkills.
+       */
+      public com.google.protobuf.ProtocolStringList
+          getExtractedSkillsList() {
+        return extractedSkills_.getUnmodifiableView();
+      }
+      /**
+       * <code>repeated string extracted_skills = 5;</code>
+       * @return The count of extractedSkills.
+       */
+      public int getExtractedSkillsCount() {
+        return extractedSkills_.size();
+      }
+      /**
+       * <code>repeated string extracted_skills = 5;</code>
+       * @param index The index of the element to return.
+       * @return The extractedSkills at the given index.
+       */
+      public java.lang.String getExtractedSkills(int index) {
+        return extractedSkills_.get(index);
+      }
+      /**
+       * <code>repeated string extracted_skills = 5;</code>
+       * @param index The index of the value to return.
+       * @return The bytes of the extractedSkills at the given index.
+       */
+      public com.google.protobuf.ByteString
+          getExtractedSkillsBytes(int index) {
+        return extractedSkills_.getByteString(index);
+      }
+      /**
+       * <code>repeated string extracted_skills = 5;</code>
+       * @param index The index to set the value at.
+       * @param value The extractedSkills to set.
+       * @return This builder for chaining.
+       */
+      public Builder setExtractedSkills(
+          int index, java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        ensureExtractedSkillsIsMutable();
+        extractedSkills_.set(index, value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string extracted_skills = 5;</code>
+       * @param value The extractedSkills to add.
+       * @return This builder for chaining.
+       */
+      public Builder addExtractedSkills(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        ensureExtractedSkillsIsMutable();
+        extractedSkills_.add(value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string extracted_skills = 5;</code>
+       * @param values The extractedSkills to add.
+       * @return This builder for chaining.
+       */
+      public Builder addAllExtractedSkills(
+          java.lang.Iterable<java.lang.String> values) {
+        ensureExtractedSkillsIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, extractedSkills_);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string extracted_skills = 5;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearExtractedSkills() {
+        extractedSkills_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000010);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string extracted_skills = 5;</code>
+       * @param value The bytes of the extractedSkills to add.
+       * @return This builder for chaining.
+       */
+      public Builder addExtractedSkillsBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        ensureExtractedSkillsIsMutable();
+        extractedSkills_.add(value);
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object nextSuggestion_ = "";
+      /**
+       * <code>string next_suggestion = 6;</code>
+       * @return The nextSuggestion.
+       */
+      public java.lang.String getNextSuggestion() {
+        java.lang.Object ref = nextSuggestion_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          nextSuggestion_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string next_suggestion = 6;</code>
+       * @return The bytes for nextSuggestion.
+       */
+      public com.google.protobuf.ByteString
+          getNextSuggestionBytes() {
+        java.lang.Object ref = nextSuggestion_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          nextSuggestion_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string next_suggestion = 6;</code>
+       * @param value The nextSuggestion to set.
+       * @return This builder for chaining.
+       */
+      public Builder setNextSuggestion(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        nextSuggestion_ = value;
+        bitField0_ |= 0x00000020;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string next_suggestion = 6;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearNextSuggestion() {
+        nextSuggestion_ = getDefaultInstance().getNextSuggestion();
+        bitField0_ = (bitField0_ & ~0x00000020);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string next_suggestion = 6;</code>
+       * @param value The bytes for nextSuggestion to set.
+       * @return This builder for chaining.
+       */
+      public Builder setNextSuggestionBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        nextSuggestion_ = value;
+        bitField0_ |= 0x00000020;
+        onChanged();
+        return this;
+      }
       @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
@@ -34043,6 +34397,12 @@ java.lang.String defaultValue) {
   public interface CareerAdviceResponseOrBuilder extends
       // @@protoc_insertion_point(interface_extends:bridge.CareerAdviceResponse)
       com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>bool success = 1;</code>
+     * @return The success.
+     */
+    boolean getSuccess();
   }
   /**
    * Protobuf type {@code bridge.CareerAdviceResponse}
@@ -34084,6 +34444,17 @@ java.lang.String defaultValue) {
               com.chat.ai.rpc.ChatProto.CareerAdviceResponse.class, com.chat.ai.rpc.ChatProto.CareerAdviceResponse.Builder.class);
     }
 
+    public static final int SUCCESS_FIELD_NUMBER = 1;
+    private boolean success_ = false;
+    /**
+     * <code>bool success = 1;</code>
+     * @return The success.
+     */
+    @java.lang.Override
+    public boolean getSuccess() {
+      return success_;
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -34098,6 +34469,9 @@ java.lang.String defaultValue) {
     @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
+      if (success_ != false) {
+        output.writeBool(1, success_);
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -34107,6 +34481,10 @@ java.lang.String defaultValue) {
       if (size != -1) return size;
 
       size = 0;
+      if (success_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(1, success_);
+      }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
       return size;
@@ -34122,6 +34500,8 @@ java.lang.String defaultValue) {
       }
       com.chat.ai.rpc.ChatProto.CareerAdviceResponse other = (com.chat.ai.rpc.ChatProto.CareerAdviceResponse) obj;
 
+      if (getSuccess()
+          != other.getSuccess()) return false;
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
     }
@@ -34133,6 +34513,9 @@ java.lang.String defaultValue) {
       }
       int hash = 41;
       hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + SUCCESS_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getSuccess());
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -34261,6 +34644,8 @@ java.lang.String defaultValue) {
       @java.lang.Override
       public Builder clear() {
         super.clear();
+        bitField0_ = 0;
+        success_ = false;
         return this;
       }
 
@@ -34287,8 +34672,16 @@ java.lang.String defaultValue) {
       @java.lang.Override
       public com.chat.ai.rpc.ChatProto.CareerAdviceResponse buildPartial() {
         com.chat.ai.rpc.ChatProto.CareerAdviceResponse result = new com.chat.ai.rpc.ChatProto.CareerAdviceResponse(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
         onBuilt();
         return result;
+      }
+
+      private void buildPartial0(com.chat.ai.rpc.ChatProto.CareerAdviceResponse result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.success_ = success_;
+        }
       }
 
       @java.lang.Override
@@ -34335,6 +34728,9 @@ java.lang.String defaultValue) {
 
       public Builder mergeFrom(com.chat.ai.rpc.ChatProto.CareerAdviceResponse other) {
         if (other == com.chat.ai.rpc.ChatProto.CareerAdviceResponse.getDefaultInstance()) return this;
+        if (other.getSuccess() != false) {
+          setSuccess(other.getSuccess());
+        }
         this.mergeUnknownFields(other.getUnknownFields());
         onChanged();
         return this;
@@ -34361,6 +34757,11 @@ java.lang.String defaultValue) {
               case 0:
                 done = true;
                 break;
+              case 8: {
+                success_ = input.readBool();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 8
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -34374,6 +34775,39 @@ java.lang.String defaultValue) {
         } finally {
           onChanged();
         } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private boolean success_ ;
+      /**
+       * <code>bool success = 1;</code>
+       * @return The success.
+       */
+      @java.lang.Override
+      public boolean getSuccess() {
+        return success_;
+      }
+      /**
+       * <code>bool success = 1;</code>
+       * @param value The success to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSuccess(boolean value) {
+        
+        success_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool success = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSuccess() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        success_ = false;
+        onChanged();
         return this;
       }
       @java.lang.Override
@@ -36674,6 +37108,1620 @@ java.lang.String defaultValue) {
 
   }
 
+  public interface RunCodeRequestOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:bridge.RunCodeRequest)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>int64 user_id = 1;</code>
+     * @return The userId.
+     */
+    long getUserId();
+
+    /**
+     * <code>string session_id = 2;</code>
+     * @return The sessionId.
+     */
+    java.lang.String getSessionId();
+    /**
+     * <code>string session_id = 2;</code>
+     * @return The bytes for sessionId.
+     */
+    com.google.protobuf.ByteString
+        getSessionIdBytes();
+
+    /**
+     * <code>string task_prompt = 3;</code>
+     * @return The taskPrompt.
+     */
+    java.lang.String getTaskPrompt();
+    /**
+     * <code>string task_prompt = 3;</code>
+     * @return The bytes for taskPrompt.
+     */
+    com.google.protobuf.ByteString
+        getTaskPromptBytes();
+
+    /**
+     * <code>repeated string skills = 4;</code>
+     * @return A list containing the skills.
+     */
+    java.util.List<java.lang.String>
+        getSkillsList();
+    /**
+     * <code>repeated string skills = 4;</code>
+     * @return The count of skills.
+     */
+    int getSkillsCount();
+    /**
+     * <code>repeated string skills = 4;</code>
+     * @param index The index of the element to return.
+     * @return The skills at the given index.
+     */
+    java.lang.String getSkills(int index);
+    /**
+     * <code>repeated string skills = 4;</code>
+     * @param index The index of the value to return.
+     * @return The bytes of the skills at the given index.
+     */
+    com.google.protobuf.ByteString
+        getSkillsBytes(int index);
+  }
+  /**
+   * Protobuf type {@code bridge.RunCodeRequest}
+   */
+  public static final class RunCodeRequest extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:bridge.RunCodeRequest)
+      RunCodeRequestOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use RunCodeRequest.newBuilder() to construct.
+    private RunCodeRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private RunCodeRequest() {
+      sessionId_ = "";
+      taskPrompt_ = "";
+      skills_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new RunCodeRequest();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.chat.ai.rpc.ChatProto.internal_static_bridge_RunCodeRequest_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.chat.ai.rpc.ChatProto.internal_static_bridge_RunCodeRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.chat.ai.rpc.ChatProto.RunCodeRequest.class, com.chat.ai.rpc.ChatProto.RunCodeRequest.Builder.class);
+    }
+
+    public static final int USER_ID_FIELD_NUMBER = 1;
+    private long userId_ = 0L;
+    /**
+     * <code>int64 user_id = 1;</code>
+     * @return The userId.
+     */
+    @java.lang.Override
+    public long getUserId() {
+      return userId_;
+    }
+
+    public static final int SESSION_ID_FIELD_NUMBER = 2;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object sessionId_ = "";
+    /**
+     * <code>string session_id = 2;</code>
+     * @return The sessionId.
+     */
+    @java.lang.Override
+    public java.lang.String getSessionId() {
+      java.lang.Object ref = sessionId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        sessionId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string session_id = 2;</code>
+     * @return The bytes for sessionId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getSessionIdBytes() {
+      java.lang.Object ref = sessionId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        sessionId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int TASK_PROMPT_FIELD_NUMBER = 3;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object taskPrompt_ = "";
+    /**
+     * <code>string task_prompt = 3;</code>
+     * @return The taskPrompt.
+     */
+    @java.lang.Override
+    public java.lang.String getTaskPrompt() {
+      java.lang.Object ref = taskPrompt_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        taskPrompt_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string task_prompt = 3;</code>
+     * @return The bytes for taskPrompt.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getTaskPromptBytes() {
+      java.lang.Object ref = taskPrompt_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        taskPrompt_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int SKILLS_FIELD_NUMBER = 4;
+    @SuppressWarnings("serial")
+    private com.google.protobuf.LazyStringList skills_;
+    /**
+     * <code>repeated string skills = 4;</code>
+     * @return A list containing the skills.
+     */
+    public com.google.protobuf.ProtocolStringList
+        getSkillsList() {
+      return skills_;
+    }
+    /**
+     * <code>repeated string skills = 4;</code>
+     * @return The count of skills.
+     */
+    public int getSkillsCount() {
+      return skills_.size();
+    }
+    /**
+     * <code>repeated string skills = 4;</code>
+     * @param index The index of the element to return.
+     * @return The skills at the given index.
+     */
+    public java.lang.String getSkills(int index) {
+      return skills_.get(index);
+    }
+    /**
+     * <code>repeated string skills = 4;</code>
+     * @param index The index of the value to return.
+     * @return The bytes of the skills at the given index.
+     */
+    public com.google.protobuf.ByteString
+        getSkillsBytes(int index) {
+      return skills_.getByteString(index);
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (userId_ != 0L) {
+        output.writeInt64(1, userId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(sessionId_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, sessionId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(taskPrompt_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, taskPrompt_);
+      }
+      for (int i = 0; i < skills_.size(); i++) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 4, skills_.getRaw(i));
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (userId_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(1, userId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(sessionId_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, sessionId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(taskPrompt_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, taskPrompt_);
+      }
+      {
+        int dataSize = 0;
+        for (int i = 0; i < skills_.size(); i++) {
+          dataSize += computeStringSizeNoTag(skills_.getRaw(i));
+        }
+        size += dataSize;
+        size += 1 * getSkillsList().size();
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.chat.ai.rpc.ChatProto.RunCodeRequest)) {
+        return super.equals(obj);
+      }
+      com.chat.ai.rpc.ChatProto.RunCodeRequest other = (com.chat.ai.rpc.ChatProto.RunCodeRequest) obj;
+
+      if (getUserId()
+          != other.getUserId()) return false;
+      if (!getSessionId()
+          .equals(other.getSessionId())) return false;
+      if (!getTaskPrompt()
+          .equals(other.getTaskPrompt())) return false;
+      if (!getSkillsList()
+          .equals(other.getSkillsList())) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + USER_ID_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getUserId());
+      hash = (37 * hash) + SESSION_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getSessionId().hashCode();
+      hash = (37 * hash) + TASK_PROMPT_FIELD_NUMBER;
+      hash = (53 * hash) + getTaskPrompt().hashCode();
+      if (getSkillsCount() > 0) {
+        hash = (37 * hash) + SKILLS_FIELD_NUMBER;
+        hash = (53 * hash) + getSkillsList().hashCode();
+      }
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.chat.ai.rpc.ChatProto.RunCodeRequest parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.chat.ai.rpc.ChatProto.RunCodeRequest parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.chat.ai.rpc.ChatProto.RunCodeRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.chat.ai.rpc.ChatProto.RunCodeRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.chat.ai.rpc.ChatProto.RunCodeRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.chat.ai.rpc.ChatProto.RunCodeRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.chat.ai.rpc.ChatProto.RunCodeRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.chat.ai.rpc.ChatProto.RunCodeRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.chat.ai.rpc.ChatProto.RunCodeRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.chat.ai.rpc.ChatProto.RunCodeRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.chat.ai.rpc.ChatProto.RunCodeRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.chat.ai.rpc.ChatProto.RunCodeRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.chat.ai.rpc.ChatProto.RunCodeRequest prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code bridge.RunCodeRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:bridge.RunCodeRequest)
+        com.chat.ai.rpc.ChatProto.RunCodeRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.chat.ai.rpc.ChatProto.internal_static_bridge_RunCodeRequest_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.chat.ai.rpc.ChatProto.internal_static_bridge_RunCodeRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.chat.ai.rpc.ChatProto.RunCodeRequest.class, com.chat.ai.rpc.ChatProto.RunCodeRequest.Builder.class);
+      }
+
+      // Construct using com.chat.ai.rpc.ChatProto.RunCodeRequest.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        userId_ = 0L;
+        sessionId_ = "";
+        taskPrompt_ = "";
+        skills_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000008);
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.chat.ai.rpc.ChatProto.internal_static_bridge_RunCodeRequest_descriptor;
+      }
+
+      @java.lang.Override
+      public com.chat.ai.rpc.ChatProto.RunCodeRequest getDefaultInstanceForType() {
+        return com.chat.ai.rpc.ChatProto.RunCodeRequest.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.chat.ai.rpc.ChatProto.RunCodeRequest build() {
+        com.chat.ai.rpc.ChatProto.RunCodeRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.chat.ai.rpc.ChatProto.RunCodeRequest buildPartial() {
+        com.chat.ai.rpc.ChatProto.RunCodeRequest result = new com.chat.ai.rpc.ChatProto.RunCodeRequest(this);
+        buildPartialRepeatedFields(result);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartialRepeatedFields(com.chat.ai.rpc.ChatProto.RunCodeRequest result) {
+        if (((bitField0_ & 0x00000008) != 0)) {
+          skills_ = skills_.getUnmodifiableView();
+          bitField0_ = (bitField0_ & ~0x00000008);
+        }
+        result.skills_ = skills_;
+      }
+
+      private void buildPartial0(com.chat.ai.rpc.ChatProto.RunCodeRequest result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.userId_ = userId_;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.sessionId_ = sessionId_;
+        }
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.taskPrompt_ = taskPrompt_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.chat.ai.rpc.ChatProto.RunCodeRequest) {
+          return mergeFrom((com.chat.ai.rpc.ChatProto.RunCodeRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.chat.ai.rpc.ChatProto.RunCodeRequest other) {
+        if (other == com.chat.ai.rpc.ChatProto.RunCodeRequest.getDefaultInstance()) return this;
+        if (other.getUserId() != 0L) {
+          setUserId(other.getUserId());
+        }
+        if (!other.getSessionId().isEmpty()) {
+          sessionId_ = other.sessionId_;
+          bitField0_ |= 0x00000002;
+          onChanged();
+        }
+        if (!other.getTaskPrompt().isEmpty()) {
+          taskPrompt_ = other.taskPrompt_;
+          bitField0_ |= 0x00000004;
+          onChanged();
+        }
+        if (!other.skills_.isEmpty()) {
+          if (skills_.isEmpty()) {
+            skills_ = other.skills_;
+            bitField0_ = (bitField0_ & ~0x00000008);
+          } else {
+            ensureSkillsIsMutable();
+            skills_.addAll(other.skills_);
+          }
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 8: {
+                userId_ = input.readInt64();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 8
+              case 18: {
+                sessionId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 18
+              case 26: {
+                taskPrompt_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 26
+              case 34: {
+                java.lang.String s = input.readStringRequireUtf8();
+                ensureSkillsIsMutable();
+                skills_.add(s);
+                break;
+              } // case 34
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private long userId_ ;
+      /**
+       * <code>int64 user_id = 1;</code>
+       * @return The userId.
+       */
+      @java.lang.Override
+      public long getUserId() {
+        return userId_;
+      }
+      /**
+       * <code>int64 user_id = 1;</code>
+       * @param value The userId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setUserId(long value) {
+        
+        userId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 user_id = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearUserId() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        userId_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object sessionId_ = "";
+      /**
+       * <code>string session_id = 2;</code>
+       * @return The sessionId.
+       */
+      public java.lang.String getSessionId() {
+        java.lang.Object ref = sessionId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          sessionId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string session_id = 2;</code>
+       * @return The bytes for sessionId.
+       */
+      public com.google.protobuf.ByteString
+          getSessionIdBytes() {
+        java.lang.Object ref = sessionId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          sessionId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string session_id = 2;</code>
+       * @param value The sessionId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSessionId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        sessionId_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string session_id = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSessionId() {
+        sessionId_ = getDefaultInstance().getSessionId();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string session_id = 2;</code>
+       * @param value The bytes for sessionId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSessionIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        sessionId_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object taskPrompt_ = "";
+      /**
+       * <code>string task_prompt = 3;</code>
+       * @return The taskPrompt.
+       */
+      public java.lang.String getTaskPrompt() {
+        java.lang.Object ref = taskPrompt_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          taskPrompt_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string task_prompt = 3;</code>
+       * @return The bytes for taskPrompt.
+       */
+      public com.google.protobuf.ByteString
+          getTaskPromptBytes() {
+        java.lang.Object ref = taskPrompt_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          taskPrompt_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string task_prompt = 3;</code>
+       * @param value The taskPrompt to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTaskPrompt(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        taskPrompt_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string task_prompt = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTaskPrompt() {
+        taskPrompt_ = getDefaultInstance().getTaskPrompt();
+        bitField0_ = (bitField0_ & ~0x00000004);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string task_prompt = 3;</code>
+       * @param value The bytes for taskPrompt to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTaskPromptBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        taskPrompt_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+
+      private com.google.protobuf.LazyStringList skills_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      private void ensureSkillsIsMutable() {
+        if (!((bitField0_ & 0x00000008) != 0)) {
+          skills_ = new com.google.protobuf.LazyStringArrayList(skills_);
+          bitField0_ |= 0x00000008;
+         }
+      }
+      /**
+       * <code>repeated string skills = 4;</code>
+       * @return A list containing the skills.
+       */
+      public com.google.protobuf.ProtocolStringList
+          getSkillsList() {
+        return skills_.getUnmodifiableView();
+      }
+      /**
+       * <code>repeated string skills = 4;</code>
+       * @return The count of skills.
+       */
+      public int getSkillsCount() {
+        return skills_.size();
+      }
+      /**
+       * <code>repeated string skills = 4;</code>
+       * @param index The index of the element to return.
+       * @return The skills at the given index.
+       */
+      public java.lang.String getSkills(int index) {
+        return skills_.get(index);
+      }
+      /**
+       * <code>repeated string skills = 4;</code>
+       * @param index The index of the value to return.
+       * @return The bytes of the skills at the given index.
+       */
+      public com.google.protobuf.ByteString
+          getSkillsBytes(int index) {
+        return skills_.getByteString(index);
+      }
+      /**
+       * <code>repeated string skills = 4;</code>
+       * @param index The index to set the value at.
+       * @param value The skills to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSkills(
+          int index, java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        ensureSkillsIsMutable();
+        skills_.set(index, value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string skills = 4;</code>
+       * @param value The skills to add.
+       * @return This builder for chaining.
+       */
+      public Builder addSkills(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        ensureSkillsIsMutable();
+        skills_.add(value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string skills = 4;</code>
+       * @param values The skills to add.
+       * @return This builder for chaining.
+       */
+      public Builder addAllSkills(
+          java.lang.Iterable<java.lang.String> values) {
+        ensureSkillsIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, skills_);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string skills = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSkills() {
+        skills_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000008);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string skills = 4;</code>
+       * @param value The bytes of the skills to add.
+       * @return This builder for chaining.
+       */
+      public Builder addSkillsBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        ensureSkillsIsMutable();
+        skills_.add(value);
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:bridge.RunCodeRequest)
+    }
+
+    // @@protoc_insertion_point(class_scope:bridge.RunCodeRequest)
+    private static final com.chat.ai.rpc.ChatProto.RunCodeRequest DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.chat.ai.rpc.ChatProto.RunCodeRequest();
+    }
+
+    public static com.chat.ai.rpc.ChatProto.RunCodeRequest getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<RunCodeRequest>
+        PARSER = new com.google.protobuf.AbstractParser<RunCodeRequest>() {
+      @java.lang.Override
+      public RunCodeRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<RunCodeRequest> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<RunCodeRequest> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.chat.ai.rpc.ChatProto.RunCodeRequest getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface RunCodeResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:bridge.RunCodeResponse)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string log_stream = 1;</code>
+     * @return The logStream.
+     */
+    java.lang.String getLogStream();
+    /**
+     * <code>string log_stream = 1;</code>
+     * @return The bytes for logStream.
+     */
+    com.google.protobuf.ByteString
+        getLogStreamBytes();
+
+    /**
+     * <code>bool is_finished = 2;</code>
+     * @return The isFinished.
+     */
+    boolean getIsFinished();
+  }
+  /**
+   * Protobuf type {@code bridge.RunCodeResponse}
+   */
+  public static final class RunCodeResponse extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:bridge.RunCodeResponse)
+      RunCodeResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use RunCodeResponse.newBuilder() to construct.
+    private RunCodeResponse(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private RunCodeResponse() {
+      logStream_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new RunCodeResponse();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.chat.ai.rpc.ChatProto.internal_static_bridge_RunCodeResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.chat.ai.rpc.ChatProto.internal_static_bridge_RunCodeResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.chat.ai.rpc.ChatProto.RunCodeResponse.class, com.chat.ai.rpc.ChatProto.RunCodeResponse.Builder.class);
+    }
+
+    public static final int LOG_STREAM_FIELD_NUMBER = 1;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object logStream_ = "";
+    /**
+     * <code>string log_stream = 1;</code>
+     * @return The logStream.
+     */
+    @java.lang.Override
+    public java.lang.String getLogStream() {
+      java.lang.Object ref = logStream_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        logStream_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string log_stream = 1;</code>
+     * @return The bytes for logStream.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getLogStreamBytes() {
+      java.lang.Object ref = logStream_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        logStream_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int IS_FINISHED_FIELD_NUMBER = 2;
+    private boolean isFinished_ = false;
+    /**
+     * <code>bool is_finished = 2;</code>
+     * @return The isFinished.
+     */
+    @java.lang.Override
+    public boolean getIsFinished() {
+      return isFinished_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(logStream_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, logStream_);
+      }
+      if (isFinished_ != false) {
+        output.writeBool(2, isFinished_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(logStream_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, logStream_);
+      }
+      if (isFinished_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(2, isFinished_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.chat.ai.rpc.ChatProto.RunCodeResponse)) {
+        return super.equals(obj);
+      }
+      com.chat.ai.rpc.ChatProto.RunCodeResponse other = (com.chat.ai.rpc.ChatProto.RunCodeResponse) obj;
+
+      if (!getLogStream()
+          .equals(other.getLogStream())) return false;
+      if (getIsFinished()
+          != other.getIsFinished()) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + LOG_STREAM_FIELD_NUMBER;
+      hash = (53 * hash) + getLogStream().hashCode();
+      hash = (37 * hash) + IS_FINISHED_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getIsFinished());
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.chat.ai.rpc.ChatProto.RunCodeResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.chat.ai.rpc.ChatProto.RunCodeResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.chat.ai.rpc.ChatProto.RunCodeResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.chat.ai.rpc.ChatProto.RunCodeResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.chat.ai.rpc.ChatProto.RunCodeResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.chat.ai.rpc.ChatProto.RunCodeResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.chat.ai.rpc.ChatProto.RunCodeResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.chat.ai.rpc.ChatProto.RunCodeResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.chat.ai.rpc.ChatProto.RunCodeResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.chat.ai.rpc.ChatProto.RunCodeResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.chat.ai.rpc.ChatProto.RunCodeResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.chat.ai.rpc.ChatProto.RunCodeResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.chat.ai.rpc.ChatProto.RunCodeResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code bridge.RunCodeResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:bridge.RunCodeResponse)
+        com.chat.ai.rpc.ChatProto.RunCodeResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.chat.ai.rpc.ChatProto.internal_static_bridge_RunCodeResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.chat.ai.rpc.ChatProto.internal_static_bridge_RunCodeResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.chat.ai.rpc.ChatProto.RunCodeResponse.class, com.chat.ai.rpc.ChatProto.RunCodeResponse.Builder.class);
+      }
+
+      // Construct using com.chat.ai.rpc.ChatProto.RunCodeResponse.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        logStream_ = "";
+        isFinished_ = false;
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.chat.ai.rpc.ChatProto.internal_static_bridge_RunCodeResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public com.chat.ai.rpc.ChatProto.RunCodeResponse getDefaultInstanceForType() {
+        return com.chat.ai.rpc.ChatProto.RunCodeResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.chat.ai.rpc.ChatProto.RunCodeResponse build() {
+        com.chat.ai.rpc.ChatProto.RunCodeResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.chat.ai.rpc.ChatProto.RunCodeResponse buildPartial() {
+        com.chat.ai.rpc.ChatProto.RunCodeResponse result = new com.chat.ai.rpc.ChatProto.RunCodeResponse(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(com.chat.ai.rpc.ChatProto.RunCodeResponse result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.logStream_ = logStream_;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.isFinished_ = isFinished_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.chat.ai.rpc.ChatProto.RunCodeResponse) {
+          return mergeFrom((com.chat.ai.rpc.ChatProto.RunCodeResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.chat.ai.rpc.ChatProto.RunCodeResponse other) {
+        if (other == com.chat.ai.rpc.ChatProto.RunCodeResponse.getDefaultInstance()) return this;
+        if (!other.getLogStream().isEmpty()) {
+          logStream_ = other.logStream_;
+          bitField0_ |= 0x00000001;
+          onChanged();
+        }
+        if (other.getIsFinished() != false) {
+          setIsFinished(other.getIsFinished());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                logStream_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+              case 16: {
+                isFinished_ = input.readBool();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 16
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private java.lang.Object logStream_ = "";
+      /**
+       * <code>string log_stream = 1;</code>
+       * @return The logStream.
+       */
+      public java.lang.String getLogStream() {
+        java.lang.Object ref = logStream_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          logStream_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string log_stream = 1;</code>
+       * @return The bytes for logStream.
+       */
+      public com.google.protobuf.ByteString
+          getLogStreamBytes() {
+        java.lang.Object ref = logStream_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          logStream_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string log_stream = 1;</code>
+       * @param value The logStream to set.
+       * @return This builder for chaining.
+       */
+      public Builder setLogStream(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        logStream_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string log_stream = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearLogStream() {
+        logStream_ = getDefaultInstance().getLogStream();
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string log_stream = 1;</code>
+       * @param value The bytes for logStream to set.
+       * @return This builder for chaining.
+       */
+      public Builder setLogStreamBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        logStream_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+
+      private boolean isFinished_ ;
+      /**
+       * <code>bool is_finished = 2;</code>
+       * @return The isFinished.
+       */
+      @java.lang.Override
+      public boolean getIsFinished() {
+        return isFinished_;
+      }
+      /**
+       * <code>bool is_finished = 2;</code>
+       * @param value The isFinished to set.
+       * @return This builder for chaining.
+       */
+      public Builder setIsFinished(boolean value) {
+        
+        isFinished_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool is_finished = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearIsFinished() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        isFinished_ = false;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:bridge.RunCodeResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:bridge.RunCodeResponse)
+    private static final com.chat.ai.rpc.ChatProto.RunCodeResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.chat.ai.rpc.ChatProto.RunCodeResponse();
+    }
+
+    public static com.chat.ai.rpc.ChatProto.RunCodeResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<RunCodeResponse>
+        PARSER = new com.google.protobuf.AbstractParser<RunCodeResponse>() {
+      @java.lang.Override
+      public RunCodeResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<RunCodeResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<RunCodeResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.chat.ai.rpc.ChatProto.RunCodeResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
   public interface RpcMessageOrBuilder extends
       // @@protoc_insertion_point(interface_extends:bridge.RpcMessage)
       com.google.protobuf.MessageOrBuilder {
@@ -38189,6 +40237,16 @@ java.lang.String defaultValue) {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_bridge_AgentSkillEventAck_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_RunCodeRequest_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_RunCodeRequest_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_RunCodeResponse_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_RunCodeResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_bridge_RpcMessage_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -38310,43 +40368,53 @@ java.lang.String defaultValue) {
       "\t\022\r\n\005value\030\002 \001(\t:\0028\001\"a\n\024InternalPushResp" +
       "onse\022\017\n\007success\030\001 \001(\010\022\r\n\005error\030\002 \001(\t\022\020\n\010" +
       "trace_id\030\003 \001(\t\022\027\n\017delivered_count\030\004 \001(\005\"" +
-      "i\n\023CareerAdviceRequest\022\017\n\007user_id\030\001 \001(\003\022" +
-      "\016\n\006skills\030\002 \003(\t\022\030\n\020resume_highlight\030\003 \001(" +
-      "\t\022\027\n\017learning_advice\030\004 \001(\t\"\026\n\024CareerAdvi" +
-      "ceResponse\"\354\001\n\017AgentSkillEvent\022\017\n\007user_i" +
-      "d\030\001 \001(\003\022\022\n\nskill_name\030\002 \001(\t\022\022\n\nevent_typ" +
-      "e\030\003 \001(\t\022\024\n\014payload_json\030\004 \001(\t\022\020\n\010trace_i" +
-      "d\030\005 \001(\t\022\021\n\ttimestamp\030\006 \001(\003\0225\n\007headers\030\007 " +
-      "\003(\0132$.bridge.AgentSkillEvent.HeadersEntr" +
-      "y\032.\n\014HeadersEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030" +
-      "\002 \001(\t:\0028\001\"F\n\022AgentSkillEventAck\022\017\n\007succe" +
-      "ss\030\001 \001(\010\022\r\n\005error\030\002 \001(\t\022\020\n\010trace_id\030\003 \001(" +
-      "\t\"\355\001\n\nRpcMessage\022%\n\004type\030\001 \001(\0162\027.bridge." +
-      "RpcMessage.Type\022\n\n\002id\030\002 \001(\003\022\024\n\014service_n" +
-      "ame\030\003 \001(\t\022\023\n\013method_name\030\004 \001(\t\022\017\n\007payloa" +
-      "d\030\005 \001(\014\022\022\n\nerror_code\030\006 \001(\005\022\022\n\nerror_des" +
-      "c\030\007 \001(\t\"H\n\004Type\022\013\n\007REQUEST\020\000\022\014\n\010RESPONSE" +
-      "\020\001\022\t\n\005ERROR\020\002\022\n\n\006STREAM\020\003\022\016\n\nSTREAM_END\020" +
-      "\004*\307\002\n\017InternalMsgType\022!\n\035INTERNAL_MSG_TY" +
-      "PE_UNSPECIFIED\020\000\022\020\n\014CHAT_PRIVATE\020\001\022\016\n\nCH" +
-      "AT_GROUP\020\002\022\021\n\rAI_AT_MENTION\020\003\022\021\n\rPOINTS_" +
-      "UPDATE\020\004\022\023\n\017AI_GRADE_RESULT\020\005\022\022\n\016COMPANI" +
-      "ON_READ\020\006\022\023\n\017DASHBOARD_QUERY\020\007\022\022\n\016DASHBO" +
-      "ARD_PUSH\020\010\022\016\n\nVOICE_CHAT\020\t\022\027\n\023SYSTEM_NOT" +
-      "IFICATION\020\n\022\023\n\017SANDBOX_EXECUTE\020\013\022\025\n\021EXPE" +
-      "RIENCE_UPDATE\020\014\022\021\n\rCAREER_ADVICE\020\r\022\017\n\013SK" +
-      "ILL_EVENT\020\0162\234\003\n\025InternalRouterService\022P\n" +
-      "\rForwardToJava\022\036.bridge.InternalForwardR" +
-      "equest\032\037.bridge.InternalForwardResponse\022" +
-      "I\n\014PushToClient\022\033.bridge.InternalPushReq" +
-      "uest\032\034.bridge.InternalPushResponse\022M\n\016St" +
-      "reamToClient\022\033.bridge.InternalPushReques" +
-      "t\032\034.bridge.InternalPushResponse0\001\022P\n\023Upd" +
-      "ateCareerProfile\022\033.bridge.CareerAdviceRe" +
-      "quest\032\034.bridge.CareerAdviceResponse\022E\n\016E" +
-      "mitSkillEvent\022\027.bridge.AgentSkillEvent\032\032" +
-      ".bridge.AgentSkillEventAckB\034\n\017com.chat.a" +
-      "i.rpcB\tChatProtob\006proto3"
+      "\234\001\n\023CareerAdviceRequest\022\017\n\007user_id\030\001 \001(\003" +
+      "\022\016\n\006skills\030\002 \003(\t\022\030\n\020resume_highlight\030\003 \001" +
+      "(\t\022\027\n\017learning_advice\030\004 \001(\t\022\030\n\020extracted" +
+      "_skills\030\005 \003(\t\022\027\n\017next_suggestion\030\006 \001(\t\"\'" +
+      "\n\024CareerAdviceResponse\022\017\n\007success\030\001 \001(\010\"" +
+      "\354\001\n\017AgentSkillEvent\022\017\n\007user_id\030\001 \001(\003\022\022\n\n" +
+      "skill_name\030\002 \001(\t\022\022\n\nevent_type\030\003 \001(\t\022\024\n\014" +
+      "payload_json\030\004 \001(\t\022\020\n\010trace_id\030\005 \001(\t\022\021\n\t" +
+      "timestamp\030\006 \001(\003\0225\n\007headers\030\007 \003(\0132$.bridg" +
+      "e.AgentSkillEvent.HeadersEntry\032.\n\014Header" +
+      "sEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001\"F" +
+      "\n\022AgentSkillEventAck\022\017\n\007success\030\001 \001(\010\022\r\n" +
+      "\005error\030\002 \001(\t\022\020\n\010trace_id\030\003 \001(\t\"Z\n\016RunCod" +
+      "eRequest\022\017\n\007user_id\030\001 \001(\003\022\022\n\nsession_id\030" +
+      "\002 \001(\t\022\023\n\013task_prompt\030\003 \001(\t\022\016\n\006skills\030\004 \003" +
+      "(\t\":\n\017RunCodeResponse\022\022\n\nlog_stream\030\001 \001(" +
+      "\t\022\023\n\013is_finished\030\002 \001(\010\"\355\001\n\nRpcMessage\022%\n" +
+      "\004type\030\001 \001(\0162\027.bridge.RpcMessage.Type\022\n\n\002" +
+      "id\030\002 \001(\003\022\024\n\014service_name\030\003 \001(\t\022\023\n\013method" +
+      "_name\030\004 \001(\t\022\017\n\007payload\030\005 \001(\014\022\022\n\nerror_co" +
+      "de\030\006 \001(\005\022\022\n\nerror_desc\030\007 \001(\t\"H\n\004Type\022\013\n\007" +
+      "REQUEST\020\000\022\014\n\010RESPONSE\020\001\022\t\n\005ERROR\020\002\022\n\n\006ST" +
+      "REAM\020\003\022\016\n\nSTREAM_END\020\004*\307\002\n\017InternalMsgTy" +
+      "pe\022!\n\035INTERNAL_MSG_TYPE_UNSPECIFIED\020\000\022\020\n" +
+      "\014CHAT_PRIVATE\020\001\022\016\n\nCHAT_GROUP\020\002\022\021\n\rAI_AT" +
+      "_MENTION\020\003\022\021\n\rPOINTS_UPDATE\020\004\022\023\n\017AI_GRAD" +
+      "E_RESULT\020\005\022\022\n\016COMPANION_READ\020\006\022\023\n\017DASHBO" +
+      "ARD_QUERY\020\007\022\022\n\016DASHBOARD_PUSH\020\010\022\016\n\nVOICE" +
+      "_CHAT\020\t\022\027\n\023SYSTEM_NOTIFICATION\020\n\022\023\n\017SAND" +
+      "BOX_EXECUTE\020\013\022\025\n\021EXPERIENCE_UPDATE\020\014\022\021\n\r" +
+      "CAREER_ADVICE\020\r\022\017\n\013SKILL_EVENT\020\0162\234\003\n\025Int" +
+      "ernalRouterService\022P\n\rForwardToJava\022\036.br" +
+      "idge.InternalForwardRequest\032\037.bridge.Int" +
+      "ernalForwardResponse\022I\n\014PushToClient\022\033.b" +
+      "ridge.InternalPushRequest\032\034.bridge.Inter" +
+      "nalPushResponse\022M\n\016StreamToClient\022\033.brid" +
+      "ge.InternalPushRequest\032\034.bridge.Internal" +
+      "PushResponse0\001\022P\n\023UpdateCareerProfile\022\033." +
+      "bridge.CareerAdviceRequest\032\034.bridge.Care" +
+      "erAdviceResponse\022E\n\016EmitSkillEvent\022\027.bri" +
+      "dge.AgentSkillEvent\032\032.bridge.AgentSkillE" +
+      "ventAck2S\n\016SandboxService\022A\n\014RunAgentTas" +
+      "k\022\026.bridge.RunCodeRequest\032\027.bridge.RunCo" +
+      "deResponse0\0012d\n\023CareerAdviceService\022M\n\020S" +
+      "endCareerAdvice\022\033.bridge.CareerAdviceReq" +
+      "uest\032\034.bridge.CareerAdviceResponseB\034\n\017co" +
+      "m.chat.ai.rpcB\tChatProtob\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -38573,13 +40641,13 @@ java.lang.String defaultValue) {
     internal_static_bridge_CareerAdviceRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_bridge_CareerAdviceRequest_descriptor,
-        new java.lang.String[] { "UserId", "Skills", "ResumeHighlight", "LearningAdvice", });
+        new java.lang.String[] { "UserId", "Skills", "ResumeHighlight", "LearningAdvice", "ExtractedSkills", "NextSuggestion", });
     internal_static_bridge_CareerAdviceResponse_descriptor =
       getDescriptor().getMessageTypes().get(31);
     internal_static_bridge_CareerAdviceResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_bridge_CareerAdviceResponse_descriptor,
-        new java.lang.String[] { });
+        new java.lang.String[] { "Success", });
     internal_static_bridge_AgentSkillEvent_descriptor =
       getDescriptor().getMessageTypes().get(32);
     internal_static_bridge_AgentSkillEvent_fieldAccessorTable = new
@@ -38598,8 +40666,20 @@ java.lang.String defaultValue) {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_bridge_AgentSkillEventAck_descriptor,
         new java.lang.String[] { "Success", "Error", "TraceId", });
-    internal_static_bridge_RpcMessage_descriptor =
+    internal_static_bridge_RunCodeRequest_descriptor =
       getDescriptor().getMessageTypes().get(34);
+    internal_static_bridge_RunCodeRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_RunCodeRequest_descriptor,
+        new java.lang.String[] { "UserId", "SessionId", "TaskPrompt", "Skills", });
+    internal_static_bridge_RunCodeResponse_descriptor =
+      getDescriptor().getMessageTypes().get(35);
+    internal_static_bridge_RunCodeResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_RunCodeResponse_descriptor,
+        new java.lang.String[] { "LogStream", "IsFinished", });
+    internal_static_bridge_RpcMessage_descriptor =
+      getDescriptor().getMessageTypes().get(36);
     internal_static_bridge_RpcMessage_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_bridge_RpcMessage_descriptor,

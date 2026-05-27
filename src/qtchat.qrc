@@ -11,5 +11,6 @@
     <file>styles.qss</file>
     <file>styles_dark.qss</file>
     <file>html/graph.html</file>
+    <file>html/career_radar.html</file>
 </qresource>
 </RCC>

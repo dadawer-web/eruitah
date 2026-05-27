@@ -62,6 +62,9 @@ public class InternalRouterHandler implements Consumer<ChatProto.RpcMessage> {
             } else if ("UpdateCareerProfile".equals(method)) {
                 ChatProto.CareerAdviceRequest request = ChatProto.CareerAdviceRequest.parseFrom(rpcMsg.getPayload());
                 CompletableFuture.runAsync(() -> handleCareerAdviceRequest(request), streamTaskExecutor);
+            } else if ("SendCareerAdvice".equals(method)) {
+                ChatProto.CareerAdviceRequest request = ChatProto.CareerAdviceRequest.parseFrom(rpcMsg.getPayload());
+                CompletableFuture.runAsync(() -> handleSendCareerAdvice(request), streamTaskExecutor);
             } else {
                 ChatProto.InternalForwardRequest request = ChatProto.InternalForwardRequest.parseFrom(rpcMsg.getPayload());
                 CompletableFuture.runAsync(() -> handleForwardRequest(request), streamTaskExecutor);
@@ -270,6 +273,22 @@ public class InternalRouterHandler implements Consumer<ChatProto.RpcMessage> {
         String learningAdvice = request.getLearningAdvice();
 
         log.info("[RPC] UpdateCareerProfile: userId={}, skills={}, highlight={}",
+                 userId, skills, resumeHighlight.length() > 50 ? resumeHighlight.substring(0, 50) + "..." : resumeHighlight);
+
+        careerAdviceService.saveAndPushProfile((int) userId, skills, resumeHighlight, learningAdvice);
+    }
+
+    private void handleSendCareerAdvice(ChatProto.CareerAdviceRequest request) {
+        long userId = request.getUserId();
+        List<String> skills = !request.getExtractedSkillsList().isEmpty()
+                ? request.getExtractedSkillsList()
+                : request.getSkillsList();
+        String resumeHighlight = request.getResumeHighlight();
+        String learningAdvice = !request.getNextSuggestion().isEmpty()
+                ? request.getNextSuggestion()
+                : request.getLearningAdvice();
+
+        log.info("[RPC] SendCareerAdvice: userId={}, skills={}, highlight={}",
                  userId, skills, resumeHighlight.length() > 50 ? resumeHighlight.substring(0, 50) + "..." : resumeHighlight);
 
         careerAdviceService.saveAndPushProfile((int) userId, skills, resumeHighlight, learningAdvice);
