@@ -1,0 +1,72 @@
+# Enterprise Document Copilot - 依赖包列表
+# Python 3.11+
+
+# ====== Web 框架 ======
+fastapi>=0.115.0
+uvicorn[standard]>=0.34.0
+pydantic>=2.10.0
+pydantic-settings>=2.7.0
+python-multipart>=0.0.18
+
+# ====== AI 框架 ======
+langchain>=0.3.0
+langchain-openai>=0.3.0
+langchain-community>=0.3.0
+langgraph>=0.2.0
+
+# ====== 向量数据库 ======
+chromadb>=0.5.0
+
+# ====== 混合检索 (BM25 + Reranker) ======
+rank-bm25>=0.2.2
+jieba>=0.42.1
+
+# ====== AI 模型客户端 ======
+openai>=1.60.0
+requests>=2.32.0
+
+# ====== 文档解析 (Word) ======
+beautifulsoup4>=4.12.0
+lxml>=5.3.0
+python-docx>=1.1.0
+
+# ====== 文档解析 (Excel) ======
+pandas>=2.2.0
+openpyxl>=3.1.0
+tabulate>=0.9.0
+
+# ====== 文档解析 (PPT) ======
+python-pptx>=1.0.0
+
+# ====== 文档解析 (PDF) ======
+pypdf>=6.0.0
+
+# ====== 数据处理 ======
+numpy>=1.26.0
+
+# ====== 异步任务 ======
+celery>=5.4.0
+redis>=5.2.0
+
+# ====== 工具 ======
+typing-extensions>=4.12.0
+python-dotenv>=1.0.0
+markdown>=3.5.0
+
+# ====== 联网搜索 ======
+ddgs>=6.0.0
+aiohttp>=3.9.0
+
+# ====== 鉴权 ======
+PyJWT>=2.8.0
+bcrypt>=4.0.0
+
+# ====== 数据库 ======
+sqlalchemy>=2.0.0
+
+# ====== HTTP 客户端 ======
+httpx>=0.28.0
+
+# ====== 图谱与可视化 ======
+networkx>=3.2.0
+matplotlib>=3.8.0

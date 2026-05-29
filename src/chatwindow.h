@@ -312,6 +312,7 @@ public slots:
     void onOpenCompanionReading();
     void onOpenCodingAgent();
     void onOpenCareerDashboard();
+    void onOpenAiDocs();
 
 protected:
     void closeEvent(QCloseEvent *event) override;

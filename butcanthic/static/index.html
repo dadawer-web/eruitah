@@ -1,0 +1,2251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta name="referrer" content="no-referrer" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enterprise Document Copilot</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+  <script src="/ppt-viewer/ppt-viewer.iife.js"></script>
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+    .terminal-font { font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace; }
+    .terminal-line { animation: fadeIn 0.15s ease-in; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .pulse-dot { animation: pulse 1.2s ease-in-out infinite; }
+    .drop-active { border-color: #6366f1 !important; background-color: rgba(99,102,241,0.08) !important; }
+    .progress-bar-track { width: 100%; height: 8px; background: #1e1e2e; border-radius: 4px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease, background 0.3s ease; }
+    .progress-bar-fill.active { background: linear-gradient(90deg, #6366f1, #8b5cf6, #a78bfa); background-size: 200% 100%; animation: progressShimmer 2s linear infinite; }
+    .progress-bar-fill.complete { background: linear-gradient(90deg, #10b981, #34d399); }
+    .progress-bar-fill.error { background: linear-gradient(90deg, #ef4444, #f87171); }
+    @keyframes progressShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    .action-log-item { animation: fadeIn 0.2s ease-in; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #1e1e2e; }
+    ::-webkit-scrollbar-thumb { background: #45475a; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #585b70; }
+    .preview-paper {
+      background: #fff;
+      color: #111;
+      min-height: 297mm;
+      height: auto;
+      overflow: visible;
+      padding: 40px;
+      box-sizing: border-box;
+      font-family: 'SimSun', 'Times New Roman', serif;
+      font-size: 14px;
+      line-height: 1.8;
+      max-width: 800px;
+      margin: 24px auto;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.18);
+      border-radius: 4px;
+    }
+    .preview-paper table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 12px 0;
+    }
+    .preview-paper td, .preview-paper th {
+      border: 1px solid #333;
+      padding: 6px 10px;
+      text-align: left;
+      font-size: 13px;
+    }
+    .preview-paper th {
+      background: #f0f0f0;
+      font-weight: bold;
+    }
+
+    .ppt-editor-left {
+      width: 350px;
+      flex-shrink: 0;
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .ppt-editor-right {
+      flex: 1;
+      margin-left: 20px;
+      background: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .ppt-editor-right.slide-in {
+      animation: slideInRight 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .ppt-editor-left.slide-in {
+      animation: slideInLeft 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    @keyframes slideInLeft {
+      from { opacity: 0; transform: translateX(-16px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .shimmer-bar {
+      animation: shimmerSlide 1.8s ease-in-out infinite;
+    }
+
+    @keyframes shimmerSlide {
+      0% { transform: translateX(-100%); opacity: 0.4; }
+      50% { transform: translateX(0%); opacity: 1; }
+      100% { transform: translateX(100%); opacity: 0.4; }
+    }
+
+    .ppt-slide-card {
+      border-radius: 10px;
+      border: 1.5px solid #e5e7eb;
+      background: #fafafa;
+      transition: all 0.2s ease;
+    }
+    .ppt-slide-card:hover {
+      border-color: #d1d5db;
+    }
+    .ppt-slide-card.active {
+      border-color: #8b5cf6;
+      background: #f5f3ff;
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    }
+
+    .ppt-input {
+      width: 100%;
+      background: #f9fafb;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 13px;
+      color: #1f2937;
+      transition: all 0.15s ease;
+      outline: none;
+    }
+    .ppt-input:focus {
+      border-color: #8b5cf6;
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.08);
+      background: #fff;
+    }
+    .ppt-input::placeholder {
+      color: #9ca3af;
+    }
+
+    .ppt-textarea {
+      width: 100%;
+      background: #f9fafb;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 13px;
+      color: #1f2937;
+      transition: all 0.15s ease;
+      outline: none;
+      resize: vertical;
+      line-height: 1.6;
+    }
+    .ppt-textarea:focus {
+      border-color: #8b5cf6;
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.08);
+      background: #fff;
+    }
+    .ppt-textarea::placeholder {
+      color: #9ca3af;
+    }
+
+    .ppt-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      color: #6b7280;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .ppt-btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #fff;
+      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+      box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+      transition: all 0.15s ease;
+      cursor: pointer;
+      border: none;
+    }
+    .ppt-btn-primary:hover {
+      background: linear-gradient(135deg, #7c3aed, #6d28d9);
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .ppt-btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #6b7280;
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+    .ppt-btn-ghost:hover {
+      color: #374151;
+      background: #e5e7eb;
+    }
+
+    .ppt-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      height: 50px;
+      border-bottom: 1px solid #e5e7eb;
+      background: #fff;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body class="bg-gray-950 text-white min-h-screen">
+<div id="app">
+
+  <div v-if="!isLoggedIn" class="flex items-center justify-center min-h-screen bg-gray-950">
+    <div class="w-full max-w-md px-6">
+      <div class="text-center mb-8">
+        <div class="w-14 h-14 rounded-2xl bg-indigo-600 flex items-center justify-center text-2xl font-bold mx-auto mb-4">DC</div>
+        <h1 class="text-2xl font-bold text-white">Document Copilot</h1>
+        <p class="text-gray-500 text-sm mt-2">Enterprise Intelligent Document Processing Platform</p>
+      </div>
+
+      <div class="bg-gray-900 rounded-2xl border border-gray-800 p-8">
+        <div class="flex mb-6 bg-gray-800 rounded-lg p-1">
+          <button @click="authMode = 'login'" class="flex-1 py-2 text-sm font-medium rounded-md transition-all" :class="authMode === 'login' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-gray-200'">登录</button>
+          <button @click="authMode = 'register'" class="flex-1 py-2 text-sm font-medium rounded-md transition-all" :class="authMode === 'register' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-gray-200'">注册</button>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs text-gray-400 mb-1.5 font-medium">用户名</label>
+            <input v-model="authUsername" type="text" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500 transition-colors" placeholder="请输入用户名" @keyup.enter="handleAuth">
+          </div>
+          <div>
+            <label class="block text-xs text-gray-400 mb-1.5 font-medium">密码</label>
+            <input v-model="authPassword" type="password" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500 transition-colors" placeholder="请输入密码" @keyup.enter="handleAuth">
+          </div>
+          <div v-if="authError" class="text-red-400 text-xs bg-red-900/20 border border-red-800/30 rounded-lg px-3 py-2">{{ authError }}</div>
+          <button @click="handleAuth" :disabled="isAuthLoading" class="w-full py-2.5 rounded-lg font-semibold text-sm transition-all" :class="isAuthLoading ? 'bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20'">
+            <span v-if="isAuthLoading" class="flex items-center justify-center gap-2">
+              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+              处理中...
+            </span>
+            <span v-else>{{ authMode === 'login' ? '登 录' : '注 册' }}</span>
+          </button>
+        </div>
+      </div>
+
+      <p class="text-center text-gray-600 text-xs mt-6">© 2025 Document Copilot Enterprise</p>
+    </div>
+  </div>
+
+  <div v-if="isLoggedIn" class="flex flex-col h-screen">
+    <header class="flex items-center justify-between px-6 py-3 bg-gray-900/80 border-b border-gray-800 backdrop-blur">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-sm font-bold">DC</div>
+        <h1 class="text-lg font-semibold tracking-tight">Document Copilot</h1>
+        <span class="text-xs text-gray-500 ml-2">Enterprise v1.0</span>
+      </div>
+      <div class="flex items-center gap-2 text-xs text-gray-500">
+        <span class="w-2 h-2 rounded-full" :class="connected ? 'bg-emerald-400' : 'bg-red-400'"></span>
+        {{ connected ? 'Service Online' : 'Service Offline' }}
+        <span class="mx-2 text-gray-700">|</span>
+        <span class="text-gray-400">{{ currentUser }}</span>
+        <button @click="handleLogout" class="ml-2 text-gray-500 hover:text-red-400 transition-colors" title="退出登录">⏻</button>
+      </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+      <div class="w-56 flex-shrink-0 bg-gray-900 border-r border-gray-800 p-3 flex flex-col">
+        <button @click="newSession" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-3 rounded text-sm mb-3 transition-colors">
+          + 新建演示文稿
+        </button>
+
+        <div class="space-y-1 mb-3">
+          <button @click="sidebarView = 'upload'" class="w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all flex items-center gap-2"
+            :class="sidebarView === 'upload' ? 'bg-indigo-600/20 text-indigo-400' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+            上传新文档
+          </button>
+          <button @click="sidebarView = 'mydocs'; loadMyDocuments(); loadKbStats(); fetchKbDocuments()" class="w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all flex items-center gap-2"
+            :class="sidebarView === 'mydocs' ? 'bg-indigo-600/20 text-indigo-400' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            我的知识库
+          </button>
+        </div>
+
+        <div class="border-t border-gray-800 my-1"></div>
+
+        <div class="text-[10px] text-gray-600 mb-2 uppercase tracking-wider font-semibold">历史对话</div>
+        <ul class="flex-1 overflow-y-auto space-y-1">
+          <li v-for="session in sessionHistory.slice().reverse()" :key="session.id"
+              @click="switchSession(session.id)"
+              :class="{'bg-gray-800 border-l-2 border-indigo-500': currentThreadId === session.id, 'hover:bg-gray-800/50': currentThreadId !== session.id}"
+              class="p-2.5 rounded cursor-pointer transition-colors border-l-2 border-transparent text-xs text-gray-400">
+            <div class="font-medium truncate text-gray-300">{{ session.title }}</div>
+            <div class="text-[10px] text-gray-600 mt-1">{{ session.date }}</div>
+          </li>
+        </ul>
+        <div v-if="sessionHistory.length === 0" class="text-[10px] text-gray-700 text-center mt-4">暂无历史对话</div>
+      </div>
+
+      <div v-if="sidebarView === 'mydocs'" class="w-[420px] flex-shrink-0 bg-gray-900/50 border-r border-gray-800 flex flex-col overflow-hidden">
+        <div class="p-5 pb-3 border-b border-gray-800">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-semibold text-gray-300 flex items-center gap-2">
+              <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+              我的知识库
+            </h2>
+            <button @click="loadMyDocuments()" class="text-[10px] text-gray-500 hover:text-gray-300 transition-colors">刷新</button>
+          </div>
+        </div>
+        <div class="flex-1 overflow-y-auto p-5 pt-3">
+          <div v-if="isLoadingDocs" class="flex items-center justify-center py-12">
+            <svg class="w-6 h-6 animate-spin text-indigo-400" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+          </div>
+          <div v-else-if="myDocuments.length === 0" class="text-center py-12">
+            <svg class="w-12 h-12 mx-auto text-gray-700 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <p class="text-xs text-gray-500">暂无文档</p>
+            <p class="text-[10px] text-gray-600 mt-1">上传文档后将在此显示</p>
+          </div>
+          <div v-else class="space-y-2">
+            <div v-for="doc in myDocuments" :key="doc.id" class="bg-gray-900 rounded-lg border border-gray-800 p-3 transition-all hover:border-gray-700">
+              <div class="flex items-start gap-3">
+                <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 text-sm"
+                  :class="{
+                    'bg-blue-900/40 text-blue-400': doc.file_type === 'docx',
+                    'bg-green-900/40 text-green-400': doc.file_type === 'xlsx' || doc.file_type === 'csv',
+                    'bg-orange-900/40 text-orange-400': doc.file_type === 'pptx',
+                    'bg-red-900/40 text-red-400': doc.file_type === 'pdf',
+                    'bg-gray-800 text-gray-400': !['docx','xlsx','csv','pptx','pdf'].includes(doc.file_type)
+                  }">
+                  {{ { docx: 'W', xlsx: 'X', csv: 'X', pptx: 'P', pdf: 'D' }[doc.file_type] || '?' }}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-xs font-medium text-gray-200 truncate">{{ doc.filename }}</div>
+                  <div class="text-[10px] text-gray-500 mt-0.5">{{ doc.upload_time ? new Date(doc.upload_time).toLocaleString('zh-CN') : '' }}</div>
+                </div>
+                <span class="text-[10px] px-2 py-0.5 rounded-full font-medium flex-shrink-0"
+                  :class="{
+                    'bg-amber-900/30 text-amber-400': doc.status === 'processing',
+                    'bg-emerald-900/30 text-emerald-400': doc.status === 'completed',
+                    'bg-red-900/30 text-red-400': doc.status === 'failed',
+                    'bg-gray-800 text-gray-400': !['processing','completed','failed'].includes(doc.status)
+                  }">
+                  {{ { processing: '处理中', completed: '已完成', failed: '失败' }[doc.status] || doc.status }}
+                </span>
+              </div>
+              <div v-if="doc.status === 'processing' && docProgress[doc.task_id]" class="mt-2">
+                <div class="progress-bar-track">
+                  <div class="progress-bar-fill active" :style="{ width: Math.max(docProgress[doc.task_id].progress, 5) + '%' }"></div>
+                </div>
+                <div class="text-[10px] text-gray-500 mt-1">{{ docProgress[doc.task_id].action }}</div>
+              </div>
+            </div>
+          </div>
+          <div v-if="myDocuments.length > 0 && myDocuments.length < myDocsTotal" class="text-center mt-4">
+            <button @click="loadMyDocuments(myDocsPage + 1)" class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">加载更多...</button>
+          </div>
+
+          <div class="border-t border-gray-800 mt-4 pt-4">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-semibold text-gray-400">📚 已入库文档</span>
+              <span v-if="kbStats" class="text-[10px] text-gray-600">{{ kbStats.total_chunks }} 个知识块</span>
+            </div>
+            <div v-if="kbDocuments.length > 0" class="space-y-1.5 max-h-40 overflow-y-auto pr-1 mb-3">
+              <div v-for="doc in kbDocuments" :key="doc.id" class="flex items-center gap-2 bg-gray-800/60 px-2.5 py-1.5 rounded-lg group">
+                <svg v-if="doc.status === 'completed'" class="w-3.5 h-3.5 flex-shrink-0 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <svg v-else-if="doc.status === 'processing'" class="w-3.5 h-3.5 flex-shrink-0 text-amber-400 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                <svg v-else class="w-3.5 h-3.5 flex-shrink-0 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <svg class="w-3.5 h-3.5 flex-shrink-0" :class="doc.file_type === 'pdf' ? 'text-red-400' : doc.file_type === 'docx' ? 'text-blue-400' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <span class="text-[11px] text-gray-300 truncate flex-1" :title="doc.filename">{{ doc.filename }}</span>
+                <span v-if="doc.chunk_count" class="text-[9px] text-gray-600 flex-shrink-0">{{ doc.chunk_count }}块</span>
+                <button @click="deleteKbDocument(doc.id, doc.filename)" class="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 text-red-500/70 hover:text-red-400" title="删除此文献">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </div>
+            </div>
+            <div v-else class="text-[11px] text-gray-600 mb-3 text-center py-2">暂无入库文档</div>
+
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-semibold text-gray-400">☁️ 上传文献至知识库</span>
+            </div>
+            <div
+              class="border-2 border-dashed border-gray-700 rounded-lg p-4 text-center cursor-pointer transition-all hover:border-gray-500"
+              :class="[{ 'drop-active': isKbDragging, 'pointer-events-none opacity-50': isKbUploading }]"
+              @click="!isKbUploading && triggerKbInput()"
+              @dragover.prevent="!isKbUploading && (isKbDragging = true)"
+              @dragleave.prevent="isKbDragging = false"
+              @drop.prevent="!isKbUploading && handleKbDrop($event)"
+            >
+              <input ref="kbFileInput" type="file" class="hidden" multiple accept=".pdf,.docx,.txt,.md,.jsonl" :disabled="isKbUploading" @change="handleKbFileSelect">
+              <div v-if="isKbUploading" class="space-y-1">
+                <svg class="w-6 h-6 mx-auto text-amber-400 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                <p class="text-[11px] text-amber-400">正在拼命上传中...</p>
+              </div>
+              <div v-else-if="kbFiles.length === 0" class="space-y-1">
+                <svg class="w-6 h-6 mx-auto text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                <p class="text-[11px] text-gray-500">点击或拖拽文件（支持多选）</p>
+                <p class="text-[10px] text-gray-600">PDF / Word / MD / TXT / JSONL</p>
+              </div>
+              <div v-else class="space-y-1.5 max-h-28 overflow-y-auto pr-1">
+                <div v-for="(f, idx) in kbFiles" :key="idx" class="bg-gray-800 p-1.5 rounded flex justify-between items-center">
+                  <div class="overflow-hidden">
+                    <div class="text-amber-400 text-[11px] font-medium truncate">{{ f.name }}</div>
+                    <div class="text-[10px] text-gray-600">{{ formatSize(f.size) }}</div>
+                  </div>
+                  <button class="text-[10px] text-red-400 hover:text-red-300 ml-2 flex-shrink-0" @click.stop="removeKbFile(idx)">✕</button>
+                </div>
+              </div>
+            </div>
+            <button
+              @click="uploadKnowledgeBatch"
+              :disabled="kbFiles.length === 0 || isKbUploading"
+              class="w-full mt-2.5 py-2 rounded-lg font-semibold text-xs transition-all flex items-center justify-center gap-1.5"
+              :class="isKbUploading
+                ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                : kbFiles.length > 0
+                  ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-lg shadow-amber-600/20'
+                  : 'bg-gray-800 text-gray-500 cursor-not-allowed'"
+            >
+              <span v-if="isKbUploading" class="flex items-center justify-center gap-1.5">
+                <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                AI 正在构建知识网络...
+              </span>
+              <span v-else>☁️ 上传文献至知识库</span>
+            </button>
+            <div v-if="kbUploadProgress" class="mt-2">
+              <div class="progress-bar-track">
+                <div class="progress-bar-fill" :class="kbUploadProgress.status === 'error' ? 'error' : kbUploadProgress.status === 'done' ? 'complete' : 'active'"
+                  :style="{ width: Math.max(kbUploadProgress.percent, 5) + '%' }"></div>
+              </div>
+              <div class="text-[10px] text-gray-500 mt-1">{{ kbUploadProgress.message }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="sidebarView === 'upload'" class="w-[420px] flex-shrink-0 bg-gray-900/50 border-r border-gray-800 flex flex-col p-5 gap-5 overflow-y-auto">
+        <div class="bg-gray-900 rounded-xl border border-gray-800 p-5">
+          <h2 class="text-sm font-semibold text-gray-300 mb-4 flex items-center gap-2">
+            <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+            Upload File
+          </h2>
+          <div
+            class="border-2 border-dashed border-gray-700 rounded-lg p-8 text-center cursor-pointer transition-all hover:border-gray-500"
+            :class="{ 'drop-active': isDragging }"
+            @click="triggerFileInput"
+            @dragover.prevent="isDragging = true"
+            @dragleave.prevent="isDragging = false"
+            @drop.prevent="handleDrop"
+          >
+            <input ref="fileInput" type="file" class="hidden" multiple accept=".docx,.xlsx,.csv,.pptx" @change="handleFileSelect">
+            <div v-if="selectedFiles.length === 0" class="space-y-2">
+              <svg class="w-10 h-10 mx-auto text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              <p class="text-sm text-gray-400">Click or drag files here</p>
+              <p class="text-xs text-gray-600">.docx / .xlsx / .csv / .pptx (multi-select)</p>
+            </div>
+            <div v-else class="space-y-2 max-h-32 overflow-y-auto pr-1">
+              <div v-for="(f, idx) in selectedFiles" :key="idx" class="bg-gray-800 p-2 rounded flex justify-between items-center">
+                <div class="overflow-hidden">
+                  <div class="text-indigo-400 text-xs font-medium truncate">{{ f.name }}</div>
+                  <div class="text-[10px] text-gray-500">{{ formatSize(f.size) }}</div>
+                </div>
+                <button class="text-[10px] text-red-400 hover:text-red-300 ml-2 flex-shrink-0" @click.stop="removeFile(idx)">✕</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-gray-900 rounded-xl border border-gray-800 p-5">
+          <h2 class="text-sm font-semibold text-gray-300 mb-4 flex items-center gap-2">
+            <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+            Instructions
+          </h2>
+          <textarea
+            v-model="userInstruction"
+            rows="3"
+            class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-indigo-500 resize-none"
+            placeholder="e.g. Fill in the blank fields in the table..."
+          ></textarea>
+        </div>
+
+        <button
+          @click="submitTask"
+          :disabled="isProcessing || (selectedFiles.length === 0 && !userInstruction.trim())"
+          class="w-full py-3 rounded-xl font-semibold text-sm transition-all"
+          :class="isProcessing
+            ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+            : selectedFiles.length > 0
+              ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20'
+              : 'bg-gray-800 text-gray-500 cursor-not-allowed'"
+        >
+          <span v-if="isProcessing" class="flex items-center justify-center gap-2">
+            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+            Processing...
+          </span>
+          <span v-else>Start Processing</span>
+        </button>
+
+        <div class="space-y-2">
+          <p class="text-xs text-gray-500 font-medium">Quick Templates</p>
+          <button v-for="t in templates" :key="t.label"
+            @click="userInstruction = t.instruction"
+            class="w-full text-left px-3 py-2 rounded-lg bg-gray-800/50 border border-gray-800 text-xs text-gray-400 hover:text-gray-200 hover:border-gray-600 transition-all"
+          >{{ t.label }}</button>
+        </div>
+
+        <div class="border-t border-gray-800 my-1"></div>
+      </div>
+
+      <div class="flex-1 flex flex-col bg-[#0d0d14] overflow-hidden">
+        <div class="flex items-center bg-[#12121c] border-b border-gray-800/50">
+          <button
+            @click="activeTab = 'terminal'"
+            class="px-5 py-2 text-xs font-medium transition-all"
+            :class="activeTab === 'terminal' ? 'text-emerald-400 border-b-2 border-emerald-400' : 'text-gray-500 hover:text-gray-300'"
+          >Terminal</button>
+          <button
+            @click="activeTab = 'preview'"
+            class="px-5 py-2 text-xs font-medium transition-all flex items-center gap-1.5"
+            :class="activeTab === 'preview' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-500 hover:text-gray-300'"
+          >
+            Preview
+            <span v-if="previewHtml" class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+          </button>
+          <button
+            v-if="sidebarView === 'mydocs'"
+            @click="activeTab = 'flashcards'"
+            class="px-5 py-2 text-xs font-medium transition-all flex items-center gap-1.5"
+            :class="activeTab === 'flashcards' ? 'text-amber-400 border-b-2 border-amber-400' : 'text-gray-500 hover:text-gray-300'"
+          >
+            🃏 闪卡复习
+            <span v-if="deck.length > 0" class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+          </button>
+          <div class="ml-auto flex items-center gap-2 px-4">
+            <span v-if="isProcessing" class="flex items-center gap-1.5 text-xs text-emerald-400">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-dot"></span>
+              Streaming
+            </span>
+          </div>
+        </div>
+
+        <div v-show="activeTab === 'terminal'" class="flex-1 flex flex-col overflow-hidden">
+          <div v-if="taskProgress > 0 || isProcessing" class="px-4 pt-3 pb-2 bg-gray-900/80 border-b border-gray-800/50">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-xs font-medium" :class="taskProgress >= 100 ? 'text-emerald-400' : taskProgress < 0 ? 'text-red-400' : 'text-indigo-400'">
+                {{ taskProgress < 0 ? '❌ Failed' : taskProgress >= 100 ? '✅ Complete' : '⚡ Processing' }}
+              </span>
+              <span class="text-xs text-gray-500">{{ Math.max(0, taskProgress) }}%</span>
+            </div>
+            <div class="progress-bar-track">
+              <div class="progress-bar-fill"
+                :class="taskProgress >= 100 ? 'complete' : taskProgress < 0 ? 'error' : 'active'"
+                :style="{ width: Math.max(0, Math.min(100, taskProgress)) + '%' }"
+              ></div>
+            </div>
+            <div v-if="currentAction" class="mt-1.5 text-[11px] text-gray-400 truncate">
+              {{ currentAction }}
+            </div>
+          </div>
+
+          <div v-if="uploadQueue.length > 0" class="px-4 py-2 bg-gray-900/60 border-b border-gray-800/30">
+            <div class="text-xs text-gray-500 mb-1.5">📤 上传队列 ({{ uploadQueue.length }})</div>
+            <div class="max-h-24 overflow-y-auto space-y-1">
+              <div v-for="(item, i) in uploadQueue" :key="i" class="flex items-center gap-2 text-[11px]">
+                <span class="truncate flex-1 text-gray-400">{{ item.name }}</span>
+                <span class="text-gray-600">{{ (item.size / 1024).toFixed(0) }}KB</span>
+                <span :class="item.status === 'completed' ? 'text-emerald-400' : item.status === 'error' ? 'text-red-400' : 'text-indigo-400'">
+                  {{ item.status === 'queued' ? '排队中' : item.status === 'uploading' ? '上传中' : item.status === 'processing' ? '入库中' : item.status === 'completed' ? '完成' : '失败' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div ref="terminal" class="flex-1 overflow-y-auto p-4 space-y-0.5 terminal-font text-[13px] leading-relaxed">
+            <div v-if="terminalLines.length === 0 && !isProcessing" class="text-gray-600 text-center mt-20">
+              <p class="text-sm mb-1">Terminal ready</p>
+              <p class="text-xs">Upload a file and click "Start Processing" to begin</p>
+            </div>
+            
+            <div v-for="(line, i) in terminalLines" :key="i" class="terminal-line action-log-item">
+              <span :class="line.color">{{ line.prefix }}</span>
+              <span class="text-gray-300">{{ line.text }}</span>
+            </div>
+            
+            <div v-if="isProcessing" class="terminal-line">
+              <span class="text-emerald-400">▌</span>
+              <span class="text-gray-600 pulse-dot">waiting...</span>
+            </div>
+          </div>
+        </div>
+
+        <div v-show="activeTab === 'preview'" class="flex-1 min-h-0 overflow-y-auto" style="max-height: 80vh; background-color: #e5e7eb;">
+          <div v-if="!previewHtml && !slideDeck" class="flex items-center justify-center h-full text-gray-400 text-sm">
+            No preview available yet
+          </div>
+          <div v-if="previewHtml && !slideDeck" class="flex justify-end space-x-3 mb-4 bg-gray-800 p-3 rounded-lg shadow-inner mx-4 mt-4">
+            <span class="text-gray-400 text-sm self-center mr-auto">💡 报告已生成，可导出到本地保存：</span>
+            <button @click="exportToWord" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded shadow transition-colors flex items-center">
+              <span class="mr-1">📄</span> 导出 Word (.doc)
+            </button>
+            <button @click="exportToHtml" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded shadow transition-colors flex items-center">
+              <span class="mr-1">🌐</span> 导出离线网页 (.html)
+            </button>
+          </div>
+          <div id="kg-container" class="mx-4 mb-4" v-show="knowledgeGraphData"></div>
+          <div v-if="!slideDeck && previewHtml" class="preview-paper" v-html="safePreviewHtml"></div>
+          <div v-if="slideDeck" class="flex flex-col items-center justify-center h-full text-gray-500 text-sm gap-3">
+            <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+            <p>PPT 已经生成完毕！</p>
+            <button @click="enterPptEditMode" style="margin-top: 16px; padding: 12px 24px; background: #2563eb; color: white; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; font-size: 15px; box-shadow: 0 4px 12px rgba(37,99,235,0.3);">✨ 开启全屏 PPT 编辑器</button>
+          </div>
+        </div>
+
+        <div v-show="activeTab === 'flashcards'" class="flex-1 flex overflow-hidden">
+          <div class="w-1/3 min-w-[280px] border-r border-gray-800/60 bg-gray-950/40 flex flex-col">
+            <div class="px-5 pt-5 pb-3 border-b border-gray-800/40">
+              <h3 class="text-sm font-semibold text-gray-300 flex items-center gap-2">
+                <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                已上传文献
+              </h3>
+              <p class="text-[10px] text-gray-600 mt-1">共 {{ kbDocuments.length }} 篇文献入库</p>
+            </div>
+            <div class="flex-1 overflow-y-auto p-4">
+              <div v-if="kbDocuments.length === 0" class="text-center py-12">
+                <svg class="w-10 h-10 mx-auto text-gray-700 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <p class="text-xs text-gray-500">暂无入库文献</p>
+                <p class="text-[10px] text-gray-600 mt-1">上传文档后自动生成闪卡</p>
+              </div>
+              <div v-else class="space-y-2">
+                <div v-for="doc in kbDocuments" :key="doc.id"
+                  @click="drawCards(doc.filename)"
+                  class="bg-gray-900/80 rounded-xl border border-gray-800/60 p-3 transition-all hover:border-indigo-700/50 hover:bg-gray-900 cursor-pointer group">
+                  <div class="flex items-start gap-2.5">
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-bold"
+                      :class="{
+                        'bg-red-900/40 text-red-400': doc.file_type === 'pdf',
+                        'bg-blue-900/40 text-blue-400': doc.file_type === 'docx',
+                        'bg-gray-800 text-gray-400': !['pdf','docx'].includes(doc.file_type)
+                      }">
+                      {{ { pdf: 'PDF', docx: 'DOC' }[doc.file_type] || '?' }}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="text-xs font-medium text-gray-200 truncate" :title="doc.filename">{{ doc.filename }}</div>
+                      <div class="flex items-center gap-2 mt-1">
+                        <span v-if="doc.chunk_count" class="text-[9px] text-gray-600">{{ doc.chunk_count }} 块</span>
+                        <span class="text-[9px] px-1.5 py-0.5 rounded-full font-medium"
+                          :class="{
+                            'bg-amber-900/30 text-amber-400': doc.status === 'processing',
+                            'bg-emerald-900/30 text-emerald-400': doc.status === 'completed',
+                            'bg-red-900/30 text-red-400': doc.status === 'failed',
+                            'bg-gray-800 text-gray-500': !['processing','completed','failed'].includes(doc.status)
+                          }">
+                          {{ { processing: '处理中', completed: '已完成', failed: '失败' }[doc.status] || doc.status }}
+                        </span>
+                      </div>
+                    </div>
+                    <button @click.stop="deleteKbDocument(doc.id, doc.filename)"
+                      class="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 p-1 rounded-md hover:bg-red-900/30 text-red-500/60 hover:text-red-400"
+                      title="删除此文献">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex-1 flex flex-col relative overflow-hidden">
+            <div class="absolute inset-0 pointer-events-none"
+              style="background: radial-gradient(ellipse at 50% 30%, rgba(99,102,241,0.06) 0%, transparent 60%);"></div>
+
+            <div class="relative z-10 flex items-center gap-3 px-8 pt-5 pb-2">
+              <button
+                @click="drawCards()"
+                :disabled="isDrawing"
+                class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-lg"
+                :class="isDrawing
+                  ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                  : 'bg-amber-600 hover:bg-amber-500 text-white hover:scale-105 active:scale-95 shadow-amber-600/30 hover:shadow-xl'"
+              >
+                <svg v-if="isDrawing" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                <span v-else>🔄</span>
+                <span>{{ isDrawing ? 'AI 生成中...' : '🔄 随机抽卡' }}</span>
+              </button>
+              <span v-if="deck.length > 0 && !isDrawing" class="text-xs text-gray-500">
+                已抽 {{ deck.length }} 张
+              </span>
+              <span v-if="cardMode === 'new' && deck.length > 0 && !isDrawing"
+                class="inline-flex items-center gap-1.5 text-[11px] text-gray-500 bg-gray-800/50 px-2.5 py-1 rounded-full">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                ✨ 探索新知
+              </span>
+              <span v-if="cardMode === 'review' && deck.length > 0 && !isDrawing"
+                class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-300 bg-amber-900/40 border border-amber-700/40 px-3 py-1.5 rounded-full animate-pulse">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                🔥 深度复习模式：新鲜考点冷却中，AI 正对薄弱点进行二次高压强化！
+              </span>
+            </div>
+
+            <div class="flex-1 flex flex-col items-center justify-center px-8 pb-8 relative z-10">
+
+            <div v-if="isDrawing" class="w-full max-w-xl flex flex-col items-center gap-6">
+              <div class="w-full rounded-2xl min-h-[300px] flex flex-col items-center justify-center relative overflow-hidden"
+                style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4338ca 100%); box-shadow: 0 25px 60px -12px rgba(67,56,202,0.4), inset 0 1px 0 rgba(255,255,255,0.05);">
+                <div class="absolute top-0 left-0 w-full h-full pointer-events-none"
+                  style="background: radial-gradient(circle at 20% 80%, rgba(129,140,248,0.15) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(99,102,241,0.1) 0%, transparent 50%);"></div>
+                <div class="relative z-10 flex flex-col items-center gap-5">
+                  <div class="relative">
+                    <div class="w-16 h-16 rounded-full border-4 border-indigo-400/30 border-t-indigo-400 animate-spin"></div>
+                    <div class="absolute inset-0 w-16 h-16 rounded-full border-4 border-transparent border-b-indigo-300/50 animate-spin"
+                      style="animation-duration: 1.5s; animation-direction: reverse;"></div>
+                  </div>
+                  <div class="text-center space-y-3">
+                    <div class="flex items-center gap-2 justify-center">
+                      <span class="text-2xl">🤖</span>
+                      <span class="text-sm font-medium text-indigo-200">AI 正在翻阅您的知识库</span>
+                    </div>
+                    <p class="text-xs text-indigo-300/50 max-w-xs leading-relaxed">为您现场印制复习卡片，请稍候（约 3-5 秒）...</p>
+                  </div>
+                  <div class="w-3/4 space-y-2.5 mt-2">
+                    <div class="h-3 rounded-full bg-indigo-300/10 overflow-hidden">
+                      <div class="h-full rounded-full bg-indigo-400/30 shimmer-bar" style="width: 60%;"></div>
+                    </div>
+                    <div class="h-3 rounded-full bg-indigo-300/10 overflow-hidden">
+                      <div class="h-full rounded-full bg-indigo-400/20 shimmer-bar" style="width: 80%; animation-delay: 0.3s;"></div>
+                    </div>
+                    <div class="h-3 rounded-full bg-indigo-300/10 overflow-hidden">
+                      <div class="h-full rounded-full bg-indigo-400/15 shimmer-bar" style="width: 45%; animation-delay: 0.6s;"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div v-else-if="deck.length === 0 && !hasDrawn" class="text-center space-y-5">
+              <div class="text-7xl mb-2">🃏</div>
+              <h3 class="text-xl font-bold text-gray-200">请点击上方按钮开始抽卡</h3>
+              <p class="text-sm text-gray-500">AI 将从您的知识库实时生成复习闪卡</p>
+            </div>
+
+            <div v-else-if="deck.length === 0 && hasDrawn" class="text-center space-y-5 max-w-md">
+              <div class="text-7xl mb-2">📭</div>
+              <h3 class="text-xl font-bold text-gray-200">暂未找到合适的考点</h3>
+              <p class="text-sm text-gray-400 leading-relaxed">您的知识库可能为空，或者 AI 暂时没有找到合适的考点，请上传更多文档或重试。</p>
+              <button @click="drawCards()" class="mt-2 px-5 py-2 rounded-xl text-sm font-medium bg-amber-600 hover:bg-amber-500 text-white transition-all hover:scale-105 active:scale-95">
+                🔄 重新抽卡
+              </button>
+            </div>
+
+            <div v-else class="w-full max-w-xl flex flex-col items-center gap-6 relative z-10">
+              <div class="flex items-center gap-3 text-xs text-gray-500">
+                <span class="px-2.5 py-1 rounded-full bg-gray-800/80 border border-gray-700/50">
+                  {{ currentIndex + 1 }} / {{ deck.length }}
+                </span>
+                <span v-if="deck[currentIndex]?.document_name"
+                  class="text-amber-400/50 flex items-center gap-1">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                  {{ deck[currentIndex]?.document_name }}
+                </span>
+              </div>
+
+              <div class="w-full cursor-pointer select-none" style="perspective: 1200px;" @click="flipCard">
+                <div
+                  class="relative w-full transition-transform duration-700 ease-in-out"
+                  style="transform-style: preserve-3d;"
+                  :style="{ transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }"
+                >
+                  <div
+                    class="w-full rounded-2xl p-8 min-h-[300px] flex flex-col items-center justify-center relative overflow-hidden"
+                    style="backface-visibility: hidden; background: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4338ca 100%); box-shadow: 0 25px 60px -12px rgba(67,56,202,0.4), inset 0 1px 0 rgba(255,255,255,0.05);"
+                  >
+                    <div class="absolute top-0 left-0 w-full h-full pointer-events-none"
+                      style="background: radial-gradient(circle at 20% 80%, rgba(129,140,248,0.15) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(99,102,241,0.1) 0%, transparent 50%);"></div>
+                    <div class="text-[10px] uppercase tracking-[0.2em] text-indigo-300/50 mb-5 relative z-10">Question</div>
+                    <p class="text-lg font-medium text-white text-center leading-relaxed relative z-10">{{ deck[currentIndex]?.question }}</p>
+                    <div class="mt-8 text-[11px] text-indigo-300/30 flex items-center gap-1.5 relative z-10">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/></svg>
+                      点击翻转查看答案
+                    </div>
+                  </div>
+                  <div
+                    class="absolute inset-0 w-full rounded-2xl p-8 min-h-[300px] flex flex-col items-center justify-center relative overflow-hidden"
+                    style="backface-visibility: hidden; transform: rotateY(180deg); background: linear-gradient(135deg, #064e3b 0%, #065f46 40%, #047857 100%); box-shadow: 0 25px 60px -12px rgba(4,120,87,0.4), inset 0 1px 0 rgba(255,255,255,0.05);"
+                  >
+                    <div class="absolute top-0 left-0 w-full h-full pointer-events-none"
+                      style="background: radial-gradient(circle at 80% 80%, rgba(52,211,153,0.15) 0%, transparent 50%), radial-gradient(circle at 20% 20%, rgba(16,185,129,0.1) 0%, transparent 50%);"></div>
+                    <div class="text-[10px] uppercase tracking-[0.2em] text-emerald-300/50 mb-5 relative z-10">Answer</div>
+                    <p class="text-lg font-medium text-white text-center leading-relaxed relative z-10">{{ deck[currentIndex]?.answer }}</p>
+                    <div v-if="deck[currentIndex]?.document_name"
+                      class="mt-5 text-[10px] text-emerald-300/30 flex items-center gap-1 relative z-10">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                      来源: {{ deck[currentIndex]?.document_name }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="!isFlipped" class="flex items-center gap-4">
+                <span class="text-xs text-indigo-300/40 flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/></svg>
+                  点击卡片翻转查看答案
+                </span>
+              </div>
+              <div v-else class="flex items-center gap-4" style="animation: fadeIn 0.3s ease-out;">
+                <button
+                  @click.stop="submitReview(false)"
+                  class="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all shadow-lg bg-red-600 hover:bg-red-500 text-white hover:scale-105 active:scale-95 shadow-red-600/30 hover:shadow-xl"
+                >
+                  🟥 我不会 (模糊)
+                </button>
+                <button
+                  @click.stop="submitReview(true)"
+                  class="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all shadow-lg bg-emerald-600 hover:bg-emerald-500 text-white hover:scale-105 active:scale-95 shadow-emerald-600/30 hover:shadow-xl"
+                >
+                  🟩 我会了 (秒杀)
+                </button>
+              </div>
+            </div>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="downloadUrl" class="px-4 py-3 bg-emerald-900/30 border-t border-emerald-700/40 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span class="text-sm text-emerald-300">Processing complete! File ready for download</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button v-if="showPptTriggerBtn" @click="enterPptEditMode" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-medium transition-all text-white shadow-lg">✨ 编辑 PPT</button>
+            <a :href="downloadUrl" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-sm font-medium transition-all">
+              Download
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <Teleport to="body">
+    <div v-if="isPptEditorOpen" id="ppt-editor-overlay" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:999999; background-color:#f3f4f6; padding:24px; box-sizing:border-box; display:flex; flex-direction:row; gap:24px;">
+      
+      <button @click="closePptPreview" style="position:absolute;top:16px;right:16px;z-index:10;width:40px;height:40px;border-radius:50%;background:#fff;border:1px solid #e5e7eb;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:#6b7280;box-shadow:0 2px 8px rgba(0,0,0,0.1);transition:all 0.15s ease;" onmouseover="this.style.background='#fee2e2';this.style.color='#dc2626';this.style.borderColor='#fca5a5'" onmouseout="this.style.background='#fff';this.style.color='#6b7280';this.style.borderColor='#e5e7eb'">✕</button>
+      
+      <div class="ppt-editor-left" :class="{ 'slide-in': pptEditorAnimated }">
+          <div class="ppt-toolbar" style="border-bottom: 1px solid #e5e7eb;">
+            <div class="flex items-center gap-2.5">
+              <span class="text-sm font-semibold text-gray-800">📑 Slide Editor</span>
+              <span class="text-[11px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{{ slideDeck?.slides?.length || 0 }} slides</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button @click="exportPptJson" class="ppt-btn-ghost" style="padding: 5px 10px; font-size: 11px;">📋 JSON</button>
+              <button @click="closePptPreview" class="ppt-btn-ghost">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                Back
+              </button>
+            </div>
+          </div>
+
+          <div class="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+            <div v-for="(slide, idx) in (slideDeck?.slides || [])" :key="idx"
+              class="ppt-slide-card"
+              :class="{ 'active': currentSlideIndex === idx }"
+            >
+              <div class="flex items-center gap-2.5 px-3.5 py-2.5 cursor-pointer select-none"
+                @click="currentSlideIndex = idx; sendPptToFrame()">
+                <span class="w-6 h-6 rounded-md text-[11px] font-bold flex items-center justify-center flex-shrink-0"
+                  :class="currentSlideIndex === idx
+                    ? 'bg-violet-500 text-white'
+                    : 'bg-gray-200 text-gray-500'"
+                >{{ idx + 1 }}</span>
+                <span class="text-xs font-medium truncate flex-1"
+                  :class="currentSlideIndex === idx ? 'text-violet-700' : 'text-gray-600'"
+                >{{ slide.title || slide.layout || 'Slide' }}</span>
+                <span class="text-[10px] px-1.5 py-0.5 rounded-md bg-gray-100 text-gray-400 font-medium">{{ slide.layout || 'content' }}</span>
+                <span v-if="slide.image_prompt" class="text-[10px]" title="Has image">🖼</span>
+              </div>
+
+              <div v-show="currentSlideIndex === idx" class="px-3.5 pb-3.5 space-y-3">
+                <div>
+                  <label class="ppt-label">Title</label>
+                  <input
+                    type="text"
+                    :value="slide.title || ''"
+                    @input="onSlideFieldChange(idx, 'title', $event.target.value)"
+                    class="ppt-input"
+                    placeholder="Slide title..."
+                  />
+                </div>
+
+                <div v-if="slide.layout === 'cover' || slide.layout === 'section'">
+                  <label class="ppt-label">Subtitle</label>
+                  <input
+                    type="text"
+                    :value="slide.subtitle || ''"
+                    @input="onSlideFieldChange(idx, 'subtitle', $event.target.value)"
+                    class="ppt-input"
+                    placeholder="Subtitle..."
+                  />
+                </div>
+
+                <div v-if="slide.layout === 'cover'">
+                  <label class="ppt-label">Eyebrow</label>
+                  <input
+                    type="text"
+                    :value="slide.eyebrow || ''"
+                    @input="onSlideFieldChange(idx, 'eyebrow', $event.target.value)"
+                    class="ppt-input"
+                    placeholder="Eyebrow text..."
+                  />
+                </div>
+
+                <div>
+                  <label class="ppt-label">Content</label>
+                  <textarea
+                    :value="getSlideContent(idx)"
+                    @input="onSlideContentChange(idx, $event.target.value)"
+                    rows="5"
+                    class="ppt-textarea"
+                    placeholder="Slide content (one bullet per line, ``` for code blocks)..."
+                  ></textarea>
+                </div>
+
+                <div>
+                  <label class="ppt-label">🖼 Image Prompt</label>
+                  <input
+                    type="text"
+                    :value="slide.image_prompt || ''"
+                    @input="onSlideFieldChange(idx, 'image_prompt', $event.target.value)"
+                    class="ppt-input"
+                    placeholder="English keywords for AI image..."
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="px-4 py-2.5 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between">
+            <span class="text-[11px] text-gray-400">✏️ Edit → 👁 Preview auto-updates</span>
+          </div>
+      </div>
+
+      <div class="ppt-editor-right" :class="{ 'slide-in': pptEditorAnimated }">
+        <div class="ppt-toolbar">
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-semibold text-gray-800">✨ 演示文稿实时预览</span>
+            <span class="text-[11px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+              Slide {{ currentSlideIndex + 1 }} / {{ slideDeck?.slides?.length || 0 }}
+            </span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button @click="exportPptx" style="background: linear-gradient(135deg, #ea580c, #c2410c); box-shadow: 0 2px 8px rgba(234, 88, 12, 0.3);" class="ppt-btn-primary">
+              ⬇️ 导出真实 .pptx
+            </button>
+            <button @click="exportPdf" class="ppt-btn-primary">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              ⬇️ Export PDF
+            </button>
+            <button @click="closePptPreview" class="ppt-btn-ghost">
+              ❌ Close
+            </button>
+          </div>
+        </div>
+        <iframe
+          id="ppt-frame"
+          src="/ppt-viewer/index.html"
+          style="flex:1; width:100%; border:none; background:#0d0d14;"
+          @load="onPptFrameLoad"
+        ></iframe>
+      </div>
+    </div>
+  </Teleport>
+</div>
+
+<script>
+const { createApp, ref, reactive, nextTick, onMounted, watch, computed } = Vue;
+
+createApp({
+  setup() {
+    const fileInput = ref(null);
+    const selectedFiles = ref([]);
+    const isDragging = ref(false);
+    const userInstruction = ref('');
+    const isProcessing = ref(false);
+    const connected = ref(false);
+    const terminalLines = ref([]);
+    const terminal = ref(null);
+    const taskProgress = ref(0);
+    const currentAction = ref('');
+    const downloadUrl = ref('');
+    const previewHtml = ref('');
+    const knowledgeGraphData = ref(null);
+    const safePreviewHtml = computed(() => {
+      if (!previewHtml.value) return '';
+      if (typeof DOMPurify !== 'undefined') {
+        return DOMPurify.sanitize(previewHtml.value, {
+          ADD_TAGS: ['table', 'tr', 'td', 'th', 'thead', 'tbody', 'colgroup', 'col', 'img'],
+          ADD_ATTR: ['style', 'class', 'colspan', 'rowspan', 'src', 'alt', 'width', 'height'],
+        });
+      }
+      return previewHtml.value;
+    });
+    const activeTab = ref('terminal');
+    const slideDeck = ref(null);
+    const currentSlideIndex = ref(0);
+    const pptFrameReady = ref(false);
+    const currentThreadId = ref(null);
+    const sessionHistory = ref([]);
+    
+    // 全屏 PPT 编辑器的状态开关 (核心修复点)
+    const isPptEditorOpen = ref(false); 
+    const pptEditorAnimated = ref(false);
+    const showPptTriggerBtn = ref(false);
+
+    const kbFileInput = ref(null);
+    const kbFiles = ref([]);
+    const isKbDragging = ref(false);
+    const isKbUploading = ref(false);
+    const kbStats = ref(null);
+    const kbUploadProgress = ref(null);
+    const kbDocuments = ref([]);
+    const deck = ref([]);
+    const currentIndex = ref(0);
+    const isFlipped = ref(false);
+    const isDrawing = ref(false);
+    const hasDrawn = ref(false);
+    const cardMode = ref('new');
+    const uploadQueue = ref([]);
+
+    const sidebarView = ref('upload');
+    const myDocuments = ref([]);
+    const myDocsTotal = ref(0);
+    const myDocsPage = ref(1);
+    const isLoadingDocs = ref(false);
+    const docProgress = reactive({});
+
+    const authToken = ref(localStorage.getItem('access_token') || '');
+    const currentUser = ref(localStorage.getItem('current_user') || '');
+    const isLoggedIn = computed(() => !!authToken.value);
+    const authMode = ref('login');
+    const authUsername = ref('');
+    const authPassword = ref('');
+    const authError = ref('');
+    const isAuthLoading = ref(false);
+
+    const templates = [
+      { label: '📄 Word - Fill blank fields in table', instruction: 'Fill in the blank fields in the table using knowledge base data' },
+      { label: '📊 Excel - Clean data and remove duplicates', instruction: 'Remove null values and duplicate rows, standardize date formats' },
+      { label: '📑 PPT - Extract slide structure', instruction: 'Extract all slide titles and text content' },
+    ];
+
+    function apiFetch(url, options = {}) {
+      const headers = options.headers || {};
+      if (authToken.value) {
+        headers['Authorization'] = `Bearer ${authToken.value}`;
+      }
+      const storedUserId = localStorage.getItem('userId');
+      if (storedUserId) {
+        headers['X-User-Id'] = storedUserId;
+      }
+      if (!(options.body instanceof FormData)) {
+        if (!headers['Content-Type']) {
+          headers['Content-Type'] = 'application/json';
+        }
+      }
+      return fetch(url, { ...options, headers }).then(res => {
+        if (res.status === 401 && authToken.value) {
+          authToken.value = '';
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('current_user');
+          kbStats.value = null;
+          authError.value = '登录已过期，请重新登录';
+        }
+        return res;
+      });
+    }
+
+    async function handleAuth() {
+      authError.value = '';
+      if (!authUsername.value.trim() || !authPassword.value.trim()) {
+        authError.value = '请输入用户名和密码';
+        return;
+      }
+      isAuthLoading.value = true;
+      try {
+        if (authMode.value === 'register') {
+          const res = await fetch('/api/v1/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: authUsername.value, password: authPassword.value }),
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            authError.value = data.detail || '注册失败';
+            return;
+          }
+          authToken.value = data.access_token;
+          currentUser.value = data.username || authUsername.value;
+          localStorage.setItem('access_token', data.access_token);
+          localStorage.setItem('current_user', currentUser.value);
+          authError.value = '';
+          loadKbStats();
+      fetchKbDocuments();
+        } else {
+          const formData = new FormData();
+          formData.append('username', authUsername.value);
+          formData.append('password', authPassword.value);
+          const res = await fetch('/api/v1/auth/login', {
+            method: 'POST',
+            body: formData,
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            authError.value = data.detail || '登录失败';
+            return;
+          }
+          authToken.value = data.access_token;
+          currentUser.value = data.username || authUsername.value;
+          localStorage.setItem('access_token', data.access_token);
+          localStorage.setItem('current_user', currentUser.value);
+          authError.value = '';
+          loadKbStats();
+        }
+      } catch (err) {
+        authError.value = '网络错误: ' + err.message;
+      } finally {
+        isAuthLoading.value = false;
+      }
+    }
+
+    function handleLogout() {
+      authToken.value = '';
+      currentUser.value = '';
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('current_user');
+      kbStats.value = null;
+    }
+
+    async function loadMyDocuments(page = 1) {
+      isLoadingDocs.value = true;
+      try {
+        const res = await apiFetch(`/api/v1/documents/my?page=${page}&page_size=20`);
+        const data = await res.json();
+        if (res.ok) {
+          if (page === 1) {
+            myDocuments.value = data.documents || [];
+          } else {
+            myDocuments.value = [...myDocuments.value, ...(data.documents || [])];
+          }
+          myDocsTotal.value = data.total || 0;
+          myDocsPage.value = page;
+          _subscribeProcessingDocs();
+        }
+      } catch (err) {
+        console.error('Failed to load documents:', err);
+      } finally {
+        isLoadingDocs.value = false;
+      }
+    }
+
+    function _subscribeProcessingDocs() {
+      for (const doc of myDocuments.value) {
+        if (doc.status === 'processing' && doc.task_id && !docProgress[doc.task_id]) {
+          docProgress[doc.task_id] = { progress: 0, action: '等待中...' };
+          const sseUrl = `/api/v1/task/${doc.task_id}/stream?token=${encodeURIComponent(authToken.value)}`;
+          const es = new EventSource(sseUrl);
+          es.onmessage = (event) => {
+            try {
+              const payload = JSON.parse(event.data);
+              if (payload.progress !== undefined) {
+                docProgress[doc.task_id] = { progress: payload.progress, action: payload.action || '' };
+              }
+              if (payload.status === 'success' || payload.status === 'error') {
+                es.close();
+                delete docProgress[doc.task_id];
+                loadMyDocuments(myDocsPage.value);
+              }
+            } catch (e) {}
+          };
+          es.onerror = () => {
+            es.close();
+            delete docProgress[doc.task_id];
+          };
+        }
+      }
+    }
+
+    let _kbPollTimer = null;
+    watch(kbDocuments, (docs) => {
+      const hasProcessing = docs.some(d => d.status === 'processing');
+      if (hasProcessing && !_kbPollTimer) {
+        _kbPollTimer = setInterval(() => {
+          fetchKbDocuments();
+          loadKbStats();
+        }, 3000);
+      } else if (!hasProcessing && _kbPollTimer) {
+        clearInterval(_kbPollTimer);
+        _kbPollTimer = null;
+      }
+    }, { deep: true });
+
+    onMounted(async () => {
+      const searchParams = new URLSearchParams(window.location.search);
+      const urlUserId = searchParams.get('userId');
+      const urlAuthFrom = searchParams.get('authFrom');
+
+      if (urlUserId && urlAuthFrom === 'qt_client') {
+        localStorage.setItem('userId', urlUserId);
+        try {
+          const res = await fetch('/api/v1/auth/silent-login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-User-Id': urlUserId },
+            body: JSON.stringify({ user_id: parseInt(urlUserId) }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.access_token) {
+              authToken.value = data.access_token;
+              currentUser.value = data.username || `user_${urlUserId}`;
+              localStorage.setItem('access_token', data.access_token);
+              localStorage.setItem('current_user', currentUser.value);
+              console.log(`[SilentAuth] Logged in as ${currentUser.value} via Qt client`);
+            }
+          } else {
+            console.warn('[SilentAuth] Silent login failed, falling back to manual login');
+            localStorage.setItem('qt_user_id', urlUserId);
+          }
+        } catch (e) {
+          console.warn('[SilentAuth] Silent login request failed:', e);
+          localStorage.setItem('qt_user_id', urlUserId);
+        }
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+
+      try {
+        const res = await fetch('/api/v1/health');
+        if (res.ok) connected.value = true;
+      } catch {}
+      loadKbStats();
+      fetchKbDocuments();
+
+      window.addEventListener('message', (event) => {
+        if (event.data && (event.data.type === 'PPT_VIEWER_READY' || event.data.type === 'PPT_READY')) {
+          console.log('检测到预览组件已就绪，正在投送数据...');
+          pptFrameReady.value = true;
+          if (slideDeck.value) {
+            sendPptToFrame();
+          }
+        }
+
+        if (event.data && event.data.type === 'REWRITE_SLIDE') {
+          const { slideIndex, instruction } = event.data.payload || {};
+          if (!slideDeck.value || !slideDeck.value.slides[slideIndex]) return;
+
+          const originalSlide = JSON.parse(JSON.stringify(slideDeck.value.slides[slideIndex]));
+          addLine('[AI Copilot] ', `🔄 正在重写第 ${slideIndex + 1} 页: ${instruction}`, 'text-yellow-400');
+
+          try {
+            apiFetch('/api/v1/task/edit-slide', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                slide_index: slideIndex,
+                instruction: instruction,
+                original_slide: originalSlide
+              })
+            }).then(r => r.json()).then(result => {
+              if (result.status === 'success') {
+                slideDeck.value.slides[slideIndex] = result.new_slide;
+                addLine('[AI Copilot] ', `✅ 第 ${slideIndex + 1} 页重写成功！`, 'text-green-400');
+                pptRetryCount = 0;
+                sendPptToFrame();
+              } else {
+                addLine('[AI Copilot] ', `❌ 重写失败: ${result.message}`, 'text-red-400');
+              }
+            }).catch(error => {
+              addLine('[AI Copilot] ', `❌ 请求错误: ${error.message}`, 'text-red-400');
+            });
+          } catch (error) {
+            addLine('[AI Copilot] ', `❌ 重写错误: ${error.message}`, 'text-red-400');
+          }
+        }
+      });
+
+      window.testPptViewer = function() {
+        slideDeck.value = {
+          meta: { title: "Test Presentation", author: "Debug", date: "2025-01-01" },
+          design: {
+            palette: { primary: "#1e40af", secondary: "#3b82f6", accent: "#f59e0b", background: "#ffffff", text: "#1f2937", text_light: "#6b7280" },
+            fonts: { heading: "Inter", body: "Inter" },
+            type_scale: { heading: 2.5, body: 1.0, caption: 0.75 },
+            radius: "8px"
+          },
+          slides: [
+            { layout: "cover", title: "测试PPT", subtitle: "如果你能看到这页，说明前端渲染正常", eyebrow: "DEBUG TEST" },
+            { layout: "content", title: "第二页", components: [{ type: "bullet_list", items: ["项目一", "项目二", "项目三"] }] },
+            { layout: "closing", title: "谢谢！" }
+          ]
+        };
+        currentSlideIndex.value = 0;
+        showPptTriggerBtn.value = true;
+        addLine('[Debug] ', '✅ 测试PPT数据已注入，请点击 ✨编辑PPT 按钮', 'text-yellow-400');
+      };
+    });
+
+    watch(slideDeck, (newVal) => {
+      if (newVal) {
+        addLine('[Debug] ', `📊 slideDeck已更新: ${newVal.slides?.length || 0} slides, keys=${Object.keys(newVal).join(',')}`, 'text-yellow-400');
+      }
+    });
+
+    watch(selectedFiles, (newFiles) => {
+      for (const f of newFiles) {
+        if (!uploadQueue.value.find(q => q.name === f.name && q.size === f.size)) {
+          uploadQueue.value.push({
+            name: f.name,
+            size: f.size,
+            status: 'queued',
+            progress: 0,
+            action: '',
+          });
+        }
+      }
+    });
+
+    let pptRetryCount = 0;
+
+    function onPptFrameLoad() {
+      console.log('[PPT] iframe @load fired, slideDeck=', !!slideDeck.value, 'isPptEditorOpen=', isPptEditorOpen.value);
+      pptFrameReady.value = true;
+      if (slideDeck.value && isPptEditorOpen.value) {
+        pptRetryCount = 0;
+        setTimeout(() => sendPptToFrame(), 300);
+      }
+    }
+
+    function sendPptToFrame() {
+      const frame = document.getElementById('ppt-frame');
+      if (!frame || !frame.contentWindow || !slideDeck.value) {
+        console.log('[PPT] sendPptToFrame skipped: frame=', !!frame, 'contentWindow=', !!(frame && frame.contentWindow), 'slideDeck=', !!slideDeck.value);
+        return;
+      }
+
+      console.log('[PPT] Sending RENDER_PPT, slides=', slideDeck.value.slides?.length, 'retry=', pptRetryCount);
+      const purePayload = JSON.parse(JSON.stringify(slideDeck.value));
+      frame.contentWindow.postMessage({
+        type: 'RENDER_PPT',
+        payload: purePayload
+      }, '*');
+
+      if (pptRetryCount < 5) {
+        pptRetryCount++;
+        setTimeout(sendPptToFrame, 500);
+      }
+    }
+
+    function enterPptEditMode() {
+      console.log('[PPT] enterPptEditMode, slideDeck=', !!slideDeck.value, 'slides=', slideDeck.value?.slides?.length);
+      isPptEditorOpen.value = true;
+      pptEditorAnimated.value = false;
+      pptRetryCount = 0;
+      nextTick(() => {
+        requestAnimationFrame(() => {
+          pptEditorAnimated.value = true;
+        });
+        setTimeout(() => sendPptToFrame(), 300);
+      });
+    }
+
+    function closePptPreview() {
+      // 彻底销毁组件
+      isPptEditorOpen.value = false;
+      pptEditorAnimated.value = false;
+    }
+
+    function switchSession(sessionId) {
+      currentThreadId.value = sessionId;
+      addLine('[System] ', `已切换至历史对话: ${sessionId}。您可以继续对该 PPT 发出修改指令。`, 'text-yellow-400');
+    }
+
+    function newSession() {
+      currentThreadId.value = null;
+      slideDeck.value = null;
+      terminalLines.value = [];
+      addLine('[System] ', '已开启全新对话，记忆已重置。', 'text-green-400');
+    }
+
+    function exportPptJson() {
+      if (!slideDeck.value) return;
+      const json = JSON.stringify(slideDeck.value, null, 2);
+      navigator.clipboard.writeText(json).then(() => {
+        alert('PPT JSON copied to clipboard!');
+      }).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = json;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        alert('PPT JSON copied to clipboard!');
+      });
+    }
+
+    function exportPdf() {
+      const frame = document.getElementById('ppt-frame');
+      if (!frame || !frame.contentWindow) {
+        alert('PPT preview not loaded yet');
+        return;
+      }
+      frame.contentWindow.postMessage({ type: 'EXPORT_PDF' }, '*');
+    }
+
+    async function exportPptx() {
+      if (!slideDeck.value) {
+        alert('No PPT data available');
+        return;
+      }
+      try {
+        addLine('[System] ', '正在生成真实 .pptx 文件...', 'text-yellow-400');
+        const payload = JSON.parse(JSON.stringify(slideDeck.value));
+        const response = await apiFetch('/api/v1/task/export-pptx', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!response.ok) {
+          throw new Error(`Export failed: ${response.status}`);
+        }
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'Generated_Presentation.pptx';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        addLine('[System] ', '✅ .pptx 文件已成功导出并下载！', 'text-green-400');
+      } catch (error) {
+        addLine('[System] ', `❌ 导出失败: ${error.message}`, 'text-red-400');
+      }
+    }
+
+    function onSlideFieldChange(slideIdx, field, value) {
+      if (!slideDeck.value || !slideDeck.value.slides[slideIdx]) return;
+      slideDeck.value.slides[slideIdx][field] = value;
+
+      if (field === 'image_prompt') {
+        const slide = slideDeck.value.slides[slideIdx];
+        if (value && value.trim()) {
+          const cleaned = value.trim().replace(/[^\w\s\-]/g, '');
+          if (cleaned) {
+            const keywords = cleaned.split(/[\s,]+/).filter(Boolean).slice(0, 4);
+            const shortKeyword = keywords.join(',');
+            const encoded = encodeURIComponent(shortKeyword);
+            slide.image_url = `https://loremflickr.com/800/600/${encoded}?random=1`;
+            const hasImageComp = (slide.components || []).some(c => c.type === 'image');
+            if (!hasImageComp) {
+              if (!slide.components) slide.components = [];
+              slide.components.unshift({ type: 'image', image_url: slide.image_url });
+            } else {
+              slide.components = (slide.components || []).map(c =>
+                c.type === 'image' ? { ...c, image_url: slide.image_url } : c
+              );
+            }
+          }
+        } else {
+          slide.image_url = null;
+          slide.components = (slide.components || []).filter(c => c.type !== 'image');
+        }
+      }
+      sendPptToFrame();
+    }
+
+    function getSlideContent(slideIdx) {
+      if (!slideDeck.value || !slideDeck.value.slides[slideIdx]) return '';
+      const slide = slideDeck.value.slides[slideIdx];
+      const comps = slide.components || [];
+      const lines = [];
+      for (const comp of comps) {
+        if (comp.type === 'text' || comp.type === 'heading') {
+          lines.push(comp.content || '');
+        } else if (comp.type === 'bullet_list') {
+          for (const item of (comp.items || [])) {
+            lines.push('• ' + item);
+          }
+        } else if (comp.type === 'code') {
+          lines.push('```' + (comp.language || ''));
+          lines.push(comp.content || '');
+          lines.push('```');
+        } else if (comp.type === 'card') {
+          lines.push(comp.content || '');
+        }
+      }
+      return lines.join('\n');
+    }
+
+    function onSlideContentChange(slideIdx, rawText) {
+      if (!slideDeck.value || !slideDeck.value.slides[slideIdx]) return;
+      const slide = slideDeck.value.slides[slideIdx];
+      const lines = rawText.split('\n');
+      const newComps = [];
+      const preservedComps = (slide.components || []).filter(c =>
+        c.type === 'image' || c.type === 'divider' || c.type === 'two_column'
+      );
+
+      let currentBulletItems = [];
+      let currentCodeLines = [];
+      let inCodeBlock = false;
+      let codeLang = '';
+
+      function flushBullets() {
+        if (currentBulletItems.length > 0) {
+          newComps.push({ type: 'bullet_list', items: [...currentBulletItems] });
+          currentBulletItems = [];
+        }
+      }
+
+      for (const line of lines) {
+        if (line.startsWith('```')) {
+          if (inCodeBlock) {
+            flushBullets();
+            newComps.push({ type: 'code', language: codeLang, content: currentCodeLines.join('\n') });
+            currentCodeLines = [];
+            inCodeBlock = false;
+          } else {
+            flushBullets();
+            inCodeBlock = true;
+            codeLang = line.slice(3).trim();
+          }
+          continue;
+        }
+
+        if (inCodeBlock) {
+          currentCodeLines.push(line);
+          continue;
+        }
+
+        if (line.startsWith('• ') || line.startsWith('- ')) {
+          currentBulletItems.push(line.slice(2));
+        } else {
+          flushBullets();
+          if (line.trim()) {
+            newComps.push({ type: 'text', content: line });
+          }
+        }
+      }
+      flushBullets();
+      if (inCodeBlock && currentCodeLines.length > 0) {
+        newComps.push({ type: 'code', language: codeLang, content: currentCodeLines.join('\n') });
+      }
+
+      const imageComps = preservedComps.filter(c => c.type === 'image');
+      const otherComps = preservedComps.filter(c => c.type !== 'image');
+      slide.components = [...imageComps, ...newComps, ...otherComps];
+
+      sendPptToFrame();
+    }
+
+    async function loadKbStats() {
+      try {
+        const res = await apiFetch('/api/v1/knowledge/stats');
+        if (res.ok) {
+          kbStats.value = await res.json();
+        }
+      } catch {}
+    }
+
+    async function fetchKbDocuments() {
+      try {
+        const res = await apiFetch('/api/v1/kb/documents');
+        if (res.ok) {
+          const data = await res.json();
+          kbDocuments.value = data.documents || data.data || [];
+        } else {
+          console.warn('fetchKbDocuments failed:', res.status);
+        }
+      } catch (err) {
+        console.warn('fetchKbDocuments error:', err);
+      }
+    }
+
+    async function deleteKbDocument(docId, filename) {
+      if (!window.confirm(`确定要删除"${filename}"及其 AI 记忆吗？此操作不可逆！`)) return;
+      try {
+        const res = await apiFetch(`/api/v1/kb/documents/${docId}`, { method: 'DELETE' });
+        if (res.ok) {
+          addLine('[知识库] ', `🗑️ 已彻底删除: ${filename}`, 'text-red-400');
+          fetchKbDocuments();
+          loadKbStats();
+        } else {
+          const err = await res.json();
+          alert('删除失败: ' + (err.detail || '未知错误'));
+        }
+      } catch (err) {
+        alert('删除错误: ' + err.message);
+      }
+    }
+
+    async function drawCards(docName) {
+      isDrawing.value = true;
+      try {
+        let url = '/api/v1/flashcards/draw?limit=5';
+        if (docName) url += `&document_name=${encodeURIComponent(docName)}`;
+        const res = await apiFetch(url);
+        if (res.ok) {
+          const data = await res.json();
+          console.log('抽卡结果:', data);
+          deck.value = data.cards || [];
+          currentIndex.value = 0;
+          isFlipped.value = false;
+          hasDrawn.value = true;
+          cardMode.value = data.mode || 'new';
+        }
+      } catch (e) {
+        console.error('抽卡请求失败:', e);
+      } finally {
+        isDrawing.value = false;
+      }
+    }
+
+    function flipCard() {
+      isFlipped.value = !isFlipped.value;
+    }
+
+    async function submitReview(isCorrect) {
+      const card = deck.value[currentIndex.value];
+      if (card && card.chunk_hash) {
+        apiFetch('/api/v1/flashcards/review', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chunk_hash: card.chunk_hash, is_correct: isCorrect }),
+        }).catch(e => console.warn('review request failed:', e));
+      }
+
+      if (currentIndex.value < deck.value.length - 1) {
+        currentIndex.value += 1;
+        isFlipped.value = false;
+      } else {
+        drawCards();
+      }
+    }
+
+    function triggerFileInput() { fileInput.value?.click(); }
+    function handleFileSelect(e) {
+      const files = e.target.files;
+      if (files) {
+        for (const f of files) {
+          if (/\.(docx|xlsx|csv|pptx)$/i.test(f.name)) {
+            selectedFiles.value.push(f);
+          }
+        }
+      }
+    }
+    function handleDrop(e) {
+      isDragging.value = false;
+      const files = e.dataTransfer?.files;
+      if (files) {
+        for (const f of files) {
+          if (/\.(docx|xlsx|csv|pptx)$/i.test(f.name)) {
+            selectedFiles.value.push(f);
+          }
+        }
+      }
+    }
+    function removeFile(idx) {
+      selectedFiles.value.splice(idx, 1);
+      if (selectedFiles.value.length === 0 && fileInput.value) fileInput.value.value = '';
+    }
+    function clearFiles() {
+      selectedFiles.value = [];
+      if (fileInput.value) fileInput.value.value = '';
+    }
+    function triggerKbInput() { kbFileInput.value?.click(); }
+    function handleKbFileSelect(e) {
+      const files = e.target.files;
+      if (files) {
+        for (const f of files) {
+          if (/\.(pdf|docx|txt|md|jsonl)$/i.test(f.name)) {
+            if (!kbFiles.value.find(kf => kf.name === f.name && kf.size === f.size)) {
+              kbFiles.value.push(f);
+            }
+          }
+        }
+      }
+    }
+    function handleKbDrop(e) {
+      isKbDragging.value = false;
+      const files = e.dataTransfer?.files;
+      if (files) {
+        for (const f of files) {
+          if (/\.(pdf|docx|txt|md|jsonl)$/i.test(f.name)) {
+            if (!kbFiles.value.find(kf => kf.name === f.name && kf.size === f.size)) {
+              kbFiles.value.push(f);
+            }
+          }
+        }
+      }
+    }
+    function removeKbFile(idx) {
+      kbFiles.value.splice(idx, 1);
+      if (kbFiles.value.length === 0 && kbFileInput.value) kbFileInput.value.value = '';
+    }
+
+    async function uploadKnowledgeBatch() {
+      if (kbFiles.value.length === 0 || isKbUploading.value) return;
+      isKbUploading.value = true;
+      kbUploadProgress.value = { percent: 0, message: '正在上传文件...', status: 'active' };
+
+      const formData = new FormData();
+      kbFiles.value.forEach(f => formData.append('files', f));
+
+      try {
+        const res = await apiFetch('/api/v1/kb/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        if (!res.ok) {
+          let errMsg = '未知错误';
+          try { const err = await res.json(); errMsg = err.detail || errMsg; } catch {}
+          kbUploadProgress.value = { percent: 100, message: '上传失败: ' + errMsg, status: 'error' };
+          return;
+        }
+        const result = await res.json();
+        kbUploadProgress.value = { percent: 60, message: '文件已接收，AI 正在后台构建知识网络...', status: 'active' };
+
+        const fileNames = result.files ? result.files.join(', ') : '';
+        addLine('[知识库] ', `☁️ 已成功加入后台分析队列: ${fileNames}`, 'text-amber-400');
+
+        kbFiles.value = [];
+        if (kbFileInput.value) kbFileInput.value.value = '';
+
+        fetchKbDocuments();
+        loadMyDocuments();
+
+        let baselineChunks = 0;
+        try {
+          await loadKbStats();
+          baselineChunks = kbStats.value ? kbStats.value.total_chunks : 0;
+        } catch {}
+
+        let pollCount = 0;
+        const MAX_POLLS = 10;
+        const pollInterval = setInterval(async () => {
+          pollCount++;
+          try {
+            const statsRes = await apiFetch('/api/v1/knowledge/stats');
+            if (statsRes.ok) {
+              const newStats = await statsRes.json();
+              kbStats.value = newStats;
+              if (newStats.total_chunks > baselineChunks) {
+                kbUploadProgress.value = { percent: 100, message: `✅ 知识网络构建完成！共 ${newStats.total_chunks} 个知识块`, status: 'done' };
+                clearInterval(pollInterval);
+                fetchKbDocuments();
+                loadMyDocuments();
+                setTimeout(() => { kbUploadProgress.value = null; }, 5000);
+              } else if (pollCount >= MAX_POLLS) {
+                clearInterval(pollInterval);
+                kbUploadProgress.value = { percent: 100, message: '✅ 已成功加入后台分析队列', status: 'done' };
+                fetchKbDocuments();
+                loadMyDocuments();
+                setTimeout(() => { kbUploadProgress.value = null; }, 3000);
+              }
+            }
+          } catch {}
+        }, 3000);
+
+        setTimeout(() => {
+          clearInterval(pollInterval);
+          if (kbUploadProgress.value && kbUploadProgress.value.status === 'active') {
+            kbUploadProgress.value = { percent: 100, message: '✅ 已成功加入后台分析队列', status: 'done' };
+            fetchKbDocuments();
+            loadMyDocuments();
+            setTimeout(() => { kbUploadProgress.value = null; }, 3000);
+          }
+        }, 30000);
+      } catch (err) {
+        kbUploadProgress.value = { percent: 100, message: '上传错误: ' + (err.message || '网络异常'), status: 'error' };
+      } finally {
+        isKbUploading.value = false;
+      }
+    }
+
+    function formatSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+
+    function addLine(prefix, text, color = 'text-gray-500') {
+      terminalLines.value.push({ prefix, text, color });
+      nextTick(() => {
+        if (terminal.value) terminal.value.scrollTop = terminal.value.scrollHeight;
+      });
+    }
+
+    async function submitTask() {
+      if ((selectedFiles.value.length === 0 && !userInstruction.value.trim()) || isProcessing.value) return;
+
+      const instructionText = userInstruction.value;
+      userInstruction.value = '';
+
+      isProcessing.value = true;
+      downloadUrl.value = '';
+      previewHtml.value = '';
+      knowledgeGraphData.value = null;
+      slideDeck.value = null;
+      currentSlideIndex.value = 0;
+      activeTab.value = 'terminal';
+      terminalLines.value = [];
+      showPptTriggerBtn.value = false;
+      isPptEditorOpen.value = false;
+      pptFrameReady.value = false;
+      taskProgress.value = 0;
+      currentAction.value = '';
+
+      const formData = new FormData();
+      if (selectedFiles.value.length > 0) {
+        selectedFiles.value.forEach(f => {
+          formData.append('files', f);
+        });
+        const fileNames = selectedFiles.value.map(f => f.name).join(', ');
+        addLine('[System] ', `Files uploaded: ${fileNames}`, 'text-indigo-400');
+      } else {
+        addLine('[System] ', 'No file uploaded. Generating from text prompt.', 'text-indigo-400');
+      }
+      selectedFiles.value = [];
+      formData.append('user_instruction', instructionText);
+      formData.append('max_retries', '3');
+
+      addLine('[System] ', `Instruction: ${instructionText || '(default)'}`, 'text-indigo-400');
+      addLine('[System] ', 'Submitting task to Celery worker...', 'text-gray-500');
+
+      try {
+        const submitRes = await apiFetch('/api/v1/task/submit', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!submitRes.ok) {
+          const err = await submitRes.text();
+          addLine('[Error] ', `Submit failed: ${submitRes.status} - ${err}`, 'text-red-400');
+          isProcessing.value = false;
+          return;
+        }
+
+        const { task_id, status } = await submitRes.json();
+        addLine('[System] ', `Task submitted! task_id=${task_id}, status=${status}`, 'text-emerald-400');
+        currentAction.value = 'Task accepted, waiting for worker...';
+        taskProgress.value = 2;
+        uploadQueue.value.forEach(item => { item.status = 'processing'; });
+
+        const sseUrl = `/api/v1/task/${task_id}/stream?token=${encodeURIComponent(authToken.value)}`;
+        const eventSource = new EventSource(sseUrl);
+
+        const pptFrame = document.getElementById('ppt-frame');
+        const sendToFrame = (type, payload) => {
+          if (pptFrame && pptFrame.contentWindow) {
+            pptFrame.contentWindow.postMessage({ type, payload }, '*');
+          }
+        };
+
+        sendToFrame('TASK_START', {});
+
+        eventSource.onmessage = (e) => {
+          try {
+            const payload = JSON.parse(e.data);
+            const progress = payload.progress || 0;
+            const action = payload.action || '';
+            const taskStatus = payload.status || '';
+
+            if (taskStatus === 'generative_ui' && payload.component === 'knowledge_graph' && payload.data) {
+              console.log('🔥 成功拦截到图谱数据:', payload.data);
+              knowledgeGraphData.value = payload.data;
+              addLine('[System] ', '🧠 AI 知识图谱已生成！切换到预览标签页查看', 'text-violet-400');
+              Vue.nextTick(() => {
+                setTimeout(() => {
+                  const container = document.getElementById('kg-container');
+                  if (container && typeof window.initKnowledgeGraph === 'function') {
+                    console.log('🔥 开始渲染知识图谱到 #kg-container');
+                    window.initKnowledgeGraph('kg-container', payload.data);
+                  } else {
+                    console.warn('🔥 kg-container 或 initKnowledgeGraph 不可用', { container: !!container, fn: typeof window.initKnowledgeGraph });
+                  }
+                }, 200);
+              });
+              return;
+            }
+
+            if (progress > 0) {
+              taskProgress.value = progress;
+            }
+            if (action) {
+              currentAction.value = action;
+              const agent = payload.agent || payload.node || 'Worker';
+              addLine(`[${agent}] `, action, 'text-emerald-400');
+              sendToFrame('TASK_PROGRESS', { progress, action, agent, status: taskStatus || 'processing' });
+            }
+
+            if (taskStatus === 'success') {
+              taskProgress.value = 100;
+              currentAction.value = 'Processing complete!';
+              addLine('[System] ', '✓ Processing complete!', 'text-green-400');
+              uploadQueue.value.forEach(item => { item.status = 'completed'; });
+              eventSource.close();
+
+              const result = payload.result;
+              if (result) {
+                if (result.filled_html) {
+                  previewHtml.value = result.filled_html;
+                  addLine('[System] ', '📄 Document preview generated, click "Preview" tab to view', 'text-indigo-400');
+                }
+                if (result.ppt_data && result.ppt_data.slides) {
+                  slideDeck.value = result.ppt_data;
+                  currentSlideIndex.value = 0;
+                  showPptTriggerBtn.value = true;
+                  addLine('[System] ', `📑 PPT Ready! ${result.ppt_data.slides.length} slides generated`, 'text-violet-400');
+                }
+                if (result.download_url) {
+                  downloadUrl.value = result.download_url;
+                }
+              }
+              sendToFrame('TASK_PROGRESS', { progress: 100, action: '处理完成', status: 'success' });
+              isProcessing.value = false;
+
+            } else if (taskStatus === 'error') {
+              taskProgress.value = -1;
+              currentAction.value = 'Processing failed';
+              addLine('[Error] ', `Task failed: ${payload.error || 'Unknown error'}`, 'text-red-400');
+              sendToFrame('TASK_ERROR', { error: payload.error || 'Unknown error' });
+              eventSource.close();
+              isProcessing.value = false;
+
+            } else if (taskStatus === 'timeout') {
+              taskProgress.value = -1;
+              currentAction.value = 'Connection timeout';
+              addLine('[Error] ', 'SSE connection timeout', 'text-red-400');
+              sendToFrame('TASK_ERROR', { error: 'SSE connection timeout' });
+              eventSource.close();
+              isProcessing.value = false;
+            }
+          } catch (parseErr) {
+            console.error('[SSE] JSON parse error:', parseErr.message);
+          }
+        };
+
+        eventSource.onerror = () => {
+          addLine('[System] ', 'SSE connection closed, falling back to direct stream mode...', 'text-yellow-400');
+          eventSource.close();
+          submitTaskDirect(instructionText || '(default)');
+        };
+
+      } catch (err) {
+        addLine('[Error] ', `Connection error: ${err.message}`, 'text-red-400');
+        addLine('[System] ', 'Falling back to direct stream mode...', 'text-yellow-400');
+        submitTaskDirect(instructionText || '(default)');
+      }
+    }
+
+    async function submitTaskDirect(instructionText) {
+      const formData = new FormData();
+      if (selectedFiles.value.length > 0) {
+        selectedFiles.value.forEach(f => formData.append('files', f));
+      }
+      formData.append('user_instruction', instructionText);
+      formData.append('max_retries', '3');
+      if (currentThreadId.value) {
+        formData.append('thread_id', currentThreadId.value);
+      }
+
+      try {
+        const response = await apiFetch('/api/v1/task/stream-process', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const err = await response.text();
+          addLine('[Error] ', `Request failed: ${response.status} - ${err}`, 'text-red-400');
+          isProcessing.value = false;
+          return;
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed.startsWith('data: ')) continue;
+            const jsonStr = trimmed.slice(6);
+            try {
+              const event = JSON.parse(jsonStr);
+              processEvent(event);
+            } catch (e) {
+              console.error('[SSE] JSON parse error:', e.message, 'raw:', jsonStr.substring(0, 200));
+            }
+          }
+        }
+
+        if (buffer.trim().startsWith('data: ')) {
+          try {
+            const event = JSON.parse(buffer.trim().slice(6));
+            processEvent(event);
+          } catch {}
+        }
+
+      } catch (err) {
+        addLine('[Error] ', `Connection error: ${err.message}`, 'text-red-400');
+      } finally {
+        isProcessing.value = false;
+      }
+    }
+
+    // 核心解析逻辑（修复了之前报错的语法错误）
+    function processEvent(event) {
+      const status = event.status || '';
+      const node = event.node || '';
+      const message = event.message || '';
+      const data = event.data || {};
+
+      console.log('[SSE] processEvent:', status, 'node=', node, 'keys=', Object.keys(event));
+
+      if (status === 'session_info') {
+        currentThreadId.value = event.thread_id;
+        addLine('[System] ', `会话记忆已同步，当前 Thread_ID: ${event.thread_id}`, 'text-blue-400');
+
+        const existingSession = sessionHistory.value.find(s => s.id === event.thread_id);
+        if (!existingSession) {
+          const lastInstruction = terminalLines.value.find(l => l.text && l.text.includes('Instruction:'));
+          const title = lastInstruction ? lastInstruction.text.replace(/.*Instruction:\s*/, '').substring(0, 15) : '新演示文稿';
+          sessionHistory.value.push({
+            id: event.thread_id,
+            title: title || '新演示文稿',
+            date: new Date().toLocaleTimeString(),
+          });
+        }
+        return;
+      }
+
+      if (status === 'processing') {
+        const agent = event.agent || node || 'Agent';
+        let color = 'text-emerald-400';
+
+        if (node === 'critic_review' && data.review_result === 'pass') color = 'text-green-400';
+        else if (node === 'critic_review' && data.review_result === 'fail') color = 'text-yellow-400';
+        else if (node === 'gateway') color = 'text-violet-400';
+        else if (agent === 'DataAgent' && data.error) color = 'text-yellow-400';
+        else if (data.circuit_break) color = 'text-yellow-400';
+        else if (data.fallback) color = 'text-amber-400';
+
+        addLine(`[${agent}] `, message, color);
+
+        if (data.generated_code) {
+          addLine('[DataAgent] ', 'Generated code:', 'text-gray-500');
+          data.generated_code.split('\n').forEach(line => { addLine('  ', line, 'text-gray-600'); });
+        }
+
+        if (data.slide_deck) {
+          let deck = data.slide_deck;
+          console.log('[SSE] Found slide_deck, keys=', Object.keys(deck), 'hasSlides=', !!deck.slides);
+          if (deck && deck.presentation && !deck.slides) {
+            deck = deck.presentation;
+            console.log('[SSE] Unwrapped slide_deck.presentation');
+          }
+          slideDeck.value = deck;
+          currentSlideIndex.value = 0;
+          showPptTriggerBtn.value = true;
+          addLine('[System] ', `📑 SlideDeck JSON generated: ${deck.slides?.length || 0} slides`, 'text-violet-400');
+        }
+
+        if (data.presentation) {
+          let pres = data.presentation;
+          console.log('[SSE] Found presentation, keys=', Object.keys(pres), 'hasSlides=', !!pres.slides);
+          if (pres && pres.presentation && !pres.slides) {
+            pres = pres.presentation;
+            console.log('[SSE] Unwrapped presentation.presentation');
+          }
+          slideDeck.value = pres;
+          currentSlideIndex.value = 0;
+          showPptTriggerBtn.value = true;
+          addLine('[System] ', `📑 Presentation JSON generated: ${pres.slides?.length || 0} slides`, 'text-violet-400');
+        }
+
+      } else if (status === 'preview') {
+        if (data.html) {
+          previewHtml.value = data.html;
+          addLine('[System] ', '📄 Document preview generated, click "Preview" tab to view', 'text-indigo-400');
+        }
+      } else if (status === 'ppt_ready') {
+        let pptData = event.ppt_data || (data && data.ppt_data);
+        console.log('[SSE] ppt_ready event, pptData=', !!pptData, 'event.ppt_data=', !!event.ppt_data, 'data.ppt_data=', !!(data && data.ppt_data));
+        if (pptData) {
+          console.log('[SSE] pptData keys=', Object.keys(pptData), 'hasSlides=', !!pptData.slides);
+          if (pptData.presentation && !pptData.slides) {
+            pptData = pptData.presentation;
+            console.log('[SSE] Unwrapped pptData.presentation');
+          }
+          slideDeck.value = pptData;
+          currentSlideIndex.value = 0;
+          showPptTriggerBtn.value = true;
+          addLine('[System] ', `📑 PPT Ready! ${pptData.slides?.length || 0} slides generated`, 'text-violet-400');
+        }
+      } else if (status === 'error') {
+        addLine('[Error] ', message, 'text-red-400');
+      } else if (status === 'success') {
+        addLine('[System] ', '✓ Processing complete!', 'text-green-400');
+        if (data.url) {
+          downloadUrl.value = data.url;
+        } else if (data.output_path) {
+          const filename = data.output_path.split(/[/\\]/).pop();
+          downloadUrl.value = '/api/v1/files/output/' + filename;
+        }
+      }
+    }
+
+    function exportToWord() {
+      if (!previewHtml.value) return;
+      try {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = previewHtml.value;
+
+        const allElements = tempDiv.querySelectorAll('*');
+        allElements.forEach(el => {
+          if (el.style.backgroundColor) {
+            el.style.backgroundColor = '';
+          }
+          if (el.style.color === 'rgb(226, 232, 240)' || el.style.color === '#e2e8f0' || el.style.color === 'rgb(209, 213, 219)') {
+            el.style.color = '#000000';
+          }
+          if (el.style.boxShadow) {
+            el.style.boxShadow = '';
+          }
+        });
+
+        const tables = tempDiv.querySelectorAll('table');
+        tables.forEach(table => {
+          table.setAttribute('border', '1');
+          table.setAttribute('cellpadding', '8');
+          table.setAttribute('cellspacing', '0');
+          table.style.borderCollapse = 'collapse';
+          table.style.width = '100%';
+          table.style.borderColor = '#000000';
+          table.style.marginBottom = '20px';
+        });
+
+        const cleanContent = tempDiv.innerHTML;
+
+        const html = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>AI Agent Report</title></head><body style="font-family: 'Microsoft YaHei', 'SimSun', sans-serif; font-size: 14pt; line-height: 1.8;">${cleanContent}</body></html>`;
+
+        const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'AI_Agent_智能报告.doc';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        addLine('[System] ', '✅ 报告已成功清洗并导出为 Word 文档！', 'text-green-400');
+      } catch (e) {
+        addLine('[Error] ', 'Word 导出失败: ' + e.message, 'text-red-400');
+      }
+    }
+
+    function exportToHtml() {
+      if (!previewHtml.value) return;
+      try {
+        const content = previewHtml.value;
+        const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>AI 智能报告</title><style>body{background:#1e1e2e; color:#e2e8f0; font-family:sans-serif; padding:40px; max-width:900px; margin:0 auto; line-height:1.6;} table{border-collapse:collapse; width:100%; margin:20px 0;} th,td{border:1px solid #475569; padding:12px; text-align:left;} th{background-color:#334155;} img{max-width:100%; border-radius:8px;}</style></head><body>${content}</body></html>`;
+        const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'AI_Agent_离线报告.html';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        addLine('[System] ', '✅ 报告已成功导出为离线网页！', 'text-green-400');
+      } catch (e) {
+        addLine('[Error] ', 'HTML 导出失败: ' + e.message, 'text-red-400');
+      }
+    }
+
+    return {
+      fileInput, selectedFiles, isDragging, userInstruction,
+      isProcessing, connected, terminalLines, terminal,
+      taskProgress, currentAction,
+      downloadUrl, previewHtml, safePreviewHtml, knowledgeGraphData, activeTab, templates,
+      slideDeck, currentSlideIndex, pptEditorAnimated, showPptTriggerBtn,
+      kbFileInput, kbFiles, isKbDragging, isKbUploading, kbStats, kbUploadProgress, kbDocuments,
+      deck, currentIndex, isFlipped, isDrawing, hasDrawn, cardMode,
+      uploadQueue,
+      currentThreadId,
+      sessionHistory,
+      switchSession,
+      newSession,
+      isPptEditorOpen,
+      triggerFileInput, handleFileSelect, handleDrop,
+      removeFile, clearFiles, formatSize, submitTask,
+      triggerKbInput, handleKbFileSelect, handleKbDrop,
+      removeKbFile, uploadKnowledgeBatch, fetchKbDocuments, deleteKbDocument,
+      drawCards, flipCard, submitReview,
+      onPptFrameLoad, closePptPreview, exportPptJson, exportPdf, exportPptx,
+      enterPptEditMode, sendPptToFrame,
+      onSlideFieldChange, onSlideContentChange, getSlideContent,
+      exportToWord, exportToHtml,
+      authToken, currentUser, isLoggedIn, authMode, authUsername, authPassword, authError, isAuthLoading,
+      handleAuth, handleLogout,
+      sidebarView, myDocuments, myDocsTotal, myDocsPage, isLoadingDocs, docProgress, loadMyDocuments,
+    };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>

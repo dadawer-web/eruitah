@@ -8,6 +8,8 @@
 #include <QLabel>
 #include <QTextBrowser>
 #include <QJsonObject>
+#include <QJsonArray>
+#include <QJsonValue>
 #include <QFrame>
 
 class CareerCardWidget : public QWidget {

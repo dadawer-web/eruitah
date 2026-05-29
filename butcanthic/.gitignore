@@ -1,0 +1,99 @@
+# ====== Python 虚拟环境 ======
+.venv/
+venv/
+env/
+ENV/
+
+# ====== Python 缓存 ======
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# ====== 敏感配置文件（含API密钥） ======
+ai_models_config.json
+**/ai_models_config.json
+
+# ====== 上传和输出目录 ======
+uploads/
+output/
+temp_workspace/
+
+# ====== 向量数据库持久化 ======
+chroma_db/
+
+# ====== 环境变量文件 ======
+.env
+.env.*
+*.env
+
+# ====== Node.js ======
+node_modules/
+package-lock.json
+
+# ====== 知识库数据（含个人信息） ======
+kb_data/
+
+# ====== DOCX示例文件（含个人数据） ======
+mulu/docx/
+docx/
+
+# ====== 备份文件 ======
+*_backup.py
+*_backup.*
+*.bak
+*.tmp
+*.swp
+*~
+
+# ====== IDE / 编辑器 ======
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+*.code-workspace
+
+# ====== 操作系统 ======
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# ====== Python 打包 / 构建 ======
+dist/
+build/
+*.egg-info/
+*.egg
+.eggs/
+
+# ====== 日志文件 ======
+*.log
+logs/
+
+# ====== 测试 / 覆盖率 ======
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# ====== Jupyter Notebook ======
+.ipynb_checkpoints/
+
+# ====== mypy / 类型检查 ======
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# ====== PyInstaller ======
+*.manifest
+*.spec
+
+# ====== 其他 ======
+*.7z
+*.zip
+*.tar.gz
+*.rar

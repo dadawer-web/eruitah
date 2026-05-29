@@ -79,6 +79,10 @@ public final class ChatProto {
      * <code>SKILL_EVENT = 14;</code>
      */
     SKILL_EVENT(14),
+    /**
+     * <code>DOCUMENT_ANALYSIS = 15;</code>
+     */
+    DOCUMENT_ANALYSIS(15),
     UNRECOGNIZED(-1),
     ;
 
@@ -142,6 +146,10 @@ public final class ChatProto {
      * <code>SKILL_EVENT = 14;</code>
      */
     public static final int SKILL_EVENT_VALUE = 14;
+    /**
+     * <code>DOCUMENT_ANALYSIS = 15;</code>
+     */
+    public static final int DOCUMENT_ANALYSIS_VALUE = 15;
 
 
     public final int getNumber() {
@@ -183,6 +191,7 @@ public final class ChatProto {
         case 12: return EXPERIENCE_UPDATE;
         case 13: return CAREER_ADVICE;
         case 14: return SKILL_EVENT;
+        case 15: return DOCUMENT_ANALYSIS;
         default: return null;
       }
     }
@@ -37108,6 +37117,1779 @@ java.lang.String defaultValue) {
 
   }
 
+  public interface DocumentAnalysisResultOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:bridge.DocumentAnalysisResult)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>int64 user_id = 1;</code>
+     * @return The userId.
+     */
+    long getUserId();
+
+    /**
+     * <code>string document_name = 2;</code>
+     * @return The documentName.
+     */
+    java.lang.String getDocumentName();
+    /**
+     * <code>string document_name = 2;</code>
+     * @return The bytes for documentName.
+     */
+    com.google.protobuf.ByteString
+        getDocumentNameBytes();
+
+    /**
+     * <code>string graph_json = 3;</code>
+     * @return The graphJson.
+     */
+    java.lang.String getGraphJson();
+    /**
+     * <code>string graph_json = 3;</code>
+     * @return The bytes for graphJson.
+     */
+    com.google.protobuf.ByteString
+        getGraphJsonBytes();
+
+    /**
+     * <code>string summary = 4;</code>
+     * @return The summary.
+     */
+    java.lang.String getSummary();
+    /**
+     * <code>string summary = 4;</code>
+     * @return The bytes for summary.
+     */
+    com.google.protobuf.ByteString
+        getSummaryBytes();
+
+    /**
+     * <code>string task_id = 5;</code>
+     * @return The taskId.
+     */
+    java.lang.String getTaskId();
+    /**
+     * <code>string task_id = 5;</code>
+     * @return The bytes for taskId.
+     */
+    com.google.protobuf.ByteString
+        getTaskIdBytes();
+
+    /**
+     * <code>int64 timestamp = 6;</code>
+     * @return The timestamp.
+     */
+    long getTimestamp();
+  }
+  /**
+   * Protobuf type {@code bridge.DocumentAnalysisResult}
+   */
+  public static final class DocumentAnalysisResult extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:bridge.DocumentAnalysisResult)
+      DocumentAnalysisResultOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use DocumentAnalysisResult.newBuilder() to construct.
+    private DocumentAnalysisResult(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private DocumentAnalysisResult() {
+      documentName_ = "";
+      graphJson_ = "";
+      summary_ = "";
+      taskId_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new DocumentAnalysisResult();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.chat.ai.rpc.ChatProto.internal_static_bridge_DocumentAnalysisResult_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.chat.ai.rpc.ChatProto.internal_static_bridge_DocumentAnalysisResult_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.chat.ai.rpc.ChatProto.DocumentAnalysisResult.class, com.chat.ai.rpc.ChatProto.DocumentAnalysisResult.Builder.class);
+    }
+
+    public static final int USER_ID_FIELD_NUMBER = 1;
+    private long userId_ = 0L;
+    /**
+     * <code>int64 user_id = 1;</code>
+     * @return The userId.
+     */
+    @java.lang.Override
+    public long getUserId() {
+      return userId_;
+    }
+
+    public static final int DOCUMENT_NAME_FIELD_NUMBER = 2;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object documentName_ = "";
+    /**
+     * <code>string document_name = 2;</code>
+     * @return The documentName.
+     */
+    @java.lang.Override
+    public java.lang.String getDocumentName() {
+      java.lang.Object ref = documentName_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        documentName_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string document_name = 2;</code>
+     * @return The bytes for documentName.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getDocumentNameBytes() {
+      java.lang.Object ref = documentName_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        documentName_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int GRAPH_JSON_FIELD_NUMBER = 3;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object graphJson_ = "";
+    /**
+     * <code>string graph_json = 3;</code>
+     * @return The graphJson.
+     */
+    @java.lang.Override
+    public java.lang.String getGraphJson() {
+      java.lang.Object ref = graphJson_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        graphJson_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string graph_json = 3;</code>
+     * @return The bytes for graphJson.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getGraphJsonBytes() {
+      java.lang.Object ref = graphJson_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        graphJson_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int SUMMARY_FIELD_NUMBER = 4;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object summary_ = "";
+    /**
+     * <code>string summary = 4;</code>
+     * @return The summary.
+     */
+    @java.lang.Override
+    public java.lang.String getSummary() {
+      java.lang.Object ref = summary_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        summary_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string summary = 4;</code>
+     * @return The bytes for summary.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getSummaryBytes() {
+      java.lang.Object ref = summary_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        summary_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int TASK_ID_FIELD_NUMBER = 5;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object taskId_ = "";
+    /**
+     * <code>string task_id = 5;</code>
+     * @return The taskId.
+     */
+    @java.lang.Override
+    public java.lang.String getTaskId() {
+      java.lang.Object ref = taskId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        taskId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string task_id = 5;</code>
+     * @return The bytes for taskId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getTaskIdBytes() {
+      java.lang.Object ref = taskId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        taskId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int TIMESTAMP_FIELD_NUMBER = 6;
+    private long timestamp_ = 0L;
+    /**
+     * <code>int64 timestamp = 6;</code>
+     * @return The timestamp.
+     */
+    @java.lang.Override
+    public long getTimestamp() {
+      return timestamp_;
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (userId_ != 0L) {
+        output.writeInt64(1, userId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(documentName_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, documentName_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(graphJson_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, graphJson_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(summary_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 4, summary_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(taskId_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 5, taskId_);
+      }
+      if (timestamp_ != 0L) {
+        output.writeInt64(6, timestamp_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (userId_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(1, userId_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(documentName_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, documentName_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(graphJson_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, graphJson_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(summary_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, summary_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(taskId_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, taskId_);
+      }
+      if (timestamp_ != 0L) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(6, timestamp_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.chat.ai.rpc.ChatProto.DocumentAnalysisResult)) {
+        return super.equals(obj);
+      }
+      com.chat.ai.rpc.ChatProto.DocumentAnalysisResult other = (com.chat.ai.rpc.ChatProto.DocumentAnalysisResult) obj;
+
+      if (getUserId()
+          != other.getUserId()) return false;
+      if (!getDocumentName()
+          .equals(other.getDocumentName())) return false;
+      if (!getGraphJson()
+          .equals(other.getGraphJson())) return false;
+      if (!getSummary()
+          .equals(other.getSummary())) return false;
+      if (!getTaskId()
+          .equals(other.getTaskId())) return false;
+      if (getTimestamp()
+          != other.getTimestamp()) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + USER_ID_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getUserId());
+      hash = (37 * hash) + DOCUMENT_NAME_FIELD_NUMBER;
+      hash = (53 * hash) + getDocumentName().hashCode();
+      hash = (37 * hash) + GRAPH_JSON_FIELD_NUMBER;
+      hash = (53 * hash) + getGraphJson().hashCode();
+      hash = (37 * hash) + SUMMARY_FIELD_NUMBER;
+      hash = (53 * hash) + getSummary().hashCode();
+      hash = (37 * hash) + TASK_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getTaskId().hashCode();
+      hash = (37 * hash) + TIMESTAMP_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getTimestamp());
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.chat.ai.rpc.ChatProto.DocumentAnalysisResult parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.chat.ai.rpc.ChatProto.DocumentAnalysisResult parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.chat.ai.rpc.ChatProto.DocumentAnalysisResult parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.chat.ai.rpc.ChatProto.DocumentAnalysisResult parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.chat.ai.rpc.ChatProto.DocumentAnalysisResult parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.chat.ai.rpc.ChatProto.DocumentAnalysisResult parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.chat.ai.rpc.ChatProto.DocumentAnalysisResult parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.chat.ai.rpc.ChatProto.DocumentAnalysisResult parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.chat.ai.rpc.ChatProto.DocumentAnalysisResult parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.chat.ai.rpc.ChatProto.DocumentAnalysisResult parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.chat.ai.rpc.ChatProto.DocumentAnalysisResult parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.chat.ai.rpc.ChatProto.DocumentAnalysisResult parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.chat.ai.rpc.ChatProto.DocumentAnalysisResult prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code bridge.DocumentAnalysisResult}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:bridge.DocumentAnalysisResult)
+        com.chat.ai.rpc.ChatProto.DocumentAnalysisResultOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.chat.ai.rpc.ChatProto.internal_static_bridge_DocumentAnalysisResult_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.chat.ai.rpc.ChatProto.internal_static_bridge_DocumentAnalysisResult_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.chat.ai.rpc.ChatProto.DocumentAnalysisResult.class, com.chat.ai.rpc.ChatProto.DocumentAnalysisResult.Builder.class);
+      }
+
+      // Construct using com.chat.ai.rpc.ChatProto.DocumentAnalysisResult.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        userId_ = 0L;
+        documentName_ = "";
+        graphJson_ = "";
+        summary_ = "";
+        taskId_ = "";
+        timestamp_ = 0L;
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.chat.ai.rpc.ChatProto.internal_static_bridge_DocumentAnalysisResult_descriptor;
+      }
+
+      @java.lang.Override
+      public com.chat.ai.rpc.ChatProto.DocumentAnalysisResult getDefaultInstanceForType() {
+        return com.chat.ai.rpc.ChatProto.DocumentAnalysisResult.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.chat.ai.rpc.ChatProto.DocumentAnalysisResult build() {
+        com.chat.ai.rpc.ChatProto.DocumentAnalysisResult result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.chat.ai.rpc.ChatProto.DocumentAnalysisResult buildPartial() {
+        com.chat.ai.rpc.ChatProto.DocumentAnalysisResult result = new com.chat.ai.rpc.ChatProto.DocumentAnalysisResult(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(com.chat.ai.rpc.ChatProto.DocumentAnalysisResult result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.userId_ = userId_;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.documentName_ = documentName_;
+        }
+        if (((from_bitField0_ & 0x00000004) != 0)) {
+          result.graphJson_ = graphJson_;
+        }
+        if (((from_bitField0_ & 0x00000008) != 0)) {
+          result.summary_ = summary_;
+        }
+        if (((from_bitField0_ & 0x00000010) != 0)) {
+          result.taskId_ = taskId_;
+        }
+        if (((from_bitField0_ & 0x00000020) != 0)) {
+          result.timestamp_ = timestamp_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.chat.ai.rpc.ChatProto.DocumentAnalysisResult) {
+          return mergeFrom((com.chat.ai.rpc.ChatProto.DocumentAnalysisResult)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.chat.ai.rpc.ChatProto.DocumentAnalysisResult other) {
+        if (other == com.chat.ai.rpc.ChatProto.DocumentAnalysisResult.getDefaultInstance()) return this;
+        if (other.getUserId() != 0L) {
+          setUserId(other.getUserId());
+        }
+        if (!other.getDocumentName().isEmpty()) {
+          documentName_ = other.documentName_;
+          bitField0_ |= 0x00000002;
+          onChanged();
+        }
+        if (!other.getGraphJson().isEmpty()) {
+          graphJson_ = other.graphJson_;
+          bitField0_ |= 0x00000004;
+          onChanged();
+        }
+        if (!other.getSummary().isEmpty()) {
+          summary_ = other.summary_;
+          bitField0_ |= 0x00000008;
+          onChanged();
+        }
+        if (!other.getTaskId().isEmpty()) {
+          taskId_ = other.taskId_;
+          bitField0_ |= 0x00000010;
+          onChanged();
+        }
+        if (other.getTimestamp() != 0L) {
+          setTimestamp(other.getTimestamp());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 8: {
+                userId_ = input.readInt64();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 8
+              case 18: {
+                documentName_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 18
+              case 26: {
+                graphJson_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 26
+              case 34: {
+                summary_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000008;
+                break;
+              } // case 34
+              case 42: {
+                taskId_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000010;
+                break;
+              } // case 42
+              case 48: {
+                timestamp_ = input.readInt64();
+                bitField0_ |= 0x00000020;
+                break;
+              } // case 48
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private long userId_ ;
+      /**
+       * <code>int64 user_id = 1;</code>
+       * @return The userId.
+       */
+      @java.lang.Override
+      public long getUserId() {
+        return userId_;
+      }
+      /**
+       * <code>int64 user_id = 1;</code>
+       * @param value The userId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setUserId(long value) {
+        
+        userId_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 user_id = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearUserId() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        userId_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object documentName_ = "";
+      /**
+       * <code>string document_name = 2;</code>
+       * @return The documentName.
+       */
+      public java.lang.String getDocumentName() {
+        java.lang.Object ref = documentName_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          documentName_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string document_name = 2;</code>
+       * @return The bytes for documentName.
+       */
+      public com.google.protobuf.ByteString
+          getDocumentNameBytes() {
+        java.lang.Object ref = documentName_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          documentName_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string document_name = 2;</code>
+       * @param value The documentName to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDocumentName(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        documentName_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string document_name = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDocumentName() {
+        documentName_ = getDefaultInstance().getDocumentName();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string document_name = 2;</code>
+       * @param value The bytes for documentName to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDocumentNameBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        documentName_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object graphJson_ = "";
+      /**
+       * <code>string graph_json = 3;</code>
+       * @return The graphJson.
+       */
+      public java.lang.String getGraphJson() {
+        java.lang.Object ref = graphJson_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          graphJson_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string graph_json = 3;</code>
+       * @return The bytes for graphJson.
+       */
+      public com.google.protobuf.ByteString
+          getGraphJsonBytes() {
+        java.lang.Object ref = graphJson_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          graphJson_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string graph_json = 3;</code>
+       * @param value The graphJson to set.
+       * @return This builder for chaining.
+       */
+      public Builder setGraphJson(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        graphJson_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string graph_json = 3;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearGraphJson() {
+        graphJson_ = getDefaultInstance().getGraphJson();
+        bitField0_ = (bitField0_ & ~0x00000004);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string graph_json = 3;</code>
+       * @param value The bytes for graphJson to set.
+       * @return This builder for chaining.
+       */
+      public Builder setGraphJsonBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        graphJson_ = value;
+        bitField0_ |= 0x00000004;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object summary_ = "";
+      /**
+       * <code>string summary = 4;</code>
+       * @return The summary.
+       */
+      public java.lang.String getSummary() {
+        java.lang.Object ref = summary_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          summary_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string summary = 4;</code>
+       * @return The bytes for summary.
+       */
+      public com.google.protobuf.ByteString
+          getSummaryBytes() {
+        java.lang.Object ref = summary_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          summary_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string summary = 4;</code>
+       * @param value The summary to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSummary(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        summary_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string summary = 4;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSummary() {
+        summary_ = getDefaultInstance().getSummary();
+        bitField0_ = (bitField0_ & ~0x00000008);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string summary = 4;</code>
+       * @param value The bytes for summary to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSummaryBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        summary_ = value;
+        bitField0_ |= 0x00000008;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object taskId_ = "";
+      /**
+       * <code>string task_id = 5;</code>
+       * @return The taskId.
+       */
+      public java.lang.String getTaskId() {
+        java.lang.Object ref = taskId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          taskId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string task_id = 5;</code>
+       * @return The bytes for taskId.
+       */
+      public com.google.protobuf.ByteString
+          getTaskIdBytes() {
+        java.lang.Object ref = taskId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          taskId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string task_id = 5;</code>
+       * @param value The taskId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTaskId(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        taskId_ = value;
+        bitField0_ |= 0x00000010;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string task_id = 5;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTaskId() {
+        taskId_ = getDefaultInstance().getTaskId();
+        bitField0_ = (bitField0_ & ~0x00000010);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string task_id = 5;</code>
+       * @param value The bytes for taskId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTaskIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        taskId_ = value;
+        bitField0_ |= 0x00000010;
+        onChanged();
+        return this;
+      }
+
+      private long timestamp_ ;
+      /**
+       * <code>int64 timestamp = 6;</code>
+       * @return The timestamp.
+       */
+      @java.lang.Override
+      public long getTimestamp() {
+        return timestamp_;
+      }
+      /**
+       * <code>int64 timestamp = 6;</code>
+       * @param value The timestamp to set.
+       * @return This builder for chaining.
+       */
+      public Builder setTimestamp(long value) {
+        
+        timestamp_ = value;
+        bitField0_ |= 0x00000020;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int64 timestamp = 6;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearTimestamp() {
+        bitField0_ = (bitField0_ & ~0x00000020);
+        timestamp_ = 0L;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:bridge.DocumentAnalysisResult)
+    }
+
+    // @@protoc_insertion_point(class_scope:bridge.DocumentAnalysisResult)
+    private static final com.chat.ai.rpc.ChatProto.DocumentAnalysisResult DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.chat.ai.rpc.ChatProto.DocumentAnalysisResult();
+    }
+
+    public static com.chat.ai.rpc.ChatProto.DocumentAnalysisResult getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<DocumentAnalysisResult>
+        PARSER = new com.google.protobuf.AbstractParser<DocumentAnalysisResult>() {
+      @java.lang.Override
+      public DocumentAnalysisResult parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<DocumentAnalysisResult> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<DocumentAnalysisResult> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.chat.ai.rpc.ChatProto.DocumentAnalysisResult getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface DocumentAnalysisResponseOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:bridge.DocumentAnalysisResponse)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>bool success = 1;</code>
+     * @return The success.
+     */
+    boolean getSuccess();
+
+    /**
+     * <code>string error = 2;</code>
+     * @return The error.
+     */
+    java.lang.String getError();
+    /**
+     * <code>string error = 2;</code>
+     * @return The bytes for error.
+     */
+    com.google.protobuf.ByteString
+        getErrorBytes();
+  }
+  /**
+   * Protobuf type {@code bridge.DocumentAnalysisResponse}
+   */
+  public static final class DocumentAnalysisResponse extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:bridge.DocumentAnalysisResponse)
+      DocumentAnalysisResponseOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use DocumentAnalysisResponse.newBuilder() to construct.
+    private DocumentAnalysisResponse(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private DocumentAnalysisResponse() {
+      error_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new DocumentAnalysisResponse();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.chat.ai.rpc.ChatProto.internal_static_bridge_DocumentAnalysisResponse_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.chat.ai.rpc.ChatProto.internal_static_bridge_DocumentAnalysisResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse.class, com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse.Builder.class);
+    }
+
+    public static final int SUCCESS_FIELD_NUMBER = 1;
+    private boolean success_ = false;
+    /**
+     * <code>bool success = 1;</code>
+     * @return The success.
+     */
+    @java.lang.Override
+    public boolean getSuccess() {
+      return success_;
+    }
+
+    public static final int ERROR_FIELD_NUMBER = 2;
+    @SuppressWarnings("serial")
+    private volatile java.lang.Object error_ = "";
+    /**
+     * <code>string error = 2;</code>
+     * @return The error.
+     */
+    @java.lang.Override
+    public java.lang.String getError() {
+      java.lang.Object ref = error_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        error_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string error = 2;</code>
+     * @return The bytes for error.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getErrorBytes() {
+      java.lang.Object ref = error_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        error_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (success_ != false) {
+        output.writeBool(1, success_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(error_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, error_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (success_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(1, success_);
+      }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(error_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, error_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse)) {
+        return super.equals(obj);
+      }
+      com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse other = (com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse) obj;
+
+      if (getSuccess()
+          != other.getSuccess()) return false;
+      if (!getError()
+          .equals(other.getError())) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + SUCCESS_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getSuccess());
+      hash = (37 * hash) + ERROR_FIELD_NUMBER;
+      hash = (53 * hash) + getError().hashCode();
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code bridge.DocumentAnalysisResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:bridge.DocumentAnalysisResponse)
+        com.chat.ai.rpc.ChatProto.DocumentAnalysisResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.chat.ai.rpc.ChatProto.internal_static_bridge_DocumentAnalysisResponse_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.chat.ai.rpc.ChatProto.internal_static_bridge_DocumentAnalysisResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse.class, com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse.Builder.class);
+      }
+
+      // Construct using com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        bitField0_ = 0;
+        success_ = false;
+        error_ = "";
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.chat.ai.rpc.ChatProto.internal_static_bridge_DocumentAnalysisResponse_descriptor;
+      }
+
+      @java.lang.Override
+      public com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse getDefaultInstanceForType() {
+        return com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse build() {
+        com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse buildPartial() {
+        com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse result = new com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse(this);
+        if (bitField0_ != 0) { buildPartial0(result); }
+        onBuilt();
+        return result;
+      }
+
+      private void buildPartial0(com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse result) {
+        int from_bitField0_ = bitField0_;
+        if (((from_bitField0_ & 0x00000001) != 0)) {
+          result.success_ = success_;
+        }
+        if (((from_bitField0_ & 0x00000002) != 0)) {
+          result.error_ = error_;
+        }
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse) {
+          return mergeFrom((com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse other) {
+        if (other == com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse.getDefaultInstance()) return this;
+        if (other.getSuccess() != false) {
+          setSuccess(other.getSuccess());
+        }
+        if (!other.getError().isEmpty()) {
+          error_ = other.error_;
+          bitField0_ |= 0x00000002;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 8: {
+                success_ = input.readBool();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 8
+              case 18: {
+                error_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 18
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+      private int bitField0_;
+
+      private boolean success_ ;
+      /**
+       * <code>bool success = 1;</code>
+       * @return The success.
+       */
+      @java.lang.Override
+      public boolean getSuccess() {
+        return success_;
+      }
+      /**
+       * <code>bool success = 1;</code>
+       * @param value The success to set.
+       * @return This builder for chaining.
+       */
+      public Builder setSuccess(boolean value) {
+        
+        success_ = value;
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool success = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearSuccess() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        success_ = false;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object error_ = "";
+      /**
+       * <code>string error = 2;</code>
+       * @return The error.
+       */
+      public java.lang.String getError() {
+        java.lang.Object ref = error_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          error_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string error = 2;</code>
+       * @return The bytes for error.
+       */
+      public com.google.protobuf.ByteString
+          getErrorBytes() {
+        java.lang.Object ref = error_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          error_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string error = 2;</code>
+       * @param value The error to set.
+       * @return This builder for chaining.
+       */
+      public Builder setError(
+          java.lang.String value) {
+        if (value == null) { throw new NullPointerException(); }
+        error_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string error = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearError() {
+        error_ = getDefaultInstance().getError();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string error = 2;</code>
+       * @param value The bytes for error to set.
+       * @return This builder for chaining.
+       */
+      public Builder setErrorBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) { throw new NullPointerException(); }
+        checkByteStringIsUtf8(value);
+        error_ = value;
+        bitField0_ |= 0x00000002;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:bridge.DocumentAnalysisResponse)
+    }
+
+    // @@protoc_insertion_point(class_scope:bridge.DocumentAnalysisResponse)
+    private static final com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse();
+    }
+
+    public static com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<DocumentAnalysisResponse>
+        PARSER = new com.google.protobuf.AbstractParser<DocumentAnalysisResponse>() {
+      @java.lang.Override
+      public DocumentAnalysisResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<DocumentAnalysisResponse> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<DocumentAnalysisResponse> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.chat.ai.rpc.ChatProto.DocumentAnalysisResponse getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
   public interface RunCodeRequestOrBuilder extends
       // @@protoc_insertion_point(interface_extends:bridge.RunCodeRequest)
       com.google.protobuf.MessageOrBuilder {
@@ -40237,6 +42019,16 @@ java.lang.String defaultValue) {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_bridge_AgentSkillEventAck_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_DocumentAnalysisResult_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_DocumentAnalysisResult_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_bridge_DocumentAnalysisResponse_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_bridge_DocumentAnalysisResponse_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_bridge_RunCodeRequest_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -40380,7 +42172,12 @@ java.lang.String defaultValue) {
       "e.AgentSkillEvent.HeadersEntry\032.\n\014Header" +
       "sEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001\"F" +
       "\n\022AgentSkillEventAck\022\017\n\007success\030\001 \001(\010\022\r\n" +
-      "\005error\030\002 \001(\t\022\020\n\010trace_id\030\003 \001(\t\"Z\n\016RunCod" +
+      "\005error\030\002 \001(\t\022\020\n\010trace_id\030\003 \001(\t\"\211\001\n\026Docum" +
+      "entAnalysisResult\022\017\n\007user_id\030\001 \001(\003\022\025\n\rdo" +
+      "cument_name\030\002 \001(\t\022\022\n\ngraph_json\030\003 \001(\t\022\017\n" +
+      "\007summary\030\004 \001(\t\022\017\n\007task_id\030\005 \001(\t\022\021\n\ttimes" +
+      "tamp\030\006 \001(\003\":\n\030DocumentAnalysisResponse\022\017" +
+      "\n\007success\030\001 \001(\010\022\r\n\005error\030\002 \001(\t\"Z\n\016RunCod" +
       "eRequest\022\017\n\007user_id\030\001 \001(\003\022\022\n\nsession_id\030" +
       "\002 \001(\t\022\023\n\013task_prompt\030\003 \001(\t\022\016\n\006skills\030\004 \003" +
       "(\t\":\n\017RunCodeResponse\022\022\n\nlog_stream\030\001 \001(" +
@@ -40390,7 +42187,7 @@ java.lang.String defaultValue) {
       "_name\030\004 \001(\t\022\017\n\007payload\030\005 \001(\014\022\022\n\nerror_co" +
       "de\030\006 \001(\005\022\022\n\nerror_desc\030\007 \001(\t\"H\n\004Type\022\013\n\007" +
       "REQUEST\020\000\022\014\n\010RESPONSE\020\001\022\t\n\005ERROR\020\002\022\n\n\006ST" +
-      "REAM\020\003\022\016\n\nSTREAM_END\020\004*\307\002\n\017InternalMsgTy" +
+      "REAM\020\003\022\016\n\nSTREAM_END\020\004*\336\002\n\017InternalMsgTy" +
       "pe\022!\n\035INTERNAL_MSG_TYPE_UNSPECIFIED\020\000\022\020\n" +
       "\014CHAT_PRIVATE\020\001\022\016\n\nCHAT_GROUP\020\002\022\021\n\rAI_AT" +
       "_MENTION\020\003\022\021\n\rPOINTS_UPDATE\020\004\022\023\n\017AI_GRAD" +
@@ -40398,23 +42195,26 @@ java.lang.String defaultValue) {
       "ARD_QUERY\020\007\022\022\n\016DASHBOARD_PUSH\020\010\022\016\n\nVOICE" +
       "_CHAT\020\t\022\027\n\023SYSTEM_NOTIFICATION\020\n\022\023\n\017SAND" +
       "BOX_EXECUTE\020\013\022\025\n\021EXPERIENCE_UPDATE\020\014\022\021\n\r" +
-      "CAREER_ADVICE\020\r\022\017\n\013SKILL_EVENT\020\0162\234\003\n\025Int" +
-      "ernalRouterService\022P\n\rForwardToJava\022\036.br" +
-      "idge.InternalForwardRequest\032\037.bridge.Int" +
-      "ernalForwardResponse\022I\n\014PushToClient\022\033.b" +
-      "ridge.InternalPushRequest\032\034.bridge.Inter" +
-      "nalPushResponse\022M\n\016StreamToClient\022\033.brid" +
-      "ge.InternalPushRequest\032\034.bridge.Internal" +
-      "PushResponse0\001\022P\n\023UpdateCareerProfile\022\033." +
-      "bridge.CareerAdviceRequest\032\034.bridge.Care" +
-      "erAdviceResponse\022E\n\016EmitSkillEvent\022\027.bri" +
-      "dge.AgentSkillEvent\032\032.bridge.AgentSkillE" +
-      "ventAck2S\n\016SandboxService\022A\n\014RunAgentTas" +
-      "k\022\026.bridge.RunCodeRequest\032\027.bridge.RunCo" +
-      "deResponse0\0012d\n\023CareerAdviceService\022M\n\020S" +
-      "endCareerAdvice\022\033.bridge.CareerAdviceReq" +
-      "uest\032\034.bridge.CareerAdviceResponseB\034\n\017co" +
-      "m.chat.ai.rpcB\tChatProtob\006proto3"
+      "CAREER_ADVICE\020\r\022\017\n\013SKILL_EVENT\020\016\022\025\n\021DOCU" +
+      "MENT_ANALYSIS\020\0172\234\003\n\025InternalRouterServic" +
+      "e\022P\n\rForwardToJava\022\036.bridge.InternalForw" +
+      "ardRequest\032\037.bridge.InternalForwardRespo" +
+      "nse\022I\n\014PushToClient\022\033.bridge.InternalPus" +
+      "hRequest\032\034.bridge.InternalPushResponse\022M" +
+      "\n\016StreamToClient\022\033.bridge.InternalPushRe" +
+      "quest\032\034.bridge.InternalPushResponse0\001\022P\n" +
+      "\023UpdateCareerProfile\022\033.bridge.CareerAdvi" +
+      "ceRequest\032\034.bridge.CareerAdviceResponse\022" +
+      "E\n\016EmitSkillEvent\022\027.bridge.AgentSkillEve" +
+      "nt\032\032.bridge.AgentSkillEventAck2S\n\016Sandbo" +
+      "xService\022A\n\014RunAgentTask\022\026.bridge.RunCod" +
+      "eRequest\032\027.bridge.RunCodeResponse0\0012\276\001\n\023" +
+      "CareerAdviceService\022M\n\020SendCareerAdvice\022" +
+      "\033.bridge.CareerAdviceRequest\032\034.bridge.Ca" +
+      "reerAdviceResponse\022X\n\024SendDocumentAnalys" +
+      "is\022\036.bridge.DocumentAnalysisResult\032 .bri" +
+      "dge.DocumentAnalysisResponseB\034\n\017com.chat" +
+      ".ai.rpcB\tChatProtob\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -40666,20 +42466,32 @@ java.lang.String defaultValue) {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_bridge_AgentSkillEventAck_descriptor,
         new java.lang.String[] { "Success", "Error", "TraceId", });
-    internal_static_bridge_RunCodeRequest_descriptor =
+    internal_static_bridge_DocumentAnalysisResult_descriptor =
       getDescriptor().getMessageTypes().get(34);
+    internal_static_bridge_DocumentAnalysisResult_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_DocumentAnalysisResult_descriptor,
+        new java.lang.String[] { "UserId", "DocumentName", "GraphJson", "Summary", "TaskId", "Timestamp", });
+    internal_static_bridge_DocumentAnalysisResponse_descriptor =
+      getDescriptor().getMessageTypes().get(35);
+    internal_static_bridge_DocumentAnalysisResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_bridge_DocumentAnalysisResponse_descriptor,
+        new java.lang.String[] { "Success", "Error", });
+    internal_static_bridge_RunCodeRequest_descriptor =
+      getDescriptor().getMessageTypes().get(36);
     internal_static_bridge_RunCodeRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_bridge_RunCodeRequest_descriptor,
         new java.lang.String[] { "UserId", "SessionId", "TaskPrompt", "Skills", });
     internal_static_bridge_RunCodeResponse_descriptor =
-      getDescriptor().getMessageTypes().get(35);
+      getDescriptor().getMessageTypes().get(37);
     internal_static_bridge_RunCodeResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_bridge_RunCodeResponse_descriptor,
         new java.lang.String[] { "LogStream", "IsFinished", });
     internal_static_bridge_RpcMessage_descriptor =
-      getDescriptor().getMessageTypes().get(36);
+      getDescriptor().getMessageTypes().get(38);
     internal_static_bridge_RpcMessage_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_bridge_RpcMessage_descriptor,

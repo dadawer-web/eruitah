@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta name="referrer" content="no-referrer" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PPT Viewer</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #1a1a2e; }
+    #ppt-root { width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+  <div id="ppt-root"></div>
+  <script src="./ppt-viewer.iife.js"></script>
+  <script>
+    if (typeof window.initPPTViewer === 'function') {
+      window.initPPTViewer('ppt-root');
+    } else if (typeof window.PPTViewer !== 'undefined' && typeof window.PPTViewer.initPPTViewer === 'function') {
+      window.PPTViewer.initPPTViewer('ppt-root');
+    } else {
+      console.error('[ppt-viewer] initPPTViewer not found on window');
+    }
+  </script>
+</body>
+</html>

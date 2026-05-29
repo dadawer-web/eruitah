@@ -699,6 +699,7 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     QPushButton *companionReadBtn = new QPushButton("📖 AI伴学", toolBarWidget);
     QPushButton *codingAgentBtn = new QPushButton("💻 编程 Agent", toolBarWidget);
     QPushButton *careerBtn = new QPushButton("🎓 职业档案", toolBarWidget);
+    QPushButton *aiDocsBtn = new QPushButton("📄 AI文档与课件", toolBarWidget);
     QPushButton *logoutBtn = new QPushButton("注销", toolBarWidget);
     
     QString btnStyle = "QPushButton { background-color: transparent; border: none; color: #9ca3af; font-size: 13px; padding: 6px 12px; border-radius: 4px; } QPushButton:hover { background-color: #3a3a3a; color: #ececec; } QPushButton:pressed { background-color: #404040; }";
@@ -709,6 +710,7 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     QString companionReadBtnStyle = "QPushButton { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #7c3aed, stop:1 #a855f7); border: none; color: white; font-size: 13px; padding: 6px 12px; border-radius: 4px; font-weight: bold; } QPushButton:hover { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #6d28d9, stop:1 #9333ea); } QPushButton:pressed { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #5b21b6, stop:1 #7e22ce); }";
     QString codingAgentBtnStyle = "QPushButton { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #007acc, stop:1 #0098ff); border: none; color: white; font-size: 13px; padding: 6px 12px; border-radius: 4px; font-weight: bold; } QPushButton:hover { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #005a9e, stop:1 #0078d4); } QPushButton:pressed { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #004578, stop:1 #0066b3); }";
     QString careerBtnStyle = "QPushButton { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #059669, stop:1 #10b981); border: none; color: white; font-size: 13px; padding: 6px 12px; border-radius: 4px; font-weight: bold; } QPushButton:hover { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #047857, stop:1 #059669); } QPushButton:pressed { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #065f46, stop:1 #047857); }";
+    QString aiDocsBtnStyle = "QPushButton { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #ea580c, stop:1 #f59e0b); border: none; color: white; font-size: 13px; padding: 6px 12px; border-radius: 4px; font-weight: bold; } QPushButton:hover { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #c2410c, stop:1 #d97706); } QPushButton:pressed { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #9a3412, stop:1 #b45309); }";
     addFriendBtn->setStyleSheet(btnStyle);
     createGroupBtn->setStyleSheet(btnStyle);
     joinGroupBtn->setStyleSheet(btnStyle);
@@ -720,6 +722,7 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     companionReadBtn->setStyleSheet(companionReadBtnStyle);
     codingAgentBtn->setStyleSheet(codingAgentBtnStyle);
     careerBtn->setStyleSheet(careerBtnStyle);
+    aiDocsBtn->setStyleSheet(aiDocsBtnStyle);
     logoutBtn->setStyleSheet(btnStyle);
     
     addFriendBtn->setFont(toolbarFont);
@@ -733,6 +736,7 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     companionReadBtn->setFont(toolbarFont);
     codingAgentBtn->setFont(toolbarFont);
     careerBtn->setFont(toolbarFont);
+    aiDocsBtn->setFont(toolbarFont);
     logoutBtn->setFont(toolbarFont);
     
     toolbarLayout->addWidget(addFriendBtn);
@@ -746,6 +750,7 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     toolbarLayout->addWidget(companionReadBtn);
     toolbarLayout->addWidget(codingAgentBtn);
     toolbarLayout->addWidget(careerBtn);
+    toolbarLayout->addWidget(aiDocsBtn);
     toolbarLayout->addSpacing(8);
     toolbarLayout->addWidget(new QLabel("|", toolBarWidget));
     toolbarLayout->addSpacing(8);
@@ -763,6 +768,7 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     connect(companionReadBtn, &QPushButton::clicked, this, &ChatWindow::onOpenCompanionReading);
     connect(codingAgentBtn, &QPushButton::clicked, this, &ChatWindow::onOpenCodingAgent);
     connect(careerBtn, &QPushButton::clicked, this, &ChatWindow::onOpenCareerDashboard);
+    connect(aiDocsBtn, &QPushButton::clicked, this, &ChatWindow::onOpenAiDocs);
     connect(logoutBtn, &QPushButton::clicked, this, &ChatWindow::onLogout);
     connect(changeAvatarButton, &QPushButton::clicked, this, [this, userId]() {
         // 打开文件选择对话框
@@ -3009,6 +3015,23 @@ void ChatWindow::onOpenCareerDashboard()
     CareerDashboardDialog *dialog = new CareerDashboardDialog(userId, this);
     dialog->setAttribute(Qt::WA_DeleteOnClose);
     dialog->exec();
+}
+
+void ChatWindow::onOpenAiDocs()
+{
+    QString hostEnv = qEnvironmentVariable("BUTCANTHIC_HOST", "");
+    QString url;
+    if (!hostEnv.isEmpty()) {
+        url = QString("http://%1/?userId=%2&authFrom=qt_client").arg(hostEnv).arg(userId);
+    } else {
+        url = QString("http://127.0.0.1:8002/?userId=%1&authFrom=qt_client").arg(userId);
+    }
+
+    bool success = QDesktopServices::openUrl(QUrl(url));
+    if (!success) {
+        QMessageBox::warning(this, QString::fromUtf8("打开失败"),
+                             QString::fromUtf8("无法打开浏览器，请手动访问：\n%1").arg(url));
+    }
 }
 
 void ChatWindow::onFarmPlantResponse(bool success, int plotId, const QString &message)

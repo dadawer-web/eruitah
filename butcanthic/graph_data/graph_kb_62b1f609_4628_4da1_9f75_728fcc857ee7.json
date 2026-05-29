@@ -1,0 +1,855 @@
+{
+  "nodes": [
+    {
+      "id": "指令寄存器IR",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "操作码",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "寄存器编号字段",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "移位量",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "功能码",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "寄存器堆",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "译码器",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "控制逻辑",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "写操作",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "ALU",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "指令寄存器",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "寄存器编号",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "操作数",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "运算",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "结果",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "数据流向逻辑",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "CPU执行算术/逻辑指令的核心数据交互路径",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "栈",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "栈帧",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "过程",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "过程的帧",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "帧指针寄存器",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "起始位置",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "帧指针和栈指针之间",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "帧指针",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "MIPS",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "返回地址",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "调用指令jal",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "&ra",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "Q",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "返回指令jr",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "调用过程P",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "&fp",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "栈帧起始标记",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "栈指针",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "栈顶",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "调用指令`jal`保存",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "被调用者",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "`&fp`",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "调用者的栈帧",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "被调用者的栈帧",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "参数",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "保存的帧指针",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "保存的寄存器",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "局部/临时变量",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "参数构建区",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "栈帧结构",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "过程调用时栈的组织方式",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "指针作用",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "栈空间单元",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "栈帧边界",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "栈空间",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "MIPS架构",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "特殊栈帧布局",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "返回地址处理方式",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "函数调用的栈机制",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "参数传递",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "局部变量存储",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    },
+    {
+      "id": "返回地址管理",
+      "attrs": {
+        "type": "entity",
+        "sources": [
+          "计组图片.docx"
+        ]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "指令寄存器IR",
+      "target": "操作码",
+      "relation": "包含",
+      "attrs": {}
+    },
+    {
+      "source": "指令寄存器IR",
+      "target": "寄存器编号字段",
+      "relation": "包含",
+      "attrs": {}
+    },
+    {
+      "source": "指令寄存器IR",
+      "target": "移位量",
+      "relation": "包含",
+      "attrs": {}
+    },
+    {
+      "source": "指令寄存器IR",
+      "target": "功能码",
+      "relation": "包含",
+      "attrs": {}
+    },
+    {
+      "source": "寄存器堆",
+      "target": "译码器",
+      "relation": "使用",
+      "attrs": {}
+    },
+    {
+      "source": "寄存器堆",
+      "target": "ALU",
+      "relation": "输出数据到",
+      "attrs": {}
+    },
+    {
+      "source": "寄存器堆",
+      "target": "操作数",
+      "relation": "读取",
+      "attrs": {}
+    },
+    {
+      "source": "译码器",
+      "target": "寄存器编号字段",
+      "relation": "依赖",
+      "attrs": {}
+    },
+    {
+      "source": "控制逻辑",
+      "target": "写操作",
+      "relation": "控制",
+      "attrs": {}
+    },
+    {
+      "source": "控制逻辑",
+      "target": "指令寄存器IR",
+      "relation": "协调",
+      "attrs": {}
+    },
+    {
+      "source": "控制逻辑",
+      "target": "寄存器堆",
+      "relation": "协调",
+      "attrs": {}
+    },
+    {
+      "source": "控制逻辑",
+      "target": "ALU",
+      "relation": "协调",
+      "attrs": {}
+    },
+    {
+      "source": "ALU",
+      "target": "寄存器堆",
+      "relation": "接收数据从; 回传结果到",
+      "attrs": {}
+    },
+    {
+      "source": "ALU",
+      "target": "运算",
+      "relation": "执行",
+      "attrs": {}
+    },
+    {
+      "source": "指令寄存器",
+      "target": "寄存器编号",
+      "relation": "提供",
+      "attrs": {}
+    },
+    {
+      "source": "结果",
+      "target": "寄存器堆",
+      "relation": "回写",
+      "attrs": {}
+    },
+    {
+      "source": "数据流向逻辑",
+      "target": "CPU执行算术/逻辑指令的核心数据交互路径",
+      "relation": "是",
+      "attrs": {}
+    },
+    {
+      "source": "栈",
+      "target": "栈帧",
+      "relation": "包含",
+      "attrs": {}
+    },
+    {
+      "source": "栈",
+      "target": "调用者的栈帧",
+      "relation": "包含",
+      "attrs": {}
+    },
+    {
+      "source": "栈",
+      "target": "被调用者的栈帧",
+      "relation": "包含",
+      "attrs": {}
+    },
+    {
+      "source": "栈帧",
+      "target": "过程的帧",
+      "relation": "是",
+      "attrs": {}
+    },
+    {
+      "source": "栈帧",
+      "target": "帧指针和栈指针之间",
+      "relation": "范围在",
+      "attrs": {}
+    },
+    {
+      "source": "栈帧",
+      "target": "帧指针",
+      "relation": "起始于",
+      "attrs": {}
+    },
+    {
+      "source": "栈帧",
+      "target": "栈指针",
+      "relation": "结束于",
+      "attrs": {}
+    },
+    {
+      "source": "栈帧",
+      "target": "栈空间单元",
+      "relation": "是",
+      "attrs": {}
+    },
+    {
+      "source": "过程",
+      "target": "栈帧",
+      "relation": "拥有",
+      "attrs": {}
+    },
+    {
+      "source": "过程",
+      "target": "帧指针",
+      "relation": "访问栈信息通过",
+      "attrs": {}
+    },
+    {
+      "source": "帧指针寄存器",
+      "target": "起始位置",
+      "relation": "指定",
+      "attrs": {}
+    },
+    {
+      "source": "帧指针",
+      "target": "栈帧起始标记",
+      "relation": "指向",
+      "attrs": {}
+    },
+    {
+      "source": "帧指针",
+      "target": "`&fp`",
+      "relation": "对应",
+      "attrs": {}
+    },
+    {
+      "source": "帧指针",
+      "target": "栈帧边界",
+      "relation": "固定",
+      "attrs": {}
+    },
+    {
+      "source": "MIPS",
+      "target": "返回地址",
+      "relation": "特殊处理",
+      "attrs": {}
+    },
+    {
+      "source": "MIPS",
+      "target": "&fp",
+      "relation": "帧指针寄存器是",
+      "attrs": {}
+    },
+    {
+      "source": "返回地址",
+      "target": "调用指令`jal`保存",
+      "relation": "由",
+      "attrs": {}
+    },
+    {
+      "source": "调用指令jal",
+      "target": "&ra",
+      "relation": "保存在",
+      "attrs": {}
+    },
+    {
+      "source": "Q",
+      "target": "&ra",
+      "relation": "入栈; 出栈",
+      "attrs": {}
+    },
+    {
+      "source": "返回指令jr",
+      "target": "调用过程P",
+      "relation": "返回到",
+      "attrs": {}
+    },
+    {
+      "source": "栈指针",
+      "target": "栈顶",
+      "relation": "指向",
+      "attrs": {}
+    },
+    {
+      "source": "栈指针",
+      "target": "栈空间",
+      "relation": "管理",
+      "attrs": {}
+    },
+    {
+      "source": "被调用者",
+      "target": "返回地址",
+      "relation": "保存",
+      "attrs": {}
+    },
+    {
+      "source": "调用者的栈帧",
+      "target": "参数",
+      "relation": "包含",
+      "attrs": {}
+    },
+    {
+      "source": "调用者的栈帧",
+      "target": "返回地址",
+      "relation": "包含",
+      "attrs": {}
+    },
+    {
+      "source": "调用者的栈帧",
+      "target": "保存的帧指针",
+      "relation": "包含",
+      "attrs": {}
+    },
+    {
+      "source": "被调用者的栈帧",
+      "target": "保存的寄存器",
+      "relation": "包含",
+      "attrs": {}
+    },
+    {
+      "source": "被调用者的栈帧",
+      "target": "局部/临时变量",
+      "relation": "包含",
+      "attrs": {}
+    },
+    {
+      "source": "被调用者的栈帧",
+      "target": "参数构建区",
+      "relation": "包含",
+      "attrs": {}
+    },
+    {
+      "source": "栈帧结构",
+      "target": "过程调用时栈的组织方式",
+      "relation": "解释",
+      "attrs": {}
+    },
+    {
+      "source": "指针作用",
+      "target": "过程调用时栈的组织方式",
+      "relation": "解释",
+      "attrs": {}
+    },
+    {
+      "source": "MIPS架构",
+      "target": "特殊栈帧布局",
+      "relation": "具有",
+      "attrs": {}
+    },
+    {
+      "source": "特殊栈帧布局",
+      "target": "返回地址处理方式",
+      "relation": "由于",
+      "attrs": {}
+    },
+    {
+      "source": "函数调用的栈机制",
+      "target": "参数传递",
+      "relation": "包含",
+      "attrs": {}
+    },
+    {
+      "source": "函数调用的栈机制",
+      "target": "局部变量存储",
+      "relation": "包含",
+      "attrs": {}
+    },
+    {
+      "source": "函数调用的栈机制",
+      "target": "返回地址管理",
+      "relation": "包含",
+      "attrs": {}
+    }
+  ]
+}

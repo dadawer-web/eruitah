@@ -2,13 +2,14 @@
 
 ## 1. 项目简介
 
-智能聊天应用系统是一个面向 **408计算机考研** 的多语言微服务系统，包含以下四大子系统：
+智能聊天应用系统是一个面向 **408计算机考研** 的多语言微服务系统，包含以下五大子系统：
 
 | 子系统 | 技术栈 | 核心职责 |
 |--------|--------|----------|
 | **C++/Qt 桌面客户端** | C++17 + Qt 5 + muduo + Material Design | 即时通讯客户端，聊天/群聊/农场/知识图谱/语音 |
 | **Java AI 后端** | Spring Boot 3.2 + Spring AI + Neo4j + Redis | AI角色、RAG知识库、知识图谱、语音交互、多智能体编排 |
 | **Python 编程沙盒** | FastAPI + WebSocket + Agent Loop | AI编程助手、代码编辑/执行/回退、多智能体协同 |
+| **Python 文档智能服务** | FastAPI + LangGraph + ChromaDB + Celery | 文档自动填充、PPT生成、知识库RAG、多Agent工作流 |
 | **Vue Web IDE** | Vue 3 + Vite + Pinia + Monaco + xterm.js | 浏览器端编程界面、代码编辑、终端、文件树 |
 
 ### 核心特性
@@ -24,7 +25,10 @@
 - **考情大屏**：雷达图、活跃度、周报等学习数据分析
 - **AI编程沙盒**：Eruitah 智能编程助手，支持代码编写/执行/回退/多智能体协同
 - **跨语言 RPC**：C++ ↔ Java ↔ Python 三语言 Protobuf RPC 通信
-- **一键部署**：Docker Compose 编排 7 个服务，Nginx 反向代理统一入口
+- **一键部署**：Docker Compose 编排 8 个服务，Nginx 反向代理统一入口
+- **文档智能处理**：Butcanthic 文档智能服务，支持 Word/Excel/PPT 自动填充、PPT 生成、知识库 RAG 检索
+- **LangGraph 多Agent工作流**：16个节点条件路由，自我纠错循环，Critic 审查机制
+- **双TTS语音引擎**：阿里云实时TTS + 小米TTS，自动故障切换
 
 ---
 
@@ -380,7 +384,7 @@ POST /api/voice/chat
 }
 ```
 
-**处理流程：** 下载音频 → ASR语音识别 → LLM生成回复 → TTS语音合成 → 返回文字+语音
+**处理流程：** 下载音频 → ASR语音识别（阿里云） → LLM生成回复 → TTS语音合成（阿里云/小米双引擎，自动故障切换） → 返回文字+语音
 
 ---
 
@@ -527,6 +531,259 @@ POST /api/farm/judge
   "data": [0.75, 0.45, 0.60, 0.80],
   "subjects": ["数据结构", "计算机组成原理", "操作系统", "计算机网络"]
 }
+```
+
+---
+
+### 3.13 Butcanthic 文档智能服务接口
+
+Butcanthic 是独立的文档智能处理微服务，端口 **8002**，提供文档上传/处理、知识库管理、PPT 生成等接口。
+
+#### 3.13.1 认证接口
+
+**静默登录（Qt客户端对接）：**
+
+```
+POST /api/v1/auth/silent-login
+```
+
+```json
+{"user_id": 1}
+```
+
+**响应：**
+
+```json
+{"access_token": "eyJ...", "token_type": "bearer", "user_id": "uuid", "username": "qt_user_1"}
+```
+
+**用户注册：**
+
+```
+POST /api/v1/auth/register
+```
+
+```json
+{"username": "student01", "password": "123456"}
+```
+
+**用户登录：**
+
+```
+POST /api/v1/auth/login
+```
+
+标准 OAuth2 表单登录（`username` + `password`）。
+
+#### 3.13.2 文档上传
+
+```
+POST /api/v1/document/upload
+```
+
+**请求：** `multipart/form-data`，字段 `file` 为文档文件
+
+**支持格式：** `.docx`、`.xlsx`、`.pptx`、`.csv`
+
+**文件大小限制：** 50MB
+
+**响应体：**
+
+```json
+{
+  "task_id": "a1b2c3d4e5f6",
+  "filename": "数据结构笔记.docx",
+  "file_type": "docx",
+  "file_size": 102400,
+  "message": "文件上传成功，已进入处理队列"
+}
+```
+
+#### 3.13.3 文档处理
+
+```
+POST /api/v1/document/process
+```
+
+**请求体：**
+
+```json
+{
+  "task_id": "a1b2c3d4e5f6",
+  "model": null,
+  "max_retries": 3,
+  "selected_tables": null
+}
+```
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| task_id | String | 是 | 上传时返回的任务ID |
+| model | String | 否 | 指定AI模型（默认使用配置中的默认模型） |
+| max_retries | Integer | 否 | 每个表格最大重试次数（1-5，默认3） |
+| selected_tables | List\<Integer\> | 否 | 指定处理的表格索引列表，null则处理全部 |
+
+**响应体：**
+
+```json
+{
+  "task_id": "a1b2c3d4e5f6",
+  "status": "processing",
+  "message": "处理请求已提交"
+}
+```
+
+#### 3.13.4 SSE 流式处理
+
+```
+POST /api/v1/task/stream-process
+```
+
+**请求：** `multipart/form-data`
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| files | List\<File\> | 否 | 上传的文件列表（支持多文件同时上传） |
+| user_instruction | String | 否 | 用户指令（如"帮我生成一个关于操作系统的PPT"） |
+| model | String | 否 | 指定AI模型 |
+| max_retries | Integer | 否 | 最大重试次数（默认3） |
+| thread_id | String | 否 | 会话ID（支持跨轮对话记忆） |
+
+**响应：** `text/event-stream`（SSE格式）
+
+```
+data: {"status": "session_info", "thread_id": "thread_a1b2c3d4"}
+data: {"status": "progress", "node": "gateway", "action": "检测文件类型..."}
+data: {"status": "progress", "node": "extract_context", "action": "提取Word文档字段..."}
+data: {"status": "progress", "node": "retrieve_knowledge", "action": "RAG知识检索..."}
+data: {"status": "progress", "node": "reason_and_fill", "action": "AI推理填充..."}
+data: {"status": "progress", "node": "critic_review", "action": "审查校验..."}
+data: {"status": "ppt_ready", "ppt_data": {...}}
+data: {"status": "success", "output_path": "..."}
+```
+
+**特色功能：**
+- 支持无文件纯文本模式（仅提供 `user_instruction` 即可生成 PPT）
+- 支持 `thread_id` 会话保持，实现跨轮对话记忆
+- 登录用户自动将 `user_id` 注入工作流状态，确保 RAG 检索在专属 Collection 中执行
+
+#### 3.13.5 PPT 编辑
+
+```
+POST /api/v1/task/edit-slide
+```
+
+**请求体：**
+
+```json
+{
+  "slide_index": 0,
+  "instruction": "将标题改为红色",
+  "original_slide": {"components": [...]}
+}
+```
+
+#### 3.13.6 PPT 导出
+
+```
+POST /api/v1/task/export-pptx
+```
+
+**请求体：** PPT JSON 数据
+
+**响应：** 直接下载 `.pptx` 文件
+
+#### 3.13.7 知识库上传
+
+**单文件上传：**
+
+```
+POST /api/v1/knowledge/upload-file
+```
+
+**请求：** `multipart/form-data`，字段 `file`
+
+**支持格式：** `.txt`、`.jsonl`、`.pdf`、`.docx`、`.md`
+
+**多文件上传：**
+
+```
+POST /api/v1/knowledge/upload-files
+```
+
+**请求：** `multipart/form-data`，字段 `files`（多文件）
+
+**支持格式：** `.docx`、`.pptx`、`.xlsx`、`.pdf`、`.txt`、`.md`、`.jsonl`
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| chunk_size | Integer | 1000 | 文本分块大小 |
+| chunk_overlap | Integer | 100 | 分块重叠字符数 |
+
+**响应体：**
+
+```json
+{
+  "status": "success",
+  "collection_name": "kb_user_xxx",
+  "record_count": 42,
+  "filename": "数据结构笔记.pdf"
+}
+```
+
+**说明：**
+- 数据存入用户专属集合（`kb_{user_id}`），实现 Collection 物理隔离
+- PDF/DOCX 自动调用 OCR+Vision 识别图片中的文字
+- 自动文本分块（RecursiveCharacterTextSplitter），支持自定义 chunk_size 和 chunk_overlap
+
+#### 3.13.8 文档列表与下载
+
+**我的文档列表：**
+
+```
+GET /api/v1/documents/my?page=1&page_size=20
+```
+
+**文档下载：**
+
+```
+GET /api/v1/document/download/{task_id}
+```
+
+**输出文件下载：**
+
+```
+GET /api/v1/files/output/{filename}
+```
+
+#### 3.13.9 任务进度查询
+
+```
+GET /api/v1/task/progress/{task_id}
+```
+
+**响应体：**
+
+```json
+{
+  "task_id": "a1b2c3d4e5f6",
+  "status": "processing",
+  "progress": 65.0,
+  "stage": "AI推理填充",
+  "tables_total": 3,
+  "tables_completed": 2,
+  "error_message": null
+}
+```
+
+#### 3.13.10 健康检查
+
+```
+GET /api/v1/health
+```
+
+```json
+{"version": "1.0.0", "uptime": 86400.0}
 ```
 
 ---
@@ -925,6 +1182,7 @@ ai-service/
 │   │   ├── KnowledgeGraphController.java # 知识图谱
 │   │   ├── RagController.java            # RAG知识库
 │   │   ├── VoiceController.java          # 语音接口
+│   │   ├── CareerDashboardController.java # 职业规划大屏
 │   │   ├── ChatRequest.java              # 聊天请求DTO
 │   │   └── ChatResponse.java             # 聊天响应DTO
 │   ├── service/                           # 业务服务
@@ -967,7 +1225,14 @@ ai-service/
 │   ├── repository/                        # 数据访问
 │   │   └── KnowledgeGraphRepository.java # Neo4j图谱仓库
 │   ├── websocket/                         # WebSocket处理器
-│   │   └── RealtimeVoiceWebSocketHandler.java  # 实时语音WebSocket
+│   │   ├── RealtimeVoiceWebSocketHandler.java  # 实时语音WebSocket
+│   │   └── SimpleIdeWebSocketHandler.java      # 简化IDE WebSocket
+│   ├── rpc/                               # Protobuf RPC通信
+│   │   ├── InternalRpcServer.java        # Netty RPC服务端（接收C++请求）
+│   │   ├── ProtobufRpcClient.java        # Protobuf RPC客户端（连接C++/Python）
+│   │   ├── RpcPushService.java           # 消息推送服务（私聊/群聊/流式/语音/农场）
+│   │   ├── ProtobufEncoder.java          # Protobuf编码器
+│   │   └── ProtobufDecoder.java          # Protobuf解码器
 │   ├── exception/                         # 异常处理
 │   │   ├── GlobalExceptionHandler.java   # 全局异常处理器
 │   │   └── RateLimitExceededException.java # 限流异常
@@ -1126,6 +1391,8 @@ C++客户端是基于 **Qt 5** 框架构建的跨平台桌面应用，采用 Mat
 | 考情大屏 | `dashboarddialog.cpp` | 雷达图/活跃度/周报展示 |
 | 实时语音 | `realtimevoicedialog.cpp` | WebSocket实时语音对话 |
 | 伴读功能 | `companionreadingdialog.cpp` | 划选文本语音讲解 |
+| 编程Agent | `codingagentdialog.cpp` | AI编程助手对话框 |
+| 职业规划 | `career_dashboard_dialog.cpp` | 职业规划仪表盘 |
 
 ### 17.3 网络通信设计
 
@@ -1280,6 +1547,91 @@ ChatClient通过Qt信号槽与UI层通信：
 │   └── static/
 │       └── coding_lab.html               # Web IDE界面
 │
+├── butcanthic/                           # Python 文档智能服务
+│   ├── main.py                           # FastAPI 入口
+│   ├── requirements.txt                  # Python 依赖
+│   ├── ai_models_config.json             # AI 模型配置（多模型切换，.gitignore）
+│   ├── metadata.db                       # SQLite 元数据数据库
+│   ├── graph_db.json                     # NetworkX 知识图谱数据
+│   ├── prompts/                          # 提示词模板目录
+│   │   ├── supervisor_system.md          # Supervisor 主管调度提示词
+│   │   ├── reason_and_fill_system.md     # AI 推理填充提示词
+│   │   ├── critic_review_system.md       # Critic 审查提示词
+│   │   ├── generate_ppt_system.md        # PPT 生成提示词
+│   │   ├── process_summary_system.md     # 长文总结提示词
+│   │   ├── literature_guide_system.md    # 文献导读提示词
+│   │   └── ...                           # 其他提示词模板
+│   ├── static/                           # 静态前端页面
+│   │   ├── index.html                    # Vue 3 完整前端单页面应用
+│   │   └── ppt-viewer/                   # PPT 查看器静态资源
+│   ├── scripts/                          # 工具脚本
+│   │   ├── run_rag_eval.py               # RAG 评估脚本
+│   │   └── migrate_jsonl_to_chroma.py    # JSONL 迁移到 ChromaDB
+│   ├── app/
+│   │   ├── core/
+│   │   │   ├── config.py                 # 全局配置
+│   │   │   ├── lifespan.py               # 应用生命周期（启动/关闭）
+│   │   │   ├── app_state.py              # 全局状态（LLM/RAG/服务实例）
+│   │   │   ├── security.py               # JWT 鉴权
+│   │   │   ├── file_manager.py           # 文件管理器
+│   │   │   ├── task_runner.py            # 任务执行引擎（Celery/本地双模式）
+│   │   │   ├── celery_app.py             # Celery 应用配置
+│   │   │   └── prompt_manager.py         # 提示词管理器（.md模板加载+变量替换）
+│   │   ├── api/
+│   │   │   └── v1/
+│   │   │       ├── router.py             # API 路由注册
+│   │   │       └── endpoints.py          # 全部 API 端点
+│   │   ├── agent_workflow/
+│   │   │   ├── graph.py                  # LangGraph 工作流定义（16个节点）
+│   │   │   ├── state.py                  # WorkflowState 状态定义
+│   │   │   └── nodes/
+│   │   │       ├── gateway_node.py       # 网关节点（文件类型路由）
+│   │   │       ├── extract_context.py    # Word 字段提取
+│   │   │       ├── retrieve_knowledge.py # RAG 知识检索
+│   │   │       ├── reason_and_fill.py    # AI 推理填充
+│   │   │       ├── critic_review.py      # Critic 审查（Word/PPT）
+│   │   │       ├── process_excel.py      # Excel 数据清洗
+│   │   │       ├── process_ppt.py        # PPT 分析
+│   │   │       ├── generate_ppt.py       # PPT 生成
+│   │   │       ├── process_summary.py    # 长文总结
+│   │   │       ├── supervisor.py         # Supervisor 主管调度
+│   │   │       ├── web_researcher.py     # 联网搜索
+│   │   │       ├── knowledge_librarian.py # 知识库检索
+│   │   │       ├── auto_tagging.py       # 自动标签
+│   │   │       └── literature_guide.py   # 文献导读
+│   │   ├── services/
+│   │   │   ├── ai_client.py             # AI 客户端（多模型切换）
+│   │   │   ├── rag_engine.py            # RAG 检索引擎（三路混合）
+│   │   │   ├── graph_engine.py          # 知识图谱引擎
+│   │   │   ├── document_service.py      # 文档处理服务
+│   │   │   ├── excel_service.py         # Excel 数据处理
+│   │   │   ├── ppt_service.py           # PPT 分析/生成
+│   │   │   ├── ppt_export_service.py    # PPT 导出（JSON→.pptx）
+│   │   │   ├── docx_parser.py           # Word 文档解析
+│   │   │   ├── docx_to_html_converter.js # Node.js DOCX→HTML 转换（mammoth.js）
+│   │   │   ├── word_export_service.py   # Word 文档导出（python-docx）
+│   │   │   ├── kb_processor.py          # 知识库文件处理器（分块+向量化+闪卡）
+│   │   │   ├── ocr_helper.py            # OCR+Vision 辅助
+│   │   │   ├── evaluator.py             # 评估器
+│   │   │   └── memory_service.py        # 对话记忆管理
+│   │   ├── worker/
+│   │   │   └── tasks.py                 # Celery 异步任务（文档处理/知识库/闪卡）
+│   │   └── models/
+│   │       ├── database.py              # SQLAlchemy 数据模型
+│   │       ├── schemas.py               # Pydantic 请求/响应模型
+│   │       └── ppt_schema.py            # PPT 结构化输出模型
+│   └── frontend_vite/                   # React 前端（Vite 库模式，输出 IIFE 供 iframe 嵌入）
+│       ├── package.json
+│       ├── vite.config.ts
+│       ├── tsconfig.json
+│       └── src/
+│           ├── index.tsx                # Vite 构建入口
+│           ├── PPTViewer.tsx            # PPT 在线查看器主组件
+│           ├── SlideCanvas.tsx          # 幻灯片画布渲染组件
+│           ├── types.ts                 # TypeScript 类型定义
+│           └── components/
+│               └── KnowledgeGraph.tsx   # 知识图谱 ECharts 可视化
+│
 ├── coding-agent-ui/                      # Vue Web IDE
 │   ├── index.html                        # 入口HTML
 │   ├── package.json                      # 依赖配置
@@ -1379,6 +1731,8 @@ ChatClient通过Qt信号槽与UI层通信：
 │   ├── dashboarddialog.cpp/h             # 考情大屏对话框
 │   ├── realtimevoicedialog.cpp/h         # 实时语音对话框
 │   ├── companionreadingdialog.cpp/h      # 伴读对话框
+│   ├── codingagentdialog.cpp/h           # 编程Agent对话框
+│   ├── career_dashboard_dialog.cpp/h     # 职业规划仪表盘对话框
 │   │
 │   ├── client/                           # 客户端CMake配置
 │   │   └── CMakeLists.txt
@@ -1459,9 +1813,201 @@ ChatClient通过Qt信号槽与UI层通信：
 
 ---
 
-## 19. Eruitah智能编程沙盒
+## 19. Butcanthic 文档智能服务
 
 ### 19.1 架构概述
+
+Butcanthic 是基于 **FastAPI + LangGraph** 的企业级文档智能处理微服务，核心采用 LangGraph 多 Agent 工作流，支持条件路由、自我纠错和 Critic 审查机制：
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                     Butcanthic 文档智能服务                                   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐    SSE/REST     ┌──────────────────┐                     │
+│  │ Qt/C++ 客户端 │ ◄────────────► │  FastAPI (main)   │                     │
+│  │ React 前端   │   双向通信      │  :8002            │                     │
+│  └──────────────┘                 └──────────────────┘                     │
+│                                          │                                  │
+│                                          ▼                                  │
+│                                   ┌──────────────┐                         │
+│                                   │  LangGraph    │                         │
+│                                   │  工作流引擎    │                         │
+│                                   └──────────────┘                         │
+│                                          │                                  │
+│           ┌──────────────────────────────┼──────────────────────┐          │
+│           ▼                              ▼                      ▼          │
+│    ┌────────────┐               ┌────────────┐          ┌────────────┐    │
+│    │ RAG Engine  │               │ Document   │          │ PPT Service │    │
+│    │ (三路混合)  │               │ Service    │          │ (生成/分析) │    │
+│    └────────────┘               └────────────┘          └────────────┘    │
+│           │                              │                                │
+│           ▼                              ▼                                │
+│    ┌────────────┐               ┌────────────┐                           │
+│    │ ChromaDB   │               │ Excel      │                           │
+│    │ + BM25     │               │ Service    │                           │
+│    │ + NetworkX │               │ + Pandas   │                           │
+│    └────────────┘               └────────────┘                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 19.2 LangGraph 工作流架构
+
+Butcanthic 的核心是 LangGraph 多 Agent 工作流，支持条件路由和自我纠错：
+
+```
+START → Gateway → Router (条件路由)
+                    ├─ docx → ExtractContext → RetrieveKnowledge → ReasonAndFill → CriticReview → END
+                    │                                                              ↑ retry ↓
+                    │                                                     increment_retry (循环，最多3次)
+                    ├─ xlsx → ProcessExcel (Data Agent + Self-Correction) → END
+                    ├─ pptx → ProcessPPT → END
+                    └─ generate_ppt → Supervisor → [WebResearcher | KnowledgeLibrarian | GeneratePPT]
+                                        └─ GeneratePPT → CriticReviewPPT ──→ PASS → END
+                                                                ↑ REJECT ↓
+                                                                └── (循环，最多3次)
+```
+
+**工作流节点说明：**
+
+| 节点 | Agent名 | 功能 |
+|------|---------|------|
+| gateway | 包工头 | 文件类型检测与路由 |
+| extract_context | ExtractAgent | Word 文档字段提取 |
+| retrieve_knowledge | RetrievalAgent | RAG 知识检索（三路混合） |
+| reason_and_fill | FillAgent | AI 推理填充 |
+| critic_review | CriticAgent | 审查校验（pass/fail） |
+| process_excel | DataAgent | Excel 数据清洗（含自我纠错） |
+| process_ppt | PPTAgent | PPT 分析 |
+| supervisor | Supervisor | 主管调度（指派子Agent） |
+| web_researcher | WebResearcher | 联网搜索（DuckDuckGo） |
+| knowledge_librarian | KnowledgeLibrarian | 知识库检索 |
+| generate_ppt | PPTGenAgent | PPT 生成 |
+| critic_review_ppt | PPTCriticAgent | PPT 审查校验 |
+| generate_summary | SummaryAgent | 长文总结 |
+| auto_tagging | Auto_Tagging | 自动标签提取 |
+| literature_guide | Literature_Guide | 文献导读 |
+
+### 19.3 WorkflowState 状态定义
+
+LangGraph 工作流的全局状态 `WorkflowState`：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| file_path | str | 输入文件路径 |
+| file_type | str | 文件类型（docx/xlsx/pptx） |
+| user_instruction | str | 用户指令 |
+| uploaded_files | List[Dict] | 上传文件列表 |
+| global_context | str | 全局上下文 |
+| original_html / current_html / filled_html | str | Word文档HTML内容 |
+| empty_fields | List[Dict] | 待填充字段 |
+| retrieved_context | List[Dict] | RAG检索结果 |
+| retry_count / max_retries | int | 重试计数 |
+| review_result / review_feedback | str | 审查结果与反馈 |
+| generated_code / code_execution_log / code_execution_error | str | Excel代码生成相关 |
+| ppt_data | dict | PPT数据 |
+| task_intent | str | 任务意图 |
+| messages | Annotated[Sequence[BaseMessage]] | 对话消息（累积追加） |
+| user_id | str | 用户ID（用于RAG隔离） |
+
+### 19.4 RAG 检索引擎
+
+Butcanthic 内置三路混合检索引擎：
+
+| 检索方式 | 技术 | Top-K | 说明 |
+|----------|------|-------|------|
+| 向量检索 | ChromaDB + BGE-M3 | 10 | 语义相似度检索 |
+| 稀疏检索 | BM25 + jieba | 10 | 关键词精确匹配 |
+| 图谱检索 | NetworkX + LLM | - | 实体关系推理（GraphRAG） |
+
+三路召回结果去重合并后，经 BGE-Reranker-V2-m3 重排序，返回 Top-5。
+
+**用户级隔离：** 每个用户拥有独立的 Chroma Collection（`kb_user_{user_id}`），数据物理隔离。
+
+**嵌入模型配置：**
+
+| 配置项 | 默认值 | 说明 |
+|--------|--------|------|
+| embedding model | BAAI/bge-m3 | 向量嵌入模型 |
+| embedding dimension | 1024 | 向量维度 |
+| reranker model | BAAI/bge-reranker-v2-m3 | 重排序模型 |
+| embedding provider | SiliconFlow | 嵌入模型提供商 |
+
+### 19.5 AI 模型配置
+
+Butcanthic 使用 `ai_models_config.json` 配置 AI 模型提供商，支持多模型切换：
+
+```json
+{
+  "default_model": "qwen-plus",
+  "models": {
+    "qwen-plus": {
+      "provider": "aliyun",
+      "api_key": "sk-xxx",
+      "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+      "model_name": "qwen-plus",
+      "max_input_tokens": 997952,
+      "max_output_tokens": 81920,
+      "temperature": 0.0,
+      "top_p": 0.1
+    },
+    "doubao-seed-1-6-flash": {
+      "provider": "volcano",
+      "api_key": "sk-xxx",
+      "base_url": "https://ark.cn-beijing.volces.com/api/v3",
+      "model_name": "doubao-seed-1-6-flash-250828",
+      "max_input_tokens": 32000,
+      "max_output_tokens": 9999
+    }
+  }
+}
+```
+
+### 19.6 记忆管理
+
+Butcanthic 支持对话记忆提取和持久化：
+
+- **MemoryManager**：后台异步从用户指令中提取记忆三元组
+- **会话保持**：通过 `thread_id` 实现跨轮对话记忆（LangGraph MemorySaver）
+- **记忆存储**：用户级记忆持久化，后续对话可检索历史记忆
+
+### 19.7 文件处理能力
+
+| 文件类型 | 处理方式 | 输出 |
+|----------|----------|------|
+| .docx | HTML解析 → 字段提取 → RAG检索 → AI填充 → Critic审查 | 填充后的.docx |
+| .xlsx | Pandas解析 → AI生成清洗代码 → 代码执行 → 自我纠错 | 清洗后的.xlsx |
+| .pptx | python-pptx解析 → AI分析 | 分析报告 |
+| 纯文本 | Supervisor调度 → 联网搜索/知识库检索 → PPT生成 → Critic审查 | PPT JSON / .pptx |
+
+**Excel 自我纠错流程：**
+
+```
+DataAgent生成Python代码 → 执行代码 → 成功? → 下一步
+                                    → 失败? → 追加错误日志 → 重新生成代码（最多3次）
+```
+
+### 19.8 Butcanthic Frontend
+
+基于 React + Vite 的前端界面，提供 PPT 查看器和知识图谱可视化：
+
+| 技术 | 版本 | 用途 |
+|------|------|------|
+| React | 18.3+ | UI 框架 |
+| Vite | 6.0+ | 构建工具 |
+| ECharts | 6.1+ | 图表可视化（知识图谱、统计图） |
+| echarts-for-react | 3.0+ | React ECharts 封装 |
+
+**核心功能：**
+- PPT 在线预览和编辑
+- 知识图谱 ECharts 可视化
+- 文档上传进度实时展示
+- 多文件协同分析界面
+
+---
+
+## 20. Eruitah智能编程沙盒
+
+### 20.1 架构概述
 
 Eruitah智能编程沙盒是一个基于 **FastAPI + WebSocket** 的AI编程助手微服务，核心引擎对齐Claude Code的Agent Loop思想：
 
@@ -1489,7 +2035,7 @@ Eruitah智能编程沙盒是一个基于 **FastAPI + WebSocket** 的AI编程助�
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 19.2 核心功能
+### 20.2 核心功能
 
 | 功能 | 说明 |
 |------|------|
@@ -1506,9 +2052,9 @@ Eruitah智能编程沙盒是一个基于 **FastAPI + WebSocket** 的AI编程助�
 | MCP客户端 | 动态加载第三方MCP Server工具 |
 | 成本护栏 | Token计费追踪，预算超限自动停止 |
 
-### 19.3 工具集详解
+### 20.3 工具集详解
 
-#### 19.3.1 bash - 命令执行器
+#### 20.3.1 bash - 命令执行器
 
 ```python
 {
@@ -1530,7 +2076,7 @@ Eruitah智能编程沙盒是一个基于 **FastAPI + WebSocket** 的AI编程助�
 - **超时保护**：默认120秒，最大600秒
 - **输出截断**：超过2000字符自动截断，防止Token爆炸
 
-#### 19.3.2 file_edit - 文件编辑器
+#### 20.3.2 file_edit - 文件编辑器
 
 ```python
 {
@@ -1551,7 +2097,7 @@ Eruitah智能编程沙盒是一个基于 **FastAPI + WebSocket** 的AI编程助�
 - **引号规范化**：自动处理弯引号与直引号的差异
 - **Diff补丁**：生成unified diff格式变更展示
 
-#### 19.3.3 file_read - 文件读取
+#### 20.3.3 file_read - 文件读取
 
 ```python
 {
@@ -1571,7 +2117,7 @@ Eruitah智能编程沙盒是一个基于 **FastAPI + WebSocket** 的AI编程助�
 - 最大读取10 MiB文件
 - 单行超过2000字符自动截断
 
-#### 19.3.4 glob - 文件模式匹配
+#### 20.3.4 glob - 文件模式匹配
 
 ```python
 {
@@ -1592,7 +2138,7 @@ Eruitah智能编程沙盒是一个基于 **FastAPI + WebSocket** 的AI编程助�
 
 **默认忽略目录：** node_modules, .git, __pycache__, .venv, build, dist, target等
 
-#### 19.3.5 grep - 正则搜索
+#### 20.3.5 grep - 正则搜索
 
 ```python
 {
@@ -1612,7 +2158,7 @@ Eruitah智能编程沙盒是一个基于 **FastAPI + WebSocket** 的AI编程助�
 2. **GNU grep**：次选，需要手动排除目录
 3. **Python re**：最终回退，速度较慢但保证可用
 
-### 19.4 Agent Loop核心流程
+### 20.4 Agent Loop核心流程
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -1645,11 +2191,11 @@ Eruitah智能编程沙盒是一个基于 **FastAPI + WebSocket** 的AI编程助�
 - 将异常堆栈转为字符串 → 作为user消息喂回大模型
 - 大模型分析错误 → 更换策略或修复参数 → 重试
 
-### 19.5 多智能体模式
+### 20.5 多智能体模式
 
 Eruitah 支持三种智能体运行模式，通过参数控制：
 
-#### 19.5.1 极速模式（use_swarm=False）
+#### 20.5.1 极速模式（use_swarm=False）
 
 单体 Agent 穿上专家外衣干活。Supervisor 路由器分析用户请求后，选择最合适的专家身份（预设或动态生成），Agent 以该专家身份执行任务。
 
@@ -1679,7 +2225,7 @@ Eruitah 支持三种智能体运行模式，通过参数控制：
 - UML类图/架构图 → 后端架构师
 - 代码截图 → 根据语言生成对应专家
 
-#### 19.5.2 深度模式（use_swarm=True）
+#### 20.5.2 深度模式（use_swarm=True）
 
 红蓝对抗模式，蓝军穿专家外衣写代码，红军从最佳实践角度挑刺。
 
@@ -1704,11 +2250,11 @@ CODING → SUBMITTED → REVIEWING → LGTM (终态)
 - **Reviewer（红军）**：只读权限（file_read/grep/glob），从最佳实践角度审查代码质量
 - **对抗循环**：Reviewer 审查后可打回（REJECTED），Coder 修改后重新提交，直到 LGTM 或达到最大循环次数
 
-#### 19.5.3 SDD模式（skills包含"sdd"）
+#### 20.5.3 SDD模式（skills包含"sdd"）
 
 多智能体协作模式（Skills-Driven Development），通过 Agent Swarm P2P 网络实现多智能体协同工作。
 
-#### 19.5.4 Supervisor路由
+#### 20.5.4 Supervisor路由
 
 所有新任务先经过 Supervisor（CTO级别技术总监）审题，决定：
 - 选择哪个预设专家（is_predefined: true）
@@ -1716,9 +2262,9 @@ CODING → SUBMITTED → REVIEWING → LGTM (终态)
 - 判定执行环境（本地后端 vs WebContainer前端）
 - 决定智能体模式（极速/深度/SDD）
 
-### 19.6 任务管理系统
+### 20.6 任务管理系统
 
-#### 19.6.1 核心设计
+#### 20.6.1 核心设计
 
 ```
 用户一句话 = 开启一个平行宇宙（独立任务）
@@ -1729,7 +2275,7 @@ AI 提炼标题 = 给这个平行宇宙贴个标签
 
 **架构：** SessionManager = TaskRegistry（物理快照）+ TaskManager（会话记忆）的统一入口
 
-#### 19.6.2 任务数据结构
+#### 20.6.2 任务数据结构
 
 ```python
 @dataclass
@@ -1745,7 +2291,7 @@ class TaskSession:
     current_turn: int = 0      # 当前轮次
 ```
 
-#### 19.6.3 核心操作
+#### 20.6.3 核心操作
 
 | 操作 | 说明 |
 |------|------|
@@ -1755,16 +2301,16 @@ class TaskSession:
 | rollback_session() | 物理级回滚（文件还原 + 记忆截断） |
 | delete_session() | 删除任务及其Worktree |
 
-#### 19.6.4 会话持久化
+#### 20.6.4 会话持久化
 
 - **session_storage.py**：会话持久化存储
 - 任务数据存储在 `.tasks/` 目录
 - 快照数据存储在 `.eruitah_snapshots/` 目录
 - 忽略模式：node_modules, __pycache__, .git, venv, dist, build等
 
-### 19.7 回退系统（Rewind System）
+### 20.7 回退系统（Rewind System）
 
-#### 19.7.1 混合指针架构
+#### 20.7.1 混合指针架构
 
 ```
 Git 存肉体，SQLite 存灵魂（指针映射）
@@ -1798,7 +2344,7 @@ class Checkpoint:
 - 并发：多Agent同时存快照不会击穿I/O
 - 增量：Git内部已经是增量存储（delta compression）
 
-#### 19.7.2 回退操作
+#### 20.7.2 回退操作
 
 | 操作 | 说明 |
 |------|------|
@@ -1811,9 +2357,9 @@ class Checkpoint:
 
 **检查点存储：** SQLite数据库 `.checkpoints/rewind.db`
 
-### 19.8 沙盒管理器（Sandbox Manager）
+### 20.8 沙盒管理器（Sandbox Manager）
 
-#### 19.8.1 Git Worktree隔离架构
+#### 20.8.1 Git Worktree隔离架构
 
 ```
 主仓库 (workspace_dir) ── 永远停留在 master/main 分支
@@ -1826,11 +2372,11 @@ class Checkpoint:
       └── warmup_e5f6/        ← 预热池中的待命worktree（分支 warmup/c3d4）
 ```
 
-#### 19.8.2 WarmPool预热池
+#### 20.8.2 WarmPool预热池
 
 后台守护线程持续维护 pool_size=3 的预热池。新任务到来时，直接 pop 预热好的 worktree，重命名分支即可，耗时约0ms。缓存击穿时降级为同步创建（Slow Path）。
 
-#### 19.8.3 三级回退
+#### 20.8.3 三级回退
 
 | 级别 | 操作 | 说明 |
 |------|------|------|
@@ -1838,13 +2384,13 @@ class Checkpoint:
 | L2 | remove_task_workspace | `git worktree remove` + `branch -D` |
 | L3 | revert_merged_task | `git revert -m 1 <merge_commit>`（主仓库） |
 
-#### 19.8.4 任务合并
+#### 20.8.4 任务合并
 
 - **merge_session(task_id)**：将任务分支合并到主干（master/main）
 - **冲突检测**：合并前自动检测冲突，有冲突时提示用户
 - **revert_merged_task(task_id)**：撤销已合并的任务（`git revert -m 1`）
 
-### 19.9 系统命令
+### 20.9 系统命令
 
 WebSocket端点支持的系统命令：
 
@@ -1862,7 +2408,7 @@ WebSocket端点支持的系统命令：
 | list_checkpoints | 列出检查点 | task_id |
 | list_mcp_services | 列出MCP服务 | 无 |
 
-### 19.10 交互式终端
+### 20.10 交互式终端
 
 #### 端点：`/ws/terminal`
 
@@ -1895,9 +2441,9 @@ Python 后端:
 
 **后台进程管理：** `BackgroundProcessManager` 支持Agent启动/监控/停止后台服务（如Web Server）。
 
-### 19.11 MCP客户端
+### 20.11 MCP客户端
 
-#### 19.11.1 架构
+#### 20.11.1 架构
 
 MCP（Model Context Protocol）客户端让Agent支持动态加载第三方MCP Server提供的工具。
 
@@ -1920,7 +2466,7 @@ mcp.json 配置文件
 → 执行查询并返回结果
 ```
 
-#### 19.11.2 MCP服务配置
+#### 20.11.2 MCP服务配置
 
 `mcp.json` 定义了多个MCP Server：
 
@@ -1933,7 +2479,7 @@ mcp.json 配置文件
 | memory | 知识图谱持久化记忆 | 跨会话知识存储和检索 |
 | sequential-thinking | 结构化推理 | 复杂问题的分步推理 |
 
-### 19.12 其他工具
+### 20.12 其他工具
 
 | 工具 | 文件 | 说明 |
 |------|------|------|
@@ -1963,9 +2509,9 @@ mcp.json 配置文件
 | 容器池 | container_pool.py | Docker容器池管理 |
 | 影子沙盒 | shadow_sandbox.py | 影子沙盒隔离执行 |
 
-### 19.13 Agent子进程模式
+### 20.13 Agent子进程模式
 
-#### 19.13.1 架构
+#### 20.13.1 架构
 
 ```
 ┌──────────────────┐  asyncio.Queue  ┌──────────────┐  multiprocessing.Queue  ┌──────────────────┐
@@ -1986,7 +2532,7 @@ mcp.json 配置文件
 
 **启用方式：** 环境变量 `ERUITAH_USE_SUBPROCESS=true`（默认开启）
 
-### 19.14 VNC/屏幕功能
+### 20.14 VNC/屏幕功能
 
 Eruitah 支持虚拟桌面环境，为 `computer_use_tool.py` 和 `browser_vision_tool.py` 提供图形界面操作能力。
 
@@ -2005,7 +2551,7 @@ Xvfb (虚拟X11显示) → x11vnc (可选VNC服务器) → 浏览器/客户端�
 
 **Docker端口：** VNC服务默认映射到5900端口。
 
-### 19.15 成本护栏
+### 20.15 成本护栏
 
 `cost_guardrails.py` 提供Token级别的成本追踪和预算控制：
 
@@ -2024,7 +2570,7 @@ Xvfb (虚拟X11显示) → x11vnc (可选VNC服务器) → 浏览器/客户端�
 - 超过预算自动停止Agent执行
 - 记录成本历史，支持查询
 
-### 19.16 WebSocket协议
+### 20.16 WebSocket协议
 
 #### 端点：`/ws/coding`（单任务模式）
 
@@ -2070,7 +2616,7 @@ Xvfb (虚拟X11显示) → x11vnc (可选VNC服务器) → 浏览器/客户端�
 {"type": "finish", "data": "...", "task_id": "xxx"}
 ```
 
-### 19.17 REST API
+### 20.17 REST API
 
 #### 同步执行：`POST /api/v1/execute`
 
@@ -2140,7 +2686,7 @@ GET /api/v1/file?path=/tmp/eruitah-sandbox/main.py
 }
 ```
 
-### 19.18 Qt客户端对接示例
+### 20.18 Qt客户端对接示例
 
 ```cpp
 void CodingLabWindow::onTextMessageReceived(QString message) {
@@ -2178,9 +2724,9 @@ void CodingLabWindow::onTextMessageReceived(QString message) {
 
 ---
 
-## 20. Coding Agent UI（Vue Web IDE）
+## 21. Coding Agent UI（Vue Web IDE）
 
-### 20.1 技术栈
+### 21.1 技术栈
 
 | 技术 | 版本 | 用途 |
 |------|------|------|
@@ -2195,7 +2741,7 @@ void CodingLabWindow::onTextMessageReceived(QString message) {
 | @webcontainer/api | ^1.3.0 | 浏览器端Node.js运行时 |
 | Tailwind CSS | ^3.4.0 | 原子化CSS框架 |
 
-### 20.2 组件说明
+### 21.2 组件说明
 
 | 组件 | 文件 | 说明 |
 |------|------|------|
@@ -2210,7 +2756,7 @@ void CodingLabWindow::onTextMessageReceived(QString message) {
 | DirPicker.vue | src/components/DirPicker.vue | 目录选择器，选择工作目录 |
 | PixelPet.vue | src/components/PixelPet.vue | 像素宠物，Agent状态可视化（精灵图动画） |
 
-### 20.3 状态管理
+### 21.3 状态管理
 
 **stores/agent.js** 使用Pinia管理全局状态：
 
@@ -2236,7 +2782,7 @@ void CodingLabWindow::onTextMessageReceived(QString message) {
 | checkpointList | ref | 检查点列表 |
 | mcpServices | ref | MCP服务列表 |
 
-### 20.4 工具类
+### 21.4 工具类
 
 #### webcontainerManager.js
 
@@ -2258,7 +2804,7 @@ Mermaid图表渲染器，提供暗色主题配置：
 - 字体：JetBrains Mono / Fira Code
 - 支持流程图、时序图、甘特图等
 
-### 20.5 开发代理配置
+### 21.5 开发代理配置
 
 **vite.config.js** 配置了开发环境的反向代理：
 
@@ -2277,9 +2823,9 @@ Mermaid图表渲染器，提供暗色主题配置：
 
 ---
 
-## 21. Protobuf RPC Bridge
+## 22. Protobuf RPC Bridge
 
-### 21.1 架构概述
+### 22.1 架构概述
 
 Protobuf RPC Bridge 实现了 C++ ↔ Java ↔ Python 三语言的高性能RPC通信，替代部分Redis Pub/Sub通信：
 
@@ -2292,30 +2838,30 @@ Protobuf RPC Bridge 实现了 C++ ↔ Java ↔ Python 三语言的高性能RPC�
 └──────────────┘                       └──────────────┘                      └──────────────┘
 ```
 
-### 21.2 Proto定义（chat.proto）
+### 22.2 Proto定义（chat.proto）
 
-#### 21.2.1 聊天核心
+#### 22.2.1 聊天核心
 
 | 消息类型 | 说明 |
 |----------|------|
 | ChatRequest | 聊天请求（userId, botId, message, voiceUrl, metadata等） |
 | ChatResponse | 聊天响应（message, voiceUrl, msgType, metadata等） |
 
-#### 21.2.2 群聊
+#### 22.2.2 群聊
 
 | 消息类型 | 说明 |
 |----------|------|
 | GroupChatRequest | 群聊请求（groupId, senderId, content, aiBotIds） |
 | GroupChatResponse | 群聊响应（groupId, botId, content） |
 
-#### 21.2.3 伴读服务
+#### 22.2.3 伴读服务
 
 | 消息类型 | 说明 |
 |----------|------|
 | CompanionReadRequest | 伴读请求（userId, action, text） |
 | CompanionReadResponse | 伴读响应（audioUrl, explanationText） |
 
-#### 21.2.4 考情大屏
+#### 22.2.4 考情大屏
 
 | 消息类型 | 说明 |
 |----------|------|
@@ -2323,14 +2869,14 @@ Protobuf RPC Bridge 实现了 C++ ↔ Java ↔ Python 三语言的高性能RPC�
 | DashboardSummaryRequest/Response | 考情摘要（avgMastery, strongestSubject等） |
 | WeeklyReportRequest/Response | AI周报 |
 
-#### 21.2.5 PDF解析
+#### 22.2.5 PDF解析
 
 | 消息类型 | 说明 |
 |----------|------|
 | PdfParseRequest | PDF解析请求（pdf_data bytes, filename） |
 | PdfParseResponse | PDF解析响应（content, pageCount） |
 
-#### 21.2.6 编程沙盒
+#### 22.2.6 编程沙盒
 
 | 消息类型 | 说明 |
 |----------|------|
@@ -2340,7 +2886,7 @@ Protobuf RPC Bridge 实现了 C++ ↔ Java ↔ Python 三语言的高性能RPC�
 | SandboxTaskResponse | 沙盒任务响应（action, taskId, data） |
 | SandboxToolEvent | 沙盒工具事件（eventType, toolName, argsJson, result等） |
 
-#### 21.2.7 Agent Swarm P2P网络
+#### 22.2.7 Agent Swarm P2P网络
 
 | 消息类型 | 说明 |
 |----------|------|
@@ -2350,7 +2896,7 @@ Protobuf RPC Bridge 实现了 C++ ↔ Java ↔ Python 三语言的高性能RPC�
 | SwarmHelpRequest/Response | 跨节点求助 |
 | SwarmNodeListResponse | 节点列表 |
 
-#### 21.2.8 内部路由服务
+#### 22.2.8 内部路由服务
 
 **InternalRouterService** 定义了5个RPC方法：
 
@@ -2375,7 +2921,7 @@ Protobuf RPC Bridge 实现了 C++ ↔ Java ↔ Python 三语言的高性能RPC�
 | SANDBOX_EXECUTE | 沙盒执行 |
 | SKILL_EVENT | 技能事件 |
 
-#### 21.2.9 RPC消息封装
+#### 22.2.9 RPC消息封装
 
 **RpcMessage** 是所有RPC通信的统一封装：
 
@@ -2389,7 +2935,7 @@ Protobuf RPC Bridge 实现了 C++ ↔ Java ↔ Python 三语言的高性能RPC�
 | error_code | int32 | 错误码 |
 | error_desc | string | 错误描述 |
 
-### 21.3 C++端
+### 22.3 C++端
 
 | 文件 | 说明 |
 |------|------|
@@ -2399,7 +2945,7 @@ Protobuf RPC Bridge 实现了 C++ ↔ Java ↔ Python 三语言的高性能RPC�
 | main.cc | C++ RPC入口 |
 | crosslang_test.cc | 跨语言测试 |
 
-### 21.4 Java端
+### 22.4 Java端
 
 | 文件 | 说明 |
 |------|------|
@@ -2410,7 +2956,7 @@ Protobuf RPC Bridge 实现了 C++ ↔ Java ↔ Python 三语言的高性能RPC�
 | ChatService.java | 聊天服务接口 |
 | AIChatService.java | 聊天服务实现 |
 
-### 21.5 Python端
+### 22.5 Python端
 
 | 文件 | 说明 |
 |------|------|
@@ -2425,11 +2971,11 @@ Protobuf RPC Bridge 实现了 C++ ↔ Java ↔ Python 三语言的高性能RPC�
 
 ---
 
-## 22. Docker Compose 部署
+## 23. Docker Compose 部署
 
-### 22.1 服务架构
+### 23.1 服务架构
 
-系统通过 Docker Compose 编排 7 个服务：
+系统通过 Docker Compose 编排 7 个服务（Butcanthic 需单独部署）：
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -2460,7 +3006,7 @@ Protobuf RPC Bridge 实现了 C++ ↔ Java ↔ Python 三语言的高性能RPC�
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 22.2 服务清单
+### 23.2 服务清单
 
 | 服务 | 镜像/构建 | 端口映射 | 依赖 |
 |------|-----------|----------|------|
@@ -2472,7 +3018,7 @@ Protobuf RPC Bridge 实现了 C++ ↔ Java ↔ Python 三语言的高性能RPC�
 | ai-service | ai-service/Dockerfile | 8081:8081, 9999:9999 | mysql, redis, neo4j, sandbox, chatserver |
 | nginx | nginx:1.25-alpine | 80:80, 8000:8000 | chatserver, ai-service, sandbox |
 
-### 22.3 一键部署
+### 23.3 一键部署
 
 ```bash
 # 克隆项目
@@ -2493,7 +3039,7 @@ docker-compose logs -f ai-service
 docker-compose logs -f sandbox
 ```
 
-### 22.4 关键环境变量
+### 23.4 关键环境变量
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
@@ -2509,7 +3055,7 @@ docker-compose logs -f sandbox
 | ERUITAH_SCREEN_WIDTH | 1280 | 虚拟屏幕宽度 |
 | ERUITAH_SCREEN_HEIGHT | 720 | 虚拟屏幕高度 |
 
-### 22.5 数据持久化
+### 23.5 数据持久化
 
 Docker Compose 使用命名卷持久化数据：
 
@@ -2531,7 +3077,7 @@ Docker Compose 使用命名卷持久化数据：
 | ./docker/mysql/init.sql | /docker-entrypoint-initdb.d/init.sql | MySQL初始化脚本 |
 | ./docker/nginx/nginx.conf | /etc/nginx/nginx.conf:ro | Nginx配置（只读） |
 
-### 22.6 健康检查
+### 23.6 健康检查
 
 | 服务 | 检查方式 | 间隔 | 超时 | 重试 |
 |------|----------|------|------|------|
@@ -2541,9 +3087,9 @@ Docker Compose 使用命名卷持久化数据：
 
 ---
 
-## 23. Nginx 反向代理
+## 24. Nginx 反向代理
 
-### 23.1 架构概述
+### 24.1 架构概述
 
 Nginx 作为统一入口，将外部请求路由到后端各服务：
 
@@ -2551,7 +3097,7 @@ Nginx 作为统一入口，将外部请求路由到后端各服务：
 客户端 → Nginx(:80/:8000) → AI Service(:8081) / Sandbox(:8001) / ChatServer(:6000)
 ```
 
-### 23.2 路由规则
+### 24.2 路由规则
 
 #### HTTP路由（端口80）
 
@@ -2566,6 +3112,8 @@ Nginx 作为统一入口，将外部请求路由到后端各服务：
 | /sandbox/ws/terminal | sandbox:8001 | 沙盒终端WebSocket（升级） |
 | /sandbox/ | sandbox:8001 | 沙盒REST API和静态文件 |
 | /ide | sandbox:8001 | Web IDE页面 |
+| /butcanthic/ | butcanthic:8002 | Butcanthic 文档智能服务REST API |
+| /butcanthic/ws/ | butcanthic:8002 | Butcanthic WebSocket（升级） |
 | /assets/ | sandbox:8001 | 静态资源（缓存30天） |
 | /api/v1/ | sandbox:8001 | 沙盒REST API |
 
@@ -2575,7 +3123,7 @@ Nginx 作为统一入口，将外部请求路由到后端各服务：
 |------|------|------|
 | 8000 | chatserver:6000 | C++ ChatServer TCP连接 |
 
-### 23.3 WebSocket配置
+### 24.3 WebSocket配置
 
 所有WebSocket路径均配置了升级头：
 
@@ -2590,7 +3138,7 @@ proxy_send_timeout 3600s;
 - **读写超时**：3600秒（1小时），防止长时间WebSocket连接被断开
 - **Connection升级映射**：通过 `map $http_upgrade $connection_upgrade` 动态设置
 
-### 23.4 超时配置
+### 24.4 超时配置
 
 | 场景 | 读写超时 | 说明 |
 |------|----------|------|
@@ -2599,7 +3147,7 @@ proxy_send_timeout 3600s;
 | TCP代理 | 300s | ChatServer TCP连接 |
 | TCP连接超时 | 5s | TCP连接建立超时 |
 
-### 23.5 其他配置
+### 24.5 其他配置
 
 - **client_max_body_size**: 50m（支持大文件上传，如PDF/音频）
 - **tcp_nodelay**: on（TCP代理禁用Nagle算法，降低延迟）
