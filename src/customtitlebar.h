@@ -4,7 +4,6 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QHBoxLayout>
-#include <QPoint>
 
 class CustomTitleBar : public QWidget {
     Q_OBJECT
@@ -23,8 +22,6 @@ signals:
 
 protected:
     void mousePressEvent(QMouseEvent *event) override;
-    void mouseMoveEvent(QMouseEvent *event) override;
-    void mouseReleaseEvent(QMouseEvent *event) override;
     void mouseDoubleClickEvent(QMouseEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
 
@@ -37,7 +34,5 @@ private:
     QPushButton *m_maximizeButton;
     QPushButton *m_closeButton;
     
-    QPoint m_dragPosition;
     bool m_canMaximize;
-    bool m_isDragging;
 };

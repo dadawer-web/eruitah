@@ -1,8 +1,8 @@
 #include "customtitlebar.h"
 #include <QMouseEvent>
 #include <QPainter>
-#include <QMainWindow>
-#include <QApplication>
+#include <QWindow>
+#include <QDebug>
 
 CustomTitleBar::CustomTitleBar(const QString &title, QWidget *parent)
     : QWidget(parent)
@@ -11,7 +11,6 @@ CustomTitleBar::CustomTitleBar(const QString &title, QWidget *parent)
     , m_maximizeButton(nullptr)
     , m_closeButton(nullptr)
     , m_canMaximize(true)
-    , m_isDragging(false)
 {
     setupUI();
     setTitle(title);
@@ -22,7 +21,7 @@ CustomTitleBar::CustomTitleBar(const QString &title, QWidget *parent)
     setMouseTracking(true);
     setAttribute(Qt::WA_StyledBackground, true);
     setFocusPolicy(Qt::NoFocus);
-    setAttribute(Qt::WA_NoMousePropagation, false);
+    setAttribute(Qt::WA_TransparentForMouseEvents, false);
 }
 
 void CustomTitleBar::setupUI()
@@ -131,38 +130,15 @@ void CustomTitleBar::setCanMaximize(bool can)
 
 void CustomTitleBar::mousePressEvent(QMouseEvent *event)
 {
+    qDebug() << "Titlebar clicked!";
     if (event->button() == Qt::LeftButton) {
-        m_dragPosition = event->globalPos() - window()->pos();
-        m_isDragging = true;
+        if (QWindow *w = window()->windowHandle()) {
+            w->startSystemMove();
+        }
         event->accept();
         return;
     }
     QWidget::mousePressEvent(event);
-}
-
-void CustomTitleBar::mouseMoveEvent(QMouseEvent *event)
-{
-    if (m_isDragging && (event->buttons() & Qt::LeftButton)) {
-        QPoint newPos = event->globalPos() - m_dragPosition;
-        if (window()->isMaximized()) {
-            window()->showNormal();
-            int titleBarWidth = width();
-            m_dragPosition = QPoint(titleBarWidth / 2, 20);
-            newPos = event->globalPos() - m_dragPosition;
-        }
-        window()->move(newPos);
-        event->accept();
-        return;
-    }
-    QWidget::mouseMoveEvent(event);
-}
-
-void CustomTitleBar::mouseReleaseEvent(QMouseEvent *event)
-{
-    if (event->button() == Qt::LeftButton) {
-        m_isDragging = false;
-    }
-    QWidget::mouseReleaseEvent(event);
 }
 
 void CustomTitleBar::mouseDoubleClickEvent(QMouseEvent *event)

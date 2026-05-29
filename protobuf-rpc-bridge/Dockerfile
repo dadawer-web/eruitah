@@ -1,16 +1,16 @@
-FROM maven:3.9.6-eclipse-temurin-17 AS build
-WORKDIR /app
+FROM python:3.11-slim
 
-COPY java/pom.xml .
-COPY java/src ./src
+WORKDIR /bridge
 
-RUN mvn clean package -DskipTests
+ENV PYTHONUNBUFFERED=1
 
-FROM eclipse-temurin:17-jre-alpine
-WORKDIR /app
+COPY python/requirements.txt .
+RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple \
+    && pip install --no-cache-dir --upgrade pip setuptools wheel \
+    && pip install --no-cache-dir --prefer-binary -r requirements.txt
 
-COPY --from=build /app/target/protobuf-rpc-bridge-1.0.0.jar app.jar
+COPY python/ /bridge/
 
-EXPOSE 9999
+EXPOSE 9998
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+CMD ["python", "main.py", "server", "0.0.0.0", "9998"]

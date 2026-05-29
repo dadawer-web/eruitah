@@ -1,11 +1,11 @@
 FROM ubuntu:22.04
 
-RUN sed -i 's/archive.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list && \
-    sed -i 's/security.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list
+RUN sed -i 's/archive.ubuntu.com/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list && \
+    sed -i 's/security.ubuntu.com/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libmysqlclient21 \
     libssl3 \
     libcurl4 \
@@ -23,6 +23,6 @@ WORKDIR /app
 COPY ./bin/ChatServer /app/ChatServer
 RUN chmod +x /app/ChatServer
 
-EXPOSE 6000
+EXPOSE 6000 8888
 
 CMD ["./ChatServer", "0.0.0.0", "6000"]

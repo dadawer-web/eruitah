@@ -11,6 +11,7 @@
 #include <QInputDialog>
 #include <QCloseEvent>
 #include <QMouseEvent>
+#include <QWindow>
 #include <QMenu>
 #include <QAction>
 #include <QMessageBox>
@@ -4354,29 +4355,12 @@ void ChatWindow::mousePressEvent(QMouseEvent *event)
     if (event->button() == Qt::LeftButton) {
         QWidget *child = childAt(event->pos());
         if (!child || child == m_titleBar || child == centralWidget()) {
-            m_windowDragging = true;
-            m_windowDragPos = event->globalPos() - pos();
+            if (QWindow *w = windowHandle()) {
+                w->startSystemMove();
+            }
             event->accept();
             return;
         }
     }
     QMainWindow::mousePressEvent(event);
-}
-
-void ChatWindow::mouseMoveEvent(QMouseEvent *event)
-{
-    if (m_windowDragging && (event->buttons() & Qt::LeftButton)) {
-        move(event->globalPos() - m_windowDragPos);
-        event->accept();
-        return;
-    }
-    QMainWindow::mouseMoveEvent(event);
-}
-
-void ChatWindow::mouseReleaseEvent(QMouseEvent *event)
-{
-    if (event->button() == Qt::LeftButton) {
-        m_windowDragging = false;
-    }
-    QMainWindow::mouseReleaseEvent(event);
 }

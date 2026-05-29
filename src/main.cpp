@@ -29,6 +29,10 @@
 // argc: 命令行参数数量
 // argv: 命令行参数数组
 int main(int argc, char *argv[]) {
+    #ifdef Q_OS_LINUX
+    qputenv("QT_QPA_PLATFORM", "xcb");
+    #endif
+
     // 初始化Winsock（Windows平台）
     #ifdef _WIN32
     WSADATA wsaData;

@@ -1,33 +1,24 @@
 FROM python:3.11-slim
 
-RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources 2>/dev/null; \
-    sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list 2>/dev/null; \
+RUN sed -i 's/deb.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list.d/debian.sources 2>/dev/null; \
+    sed -i 's/deb.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list 2>/dev/null; \
     true
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_DOWNLOAD_HOST=https://npmmirror.com/mirrors/chrome-for-testing
+ENV PYTHONUNBUFFERED=1
+ENV PLAYWRIGHT_DOWNLOAD_HOST=https://npmmirror.com/mirrors/playwright/
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git grep curl \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
     libx11-6 libxext6 libxrender1 libxtst6 libxi6 libxrandr2 \
     libxss1 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
     libglib2.0-0 libgl1 libgtk-3-0 libnotify4 libnss3 libnspr4 \
     libasound2 libgbm1 libatk1.0-0 libatk-bridge2.0-0 libdrm2 libcups2 \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
     xvfb x11vnc xdotool scrot imagemagick x11-utils wmctrl \
     fonts-noto-cjk fonts-wqy-zenhei \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
     clangd default-jdk \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -36,9 +27,8 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     apt-get update && apt-get install -y --no-install-recommends nodejs \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN npm config set registry https://registry.npmmirror.com
-
-RUN npm install -g \
+RUN npm config set registry https://registry.npmmirror.com \
+    && npm install -g \
     @modelcontextprotocol/server-filesystem \
     @modelcontextprotocol/server-memory \
     @modelcontextprotocol/server-sequential-thinking \
@@ -55,10 +45,11 @@ ENV JDTLS_HOME=/opt/jdtls
 ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt \
-    -i https://pypi.tuna.tsinghua.edu.cn/simple
-
-RUN pip install playwright && playwright install chromium --with-deps
+RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple \
+    && pip install --no-cache-dir --upgrade pip setuptools wheel \
+    && pip install --no-cache-dir --prefer-binary -r requirements.txt \
+    && pip install --no-cache-dir --prefer-binary playwright \
+    && playwright install chromium --with-deps
 
 COPY . .
 

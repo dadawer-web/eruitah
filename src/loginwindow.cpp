@@ -8,6 +8,7 @@
 #include <QPainterPath>
 #include <QGraphicsDropShadowEffect>
 #include <QMouseEvent>
+#include <QWindow>
 
 // 跨平台网络头文件处理 - 注意：先包含Windows网络头文件，再包含Qt头文件，避免byte类型歧义
 #ifdef _WIN32
@@ -572,24 +573,14 @@ void LoginWindow::handleRegisterResponse(bool success, int userId, const QString
 }
 
 // ================= 窗口拖动支持 =================
-void LoginWindow::mousePressEvent(QMouseEvent *event) {
+void LoginWindow::mousePressEvent(QMouseEvent *event)
+{
     if (event->button() == Qt::LeftButton) {
-        m_dragging = true;
-        m_dragPosition = event->globalPos() - this->pos();
+        if (QWindow *w = windowHandle()) {
+            w->startSystemMove();
+        }
         event->accept();
+        return;
     }
-}
-
-void LoginWindow::mouseMoveEvent(QMouseEvent *event) {
-    if (m_dragging && (event->buttons() & Qt::LeftButton)) {
-        this->move(event->globalPos() - m_dragPosition);
-        event->accept();
-    }
-}
-
-void LoginWindow::mouseReleaseEvent(QMouseEvent *event) {
-    if (event->button() == Qt::LeftButton) {
-        m_dragging = false;
-        event->accept();
-    }
+    QMainWindow::mousePressEvent(event);
 }

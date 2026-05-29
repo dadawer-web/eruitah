@@ -84,17 +84,8 @@ private:
     ChatClient *chatClient;
 
 protected:
-    // 重写showEvent事件处理函数
     void showEvent(QShowEvent *event) override;
-    
-    // 窗口拖动支持
     void mousePressEvent(QMouseEvent *event) override;
-    void mouseMoveEvent(QMouseEvent *event) override;
-    void mouseReleaseEvent(QMouseEvent *event) override;
-
-private:
-    bool m_dragging = false;
-    QPoint m_dragPosition;
 
 private slots:
     void handleLogin();

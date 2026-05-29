@@ -8,6 +8,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-xieming562}
       MYSQL_DATABASE: chat
+      TZ: Asia/Shanghai
     ports:
       - "3306:3306"
     volumes:
@@ -20,7 +21,7 @@ services:
       timeout: 5s
       retries: 10
     networks:
-      - chat-net
+      - eruitah-net
 
   redis:
     image: redis/redis-stack:latest
@@ -38,7 +39,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - chat-net
+      - eruitah-net
 
   neo4j:
     image: neo4j:latest
@@ -50,11 +51,12 @@ services:
     environment:
       NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:-12345678}
       NEO4J_PLUGINS: '["apoc"]'
+      TZ: Asia/Shanghai
     volumes:
       - neo4j-data:/data
       - neo4j-logs:/logs
     networks:
-      - chat-net
+      - eruitah-net
 
   chatserver:
     build:
@@ -83,7 +85,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - chat-net
+      - eruitah-net
 
   sandbox:
     build:
@@ -105,12 +107,34 @@ services:
       ERUITAH_ENABLE_VNC: ${ERUITAH_ENABLE_VNC:-false}
       ERUITAH_SCREEN_WIDTH: ${ERUITAH_SCREEN_WIDTH:-1280}
       ERUITAH_SCREEN_HEIGHT: ${ERUITAH_SCREEN_HEIGHT:-720}
+      HF_ENDPOINT: https://hf-mirror.com
     volumes:
       - /tmp/eruitah-sandbox:/tmp/eruitah-sandbox
       - /tmp/agent-worktrees:/tmp/agent-worktrees
       - ./coding-agent-ui/dist:/app/coding-agent-ui/dist:ro
     networks:
-      - chat-net
+      - eruitah-net
+
+  butcanthic-ai:
+    build:
+      context: ./butcanthic
+      dockerfile: Dockerfile
+    container_name: chat-butcanthic
+    restart: always
+    ports:
+      - "8002:8002"
+    environment:
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-}
+      EMBEDDING_API_KEY: ${EMBEDDING_API_KEY:-}
+      HF_ENDPOINT: https://hf-mirror.com
+      USE_CELERY: ${USE_CELERY:-false}
+    volumes:
+      - butcanthic-chroma:/app/chroma_db
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - eruitah-net
 
   ai-service:
     build:
@@ -122,7 +146,6 @@ services:
       - "8081:8081"
       - "9999:9999"
     environment:
-      JAVA_OPTS: -Xms256m -Xmx512m
       SPRING_PROFILES_ACTIVE: prod
       SPRING_NEO4J_URI: bolt://neo4j:7687
       SPRING_NEO4J_AUTHENTICATION_USERNAME: neo4j
@@ -130,26 +153,30 @@ services:
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
       SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD:-123456}
-      SPRING_AI_OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      SPRING_AI_OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://dashscope.aliyuncs.com/compatible-mode}
-      SPRING_AI_OPENAI_CHAT_OPTIONS_MODEL: ${OPENAI_MODEL:-qwen3.5-plus}
-      MULTIMODAL_OPENAI_API_KEY: ${MULTIMODAL_API_KEY:-}
-      MULTIMODAL_OPENAI_BASE_URL: ${MULTIMODAL_BASE_URL:-https://dashscope.aliyuncs.com/compatible-mode}
-      MULTIMODAL_OPENAI_MODEL: ${MULTIMODAL_MODEL:-qwen3.5-omni-flash-2026-03-15}
-      EMBEDDING_SILICONFLOW_API_KEY: ${EMBEDDING_API_KEY:-}
-      EMBEDDING_SILICONFLOW_BASE_URL: ${EMBEDDING_BASE_URL:-https://api.siliconflow.cn}
-      EMBEDDING_SILICONFLOW_MODEL: ${EMBEDDING_MODEL:-BAAI/bge-m3}
-      RERANKER_SILICONFLOW_API_KEY: ${RERANKER_API_KEY:-}
-      RERANKER_SILICONFLOW_BASE_URL: ${RERANKER_BASE_URL:-https://api.siliconflow.cn}
-      RERANKER_SILICONFLOW_MODEL: ${RERANKER_MODEL:-BAAI/bge-reranker-v2-m3}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://dashscope.aliyuncs.com/compatible-mode}
+      OPENAI_MODEL: ${OPENAI_MODEL:-qwen3.5-plus}
+      MULTIMODAL_API_KEY: ${MULTIMODAL_API_KEY:-}
+      MULTIMODAL_BASE_URL: ${MULTIMODAL_BASE_URL:-https://dashscope.aliyuncs.com/compatible-mode}
+      MULTIMODAL_MODEL: ${MULTIMODAL_MODEL:-qwen3.5-omni-flash-2026-03-15}
+      EMBEDDING_API_KEY: ${EMBEDDING_API_KEY:-}
+      EMBEDDING_BASE_URL: ${EMBEDDING_BASE_URL:-https://api.siliconflow.cn}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-BAAI/bge-m3}
+      RERANKER_API_KEY: ${RERANKER_API_KEY:-}
+      RERANKER_BASE_URL: ${RERANKER_BASE_URL:-https://api.siliconflow.cn}
+      RERANKER_MODEL: ${RERANKER_MODEL:-BAAI/bge-reranker-v2-m3}
       SERPER_API_KEY: ${SERPER_API_KEY:-}
       SERPER_BASE_URL: ${SERPER_BASE_URL:-https://google.serper.dev}
-      VOICE_DASHSCOPE_API_KEY: ${VOICE_API_KEY:-}
-      VOICE_DASHSCOPE_ASR_MODEL: ${VOICE_ASR_MODEL:-fun-asr-realtime-2026-02-28}
-      VOICE_DASHSCOPE_TTS_MODEL: ${VOICE_TTS_MODEL:-qwen3-tts-instruct-flash-realtime}
-      VOICE_DASHSCOPE_TTS_VOICE: ${VOICE_TTS_VOICE:-Cherry}
+      ALI_ASR_API_KEY: ${ALI_ASR_API_KEY:-}
+      ALI_ASR_MODEL: ${ALI_ASR_MODEL:-fun-asr-realtime-2026-02-28}
+      ALI_REALTIME_TTS_MODEL: ${ALI_REALTIME_TTS_MODEL:-qwen3-tts-instruct-flash-realtime}
+      ALI_REALTIME_TTS_VOICE: ${ALI_REALTIME_TTS_VOICE:-Cherry}
+      XIAOMI_TTS_API_KEY: ${XIAOMI_TTS_API_KEY:-}
+      XIAOMI_TTS_BASE_URL: ${XIAOMI_TTS_BASE_URL:-https://token-plan-cn.xiaomimimo.com/v1}
+      XIAOMI_TTS_MODEL: ${XIAOMI_TTS_MODEL:-mimo-v2.5-tts}
+      XIAOMI_TTS_VOICE: ${XIAOMI_TTS_VOICE:-冰糖}
       VOICE_STORAGE_PATH: /tmp/audio
-      VOICE_STORAGE_URL_PREFIX: http://localhost/audio
+      VOICE_URL_PREFIX: http://localhost/audio
       RPC_CPP_HOST: chatserver
       RPC_CPP_PORT: 8888
       RPC_PYTHON_HOST: chat-sandbox
@@ -169,14 +196,27 @@ services:
     volumes:
       - audio-storage:/tmp/audio
     networks:
-      - chat-net
+      - eruitah-net
+
+  frontend:
+    build:
+      context: ./coding-agent-ui
+      dockerfile: Dockerfile
+    container_name: chat-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - sandbox
+      - ai-service
+    networks:
+      - eruitah-net
 
   nginx:
     image: nginx:1.25-alpine
     container_name: chat-nginx
     restart: always
     ports:
-      - "80:80"
       - "8000:8000"
     volumes:
       - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
@@ -184,8 +224,9 @@ services:
       - chatserver
       - ai-service
       - sandbox
+      - butcanthic-ai
     networks:
-      - chat-net
+      - eruitah-net
 
 volumes:
   mysql-data:
@@ -193,7 +234,8 @@ volumes:
   neo4j-data:
   neo4j-logs:
   audio-storage:
+  butcanthic-chroma:
 
 networks:
-  chat-net:
+  eruitah-net:
     driver: bridge

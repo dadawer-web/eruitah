@@ -1,5 +1,3 @@
-CubismSdkForWeb-5-r.5/
-hiyori_pro_en/
 .git/
 .gitignore
 .gitbackup
@@ -8,8 +6,23 @@ hiyori_pro_en/
 *.md
 !README.md
 
-bulid/
+venv/
+__pycache__/
+*.pyc
+*.py[cod]
+*$py.class
+.pytest_cache/
 
+node_modules/
+npm-debug.log
+
+ai-service/
+eruitah-sandbox/
+butcanthic/
+coding-agent-ui/
+protobuf-rpc-bridge/
+
+build/
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
@@ -18,6 +31,10 @@ Makefile
 install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
+.qmake.stash
+
+*.db
+*.log
 
 *.o
 *.obj
@@ -33,9 +50,7 @@ CTestTestfile.cmake
 *.user
 *.pro.user
 
-*.log
 *.tmp
-
 *_autogen/
 *.moc
 moc_*.cpp
@@ -43,17 +58,11 @@ qrc_*.cpp
 ui_*.h
 timestamp
 
-venv/
-__pycache__/
-*.pyc
-.pytest_cache/
-.checkpoints/
-*.py[cod]
-*$py.class
-
-node_modules/
-npm-debug.log
-
+CubismSdkForWeb-5-r.5/
+hiyori_pro_en/
 test/
 xmind/
 qt-material-widgets/
+docker/
+installation-guide.md
+user-manual.md
