@@ -169,10 +169,17 @@ function SlideRenderer({ slide, design }: { slide: SlidePage; design: DesignSyst
       {slide.subtitle && (
         <div style={{ fontSize: ts.body, color: pal.accent, marginBottom: 24 }}>{slide.subtitle}</div>
       )}
-      <div style={{ flex: 1, overflow: 'hidden' }}>
-        {(slide.components || []).map((comp, i) => (
-          <React.Fragment key={i}>{renderComponent(comp, design)}</React.Fragment>
-        ))}
+      <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'row', gap: 32 }}>
+        <div style={{ flex: 1, overflow: 'hidden' }}>
+          {(slide.components || []).map((comp, i) => (
+            <React.Fragment key={i}>{renderComponent(comp, design)}</React.Fragment>
+          ))}
+        </div>
+        {slide.image_url && (
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src={slide.image_url} style={{ maxWidth: '100%', maxHeight: '100%', borderRadius: radius, objectFit: 'contain' as const }} />
+          </div>
+        )}
       </div>
     </div>
   );

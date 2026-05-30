@@ -55,10 +55,17 @@ export const useAgentStore = defineStore('agent', () => {
   const systemAlerts = ref([])
   const checkpointList = ref([])
 
+  const toasts = ref([])
+  let toastIdCounter = 0
+
   const taskList = ref([])
   const taskMessages = ref({})
   const activeTaskId = ref(null)
   const autoApprove = ref(false)
+
+  try {
+    localStorage.removeItem('eruitah_tasks')
+  } catch {}
 
   const historyStates = ref([])
   const rollbackPreview = ref(null)
@@ -101,8 +108,8 @@ export const useAgentStore = defineStore('agent', () => {
       }
     } catch {}
     if (!userId.value) {
-      userId.value = 9527
-      try { localStorage.setItem('eruitah_user_id', '9527') } catch {}
+      userId.value = 1
+      console.warn('[Auth] user_id 未指定，默认使用 1。请通过 URL 参数 ?user_id=xxx 传入真实用户 ID')
     }
   }
   _initUserId()
@@ -164,6 +171,7 @@ export const useAgentStore = defineStore('agent', () => {
       connected.value = true
       wsRetryCount = 0
       console.log('[WS] Connected to coding agent')
+      fetchTaskRegistry()
     }
 
     socket.onclose = () => {
@@ -1016,7 +1024,6 @@ export const useAgentStore = defineStore('agent', () => {
       const resp = await fetch(`/api/v1/task-registry?user_id=${uid}`)
       if (!resp.ok) {
         console.warn('[API] fetchTaskRegistry HTTP error:', resp.status)
-        _loadTasksFromCache()
         return
       }
       const data = await resp.json()
@@ -1046,14 +1053,7 @@ export const useAgentStore = defineStore('agent', () => {
 
       console.log('[API] fetchTaskRegistry extracted tasks count:', backendTasks.length)
 
-      if (backendTasks.length === 0) {
-        console.warn('[API] fetchTaskRegistry: 后端返回 0 个任务, work_dir=', basePath.value)
-        _loadTasksFromCache()
-        return
-      }
-
-      const existingMap = new Map(taskList.value.map(t => [t.id, t]))
-
+      const newList = []
       for (const t of backendTasks) {
         const taskId = t.task_id || t.id
         if (!taskId) continue
@@ -1062,50 +1062,36 @@ export const useAgentStore = defineStore('agent', () => {
           ? (t.created_at > 1e12 ? t.created_at : t.created_at * 1000)
           : Date.now()
 
-        if (existingMap.has(taskId)) {
-          const existing = existingMap.get(taskId)
-          existing.status = t.status || existing.status
-          existing.title = t.summary || existing.title
-          existing.baseTaskId = t.base_task_id || existing.baseTaskId
-          existing.mergeCommitHash = t.merge_commit_hash || existing.mergeCommitHash
-          existing.workDir = t.work_dir || existing.workDir
-        } else {
-          const newTask = {
-            id: taskId,
-            title: t.summary || '未命名任务',
-            status: t.status || 'active',
-            created_at: createdTs,
-            baseTaskId: t.base_task_id || '',
-            mergeCommitHash: t.merge_commit_hash || '',
-            workDir: t.work_dir || '',
-          }
-          taskList.value.push(newTask)
-          existingMap.set(taskId, newTask)
-        }
+        newList.push({
+          id: taskId,
+          title: t.summary || '未命名任务',
+          status: t.status || 'active',
+          created_at: createdTs,
+          baseTaskId: t.base_task_id || '',
+          mergeCommitHash: t.merge_commit_hash || '',
+          workDir: t.work_dir || '',
+        })
       }
 
-      taskList.value.sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
+      newList.sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
 
-      try {
-        localStorage.setItem('eruitah_tasks', JSON.stringify(taskList.value))
-      } catch {}
+      taskList.value = newList
     } catch (e) {
       console.error('[API] fetchTaskRegistry error:', e)
-      _loadTasksFromCache()
     }
   }
 
-  function _loadTasksFromCache() {
-    try {
-      const cached = localStorage.getItem('eruitah_tasks')
-      if (cached) {
-        const parsed = JSON.parse(cached)
-        if (Array.isArray(parsed) && parsed.length > 0 && taskList.value.length === 0) {
-          taskList.value = parsed
-          console.log('[Cache] 从 localStorage 恢复了', parsed.length, '个任务')
-        }
-      }
-    } catch {}
+  function showToast(message, type = 'info', duration = 3000) {
+    const id = ++toastIdCounter
+    toasts.value.push({ id, message, type, duration })
+    if (duration > 0) {
+      setTimeout(() => removeToast(id), duration)
+    }
+    return id
+  }
+
+  function removeToast(id) {
+    toasts.value = toasts.value.filter(t => t.id !== id)
   }
 
   async function fetchFileTree() {
@@ -1372,9 +1358,31 @@ export const useAgentStore = defineStore('agent', () => {
     return sendSystemCommand('stop_agent')
   }
 
-  function deleteTask(taskId) {
+  async function deleteTask(taskId) {
     if (!taskId) return false
-    return sendSystemCommand('delete_task', { target_task_id: taskId })
+    try {
+      const taskTitle = taskList.value.find(t => t.id === taskId)?.title || taskId
+      taskList.value = taskList.value.filter(t => t.id !== taskId)
+      delete taskMessages.value[taskId]
+      if (activeTaskId.value === taskId) {
+        activeTaskId.value = null
+        currentTaskId.value = null
+        currentTaskName.value = ''
+        messages.value = []
+      }
+      const sent = sendSystemCommand('delete_task', { target_task_id: taskId })
+      if (sent) {
+        await new Promise(resolve => setTimeout(resolve, 1500))
+        await fetchTaskRegistry()
+      }
+      showToast(`🗑️ 任务「${taskTitle.slice(0, 20)}」已删除`, 'success')
+      return true
+    } catch (e) {
+      console.error('[Store] deleteTask error:', e)
+      showToast('❌ 删除任务失败: ' + (e.message || '未知错误'), 'error')
+      await fetchTaskRegistry()
+      return false
+    }
   }
 
   function mergeTask(taskId, force = false) {
@@ -1698,6 +1706,9 @@ export const useAgentStore = defineStore('agent', () => {
     fetchFileTree,
     fetchFileContent,
     fetchTaskRegistry,
+    toasts,
+    showToast,
+    removeToast,
     registerEditor,
     unregisterEditor,
     wcPreviewUrl,

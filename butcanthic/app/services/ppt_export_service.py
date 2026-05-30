@@ -202,17 +202,6 @@ async def generate_pptx_from_json(ppt_data: dict) -> io.BytesIO:
                         p.space_after = Pt(8)
                         first_para = False
 
-                    elif comp_type == "image":
-                        comp_img_url = comp.get("image_url")
-                        if comp_img_url and str(comp_img_url).startswith("http"):
-                            try:
-                                resp = await client.get(comp_img_url, headers=headers, timeout=15.0, follow_redirects=True)
-                                if resp.status_code == 200:
-                                    img_stream = io.BytesIO(resp.content)
-                                    slide.shapes.add_picture(img_stream, Inches(1.0), Inches(5.5), width=Inches(3))
-                            except Exception:
-                                pass
-
                 if has_valid_img:
                     try:
                         resp = await client.get(image_url, headers=headers, timeout=20.0, follow_redirects=True)

@@ -425,25 +425,23 @@ async def _inject_image_urls(presentation_data: Dict[str, Any]) -> None:
             image_url = await _search_unsplash_image(keyword, unsplash_key)
 
         if not image_url:
-            keyword_str = keyword.strip().replace(" ", ",")
-            keywords_list = [k for k in keyword_str.split(",") if k][:4]
-            short_keyword = ",".join(keywords_list)
-            encoded_keyword = urllib.parse.quote(short_keyword)
-            image_url = f"https://loremflickr.com/1024/768/{encoded_keyword}?random=1"
-            logger.info(f"🖼️ [LoremFlickr] keyword='{short_keyword}' → loremflickr.com search")
+            lorem_keywords = [
+                "technology", "business", "nature", "education", "science",
+                "architecture", "abstract", "city", "office", "computer",
+                "network", "data", "creative", "innovation", "landscape",
+            ]
+            search_word = keyword.strip().split()[0] if keyword.strip() else ""
+            if not search_word or len(search_word) < 3:
+                search_word = lorem_keywords[idx % len(lorem_keywords)]
+            encoded_keyword = urllib.parse.quote(search_word)
+            image_url = f"https://loremflickr.com/1024/768/{encoded_keyword}?lock={idx}"
+            logger.info(f"🖼️ [LoremFlickr] keyword='{search_word}' idx={idx} → loremflickr.com search")
 
         slide["image_url"] = image_url
         injected_count += 1
 
-        if layout not in ["cover", "section"]:
-            if "components" not in slide or not isinstance(slide["components"], list):
-                slide["components"] = []
-            has_image_comp = any(isinstance(c, dict) and c.get("type") == "image" for c in slide["components"])
-            if not has_image_comp:
-                slide["components"].insert(0, {
-                    "type": "image",
-                    "image_url": image_url,
-                })
+        if isinstance(slide.get("components"), list):
+            slide["components"] = [c for c in slide["components"] if not (isinstance(c, dict) and c.get("type") == "image")]
 
     if injected_count > 0:
         logger.info(f"🖼️ [GeneratePPT] 注入了 {injected_count} 张配图 (keyword='{keyword}' per-slide)")

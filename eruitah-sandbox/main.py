@@ -980,6 +980,13 @@ async def _handle_system_command(websocket, data: dict, safe_send):
         except Exception as e:
             logger.warning(f"删除 worktree 失败: {e}")
 
+        try:
+            from task_registry import get_task_registry
+            registry = get_task_registry(user_id=user_id)
+            registry.delete_task(target_task_id)
+        except Exception as e:
+            logger.warning(f"清理 TaskRegistry 失败: {e}")
+
         sm.delete_session(target_task_id)
 
         if sm.current_task_id == target_task_id:
@@ -1945,6 +1952,8 @@ async def list_tasks(project_path: str = "", user_id: int = 0):
 
 @app.get("/api/v1/task-registry")
 async def list_task_registry(work_dir: str = "", user_id: int = 0):
+    if not user_id:
+        user_id = 1
     from task_manager import get_session_manager
     sm = get_session_manager(user_id=user_id)
     tasks = sm.list_sessions(work_dir="")

@@ -59,8 +59,8 @@
 
 ## 组件类型限制 (极其重要！)
 
-SlideComponent 的 `type` 必须严格是以下 8 种之一："heading", "text", "code", "bullet_list", "image", "divider", "card", "two_column"。
-绝对不允许捏造类型！绝不能使用 "title", "subtitle", "eyebrow" 作为 component 的 type！如果要在页面中放置标题，请直接写在 SlidePage 的 `title` 属性中，若需在组件中显示文字，只能使用 "heading" 或 "text"。
+SlideComponent 的 `type` 必须严格是以下 7 种之一："heading", "text", "code", "bullet_list", "divider", "card", "two_column"。
+绝对不允许捏造类型！绝不能使用 "title", "subtitle", "eyebrow" 作为 component 的 type！绝不能使用 "image" 作为 component 的 type（配图由系统自动注入，你只需填写 image_prompt 和 image_search_keyword）！如果要在页面中放置标题，请直接写在 SlidePage 的 `title` 属性中，若需在组件中显示文字，只能使用 "heading" 或 "text"。
 
 ## 输出格式
 

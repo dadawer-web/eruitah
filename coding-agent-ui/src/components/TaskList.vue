@@ -6,6 +6,8 @@ const store = useAgentStore()
 const expandedTaskId = ref(null)
 const taskCommits = ref({})
 
+const deletingTaskIds = ref(new Set())
+
 async function fetchTasks() {
   await store.fetchTaskRegistry()
 }
@@ -24,8 +26,16 @@ function rollbackStep(taskId, steps = 1) {
   store.rollbackStep(taskId, steps)
 }
 
-function deleteTask(taskId) {
-  store.deleteTask(taskId)
+async function deleteTask(taskId) {
+  if (deletingTaskIds.value.has(taskId)) return
+  deletingTaskIds.value.add(taskId)
+  try {
+    await store.deleteTask(taskId)
+  } catch (e) {
+    console.error('[TaskList] deleteTask failed:', e)
+  } finally {
+    deletingTaskIds.value.delete(taskId)
+  }
 }
 
 function mergeTask(taskId, force = false) {
@@ -163,9 +173,11 @@ onMounted(fetchTasks)
           >🔄</button>
           <button
             @click.stop="deleteTask(task.id)"
-            class="opacity-0 group-hover:opacity-100 text-geek-text-dim hover:text-red-400 transition-all text-[10px] px-0.5"
-            title="删除此任务"
-          >✕</button>
+            :disabled="deletingTaskIds.has(task.id)"
+            class="opacity-0 group-hover:opacity-100 transition-all text-[10px] px-0.5"
+            :class="deletingTaskIds.has(task.id) ? 'text-geek-text-dim cursor-wait' : 'text-geek-text-dim hover:text-red-400'"
+            :title="deletingTaskIds.has(task.id) ? '删除中...' : '删除此任务'"
+          >{{ deletingTaskIds.has(task.id) ? '⏳' : '✕' }}</button>
 
           <button
             @click.stop="toggleCommits(task.id)"

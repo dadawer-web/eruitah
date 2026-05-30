@@ -337,6 +337,28 @@ onBeforeUnmount(() => {
       </div>
 
       <!-- ═══ Mermaid Lightbox 全屏放大 ═══ -->
+
+      <!-- ═══ Toast 通知 ═══ -->
+      <div
+        v-if="store.toasts.length > 0"
+        class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[150] flex flex-col gap-2 items-center pointer-events-none"
+      >
+        <TransitionGroup name="toast">
+          <div
+            v-for="toast in store.toasts"
+            :key="toast.id"
+            class="px-4 py-2 rounded-lg text-xs shadow-xl pointer-events-auto cursor-pointer backdrop-blur-sm"
+            :class="{
+              'bg-emerald-900/90 border border-emerald-500/50 text-emerald-300': toast.type === 'success',
+              'bg-red-900/90 border border-red-500/50 text-red-300': toast.type === 'error',
+              'bg-blue-900/90 border border-blue-500/50 text-blue-300': toast.type === 'info',
+              'bg-amber-900/90 border border-amber-500/50 text-amber-300': toast.type === 'warning',
+            }"
+            @click="store.removeToast(toast.id)"
+          >{{ toast.message }}</div>
+        </TransitionGroup>
+      </div>
+
       <Transition name="lightbox">
         <div
           v-if="mermaidLightbox"
@@ -386,5 +408,23 @@ onBeforeUnmount(() => {
 .lightbox-leave-to {
   opacity: 0;
   transform: scale(0.95);
+}
+
+.toast-enter-active {
+  transition: all 0.3s ease-out;
+}
+.toast-leave-active {
+  transition: all 0.2s ease-in;
+}
+.toast-enter-from {
+  opacity: 0;
+  transform: translateY(16px);
+}
+.toast-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+.toast-move {
+  transition: transform 0.2s ease;
 }
 </style>

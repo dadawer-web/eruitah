@@ -1,13 +1,15 @@
 """
-Eruitah 智能编程沙盒 - 任务注册表 + 物理快照系统
+Eruitah 智能编程沙盒 - 任务注册表 + 物理快照系统（多租户隔离版）
 
 核心设计:
   每个用户提问 = 一个任务 (Task)
   任务开始前 = 物理备份整个工作目录 (shutil.copytree)
   任务回退 = 物理还原整个工作目录 (shutil.rmtree + shutil.copytree) + 消息截断
 
-物理备份路径: .eruitah_snapshots/{task_id}_pre/
-注册表文件: .eruitah_snapshots/registry.json
+物理备份路径: .user_data/user_{user_id}/snapshots/{task_id}_pre/
+注册表文件: .user_data/user_{user_id}/snapshots/registry.json
+
+重要：所有路径严格绑定 user_id，绝不允许跨用户访问
 """
 
 import os
@@ -16,20 +18,21 @@ import time
 import shutil
 import logging
 import threading
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass
 from typing import Optional, Dict, List, Any
 
 logger = logging.getLogger(__name__)
 
-SNAPSHOT_BASE_DIR = os.environ.get(
-    "ERUITAH_SNAPSHOT_DIR",
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), ".eruitah_snapshots"),
+USER_DATA_ROOT = os.environ.get(
+    "ERUITAH_USER_DATA_ROOT",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), ".user_data"),
 )
 
 IGNORE_PATTERNS = {
     "node_modules", "__pycache__", ".git", "venv", ".venv",
     "dist", "build", ".next", ".nuxt", "target", ".gradle",
     ".eruitah_snapshots", ".checkpoints", ".eruitah_cache",
+    ".tasks", ".user_data",
 }
 
 
@@ -67,15 +70,28 @@ class TaskRecord:
         )
 
 
+def _get_user_snapshot_dir(user_id: int) -> str:
+    d = os.path.join(USER_DATA_ROOT, f"user_{user_id}", "snapshots")
+    os.makedirs(d, exist_ok=True)
+    return d
+
+
 class TaskRegistry:
-    def __init__(self):
+    def __init__(self, user_id: int):
+        if not user_id:
+            user_id = 1
+            logger.warning("TaskRegistry created with user_id=0, falling back to 1")
+        self._user_id = user_id
         self._tasks: Dict[str, TaskRecord] = {}
         self._lock = threading.Lock()
-        os.makedirs(SNAPSHOT_BASE_DIR, exist_ok=True)
+        os.makedirs(self._snapshot_base_dir(), exist_ok=True)
         self._load_registry()
 
+    def _snapshot_base_dir(self) -> str:
+        return _get_user_snapshot_dir(self._user_id)
+
     def _registry_path(self) -> str:
-        return os.path.join(SNAPSHOT_BASE_DIR, "registry.json")
+        return os.path.join(self._snapshot_base_dir(), "registry.json")
 
     def _load_registry(self):
         path = self._registry_path()
@@ -86,7 +102,7 @@ class TaskRegistry:
                 for item in data:
                     record = TaskRecord.from_dict(item)
                     self._tasks[record.task_id] = record
-                logger.info(f"已加载 {len(self._tasks)} 条任务记录")
+                logger.info(f"TaskRegistry(user={self._user_id}) 已加载 {len(self._tasks)} 条任务记录")
             except Exception as e:
                 logger.error(f"加载任务注册表失败: {e}")
 
@@ -117,7 +133,7 @@ class TaskRegistry:
         work_dir: str,
         messages_before: List[Dict[str, Any]],
     ) -> TaskRecord:
-        snapshot_path = os.path.join(SNAPSHOT_BASE_DIR, f"{task_id}_pre")
+        snapshot_path = os.path.join(self._snapshot_base_dir(), f"{task_id}_pre")
 
         with self._lock:
             if task_id in self._tasks:
@@ -246,12 +262,26 @@ class TaskRegistry:
                     shutil.rmtree(record.snapshot_path, ignore_errors=True)
                     logger.info(f"已删除快照: {record.snapshot_path}")
 
+    def delete_task(self, task_id: str):
+        with self._lock:
+            if task_id in self._tasks:
+                record = self._tasks[task_id]
+                if os.path.exists(record.snapshot_path):
+                    shutil.rmtree(record.snapshot_path, ignore_errors=True)
+                del self._tasks[task_id]
+                self._save_registry()
+                logger.info(f"已彻底删除任务记录: {task_id}")
 
-_registry: Optional[TaskRegistry] = None
+
+_registries: Dict[int, TaskRegistry] = {}
+_registries_lock = threading.Lock()
 
 
-def get_task_registry() -> TaskRegistry:
-    global _registry
-    if _registry is None:
-        _registry = TaskRegistry()
-    return _registry
+def get_task_registry(user_id: int = 0) -> TaskRegistry:
+    if not user_id:
+        user_id = 1
+        logger.warning("get_task_registry() called without user_id, falling back to 1")
+    with _registries_lock:
+        if user_id not in _registries:
+            _registries[user_id] = TaskRegistry(user_id=user_id)
+        return _registries[user_id]
