@@ -8,6 +8,24 @@ const taskCommits = ref({})
 
 const deletingTaskIds = ref(new Set())
 
+const safeFormatDate = (dateStr) => {
+  if (!dateStr) return ''
+  let cleanStr = String(dateStr).replace(',', '.')
+  if (cleanStr.length === 19 && cleanStr.includes(' ')) {
+    cleanStr = cleanStr.replace(' ', 'T')
+  }
+  const d = new Date(cleanStr)
+  if (isNaN(d.getTime())) return String(dateStr)
+  return d.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
+}
+
 async function fetchTasks() {
   await store.fetchTaskRegistry()
 }
@@ -123,7 +141,7 @@ onMounted(fetchTasks)
           <div class="flex-1 min-w-0">
             <div class="truncate text-geek-text">{{ task.title }}</div>
             <div class="flex items-center gap-1 text-[10px] text-geek-text-dim">
-              <span>{{ task.created_at ? new Date(task.created_at).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) : '' }}</span>
+              <span>{{ safeFormatDate(task.created_at) }}</span>
               <span v-if="task.baseTaskId" class="text-purple-400">🔗{{ task.baseTaskId.slice(5, 13) }}</span>
             </div>
           </div>

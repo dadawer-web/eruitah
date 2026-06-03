@@ -10,6 +10,9 @@ import TerminalPanel from './components/TerminalPanel.vue'
 import ToolBar from './components/ToolBar.vue'
 import TaskList from './components/TaskList.vue'
 import PixelPet from './components/PixelPet.vue'
+import ArchitectureViewer from './components/ArchitectureViewer.vue'
+import CodeGraphViewer from './components/CodeGraphViewer.vue'
+import TourPlayer from './components/TourPlayer.vue'
 
 const store = useAgentStore()
 
@@ -394,6 +397,23 @@ onBeforeUnmount(() => {
         </div>
       </Transition>
     </Teleport>
+
+    <ArchitectureViewer
+      :visible="store.architectureVisible"
+      :graph-data="store.architectureData"
+      @close="store.hideArchitecture()"
+    />
+
+    <CodeGraphViewer
+      :visible="store.codeGraphVisible"
+      :graph-data="store.codeGraphData"
+      :is-loading="store.codeGraphLoading"
+      :active-node-id="store.tourActiveNodeId"
+      @close="store.hideCodeGraph()"
+      @analyze="store.generateGraph()"
+    />
+
+    <TourPlayer />
 
     <PixelPet />
   </div>

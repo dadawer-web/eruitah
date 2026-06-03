@@ -141,11 +141,45 @@ class SessionManager:
     def _save_session(self, session: TaskSession):
         filepath = self._task_filepath(session.id)
         try:
+            # 防空覆盖兜底：如果当前消息为空，但磁盘上已有历史记录，禁止覆盖
+            if not session.messages:
+                if os.path.exists(filepath):
+                    try:
+                        with open(filepath, "r", encoding="utf-8") as f:
+                            disk_data = json.load(f)
+                        disk_messages = disk_data.get("messages") or []
+                        if disk_messages:
+                            logger.warning(
+                                f"⚠️ 跳过保存：当前会话消息为 0，防止覆盖已有历史记录 "
+                                f"(task={session.id}, 磁盘已有 {len(disk_messages)} 条消息)"
+                            )
+                            # 用磁盘数据恢复内存中的 messages，防止后续操作继续用空列表
+                            session.messages = disk_messages
+                            return
+                    except Exception as e:
+                        logger.warning(f"读取磁盘历史记录失败，允许保存空会话: {e}")
             os.makedirs(os.path.dirname(filepath), exist_ok=True)
             with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(session.to_dict(), f, ensure_ascii=False, indent=2)
         except Exception as e:
             logger.error(f"保存任务失败 {session.id}: {e}")
+
+    def _restore_messages_from_disk(self, session: TaskSession):
+        """从磁盘恢复 session 的 messages，防止内存中空列表覆盖磁盘历史记录"""
+        if session.messages:
+            return  # 内存中已有消息，无需恢复
+        filepath = self._task_filepath(session.id)
+        if not os.path.exists(filepath):
+            return
+        try:
+            with open(filepath, "r", encoding="utf-8") as f:
+                disk_data = json.load(f)
+            disk_messages = disk_data.get("messages") or []
+            if disk_messages:
+                session.messages = disk_messages
+                logger.info(f"🔄 从磁盘恢复了 {len(disk_messages)} 条消息到 session {session.id}")
+        except Exception as e:
+            logger.warning(f"从磁盘恢复消息失败 {session.id}: {e}")
 
     def _create_physical_snapshot(self, task_id: str, work_dir: str) -> str:
         snapshot_path = self._snapshot_path(task_id)
@@ -294,6 +328,9 @@ class SessionManager:
                 old_session = self._sessions[self.current_task_id]
                 if current_messages is not None:
                     old_session.messages = current_messages
+                else:
+                    # 没有传入 current_messages 时，从磁盘恢复，防止空列表覆盖
+                    self._restore_messages_from_disk(old_session)
                 old_session.messages = old_session.messages or []
                 if current_turn is not None:
                     old_session.current_turn = current_turn
@@ -337,7 +374,14 @@ class SessionManager:
         with self._lock:
             if task_id in self._sessions:
                 session = self._sessions[task_id]
-                session.messages = messages or []
+                effective_messages = messages or []
+                # 防空覆盖：传入空消息时不覆盖磁盘上已有的历史记录
+                if not effective_messages and session.messages:
+                    logger.warning(
+                        f"⚠️ update_session_messages: 传入空消息但 session 已有 {len(session.messages)} 条，跳过覆盖"
+                    )
+                else:
+                    session.messages = effective_messages
                 session.current_turn = current_turn
                 self._save_session(session)
 

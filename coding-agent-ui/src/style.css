@@ -74,3 +74,20 @@ html, body, #app {
 .splitpanes--horizontal > .splitpanes__splitter:hover {
   border-top-color: #7c3aed !important;
 }
+
+.monaco-editor .tour-highlight-line {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+  border-left: 4px solid #3b82f6 !important;
+}
+
+.monaco-editor .tour-highlight-line:hover {
+  background-color: rgba(59, 130, 246, 0.25) !important;
+}
+
+.monaco-editor .tour-glyph-highlight {
+  background-color: #3b82f6 !important;
+  border-radius: 50%;
+  margin-left: 3px;
+  width: 6px !important;
+  height: 6px !important;
+}

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, shallowRef } from 'vue'
+import { ref, shallowRef, computed, nextTick } from 'vue'
 import { WebContainerManager } from '../utils/webcontainerManager'
 
 const LAST_PATH_KEY = 'coding-agent-last-path'
@@ -78,6 +78,20 @@ export const useAgentStore = defineStore('agent', () => {
   const wcShowPreview = ref(false)
 
   const selectedSkills = ref([])
+  const architectureVisible = ref(false)
+  const architectureData = ref({ nodes: [], edges: [] })
+  const codeGraphVisible = ref(false)
+  const codeGraphData = ref({ nodes: [], edges: [] })
+  const codeGraphLoading = ref(false)
+
+  const tourSteps = ref([])
+  const tourActiveIdx = ref(-1)
+  const tourActiveNodeId = ref(null)
+
+  const tourActiveStep = computed(() => {
+    if (tourActiveIdx.value < 0 || tourActiveIdx.value >= tourSteps.value.length) return null
+    return tourSteps.value[tourActiveIdx.value]
+  })
 
   let _wcManager = null
   let _wcOutputUnsubscribe = null
@@ -798,6 +812,17 @@ export const useAgentStore = defineStore('agent', () => {
         }
         break
 
+      case 'graph_data':
+        codeGraphData.value = data.data || { nodes: [], edges: [] }
+        codeGraphLoading.value = false
+        break
+
+      case 'code_tour_data':
+        if (Array.isArray(data.data) && data.data.length > 0) {
+          _startTour(data.data)
+        }
+        break
+
       case 'system_msg':
         pushMessage({
           role: 'agent',
@@ -1058,9 +1083,16 @@ export const useAgentStore = defineStore('agent', () => {
         const taskId = t.task_id || t.id
         if (!taskId) continue
 
-        const createdTs = t.created_at
-          ? (t.created_at > 1e12 ? t.created_at : t.created_at * 1000)
-          : Date.now()
+        let createdTs = Date.now()
+        if (t.created_at) {
+          const raw = t.created_at
+          if (typeof raw === 'number') {
+            createdTs = raw > 1e12 ? raw : raw * 1000
+          } else if (typeof raw === 'string') {
+            const parsed = new Date(raw.replace(',', '.').replace(' ', 'T')).getTime()
+            createdTs = isNaN(parsed) ? Date.now() : parsed
+          }
+        }
 
         newList.push({
           id: taskId,
@@ -1634,6 +1666,20 @@ export const useAgentStore = defineStore('agent', () => {
     unregisterEditor()
   }
 
+  function _startTour(steps) {
+    if (!Array.isArray(steps) || steps.length === 0) return
+    tourSteps.value = steps
+    tourActiveIdx.value = 0
+    _applyTourStep(steps[0])
+  }
+
+  function _applyTourStep(step) {
+    if (!step) return
+    const relPath = step.file || ''
+    const funcName = step.function || ''
+    tourActiveNodeId.value = funcName ? `${relPath}::${funcName}` : relPath
+  }
+
   return {
     ws,
     connected,
@@ -1721,5 +1767,65 @@ export const useAgentStore = defineStore('agent', () => {
     openWebContainerPreview,
     resetWebContainer,
     selectedSkills,
+    architectureVisible,
+    architectureData,
+    showArchitecture(data) {
+      architectureData.value = data || { nodes: [], edges: [] }
+      architectureVisible.value = true
+    },
+    hideArchitecture() {
+      architectureVisible.value = false
+    },
+    codeGraphVisible,
+    codeGraphLoading,
+    codeGraphData,
+    tourSteps,
+    tourActiveIdx,
+    tourActiveNodeId,
+    tourActiveStep,
+    showCodeGraph(data) {
+      codeGraphData.value = data || { nodes: [], edges: [] }
+      codeGraphVisible.value = true
+    },
+    hideCodeGraph() {
+      codeGraphVisible.value = false
+    },
+    generateGraph() {
+      if (!ws.value || ws.value.readyState !== WebSocket.OPEN) {
+        return false
+      }
+      codeGraphLoading.value = true
+      codeGraphVisible.value = true
+      codeGraphData.value = { nodes: [], edges: [] }
+      const payload = _injectIdentity({
+        type: 'system_command',
+        action: 'generate_graph',
+        work_dir: basePath.value,
+      })
+      ws.value.send(JSON.stringify(payload))
+      return true
+    },
+
+    startTour(steps) {
+      _startTour(steps)
+    },
+
+    tourNext() {
+      if (tourActiveIdx.value < 0 || tourActiveIdx.value >= tourSteps.value.length - 1) return
+      tourActiveIdx.value++
+      _applyTourStep(tourSteps.value[tourActiveIdx.value])
+    },
+
+    tourPrev() {
+      if (tourActiveIdx.value <= 0) return
+      tourActiveIdx.value--
+      _applyTourStep(tourSteps.value[tourActiveIdx.value])
+    },
+
+    stopTour() {
+      tourSteps.value = []
+      tourActiveIdx.value = -1
+      tourActiveNodeId.value = null
+    },
   }
 })

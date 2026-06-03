@@ -223,8 +223,8 @@ def _get_tool_function(name: str):
         from bash_executor import execute_bash
         return execute_bash
     elif name == "file_edit":
-        from file_editor import edit_file
-        return edit_file
+        from file_editor import execute_file_edit
+        return execute_file_edit
     elif name == "file_read":
         from file_read_tool import read_file
         return read_file

@@ -491,6 +491,39 @@ def generate_diff_patch(
 # 核心编辑函数 - 对应 TS 源码 FileEditTool.call()
 # ============================================================================
 
+def _resolve_and_validate_path(file_path: str, work_dir: str = ".") -> tuple[str, Optional[str]]:
+    """
+    路径解析与安全校验（Path Jail）
+
+    1. 将相对路径拼接到 work_dir 下
+    2. 解析为绝对路径
+    3. 校验路径不越界
+
+    Returns:
+        (abs_path, error_msg) — error_msg 为 None 表示校验通过
+    """
+    if not file_path or not file_path.strip():
+        return "", "文件路径不能为空"
+
+    file_path = file_path.strip()
+
+    if not os.path.isabs(file_path):
+        abs_work_dir = os.path.abspath(work_dir)
+        abs_file_path = os.path.normpath(os.path.join(abs_work_dir, file_path))
+    else:
+        abs_file_path = os.path.normpath(os.path.abspath(file_path))
+
+    abs_work_dir = os.path.abspath(work_dir)
+    if not abs_file_path.startswith(abs_work_dir + os.sep) and abs_file_path != abs_work_dir:
+        return abs_file_path, (
+            f"安全校验失败: 路径 '{file_path}' 解析为 '{abs_file_path}'，"
+            f"超出了工作区 '{abs_work_dir}' 范围。"
+            f"禁止使用 '../' 等方式访问工作区外的文件。"
+        )
+
+    return abs_file_path, None
+
+
 def edit_file(
     file_path: str,
     search_text: str,
@@ -498,6 +531,7 @@ def edit_file(
     replace_all: bool = False,
     session_id: str = None,
     turn: int = 0,
+    work_dir: str = ".",
 ) -> EditResult:
     """
     文件编辑核心函数 - SEARCH/REPLACE 模式
@@ -540,23 +574,15 @@ def edit_file(
         ...     print(result.diff_patch)
     """
     # ------------------------------------------------------------------
-    # 路径规范化 - 对应 TS 源码 expandPath(file_path)
+    # 路径解析与安全校验（Path Jail）
     # ------------------------------------------------------------------
-    abs_file_path = os.path.abspath(os.path.expanduser(file_path))
-
-    # ------------------------------------------------------------------
-    # 沙盒路径隔离校验
-    # ------------------------------------------------------------------
-    if work_dir and work_dir != ".":
-        try:
-            from sandbox_isolation import enforce_sandbox_path
-            abs_file_path = enforce_sandbox_path(abs_file_path, work_dir)
-        except PermissionError as e:
-            return EditResult(
-                success=False,
-                file_path=file_path,
-                error=str(e),
-            )
+    abs_file_path, path_error = _resolve_and_validate_path(file_path, work_dir)
+    if path_error:
+        return EditResult(
+            success=False,
+            file_path=file_path,
+            error=path_error,
+        )
 
     # ------------------------------------------------------------------
     # 第一步: 读取文件 - 对应 TS 源码 readFileForEdit()
@@ -739,13 +765,14 @@ def edit_file(
 def execute_file_edit(file_path: str, old_string: str, new_string: str, work_dir: str = ".") -> tuple[str, bool]:
     """执行文件编辑（供 agent_runner 调用）"""
     try:
-        original_dir = os.getcwd()
-        os.chdir(work_dir)
-
         cached = _file_cache.get(file_path)
-        result = edit_file(file_path, old_string, new_string)
 
-        os.chdir(original_dir)
+        result = edit_file(
+            file_path=file_path,
+            search_text=old_string,
+            replace_text=new_string,
+            work_dir=work_dir,
+        )
 
         if result.success:
             _file_cache.invalidate(file_path)
@@ -758,6 +785,12 @@ def execute_file_edit(file_path: str, old_string: str, new_string: str, work_dir
         else:
             if result.self_healing_hint:
                 return result.self_healing_hint, True
-            return result.error, True
+            return f"Error: {result.error}", True
+    except PermissionError as e:
+        return f"Error: 权限不足，无法写入文件 '{file_path}'。原因: {str(e)}", True
+    except OSError as e:
+        return f"Error: 文件系统错误。路径: '{file_path}'，原因: {str(e)}", True
+    except UnicodeDecodeError as e:
+        return f"Error: 文件编码错误，无法读取 '{file_path}'。原因: {str(e)}", True
     except Exception as e:
-        return f"文件编辑失败: {str(e)}", True
+        return f"Error: 文件编辑失败。路径: '{file_path}'，原因: {str(e)}", True

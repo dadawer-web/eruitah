@@ -84,6 +84,8 @@ ROUTER_PROMPT = """你是一位 CTO 级别的技术总监。你的职责是分�
 **关键：如果你判定为 webcontainer，请在 sub_task 中明确告知专家"本项目将在前端 WebContainer 中运行，请勿使用后端特有的功能（如文件系统直接操作、子进程等）"，并提醒专家不要尝试运行 npm start/dev 等命令，因为运行将由前端接管。**
 
 **你必须严格输出以下 JSON 格式，不要输出任何其他内容：**
+
+【极其重要】：你必须且只能返回合法的 JSON 对象，绝对禁止输出任何 Markdown 代码块（如 ```json）、前言、解释或自然语言！直接输出纯 JSON，不要用代码块包裹！
 ```json
 {
   "is_predefined": true/false,

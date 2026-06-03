@@ -264,11 +264,11 @@ class LSPClient:
             ['ccls'],
         ],
         'javascript': [
-            ['typescript-language-server', '--stdio'],
+            ['npx', 'typescript-language-server', '--stdio'],
             ['vscode-json-language-server', '--stdio'],
         ],
         'typescript': [
-            ['typescript-language-server', '--stdio'],
+            ['npx', 'typescript-language-server', '--stdio'],
         ],
         'java': [
             ['__jdtls__'],
@@ -293,17 +293,19 @@ class LSPClient:
     LSP_AUTO_INSTALL = {
         'python': {
             'check': ['pyright-langserver', '--version'],
-            'install': ['npm', 'install', '-g', 'pyright'],
+            'install': ['npm', 'install', '--no-save', 'pyright'],
             'name': 'pyright',
         },
         'typescript': {
-            'check': ['typescript-language-server', '--version'],
-            'install': ['npm', 'install', '-g', 'typescript-language-server', 'typescript'],
+            'check': ['npx', 'typescript-language-server', '--version'],
+            'install': ['npm', 'install', '--no-save', 'typescript-language-server', 'typescript'],
+            'install_fallback': ['npm', 'install', '--no-save', 'typescript-language-server@3.3.2', 'typescript@4.9.5'],
             'name': 'typescript-language-server',
         },
         'javascript': {
-            'check': ['typescript-language-server', '--version'],
-            'install': ['npm', 'install', '-g', 'typescript-language-server', 'typescript'],
+            'check': ['npx', 'typescript-language-server', '--version'],
+            'install': ['npm', 'install', '--no-save', 'typescript-language-server', 'typescript'],
+            'install_fallback': ['npm', 'install', '--no-save', 'typescript-language-server@3.3.2', 'typescript@4.9.5'],
             'name': 'typescript-language-server',
         },
         'cpp': {
@@ -378,6 +380,37 @@ class LSPClient:
                 )
                 if result.returncode == 0:
                     logger.info(f"✅ LSP 服务器 {install_info['name']} 安装成功，重新启动...")
+                else:
+                    stderr_lower = (result.stderr or '').lower()
+                    is_engine_error = 'ebadengine' in stderr_lower or 'unsupported engine' in stderr_lower
+                    fallback_cmd = install_info.get('install_fallback')
+                    if is_engine_error and fallback_cmd:
+                        logger.warning(f"⚠️ LSP 安装遇到引擎版本不兼容 (EBADENGINE)，降级重试: {' '.join(fallback_cmd)}")
+                        result = subprocess.run(
+                            fallback_cmd,
+                            capture_output=True, text=True, timeout=120,
+                        )
+                        if result.returncode == 0:
+                            logger.info(f"✅ LSP 服务器 {install_info['name']} 降级安装成功，重新启动...")
+                        else:
+                            logger.warning(f"LSP 降级安装也失败: {result.stderr[:200]}")
+                            result = None
+                    elif not is_engine_error and fallback_cmd:
+                        logger.warning(f"LSP 自动安装失败: {result.stderr[:200]}，尝试降级版本...")
+                        result = subprocess.run(
+                            fallback_cmd,
+                            capture_output=True, text=True, timeout=120,
+                        )
+                        if result.returncode == 0:
+                            logger.info(f"✅ LSP 服务器 {install_info['name']} 降级安装成功，重新启动...")
+                        else:
+                            logger.warning(f"LSP 降级安装也失败: {result.stderr[:200]}")
+                            result = None
+                    else:
+                        logger.warning(f"LSP 自动安装失败: {result.stderr[:200]}")
+                        result = None
+
+                if result and result.returncode == 0:
                     for cmd in commands_list:
                         try:
                             sock1, sock2 = socket.socketpair()
@@ -397,8 +430,6 @@ class LSPClient:
                             return LSPConnection(server_process, sock1, language)
                         except Exception:
                             continue
-                else:
-                    logger.warning(f"LSP 自动安装失败: {result.stderr[:200]}")
             except Exception as e:
                 logger.warning(f"LSP 自动安装异常: {e}")
 

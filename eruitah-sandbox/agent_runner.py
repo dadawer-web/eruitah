@@ -131,6 +131,11 @@ from ast_tool import (
     AST_FUNCTION_DEFINITION_TOOL_DEFINITION_OPENAI,
     AST_FUNCTION_DEFINITION_TOOL_DEFINITION_ANTHROPIC,
 )
+from tour_generator import (
+    execute_code_tour,
+    CODE_TOUR_TOOL_DEFINITION_OPENAI,
+    CODE_TOUR_TOOL_DEFINITION_ANTHROPIC,
+)
 from interactive_terminal import (
     execute_bg_service_tool,
     BG_SERVICE_TOOL_DEFINITIONS,
@@ -288,6 +293,39 @@ class StateBlackboard:
 BASE_SYSTEM_PROMPT = """你是一个受限沙盒中的「任务型 AI 编码智能体」，名为 Eruitah。
 你的生命周期严格绑定于用户当前下发的【单一任务】。你没有系统级的上下文管理权限。
 
+🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴
+🔴 【核心工作流强制路由 - 绝对不可违背】 🔴
+🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴
+
+你的核心能力之一是基于现有代码库生成"源码级互动导览 (Code Tour)"。
+
+**触发条件**：当用户的话中包含以下任意词汇或意图时：
+- "复习"、"讲解"、"梳理"、"分析"、"理解"、"怎么写"、"如何实现"
+- 并且涉及到具体的架构、模式、模块（如"线程池"、"Reactor"、"登录"、"连接"、"请求"等）
+
+**你唯一被允许的操作**：立即调用 `code_tour` 工具，将用户的查询作为 question 参数传入。
+
+**禁止行为一**：绝对禁止使用自然语言直接解释概念！
+**禁止行为二**：绝对禁止使用 bash 或 file_edit 试图自己去写一套教程代码或生成文件给用户看！
+**禁止行为三**：绝对禁止用 grep/file_read 等工具搜索代码后自己总结！
+
+**你的唯一目标**：传入查询关键字给 `code_tour` 工具，工具会自动结合本地知识库生成多步导览路径。
+
+**正确示例**：
+- 用户: "带我复习 Reactor 模式" → 你必须调用 code_tour(question="复习 Reactor 模式")
+- 用户: "梳理一下新连接的处理流程" → 你必须调用 code_tour(question="梳理新连接的处理流程")
+- 用户: "讲解线程池的实现" → 你必须调用 code_tour(question="讲解线程池的实现")
+- 用户: "分析 HTTP 请求链路" → 你必须调用 code_tour(question="分析 HTTP 请求链路")
+- 用户: "这个项目的登录是怎么写的" → 你必须调用 code_tour(question="登录功能的实现")
+
+**调用 code_tour 后的输出规范**：
+1. 工具会返回导览结果，前端会自动接管展示
+2. 你只需用一句话确认即可，例如："🗺️ 代码导览已生成，请在底部播放器中逐步查看。"
+3. 绝对禁止在回复中重复输出导览的 JSON 内容
+4. 绝对禁止对导览结果进行二次总结或改写
+
+🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴
+
 🚨🚨🚨 【绝对铁律 #0 - 禁止盲目行动，必须先问人！】🚨🚨🚨
 你拥有 ask_user 工具。这是你最重要的工具，没有之一。
 当用户的指令模糊不清时，你**绝对禁止**自己猜测意图并直接动手写代码！
@@ -336,7 +374,8 @@ BASE_SYSTEM_PROMPT = """你是一个受限沙盒中的「任务型 AI 编码智�
 5. grep - 正则表达式代码搜索
 6. **get_code_structure** - 🔭 AST 代码结构透视（获取文件的类名、函数签名、行号）
 7. **get_function_definition** - 🎯 AST 函数精准定位（直接获取函数完整代码块）
-8. semantic_search - 语义代码搜索（基于 AST，比 grep 更精准）
+8. **code_tour** - 🗺️ 代码导览路径生成器（根据项目依赖图规划代码阅读路径，返回结构化 JSON 导览）
+9. semantic_search - 语义代码搜索（基于 AST，比 grep 更精准）
 15. **semantic_search_code** - 🔍 Codebase RAG 语义搜索（用自然语言描述功能，返回最相关的代码片段！不确定功能在哪个文件时优先使用）
 9. lsp_tool - LSP 语言服务器（查找定义、引用、文件大纲）
 10. git_tool - Git 版本控制（查看状态、差异、日志、提交）
@@ -538,6 +577,50 @@ dispatch_subtasks(subtasks=[
 🚫 【铁律二：视觉工具使用规范】
 如果需要截图或查看网页，严禁使用 `browser_vision` 工具（该工具不存在且已被废弃）。你必须使用 MCP 提供的真实工具：先调用 `mcp_puppeteer_puppeteer_navigate` 打开网址，然后调用 `mcp_puppeteer_puppeteer_screenshot` 获取截图。如果你尝试调用 `browser_vision`，系统将返回错误并要求你重新使用正确的 MCP 工具。
 """
+
+_TOUR_TRIGGER_WORDS = {
+    "复习", "讲解", "梳理", "导览", "依赖关系", "调用链路", "原理解析",
+    "执行流程", "调用链", "链路", "调用关系", "执行路径",
+    "代码流程", "代码结构", "实现原理", "工作原理",
+    "给我讲", "帮我理", "走一遍", "过一遍",
+    "分析", "理解",
+}
+
+_TOUR_EXCLUDE_WORDS = {
+    "写一段", "写一个", "帮我写", "生成", "创建",
+    "修改", "重构", "编写", "开发", "写个", "写个示例",
+    "简单示例", "代码示例", "写代码", "帮我生成", "帮我创建",
+    "新增", "添加", "删除", "修复", "fix", "bug",
+    "实现一个", "实现一个简单",
+}
+
+_TOUR_TOPIC_WORDS = {
+    "线程池", "reactor", "连接", "请求", "登录", "注册",
+    "路由", "中间件", "数据库", "缓存", "消息", "事件",
+    "socket", "http", "tcp", "udp", "epoll", "select",
+    "pool", "queue", "handler", "server", "client",
+    "dispatcher", "scheduler", "observer", "factory",
+    "singleton", "adapter", "proxy", "decorator",
+    "模式", "架构", "模块", "组件", "框架",
+    "初始化", "启动", "关闭", "销毁", "配置",
+    "connection", "request", "response", "session",
+    "thread", "process", "async", "sync", "callback",
+    "代码", "项目", "系统", "流程", "依赖",
+    "调用", "链路",
+}
+
+def _is_tour_intent(user_message: str) -> bool:
+    if not user_message or not isinstance(user_message, str):
+        return False
+    msg_lower = user_message.lower()
+    if any(w in msg_lower for w in _TOUR_EXCLUDE_WORDS):
+        return False
+    has_trigger = any(w in msg_lower for w in _TOUR_TRIGGER_WORDS)
+    has_topic = any(w in msg_lower for w in _TOUR_TOPIC_WORDS)
+    return has_trigger and has_topic
+
+def _extract_tour_question(user_message: str) -> str:
+    return user_message.strip()[:200]
 
 # ============================================================================
 # Markdown 正则拦截器 - 当 Function Calling 失败时的备用方案
@@ -858,6 +941,7 @@ def _get_tools_definition(provider: str = "openai") -> list[dict]:
             RUN_AUTO_TEST_TOOL_DEFINITION_ANTHROPIC,
             AST_CODE_STRUCTURE_TOOL_DEFINITION_ANTHROPIC,
             AST_FUNCTION_DEFINITION_TOOL_DEFINITION_ANTHROPIC,
+            CODE_TOUR_TOOL_DEFINITION_ANTHROPIC,
             {
                 "name": "read_project_memory",
                 "description": "搜索项目记忆库，查找以前踩过的坑和解决方案。遇到 Bug 时先查记忆，避免重复踩坑。",
@@ -1030,6 +1114,7 @@ def _get_tools_definition(provider: str = "openai") -> list[dict]:
             RUN_AUTO_TEST_TOOL_DEFINITION_OPENAI,
             AST_CODE_STRUCTURE_TOOL_DEFINITION_OPENAI,
             AST_FUNCTION_DEFINITION_TOOL_DEFINITION_OPENAI,
+            CODE_TOUR_TOOL_DEFINITION_OPENAI,
             {
                 "type": "function",
                 "function": {
@@ -1663,6 +1748,40 @@ def _execute_tool_local(
             result_str, is_error = execute_get_function_definition(file_path, function_name, work_dir)
             return result_str, is_error, meta
 
+        elif name == "code_tour":
+            question = args.get("question", "")
+            if not question:
+                return "问题不能为空", True, meta
+            tour_context = args.get("context", "")
+            tour_work_dir = args.get("work_dir", work_dir)
+            tour_provider = args.get("provider", "openai")
+            tour_model = args.get("model")
+            result_str, is_error = execute_code_tour(
+                question=question,
+                context=tour_context,
+                work_dir=tour_work_dir,
+                api_key=api_key,
+                model=tour_model or model,
+                base_url=base_url,
+                provider=tour_provider,
+            )
+            if not is_error:
+                import re as _re
+                json_match = _re.search(r'\[.*\]', result_str, _re.DOTALL)
+                if json_match:
+                    try:
+                        tour_json = json.loads(json_match.group())
+                        meta["code_tour_data"] = tour_json
+                        meta["code_tour_question"] = question
+                        result_str = (
+                            "✅ 代码导览路径已生成并发送给前端播放器。\n"
+                            "你不需要再输出导览路径的 JSON 内容，前端已经收到了。\n"
+                            "请用一句话简要告诉用户导览已生成即可，例如：'🗺️ 代码导览已生成，请在底部播放器中逐步查看。'"
+                        )
+                    except json.JSONDecodeError:
+                        pass
+            return result_str, is_error, meta
+
         elif name in ("start_background_service", "read_service_logs", "kill_service"):
             result_str, is_error = execute_bg_service_tool(name, **args)
             return result_str, is_error, meta
@@ -1761,6 +1880,7 @@ def route_task(
                 api_key=api_key,
                 model=model,
                 base_url=base_url,
+                response_format={"type": "json_object"},
             )
 
         text = text.strip()
@@ -1862,6 +1982,65 @@ def run_agent(
     rewind_system.load_checkpoints(session_id)
 
     blackboard = StateBlackboard()
+
+    # 🗺️ 短路路由：导览意图时，跳过 LLM，直接本地执行 code_tour
+    if _is_tour_intent(user_input) and not initial_messages:
+        logger.info(f"🗺️ [短路路由] 检测到代码导览意图，跳过 LLM 直接本地执行 | 原始输入: {user_input[:80]}")
+        yield {"type": "system_alert", "content": "🗺️ 检测到代码讲解请求，正在生成代码导览..."}
+        try:
+            from tour_generator import execute_code_tour
+            result_str, is_error = execute_code_tour(
+                question=user_input,
+                work_dir=work_dir,
+                api_key=api_key,
+                model=model,
+                base_url=base_url,
+                provider=provider,
+            )
+            if not is_error:
+                import re as _re
+                import json as _json
+                json_match = _re.search(r'\[.*\]', result_str, _re.DOTALL)
+                if json_match:
+                    try:
+                        tour_json = _json.loads(json_match.group())
+                        yield {
+                            "type": "code_tour_data",
+                            "data": tour_json,
+                            "question": user_input,
+                        }
+                        yield {
+                            "type": "assistant",
+                            "content": "🗺️ 代码导览已生成，请在底部播放器中逐步查看。",
+                            "isChat": True,
+                        }
+                        logger.info(f"🗺️ [短路路由] 导览生成成功，共 {len(tour_json)} 步")
+                        return
+                    except _json.JSONDecodeError:
+                        pass
+                yield {
+                    "type": "assistant",
+                    "content": result_str,
+                    "isChat": True,
+                }
+                return
+            else:
+                yield {
+                    "type": "assistant",
+                    "content": f"❌ 代码导览生成失败: {result_str}",
+                    "isChat": True,
+                    "isError": True,
+                }
+                return
+        except Exception as e:
+            logger.error(f"🗺️ [短路路由] 导览生成异常: {e}", exc_info=True)
+            yield {
+                "type": "assistant",
+                "content": f"❌ 代码导览生成异常: {str(e)}",
+                "isChat": True,
+                "isError": True,
+            }
+            return
 
     if initial_messages:
         messages = initial_messages.copy()
@@ -2040,6 +2219,7 @@ def run_agent(
     format_error_count = 0
     thinking_mode_detected = False
     has_code_changes = False
+    tour_already_generated = False
 
     for turn in range(start_turn, max_turns + 1):
         try:
@@ -2064,6 +2244,19 @@ def run_agent(
 
         messages, is_compacted = memory_manager.check_and_compact(messages, turn_count=turn)
         if is_compacted:
+            # 折叠后立即同步到 session，防止循环异常退出时丢失折叠结果
+            if task_id:
+                try:
+                    from task_manager import get_task_manager
+                    tm = get_task_manager(user_id=user_id)
+                    tm.update_session_messages(
+                        task_id=task_id,
+                        messages=messages,
+                        current_turn=turn,
+                    )
+                    logger.info(f"📦 折叠后已同步保存 {len(messages)} 条消息到 session")
+                except Exception as e:
+                    logger.warning(f"折叠后同步保存 session 失败: {e}")
             yield {
                 "type": "context_compact",
                 "data": {
@@ -2094,6 +2287,19 @@ def run_agent(
                 if name in PLAN_MODE_TOOLS:
                     filtered_tools.append(t)
             logger.info(f"🔒 PM模式: 工具列表已过滤 {len(tools)} → {len(filtered_tools)} (仅保留: {PLAN_MODE_TOOLS})")
+            tools = filtered_tools
+
+        # 🗺️ 动态工具过滤：讲解/复习意图时，绝对白名单——仅保留 code_tour
+        if _is_tour_intent(user_input):
+            filtered_tools = []
+            for t in tools:
+                func_info = t.get("function", t)
+                name = func_info.get("name", "")
+                if name == "code_tour":
+                    filtered_tools.append(t)
+            if len(filtered_tools) < len(tools):
+                logger.info(f"🗺️ [导览模式] 工具列表已过滤 {len(tools)} → {len(filtered_tools)} (绝对白名单: 仅 code_tour)")
+                yield {"type": "system_alert", "content": "🗺️ 检测到代码讲解请求，已切换到导览模式（仅保留 code_tour 工具）"}
             tools = filtered_tools
 
         try:
@@ -2141,6 +2347,37 @@ def run_agent(
                 logger.info("🧠 检测到思维链模式 (reasoning_content)，后续请求将保留推理内容")
 
             logger.info(f"🤖 LLM 返回: text 长度={len(text) if text else 0}, tool_calls 数量={len(tool_calls)}")
+
+            # 🗺️ 代码导览意图拦截：检测用户是否在请求复习/讲解，但 LLM 没有调用 code_tour
+            tour_intent_violation = False
+            if _is_tour_intent(user_input) and not tour_already_generated:
+                called_tour = tool_calls and any(tc.get('name') == 'code_tour' for tc in tool_calls)
+                if not called_tour:
+                    tour_intent_violation = True
+                    tour_question = _extract_tour_question(user_input)
+                    logger.warning(f"🗺️ [导览意图拦截] 用户请求讲解/复习，但 LLM 未调用 code_tour！强制注入重试指令。")
+                    logger.warning(f"   用户输入: {user_input[:100]}")
+                    logger.warning(f"   LLM 工具调用: {[tc.get('name', 'unknown') for tc in tool_calls] if tool_calls else '无'}")
+
+                    if text:
+                        yield {"type": "system_alert", "content": "检测到 Agent 试图用文本/代码回答讲解请求，正在强制拦截并重定向到导览工具..."}
+
+                    messages.append(_build_assistant_msg(text[:500] if text else "(无工具调用)", reasoning_content=reasoning_content))
+                    messages.append({
+                        "role": "user",
+                        "content": (
+                            "🚨🚨🚨 你违规了！🚨🚨🚨\n\n"
+                            "用户正在请求代码讲解/复习/梳理，你 **必须** 调用 `code_tour` 工具！\n\n"
+                            "禁止行为：\n"
+                            "- 禁止用自然语言直接解释概念\n"
+                            "- 禁止用 bash/file_edit 自己写教程代码\n"
+                            "- 禁止用 grep/file_read 搜索后自己总结\n\n"
+                            f"请立即调用 code_tour(question=\"{tour_question}\")！\n"
+                            "这是系统强制指令，不可违背！"
+                        )
+                    })
+                    continue
+
             if tool_calls:
                 logger.info(f"🔧 工具调用: {[tc.get('name', 'unknown') for tc in tool_calls]}")
                 file_related = any(tc.get('name', '') in ('file_edit', 'file_write', 'bash', 'theseus_rewrite') for tc in tool_calls)
@@ -2293,6 +2530,24 @@ def run_agent(
                 continue
 
             if not tool_calls:
+                # 🗺️ 导览意图二次拦截：无工具调用 + 用户意图是复习/讲解
+                if _is_tour_intent(user_input) and not tour_already_generated and text:
+                    tour_question = _extract_tour_question(user_input)
+                    logger.warning(f"🗺️ [导览意图拦截-无工具] 用户请求讲解，LLM 输出纯文本，强制重定向！")
+                    yield {"type": "system_alert", "content": "Agent 试图用纯文本回答讲解请求，正在强制重定向到导览工具..."}
+                    messages.append(_build_assistant_msg(text[:300], reasoning_content=reasoning_content))
+                    messages.append({
+                        "role": "user",
+                        "content": (
+                            "🚨🚨🚨 你违规了！🚨🚨🚨\n\n"
+                            "用户正在请求代码讲解/复习/梳理，你 **必须** 调用 `code_tour` 工具！\n"
+                            "禁止用自然语言直接解释，禁止用 bash/file_edit 自己写教程代码！\n\n"
+                            f"请立即调用 code_tour(question=\"{tour_question}\")！\n"
+                            "这是系统强制指令，不可违背！"
+                        )
+                    })
+                    continue
+
                 format_error_count += 1
                 if text and len(text) > 2000:
                     logger.warning(f"🚨 [系统拦截] 模型输出了 {len(text)} 字符的纯文本，无工具调用！强制截断！")
@@ -2431,6 +2686,7 @@ def run_agent(
             error_logs = []
             turn_tool_summary = []
             format_error_count = 0
+            _tour_break = False
 
             for tc in tool_calls:
                 name = tc.get("name", "unknown")
@@ -2617,6 +2873,21 @@ def run_agent(
 
                 if "ask_user" not in tool_meta:
                     yield tool_end_event
+
+                if name == "code_tour" and not is_error and tool_meta.get("code_tour_data"):
+                    yield {
+                        "type": "code_tour_data",
+                        "data": tool_meta["code_tour_data"],
+                        "question": tool_meta.get("code_tour_question", ""),
+                    }
+                    tour_already_generated = True
+                    yield {
+                        "type": "assistant",
+                        "content": "🗺️ 代码导览已生成，请在底部播放器中逐步查看。",
+                        "isChat": True,
+                    }
+                    logger.info(f"🗺️ code_tour 工具执行成功，设置 _tour_break 标志终止 Agent 循环")
+                    _tour_break = True
 
                 if not is_error:
                     tool_desc = name
@@ -2832,6 +3103,10 @@ def run_agent(
                         "content": tool_result_content,
                     })
 
+            if _tour_break:
+                logger.info(f"🗺️ _tour_break 为 True，跳出 Agent 主循环")
+                break
+
             # 只有在有工具调用结果时才添加到消息列表
             if tool_results_for_api:
                 # 对于 OpenAI 格式，需要先添加 assistant 消息（带 tool_calls）
@@ -2935,6 +3210,20 @@ def run_agent(
             yield {"type": "agent_status", "status": "ERROR"}
             yield {"type": "error", "data": f"Agent 执行异常: {str(e)}"}
             break
+
+    # Agent 循环结束后，最终保存消息到 session，防止 break 退出时丢失
+    if task_id and messages:
+        try:
+            from task_manager import get_task_manager
+            tm = get_task_manager(user_id=user_id)
+            tm.update_session_messages(
+                task_id=task_id,
+                messages=messages,
+                current_turn=turn,
+            )
+            logger.info(f"💾 Agent 循环结束，最终保存 {len(messages)} 条消息到 session")
+        except Exception as e:
+            logger.warning(f"Agent 循环结束后最终保存失败: {e}")
 
     yield {"type": "status", "data": f"Agent 任务完成 (共 {turn-1} 轮)"}
     yield {"type": "agent_status", "status": "DONE"}
@@ -3095,6 +3384,7 @@ def _call_openai(
     base_url: str | None,
     max_retries: int = 3,
     force_tool_call: bool = False,
+    response_format: dict | None = None,
 ) -> tuple[str, list[dict], str | None]:
     """
     调用 OpenAI 兼容 API (带主备双活 + 指数退避重试 + DashScope 终极防幻觉解析)
@@ -3127,6 +3417,9 @@ def _call_openai(
                 logger.warning(f"🔒 强制工具调用模式已激活 (连续格式错误 ≥ 2)")
             else:
                 request_kwargs["tool_choice"] = "auto"
+
+        if response_format:
+            request_kwargs["response_format"] = response_format
 
         return client.chat.completions.create(**request_kwargs)
 
@@ -3264,6 +3557,10 @@ def _call_openai(
                     "swarm_review": "coder_reviewer_swarm",
                     "code_review": "coder_reviewer_swarm",
                     "review_code": "coder_reviewer_swarm",
+                    "generate_code_tour": "code_tour",
+                    "tour_generator": "code_tour",
+                    "code_tour_generator": "code_tour",
+                    "generate_tour": "code_tour",
                 }
 
                 VALID_TOOLS = {
@@ -3276,6 +3573,7 @@ def _call_openai(
                     "auto_test", "run_auto_test", "computer_use",
                     "read_project_memory", "record_learning",
                     "get_code_structure", "get_function_definition",
+                    "code_tour",
                     "start_background_service", "read_service_logs", "kill_service",
                     "coder_reviewer_swarm",
                 }

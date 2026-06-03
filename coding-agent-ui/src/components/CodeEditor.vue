@@ -216,7 +216,138 @@ watch(() => store.currentFile, () => {
   nextTick(() => updateMarkers())
 })
 
+let tourDecorations = []
+
+function clearTourHighlights() {
+  try {
+    if (editor && tourDecorations.length) {
+      tourDecorations = editor.deltaDecorations(tourDecorations, [])
+    }
+  } catch (e) {
+    console.warn('[CodeEditor] clearTourHighlights failed:', e)
+  }
+  tourDecorations = []
+}
+
+function applyTourHighlight(step) {
+  if (!editor || !editor.revealLinesInCenter) {
+    console.warn('[CodeEditor] Editor instance not ready for tour highlight')
+    return
+  }
+
+  try {
+    clearTourHighlights()
+
+    const startLine = step.start_line || step.startLine
+    const endLine = step.end_line || step.endLine || startLine
+    if (!startLine) return
+
+    editor.revealLinesInCenter(startLine, endLine)
+    editor.setPosition({ lineNumber: startLine, column: 1 })
+
+    if (!monacoInstance) return
+
+    const newDecorations = []
+    for (let line = startLine; line <= endLine; line++) {
+      newDecorations.push({
+        range: new monacoInstance.Range(line, 1, line, 1),
+        options: {
+          isWholeLine: true,
+          className: 'tour-highlight-line',
+          glyphMarginClassName: 'tour-glyph-highlight',
+          overviewRuler: {
+            color: '#3b82f6',
+            position: monacoInstance.OverviewRulerLane.Full,
+          },
+        },
+      })
+    }
+
+    tourDecorations = editor.deltaDecorations([], newDecorations)
+
+    setTimeout(() => {
+      if (editor && editor.focus) {
+        try { editor.focus() } catch (_) {}
+      }
+    }, 120)
+  } catch (e) {
+    console.error('[CodeEditor] applyTourHighlight failed:', e)
+  }
+}
+
+async function loadFileForTour(filePath) {
+  const existingIdx = store.openFiles.findIndex(f => f.path === filePath || f.path.endsWith(filePath.replace(/^\//, '')))
+  if (existingIdx >= 0) {
+    const file = store.openFiles[existingIdx]
+    if (file.code && file.code.length > 0) {
+      store.switchToFile(existingIdx)
+      store.closeMermaidView()
+      return true
+    }
+  }
+
+  try {
+    const uid = store.userId || 0
+    const fullPath = filePath.startsWith('/') ? filePath : `${store.basePath}/${filePath}`
+    const resp = await fetch(`/api/v1/file?path=${encodeURIComponent(fullPath)}&user_id=${uid}`)
+    if (!resp.ok) return false
+    const data = await resp.json()
+    const content = data.content || ''
+    if (!content) return false
+
+    const matchIdx = store.openFiles.findIndex(f => f.path === filePath || f.path === fullPath)
+    if (matchIdx >= 0) {
+      store.openFiles[matchIdx].code = content
+      store.switchToFile(matchIdx)
+    } else {
+      store.openFiles.push({ path: fullPath, code: content })
+      store.switchToFile(store.openFiles.length - 1)
+    }
+
+    if (editor) {
+      const model = editor.getModel()
+      if (model) {
+        model.setValue(content)
+      }
+    }
+
+    store.closeMermaidView()
+    return true
+  } catch (e) {
+    console.error('[CodeEditor] loadFileForTour failed:', e)
+    return false
+  }
+}
+
+watch(() => store.tourActiveStep, async (step) => {
+  if (!step) {
+    clearTourHighlights()
+    return
+  }
+
+  try {
+    const relPath = step.file || ''
+    const fullFilePath = relPath.startsWith('/') ? relPath : `${store.basePath}/${relPath}`
+    const currentPath = store.currentFile || ''
+    const needsFileSwitch = currentPath !== fullFilePath && currentPath !== relPath
+
+    if (needsFileSwitch) {
+      const loaded = await loadFileForTour(fullFilePath)
+      if (loaded) {
+        await nextTick()
+        applyTourHighlight(step)
+      }
+    } else {
+      store.closeMermaidView()
+      applyTourHighlight(step)
+    }
+  } catch (e) {
+    console.error('[CodeEditor] tourActiveStep watcher failed:', e)
+  }
+})
+
 onBeforeUnmount(() => {
+  clearTourHighlights()
   store.unregisterEditor()
   if (editor) {
     editor.dispose()
@@ -293,3 +424,23 @@ watch(() => store.activeMermaidIdx, (val) => {
     <div v-show="store.activeMermaidIdx < 0" ref="editorContainer" class="flex-1 min-h-0"></div>
   </div>
 </template>
+
+<style scoped>
+:deep(.tour-highlight-line) {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+  border-left: 4px solid #3b82f6 !important;
+  transition: background-color 0.2s ease;
+}
+
+:deep(.tour-highlight-line:hover) {
+  background-color: rgba(59, 130, 246, 0.25) !important;
+}
+
+:deep(.tour-glyph-highlight) {
+  background-color: #3b82f6 !important;
+  border-radius: 50%;
+  margin-left: 3px;
+  width: 6px !important;
+  height: 6px !important;
+}
+</style>

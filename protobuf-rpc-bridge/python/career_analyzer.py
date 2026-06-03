@@ -684,12 +684,10 @@ async def analyze_career(
         return None
 
     if not git_diff:
-        logger.info(f"[CareerAnalyzer] No code files, using task description only for user={user_id}")
-        fallback_skills = _fallback_skills_from_code(task_description, "")
-        if fallback_skills:
-            result = _build_fallback_result(fallback_skills, task_description, "")
-            logger.info(f"[CareerAnalyzer] Task-desc fallback: skills={fallback_skills}")
-            return result
+        logger.info(
+            f"[CareerAnalyzer] No code files modified for user={user_id}, "
+            f"skipping analysis (no physical code changes = no skill XP)"
+        )
         return None
 
     context_chars = len(git_diff) + len(task_description)

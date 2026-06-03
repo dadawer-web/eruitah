@@ -325,29 +325,64 @@ async def _run_agent_async(
                             f"[Supervisor] 检测到图片输入，直接指定视觉架构师 | 图片数: {len(effective_images)}"
                         )
                     else:
-                        loop.call_soon_threadsafe(queue.put_nowait, {
-                            "type": "status",
-                            "data": "正在分析任务，选择专家...",
-                        })
+                        from agent_runner import _is_tour_intent
 
-                        from agent_runner import route_task
-                        route_result = route_task(
-                            user_message=user_input,
-                            api_key=api_key,
-                            model=model,
-                            base_url=base_url,
-                            provider=provider,
-                            images=effective_images,
-                        )
+                        if _is_tour_intent(user_input):
+                            route_result = {
+                                "is_predefined": True,
+                                "target_agent_name": "code_tour_guide",
+                                "dynamic_system_prompt": "",
+                                "sub_task": f"用户请求讲解知识点。请立即使用 code_tour 工具，将用户的需求：\"{user_input}\"作为 question 参数传入并执行。不要做任何其他操作。",
+                            }
+                            expert_label = "code_tour_guide (代码导览)"
+                            effective_input = route_result["sub_task"]
 
-                        is_predefined = route_result.get("is_predefined", True)
-                        target_agent = route_result.get("target_agent_name", "general_coder")
-                        sub_task = route_result.get("sub_task", user_input)
-                        dynamic_prompt = route_result.get("dynamic_system_prompt", "")
-                        cto_execution_env = route_result.get("execution_env", "native")
+                            base_prompt = build_system_prompt(work_dir)
+                            persona_prompt = base_prompt
 
-                        expert_label = target_agent if is_predefined else "动态生成的专家"
-                        effective_input = sub_task
+                            is_predefined = True
+                            target_agent = "code_tour_guide"
+                            sub_task = effective_input
+                            dynamic_prompt = ""
+                            cto_execution_env = "native"
+
+                            logger.info(
+                                f"[Supervisor] 🗺️ 检测到代码导览意图，跳过 CTO 路由，直接进入导览模式 | 原始输入: {user_input[:60]}"
+                            )
+
+                            loop.call_soon_threadsafe(queue.put_nowait, {
+                                "type": "task_routed",
+                                "data": {
+                                    "is_predefined": True,
+                                    "target_agent": "code_tour_guide",
+                                    "sub_task": effective_input[:80],
+                                    "mode": "tour",
+                                },
+                            })
+                        else:
+                            loop.call_soon_threadsafe(queue.put_nowait, {
+                                "type": "status",
+                                "data": "正在分析任务，选择专家...",
+                            })
+
+                            from agent_runner import route_task
+                            route_result = route_task(
+                                user_message=user_input,
+                                api_key=api_key,
+                                model=model,
+                                base_url=base_url,
+                                provider=provider,
+                                images=effective_images,
+                            )
+
+                            is_predefined = route_result.get("is_predefined", True)
+                            target_agent = route_result.get("target_agent_name", "general_coder")
+                            sub_task = route_result.get("sub_task", user_input)
+                            dynamic_prompt = route_result.get("dynamic_system_prompt", "")
+                            cto_execution_env = route_result.get("execution_env", "native")
+
+                            expert_label = target_agent if is_predefined else "动态生成的专家"
+                            effective_input = sub_task
 
                         logger.info(
                             f"[Supervisor] 需求拆解完毕，已生成动态专家设定: {expert_label}，"
@@ -997,6 +1032,27 @@ async def _handle_system_command(websocket, data: dict, safe_send):
         await safe_send({"type": "system_msg", "content": f"🗑️ 任务「{session.summary[:30]}」已删除"})
         return
 
+    elif action == "generate_graph":
+        try:
+            from project_grapher import build_project_graph
+            graph_work_dir = data.get("work_dir", SANDBOX_DIR)
+            logger.info(f"🏗️ 生成项目架构图: {graph_work_dir}")
+            graph_data = build_project_graph(graph_work_dir)
+            node_count = len(graph_data.get("nodes", []))
+            edge_count = len(graph_data.get("edges", []))
+            logger.info(f"🏗️ 架构图生成完成: {node_count} 节点, {edge_count} 边")
+            await safe_send({
+                "type": "graph_data",
+                "data": graph_data,
+            })
+        except Exception as e:
+            logger.error(f"生成架构图失败: {e}")
+            await safe_send({
+                "type": "system_msg",
+                "content": f"❌ 架构图生成失败: {str(e)}",
+            })
+        return
+
     else:
         await safe_send({
             "type": "system_msg",
@@ -1107,13 +1163,17 @@ async def websocket_coding(websocket: WebSocket, user_id: int = 0):
     ws_connected = True
     effective_user_id = user_id if user_id else 0
     has_analyzed = False
+    skip_career_analysis = False
 
     async def safe_trigger_analysis(uid: int, tid: str, wdir: str):
-        nonlocal has_analyzed
+        nonlocal has_analyzed, skip_career_analysis
         if has_analyzed:
             return
         has_analyzed = True
         if not uid or uid <= 0 or not tid:
+            return
+        if skip_career_analysis:
+            logger.info(f"ℹ️ 当前为纯导览/讲解任务，已在最外层短路，跳过职业增量分析启动。用户: {uid}, 任务: {tid}")
             return
         logger.info(f"🛡️ 启动全量代码增量分析，用户: {uid}, 任务: {tid}")
         try:
@@ -1196,6 +1256,12 @@ async def websocket_coding(websocket: WebSocket, user_id: int = 0):
             msg_type = data.get("type", "")
             user_input = data.get("task") or data.get("prompt") or data.get("content", "")
             images = data.get("images") or []
+
+            if user_input and msg_type in ("chat_new_task", "chat"):
+                from agent_runner import _is_tour_intent
+                if _is_tour_intent(user_input):
+                    skip_career_analysis = True
+                    logger.info(f"ℹ️ 检测到导览/讲解意图，设置 skip_career_analysis=True")
             if images and not isinstance(images, list):
                 images = [images]
             skills = data.get("skills") or []
@@ -1581,14 +1647,20 @@ async def websocket_coding(websocket: WebSocket, user_id: int = 0):
 
             if task_id:
                 logger.info(f"💾 任务 {task_id} Agent 循环结束 (消息已由 run_agent 内部每轮保存)")
-                await safe_trigger_analysis(effective_user_id, task_id, work_dir)
+                if not skip_career_analysis:
+                    await safe_trigger_analysis(effective_user_id, task_id, work_dir)
+                else:
+                    logger.info(f"ℹ️ 当前为纯导览/讲解任务，已在最外层短路，跳过职业增量分析启动。")
 
             task_id = None
 
     except WebSocketDisconnect:
         logger.info("WebSocket 客户端断开连接")
         if task_id:
-            await safe_trigger_analysis(effective_user_id, task_id, work_dir)
+            if not skip_career_analysis:
+                await safe_trigger_analysis(effective_user_id, task_id, work_dir)
+            else:
+                logger.info(f"ℹ️ 当前为纯导览/讲解任务，已在最外层短路，跳过职业增量分析启动。")
     except Exception as e:
         logger.error(f"WebSocket 异常: {e}")
         await safe_send({"type": "error", "data": str(e)})

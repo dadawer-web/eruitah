@@ -149,6 +149,16 @@ watch(() => store.messages.length, async () => {
   if (chatContainer.value) {
     chatContainer.value.scrollTop = chatContainer.value.scrollHeight
   }
+  for (let i = 0; i < store.messages.length; i++) {
+    const msg = store.messages[i]
+    if (!_processedTourMsgs.has(i)) {
+      const tourData = isCodeTourContent(msg.content)
+      if (tourData && !store.tourSteps.length) {
+        _processedTourMsgs.add(i)
+        store.startTour(tourData)
+      }
+    }
+  }
 })
 
 function handleSend() {
@@ -245,11 +255,58 @@ function getMsgType(msg) {
   if (msg.msgType === 'agent_state') return 'agent_state'
   if (msg.msgType === 'system_alert') return 'system_alert'
   if (msg.msgType === 'context_update') return 'context_update'
+  if (msg.isChat && isCodeTourContent(msg.content)) return 'code_tour'
   if (msg.isChat) return 'chat'
   if (msg.isError) return 'error'
   if (msg.isFinish) return 'finish'
   if (msg.isQuestion) return 'question'
+  if (!msg.isChat && !msg.isError && !msg.isFinish && !msg.isQuestion && isCodeTourContent(msg.content)) return 'code_tour'
   return 'default'
+}
+
+const _processedTourMsgs = new Set()
+
+function isCodeTourContent(content) {
+  if (!content || typeof content !== 'string') return null
+  let text = content.trim()
+  const fenceMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/)
+  if (fenceMatch) {
+    text = fenceMatch[1].trim()
+  }
+  const bracketStart = text.indexOf('[')
+  const bracketEnd = text.lastIndexOf(']')
+  if (bracketStart === -1 || bracketEnd === -1 || bracketEnd <= bracketStart) return null
+  const jsonCandidate = text.substring(bracketStart, bracketEnd + 1)
+  try {
+    const parsed = JSON.parse(jsonCandidate)
+    if (
+      Array.isArray(parsed) &&
+      parsed.length > 0 &&
+      parsed.every(item =>
+        typeof item === 'object' &&
+        item !== null &&
+        'step' in item &&
+        'file' in item &&
+        'function' in item
+      )
+    ) {
+      return parsed
+    }
+  } catch {
+    return null
+  }
+  return null
+}
+
+function checkAndStartTour(msg, idx) {
+  if (_processedTourMsgs.has(idx)) return
+  const tourData = isCodeTourContent(msg.content)
+  if (tourData) {
+    _processedTourMsgs.add(idx)
+    if (!store.tourSteps.length) {
+      store.startTour(tourData)
+    }
+  }
 }
 
 function addImageFile(file) {
@@ -425,6 +482,36 @@ function handlePaste(e) {
               :key="f"
               class="context-file-tag"
             >{{ f }}</span>
+          </div>
+
+          <!-- ═══ code_tour 代码导览卡片 ═══ -->
+          <div v-if="getMsgType(msg) === 'code_tour'" class="code-tour-card" :data-idx="idx">
+            <div
+              class="flex items-center gap-3 px-4 py-3 rounded-lg border backdrop-blur-sm"
+              style="background: rgba(5, 46, 22, 0.3); border-color: rgba(52, 211, 153, 0.25);"
+            >
+              <div class="w-9 h-9 rounded-lg flex items-center justify-center text-base shrink-0"
+                style="background: rgba(52, 211, 153, 0.1); border: 1px solid rgba(52, 211, 153, 0.3);">
+                🗺️
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-[11px] font-bold" style="color: #34d399;">
+                  源码级导览已生成
+                </div>
+                <div class="text-[10px] mt-0.5" style="color: #6ee7b7; opacity: 0.7;">
+                  为您生成了源码级导览，请在底部控制台点击播放查看
+                </div>
+              </div>
+              <button
+                @click="checkAndStartTour(msg, idx)"
+                class="shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-200"
+                style="background: rgba(52, 211, 153, 0.12); border: 1px solid rgba(52, 211, 153, 0.35); color: #34d399;"
+                @mouseenter="$event.target.style.background='rgba(52,211,153,0.22)'"
+                @mouseleave="$event.target.style.background='rgba(52,211,153,0.12)'"
+              >
+                ▶ 播放导览
+              </button>
+            </div>
           </div>
 
           <!-- ═══ chat 结构化回复 ═══ -->
@@ -1123,6 +1210,22 @@ function handlePaste(e) {
   background: rgba(16, 185, 129, 0.03);
   border-radius: 0 6px 6px 0;
   padding: 6px 10px;
+}
+
+.code-tour-card {
+  margin: 4px 0;
+  animation: tour-card-in 0.3s ease-out;
+}
+
+@keyframes tour-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .slash-menu-enter-active,
