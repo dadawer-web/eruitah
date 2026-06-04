@@ -402,6 +402,7 @@ export const useAgentStore = defineStore('agent', () => {
             title: realTaskName || '新任务',
             status: 'active',
             created_at: Date.now(),
+            updated_at: Date.now(),
             workDir: realWorkDir,
           })
         } else {
@@ -1083,29 +1084,25 @@ export const useAgentStore = defineStore('agent', () => {
         const taskId = t.task_id || t.id
         if (!taskId) continue
 
-        let createdTs = Date.now()
-        if (t.created_at) {
-          const raw = t.created_at
-          if (typeof raw === 'number') {
-            createdTs = raw > 1e12 ? raw : raw * 1000
-          } else if (typeof raw === 'string') {
-            const parsed = new Date(raw.replace(',', '.').replace(' ', 'T')).getTime()
-            createdTs = isNaN(parsed) ? Date.now() : parsed
-          }
-        }
-
         newList.push({
           id: taskId,
           title: t.summary || '未命名任务',
           status: t.status || 'active',
-          created_at: createdTs,
+          created_at: t.created_at_iso || t.created_at_str || t.created_at || null,
+          updated_at: t.updated_at_iso || t.updated_at_str || t.updated_at || null,
+          created_at_str: t.created_at_str || null,
+          updated_at_str: t.updated_at_str || null,
           baseTaskId: t.base_task_id || '',
           mergeCommitHash: t.merge_commit_hash || '',
           workDir: t.work_dir || '',
         })
       }
 
-      newList.sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
+      newList.sort((a, b) => {
+        const ta = a.created_at ? new Date(a.created_at).getTime() : 0
+        const tb = b.created_at ? new Date(b.created_at).getTime() : 0
+        return tb - ta
+      })
 
       taskList.value = newList
     } catch (e) {
@@ -1282,6 +1279,7 @@ export const useAgentStore = defineStore('agent', () => {
         title: task.substring(0, 30) + (task.length > 30 ? '...' : ''),
         status: 'active',
         created_at: Date.now(),
+        updated_at: Date.now(),
       })
       activeTaskId.value = tempId
       currentTaskId.value = tempId

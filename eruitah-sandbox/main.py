@@ -2017,8 +2017,11 @@ async def list_tasks(project_path: str = "", user_id: int = 0):
     for t in tasks:
         if "task_id" in t:
             t["id"] = t["task_id"]
-        if "created_at" in t:
-            t["created_at_str"] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(t["created_at"]))
+        # 确保 created_at 和 updated_at 存在（list_sessions 已注入 ISO 字符串）
+        if "created_at" not in t or not t["created_at"]:
+            t["created_at"] = t.get("created_at_iso", "")
+        if "updated_at" not in t or not t["updated_at"]:
+            t["updated_at"] = t.get("updated_at_iso", "")
     return {"tasks": tasks}
 
 

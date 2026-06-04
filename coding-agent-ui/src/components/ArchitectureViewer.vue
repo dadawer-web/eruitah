@@ -28,6 +28,9 @@ const selectedNode = ref(null)
 const searchQuery = ref('')
 const elkInstance = new ELK()
 
+// ── Diff Mode 状态 ──
+const isDiffMode = ref(false)
+
 const TYPE_CONFIG = {
   file:     { color: '#06b6d4', bg: '#0e2a38', icon: '📄', label: 'File' },
   class:    { color: '#a78bfa', bg: '#1e1538', icon: '📦', label: 'Class' },
@@ -200,6 +203,9 @@ async function computeElkLayout(rawNodes, rawEdges) {
           bg: cfg.bg,
           icon: cfg.icon,
           file: node.file || '',
+          diffStatus: node.diff_status || null,
+          clusterId: node.cluster_id || null,
+          clusterName: node.cluster_name || null,
           extra: node,
         },
         style: {
@@ -221,6 +227,7 @@ async function computeElkLayout(rawNodes, rawEdges) {
           target: edge.target,
           type: 'smoothstep',
           animated: edge.type === 'calls',
+          diffStatus: edge.diff_status || null,
           style: {
             stroke: style.color,
             strokeWidth: style.width,
@@ -303,11 +310,181 @@ const filteredNodes = computed(() => {
   })
 })
 
+const displayNodes = computed(() => {
+  if (!filteredNodes.value) return [];
+
+  const allNodes = filteredNodes.value
+
+  // ── 1. 构建文件组 → cluster_id 映射 ──
+  // 如果一个文件组（type=group）内的子节点有 cluster_id，则整个文件组继承该 cluster_id
+  const fileGroupClusterMap = new Map() // groupId → clusterId
+  for (const node of allNodes) {
+    if (node.type === 'group') {
+      // 查找该文件组下的子节点（通过 ELK 布局的 groupNodesByFile 逻辑）
+      // 文件组 id 格式为 'file:xxx'，子节点 id 格式为 'file:xxx:class:yyy' 或 'file:xxx:func:zzz'
+      const groupId = node.id
+      const childClusterIds = new Set()
+      for (const child of allNodes) {
+        if (child.id !== groupId && child.id.startsWith(groupId + ':')) {
+          const cid = child.data?.clusterId || child.data?.extra?.cluster_id
+          if (cid) childClusterIds.add(cid)
+        }
+      }
+      // 如果所有子节点属于同一个 cluster，文件组继承该 cluster
+      if (childClusterIds.size === 1) {
+        fileGroupClusterMap.set(groupId, [...childClusterIds][0])
+      }
+    }
+  }
+
+  // ── 2. 提取所有非空的 cluster_id（包括文件组继承的） ──
+  const clusterIds = new Set()
+  for (const node of allNodes) {
+    const cid = node.data?.clusterId || node.data?.extra?.cluster_id
+    if (cid) clusterIds.add(cid)
+  }
+  for (const cid of fileGroupClusterMap.values()) {
+    clusterIds.add(cid)
+  }
+
+  // ── 3. 为每个 cluster_id 生成 DDD 领域 Group 父节点 ──
+  const domainGroupNodes = []
+  for (const clusterId of clusterIds) {
+    // 收集该 cluster 下所有直接子节点（含继承了 cluster 的文件组）
+    const children = allNodes.filter(n => {
+      const cid = n.data?.clusterId || n.data?.extra?.cluster_id || fileGroupClusterMap.get(n.id)
+      return cid === clusterId
+    })
+    if (children.length === 0) continue
+
+    // 计算子节点的包围盒
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+    for (const child of children) {
+      const cx = child.position?.x || 0
+      const cy = child.position?.y || 0
+      const w = parseFloat(child.style?.width) || 200
+      const h = parseFloat(child.style?.height) || 44
+      minX = Math.min(minX, cx)
+      minY = Math.min(minY, cy)
+      maxX = Math.max(maxX, cx + w)
+      maxY = Math.max(maxY, cy + h)
+    }
+
+    const padding = 40
+    const groupW = Math.max(300, (maxX - minX) + padding * 2)
+    const groupH = Math.max(300, (maxY - minY) + padding * 2)
+
+    // 取 cluster_name（如果有）
+    const firstChild = children[0]
+    const clusterName = firstChild?.data?.clusterName || firstChild?.data?.extra?.cluster_name || clusterId
+
+    domainGroupNodes.push({
+      id: clusterId,
+      type: 'domain-group',
+      position: { x: minX - padding, y: minY - padding },
+      style: {
+        backgroundColor: 'rgba(30, 58, 138, 0.1)',
+        border: '1px dashed #3b82f6',
+        borderRadius: '12px',
+        width: groupW + 'px',
+        height: groupH + 'px',
+        zIndex: -1,
+      },
+      data: {
+        label: `[Domain: ${clusterName}]`,
+        nodeType: 'domain-group',
+        color: '#3b82f6',
+        bg: 'rgba(30, 58, 138, 0.1)',
+        icon: '🛡️',
+        isDomainGroup: true,
+      },
+    })
+  }
+
+  // ── 4. 处理子节点：追加 parentNode 和 extent ──
+  // 策略：文件组节点继承 cluster_id 后整体作为 domain-group 的子节点
+  //       文件组内部的子节点不再重复设置 parentNode（避免破坏 ELK 布局嵌套）
+  const processedNodes = allNodes.map(node => {
+    // 跳过已经是 domain-group 的节点
+    if (node.type === 'domain-group') return node
+
+    // 判断该节点是否应该属于某个领域组
+    let cid = node.data?.clusterId || node.data?.extra?.cluster_id
+
+    // 文件组节点：从子节点继承 cluster_id
+    if (!cid && node.type === 'group') {
+      cid = fileGroupClusterMap.get(node.id)
+    }
+
+    // 如果是文件组内部的子节点，且其文件组已经有 cluster_id，则不单独设置 parentNode
+    // （避免与文件组的 parentNode 冲突）
+    if (node.type !== 'group' && !cid) {
+      // 检查是否属于某个有 cluster_id 的文件组
+      for (const [groupId, clusterId] of fileGroupClusterMap) {
+        if (node.id.startsWith(groupId + ':')) {
+          // 该节点在文件组内，文件组会整体被包裹，不需要单独设置
+          return node
+        }
+      }
+    }
+
+    if (!cid) return node
+
+    return {
+      ...node,
+      parentNode: cid,
+      extent: 'parent',
+    }
+  })
+
+  // ── 5. 领域 Group 节点放在最前面，子节点在后 ──
+  return [...domainGroupNodes, ...processedNodes];
+})
+
+// ── Diff Mode: 内联样式计算（绕过 Tailwind PurgeCSS 和子元素遮挡） ──
+const getDiffNodeStyle = (nodeProps) => {
+  if (!isDiffMode.value) return {};
+  const status = nodeProps.data?.diffStatus || nodeProps.data?.diff_status || nodeProps.diff_status;
+  if (status === 'added') return { border: '2px solid #22c55e', boxShadow: '0 0 20px rgba(34,197,94,0.8)', zIndex: 10 };
+  if (status === 'modified') return { border: '2px solid #facc15', boxShadow: '0 0 20px rgba(250,204,21,0.8)', zIndex: 10 };
+  if (status === 'impacted') return { border: '2px dashed #f97316', boxShadow: '0 0 15px rgba(249,115,22,0.5)', zIndex: 5 };
+  if (status === 'deleted') return { border: '2px solid #ef4444', opacity: 0.5, textDecoration: 'line-through' };
+  // 没有任何修改的节点，极度虚化
+  return { opacity: 0.15, filter: 'grayscale(100%)', pointerEvents: 'none' };
+};
+
 const filteredNodeIds = computed(() => new Set(filteredNodes.value.map(n => n.id)))
 
 const displayEdges = computed(() => {
+  if (!flowEdges.value) return [];
   const ids = filteredNodeIds.value
-  return flowEdges.value.filter(e => ids.has(e.source) && ids.has(e.target))
+
+  return flowEdges.value
+    .filter(e => ids.has(e.source) && ids.has(e.target))
+    .map(edge => {
+      let edgeStyle = edge.style || { stroke: '#6b7280', strokeWidth: 1 };
+      let animated = edge.animated || false;
+      const status = edge.diff_status || edge.diffStatus || edge.data?.diff_status;
+
+      if (isDiffMode.value) {
+        if (status === 'impacted') {
+          edgeStyle = { stroke: '#f97316', strokeWidth: 3, filter: 'drop-shadow(0 0 5px #f97316)' }; // 橙色电流
+          animated = true;
+        } else if (status === 'added') {
+          edgeStyle = { stroke: '#22c55e', strokeWidth: 3, filter: 'drop-shadow(0 0 5px #22c55e)' }; // 绿色电流
+          animated = true;
+        } else if (status === 'modified') {
+          edgeStyle = { stroke: '#facc15', strokeWidth: 3, filter: 'drop-shadow(0 0 5px #facc15)' }; // 黄色电流
+          animated = true;
+        } else if (status === 'deleted') {
+          edgeStyle = { stroke: '#ef4444', strokeWidth: 1.5, strokeDasharray: '4 4', opacity: 0.5 };
+        } else {
+          edgeStyle = { ...edgeStyle, stroke: '#374151', opacity: 0.1 }; // 未波及的线隐身
+        }
+      }
+
+      return { ...edge, style: edgeStyle, animated };
+    });
 })
 
 function handleNodeClick(event) {
@@ -345,6 +522,14 @@ function handlePaneClick() {
               />
               <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-geek-text-dim">⌘</span>
             </div>
+            <button
+              @click="isDiffMode = !isDiffMode"
+              :class="isDiffMode ? 'bg-orange-600 border-orange-500 shadow-[0_0_10px_rgba(234,88,12,0.8)] text-white' : 'bg-gray-800/90 border-gray-600 text-gray-300'"
+              class="px-3 py-1.5 rounded-lg border text-[11px] font-bold transition-all duration-300 cursor-pointer hover:scale-105 flex items-center gap-1.5"
+            >
+              <span>{{ isDiffMode ? '🔥' : '👁️' }}</span>
+              <span>{{ isDiffMode ? 'Diff: ON' : 'Diff' }}</span>
+            </button>
             <button @click="emit('close')" class="text-geek-text-dim hover:text-geek-text text-lg leading-none ml-2">×</button>
           </div>
         </div>
@@ -374,7 +559,7 @@ function handlePaneClick() {
 
           <VueFlow
             v-if="flowNodes.length"
-            :nodes="filteredNodes"
+            :nodes="displayNodes"
             :edges="displayEdges"
             :fit-view-on-init="true"
             :default-viewport="{ zoom: 0.7, x: 0, y: 0 }"
@@ -407,13 +592,29 @@ function handlePaneClick() {
                 :style="{
                   borderColor: groupNodeProps.data?.color + '40',
                   background: 'linear-gradient(135deg, ' + groupNodeProps.data?.bg + 'cc, ' + groupNodeProps.data?.bg + '66)',
+                  ...getDiffNodeStyle(groupNodeProps),
                 }"
               >
+                <!-- Diff Mode 角标 -->
+                <div v-if="isDiffMode && groupNodeProps.data?.diffStatus === 'deleted'" class="diff-deleted-x">✕</div>
+                <div v-if="isDiffMode && groupNodeProps.data?.diffStatus === 'impacted'" class="diff-impacted-badge">⚠</div>
+                <div v-if="isDiffMode && groupNodeProps.data?.diffStatus === 'added'" class="diff-status-tag diff-tag-added">+ADDED</div>
+                <div v-if="isDiffMode && groupNodeProps.data?.diffStatus === 'modified'" class="diff-status-tag diff-tag-modified">~MOD</div>
                 <div class="arch-group-header" :style="{ borderColor: groupNodeProps.data?.color + '30' }">
                   <span class="text-[10px] mr-1">{{ groupNodeProps.data?.icon }}</span>
                   <span class="text-[11px] font-bold truncate" :style="{ color: groupNodeProps.data?.color }">
                     {{ groupNodeProps.data?.label }}
                   </span>
+                </div>
+              </div>
+            </template>
+
+            <!-- DDD 领域聚合结界 Group 节点 -->
+            <template #node-domain-group="domainGroupProps">
+              <div class="arch-domain-group-node">
+                <div class="arch-domain-group-label">
+                  <span class="text-[10px] mr-1">🛡️</span>
+                  <span class="text-[10px] font-bold text-blue-400">{{ domainGroupProps.data?.label }}</span>
                 </div>
               </div>
             </template>
@@ -425,8 +626,14 @@ function handlePaneClick() {
                   borderColor: defaultNodeProps.data?.color + '60',
                   background: defaultNodeProps.data?.bg,
                   boxShadow: '0 0 12px ' + defaultNodeProps.data?.color + '10',
+                  ...getDiffNodeStyle(defaultNodeProps),
                 }"
               >
+                <!-- Diff Mode 标记 -->
+                <div v-if="isDiffMode && defaultNodeProps.data?.diffStatus === 'deleted'" class="diff-deleted-x">✕</div>
+                <div v-if="isDiffMode && defaultNodeProps.data?.diffStatus === 'impacted'" class="diff-impacted-badge">⚠</div>
+                <div v-if="isDiffMode && defaultNodeProps.data?.diffStatus === 'added'" class="diff-status-tag diff-tag-added">+ADD</div>
+                <div v-if="isDiffMode && defaultNodeProps.data?.diffStatus === 'modified'" class="diff-status-tag diff-tag-modified">~MOD</div>
                 <span class="text-[10px] mr-1.5 shrink-0">{{ defaultNodeProps.data?.icon }}</span>
                 <span class="text-[11px] truncate" :style="{ color: defaultNodeProps.data?.color }">
                   {{ defaultNodeProps.data?.label }}
@@ -505,6 +712,14 @@ function handlePaneClick() {
   overflow: visible !important;
 }
 
+.arch-flow :deep(.vue-flow__node-domain-group) {
+  padding: 0 !important;
+  border-radius: 12px !important;
+  border: 1px dashed #3b82f6 !important;
+  background: rgba(30, 58, 138, 0.1) !important;
+  overflow: visible !important;
+}
+
 .arch-flow :deep(.vue-flow__node-default) {
   padding: 0 !important;
   border-radius: 6px !important;
@@ -556,6 +771,30 @@ function handlePaneClick() {
   background: rgba(0, 0, 0, 0.3);
 }
 
+/* ══════════════════════════════════════════════════════════
+   DDD 领域聚合结界 Group 节点样式
+   ══════════════════════════════════════════════════════════ */
+.arch-domain-group-node {
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  position: relative;
+  pointer-events: none;
+}
+
+.arch-domain-group-label {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  padding: 2px 8px;
+  background: rgba(30, 58, 138, 0.3);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  letter-spacing: 0.05em;
+  pointer-events: auto;
+}
+
 .arch-default-node {
   display: flex;
   align-items: center;
@@ -570,6 +809,105 @@ function handlePaneClick() {
 
 .arch-default-node:hover {
   filter: brightness(1.2);
+}
+
+/* ══════════════════════════════════════════════════════════
+   Diff Mode: 变更影响分析视觉样式
+   ══════════════════════════════════════════════════════════ */
+
+/* deleted 红叉角标 */
+.diff-deleted-x {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 18px;
+  height: 18px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+  z-index: 10;
+  line-height: 1;
+}
+
+/* impacted 警告角标 */
+.diff-impacted-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 18px;
+  height: 18px;
+  background: #0a0a0a;
+  border: 1.5px solid #f97316;
+  color: #f97316;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(249, 115, 22, 0.5);
+  z-index: 10;
+  line-height: 1;
+}
+
+/* Diff 状态标签 */
+.diff-status-tag {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 1px 5px;
+  border-radius: 3px;
+  z-index: 10;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  line-height: 1.4;
+}
+.diff-tag-added {
+  background: #22c55e;
+  color: #052e16;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+}
+.diff-tag-modified {
+  background: #facc15;
+  color: #422006;
+  box-shadow: 0 0 8px rgba(250, 204, 21, 0.5);
+}
+
+/* Diff Mode 边 SVG 样式 */
+.arch-flow :deep(.vue-flow__edge.diff-edge-added .vue-flow__edge-path) {
+  stroke: #22c55e !important;
+  stroke-width: 2.5px !important;
+  filter: drop-shadow(0 0 6px rgba(34, 197, 94, 0.5));
+}
+.arch-flow :deep(.vue-flow__edge.diff-edge-modified .vue-flow__edge-path) {
+  stroke: #facc15 !important;
+  stroke-width: 2.5px !important;
+  filter: drop-shadow(0 0 6px rgba(250, 204, 21, 0.5));
+}
+.arch-flow :deep(.vue-flow__edge.diff-edge-impacted .vue-flow__edge-path) {
+  stroke: #f97316 !important;
+  stroke-width: 2px !important;
+  stroke-dasharray: 6 3 !important;
+  filter: drop-shadow(0 0 4px rgba(249, 115, 22, 0.4));
+}
+.arch-flow :deep(.vue-flow__edge.diff-edge-deleted .vue-flow__edge-path) {
+  stroke: #ef4444 !important;
+  stroke-width: 1.5px !important;
+  stroke-dasharray: 4 4 !important;
+  opacity: 0.5;
+}
+.arch-flow :deep(.vue-flow__edge.diff-edge-unchanged .vue-flow__edge-path) {
+  stroke: #334155 !important;
+  stroke-width: 1px !important;
+  opacity: 0.15;
 }
 
 .panel-slide-enter-active {

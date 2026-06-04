@@ -48,6 +48,7 @@ class TaskSession:
     messages_before: List[Dict[str, Any]]
     messages: List[Dict[str, Any]]
     created_at: float
+    updated_at: float = 0.0
     status: str = "active"
     current_turn: int = 0
     base_checkpoint_id: str = ""
@@ -64,6 +65,7 @@ class TaskSession:
             "messages_before": self.messages_before,
             "messages": self.messages,
             "created_at": self.created_at,
+            "updated_at": self.updated_at or self.created_at,
             "status": self.status,
             "current_turn": self.current_turn,
             "base_checkpoint_id": self.base_checkpoint_id,
@@ -82,6 +84,7 @@ class TaskSession:
             messages_before=data.get("messages_before") or [],
             messages=data.get("messages") or [],
             created_at=data.get("created_at") or time.time(),
+            updated_at=data.get("updated_at") or 0.0,
             status=data.get("status", "active") or "active",
             current_turn=data.get("current_turn", 0) or 0,
             base_checkpoint_id=data.get("base_checkpoint_id", "") or "",
@@ -158,6 +161,8 @@ class SessionManager:
                             return
                     except Exception as e:
                         logger.warning(f"读取磁盘历史记录失败，允许保存空会话: {e}")
+            # 每次保存时刷新 updated_at
+            session.updated_at = time.time()
             os.makedirs(os.path.dirname(filepath), exist_ok=True)
             with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(session.to_dict(), f, ensure_ascii=False, indent=2)
@@ -241,6 +246,7 @@ class SessionManager:
                 messages_before=messages_before,
                 messages=[],
                 created_at=time.time(),
+                updated_at=time.time(),
                 status="active",
                 current_turn=0,
                 base_checkpoint_id=f"task/{new_id}",
@@ -567,8 +573,27 @@ class SessionManager:
                     sdir = session.work_dir or ""
                     if sdir != work_dir and not sdir.startswith(work_dir) and not work_dir.startswith(sdir):
                         continue
+
+                # 旧数据兼容：如果 created_at 缺失或为 0，用磁盘文件 mtime 回填
+                if not session.created_at:
+                    filepath = self._task_filepath(session.id)
+                    if os.path.exists(filepath):
+                        mtime = os.path.getmtime(filepath)
+                        session.created_at = mtime
+                    else:
+                        session.created_at = time.time()
+
+                # 旧数据兼容：如果 updated_at 缺失或为 0，用 created_at 回填
+                if not session.updated_at:
+                    session.updated_at = session.created_at
+
                 d = session.to_dict()
-                d["created_at_str"] = time.strftime("%H:%M:%S", time.localtime(session.created_at))
+                # 注入 ISO 8601 格式的时间字符串，前端直接可用
+                from datetime import datetime
+                d["created_at_iso"] = datetime.fromtimestamp(session.created_at).isoformat()
+                d["updated_at_iso"] = datetime.fromtimestamp(session.updated_at).isoformat()
+                d["created_at_str"] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(session.created_at))
+                d["updated_at_str"] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(session.updated_at))
                 sessions.append(d)
             sessions.sort(key=lambda t: t.get("created_at", 0), reverse=True)
             return sessions

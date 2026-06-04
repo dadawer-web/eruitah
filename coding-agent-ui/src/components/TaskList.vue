@@ -8,26 +8,50 @@ const taskCommits = ref({})
 
 const deletingTaskIds = ref(new Set())
 
-const safeFormatDate = (dateStr) => {
-  if (!dateStr) return ''
-  let cleanStr = String(dateStr).replace(',', '.')
-  if (cleanStr.length === 19 && cleanStr.includes(' ')) {
-    cleanStr = cleanStr.replace(' ', 'T')
+const safeFormatDate = (dateVal) => {
+  if (!dateVal) return '未知时间';
+
+  let d;
+
+  // 判断是否为纯数字（时间戳）
+  if (typeof dateVal === 'number' || /^\d+(\.\d+)?$/.test(String(dateVal))) {
+    let timestamp = Number(dateVal);
+    // 如果是 10 位数级别的 Unix 时间戳（秒级），乘以 1000 转为毫秒
+    if (timestamp < 10000000000) {
+      timestamp *= 1000;
+    }
+    d = new Date(timestamp);
+  } else {
+    // 强制替换横杠为斜杠，替换 T 为空格，并且暴力剥离 Z 后缀，强制当成本地时间解析！
+    let safeDateStr = String(dateVal).replace(/-/g, '/').replace(/T/i, ' ').replace(/Z/i, '').split('.')[0];
+    d = new Date(safeDateStr);
+
+    // 如果上面这种方式解析失败，再回退到原生解析
+    if (isNaN(d.getTime())) {
+      d = new Date(dateVal);
+    }
   }
-  const d = new Date(cleanStr)
-  if (isNaN(d.getTime())) return String(dateStr)
-  return d.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  })
+
+  // 最终校验：如果还是无效时间，原样返回或提示
+  if (isNaN(d.getTime())) {
+    return String(dateVal); // 实在解析不了，就显示原文本
+  }
+
+  // 手动格式化为友好的 YYYY-MM-DD HH:mm:ss
+  const pad = (n) => n.toString().padStart(2, '0');
+  const year = d.getFullYear();
+  const month = pad(d.getMonth() + 1);
+  const day = pad(d.getDate());
+  const hours = pad(d.getHours());
+  const minutes = pad(d.getMinutes());
+  const seconds = pad(d.getSeconds());
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
 async function fetchTasks() {
   await store.fetchTaskRegistry()
+  console.log('🕵️ 嗅探到的第一条任务数据:', activeTasks.value[0] || taskCommits.value);
 }
 
 function switchTask(task) {
@@ -141,7 +165,8 @@ onMounted(fetchTasks)
           <div class="flex-1 min-w-0">
             <div class="truncate text-geek-text">{{ task.title }}</div>
             <div class="flex items-center gap-1 text-[10px] text-geek-text-dim">
-              <span>{{ safeFormatDate(task.created_at) }}</span>
+              <span v-if="task.updated_at_str || task.created_at_str">🕒 {{ task.updated_at_str || task.created_at_str }}</span>
+              <span v-else>🕒 {{ safeFormatDate(task.updated_at || task.created_at || task.timestamp || task.time) }}</span>
               <span v-if="task.baseTaskId" class="text-purple-400">🔗{{ task.baseTaskId.slice(5, 13) }}</span>
             </div>
           </div>

@@ -136,6 +136,11 @@ from tour_generator import (
     CODE_TOUR_TOOL_DEFINITION_OPENAI,
     CODE_TOUR_TOOL_DEFINITION_ANTHROPIC,
 )
+from graph_context_tool import (
+    get_graph_context,
+    GRAPH_CONTEXT_TOOL_DEFINITION_OPENAI,
+    GRAPH_CONTEXT_TOOL_DEFINITION_ANTHROPIC,
+)
 from interactive_terminal import (
     execute_bg_service_tool,
     BG_SERVICE_TOOL_DEFINITIONS,
@@ -536,6 +541,35 @@ dispatch_subtasks(subtasks=[
   1. 先用 `get_code_structure(file_path)` 鸟瞰文件结构
   2. 再用 `get_function_definition(file_path, function_name)` 精准定位感兴趣的函数
   3. 只有在 AST 工具无法覆盖的场景（如搜索变量名、字符串常量）才回退到 grep
+
+## 6.1 🗺️ 图谱制导思维 (Graph-Guided Thinking)
+
+你现在拥有 `get_graph_context` 工具，它能基于项目的 AST 图谱，用极少的 Token 告诉你任何模块在系统中的架构位置和依赖关系。**你必须遵循以下三条原则：**
+
+### 原则一：架构认知优先
+**在分析、重构或修改任何代码之前，你必须先调用 `get_graph_context` 工具获取该模块的拓扑依赖关系。**
+- 修改一个函数前，先查它在哪一层、谁依赖它、它依赖谁
+- 理解陌生代码时，先用图谱建立全局认知，再深入细节
+- 示例：`get_graph_context(target_node_name="UserService")` → 立即知道它在业务层，被 Controller 调用，依赖 Repository
+
+### 原则二：安全爆炸半径检查
+**修改代码前，必须观察图谱中该节点的[被谁调用 (上游)]。你需要意识到你的修改可能会波及这些上游节点。**
+- 如果上游节点很多（≥3个），说明这是核心模块，修改必须极其谨慎，确保向后兼容
+- 如果修改了函数签名或返回值，必须检查所有上游调用者是否需要同步修改
+- 如果上游涉及不同分层（如 data 层的修改波及 api 层），这是跨层影响，必须格外小心
+
+### 原则三：按需读取 (Token 节约)
+**通过图谱了解了依赖关系后，只使用 file_read 或 get_function_definition 去读取你真正需要的那个下游依赖的接口定义，绝对禁止盲目读取不相关的文件全文。**
+- 图谱已经告诉你依赖关系，不需要再 grep 搜索"谁调用了谁"
+- 只读取即将修改的函数和它直接依赖的接口，不要扩散读取
+- 示例：图谱显示 UserService → UserRepository，你只需要读 UserRepository 的接口定义，不需要读整个文件
+
+**图谱制导工作流（推荐）**：
+1. `get_graph_context(target_node_name="目标模块")` → 获取架构位置和上下游
+2. 评估爆炸半径 → 上游多则谨慎，上游少则放心
+3. `get_function_definition(file_path, function_name)` → 只读需要修改的函数
+4. 执行修改 → 确保向后兼容
+5. 验证 → 运行测试确认上游未受影响
 
 ## 6.5 🔍 Codebase RAG 语义搜索优先策略
 - **当你不确定某个功能在哪个文件，或者需要理解业务逻辑时，优先使用 `semantic_search_code`。**
@@ -942,6 +976,7 @@ def _get_tools_definition(provider: str = "openai") -> list[dict]:
             AST_CODE_STRUCTURE_TOOL_DEFINITION_ANTHROPIC,
             AST_FUNCTION_DEFINITION_TOOL_DEFINITION_ANTHROPIC,
             CODE_TOUR_TOOL_DEFINITION_ANTHROPIC,
+            GRAPH_CONTEXT_TOOL_DEFINITION_ANTHROPIC,
             {
                 "name": "read_project_memory",
                 "description": "搜索项目记忆库，查找以前踩过的坑和解决方案。遇到 Bug 时先查记忆，避免重复踩坑。",
@@ -1115,6 +1150,7 @@ def _get_tools_definition(provider: str = "openai") -> list[dict]:
             AST_CODE_STRUCTURE_TOOL_DEFINITION_OPENAI,
             AST_FUNCTION_DEFINITION_TOOL_DEFINITION_OPENAI,
             CODE_TOUR_TOOL_DEFINITION_OPENAI,
+            GRAPH_CONTEXT_TOOL_DEFINITION_OPENAI,
             {
                 "type": "function",
                 "function": {
@@ -1736,6 +1772,13 @@ def _execute_tool_local(
             if not file_path:
                 return "文件路径不能为空", True, meta
             result_str, is_error = execute_get_code_structure(file_path, work_dir)
+            return result_str, is_error, meta
+
+        elif name == "get_graph_context":
+            target_node_name = args.get("target_node_name", "")
+            if not target_node_name:
+                return "target_node_name 不能为空", True, meta
+            result_str, is_error = get_graph_context(target_node_name, work_dir)
             return result_str, is_error, meta
 
         elif name == "get_function_definition":

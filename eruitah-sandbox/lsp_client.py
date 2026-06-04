@@ -264,11 +264,11 @@ class LSPClient:
             ['ccls'],
         ],
         'javascript': [
-            ['npx', 'typescript-language-server', '--stdio'],
+            ['./node_modules/.bin/typescript-language-server', '--stdio'],
             ['vscode-json-language-server', '--stdio'],
         ],
         'typescript': [
-            ['npx', 'typescript-language-server', '--stdio'],
+            ['./node_modules/.bin/typescript-language-server', '--stdio'],
         ],
         'java': [
             ['__jdtls__'],
@@ -297,13 +297,13 @@ class LSPClient:
             'name': 'pyright',
         },
         'typescript': {
-            'check': ['npx', 'typescript-language-server', '--version'],
+            'check': ['./node_modules/.bin/typescript-language-server', '--version'],
             'install': ['npm', 'install', '--no-save', 'typescript-language-server', 'typescript'],
             'install_fallback': ['npm', 'install', '--no-save', 'typescript-language-server@3.3.2', 'typescript@4.9.5'],
             'name': 'typescript-language-server',
         },
         'javascript': {
-            'check': ['npx', 'typescript-language-server', '--version'],
+            'check': ['./node_modules/.bin/typescript-language-server', '--version'],
             'install': ['npm', 'install', '--no-save', 'typescript-language-server', 'typescript'],
             'install_fallback': ['npm', 'install', '--no-save', 'typescript-language-server@3.3.2', 'typescript@4.9.5'],
             'name': 'typescript-language-server',
@@ -336,6 +336,13 @@ class LSPClient:
 
         for cmd in commands_list:
             try:
+                # 容错：检查局部二进制文件是否存在（./node_modules/.bin/... 路径）
+                binary_path = cmd[0]
+                if binary_path.startswith('./') or binary_path.startswith('../'):
+                    if not os.path.exists(binary_path):
+                        logger.debug(f"LSP 二进制文件不存在: {binary_path}，跳过")
+                        continue
+
                 sock1, sock2 = socket.socketpair()
 
                 init_opts = self.LSP_INIT_OPTIONS.get(language, {})
@@ -413,6 +420,13 @@ class LSPClient:
                 if result and result.returncode == 0:
                     for cmd in commands_list:
                         try:
+                            # 容错：检查局部二进制文件是否存在
+                            binary_path = cmd[0]
+                            if binary_path.startswith('./') or binary_path.startswith('../'):
+                                if not os.path.exists(binary_path):
+                                    logger.debug(f"安装后二进制文件仍不存在: {binary_path}，跳过")
+                                    continue
+
                             sock1, sock2 = socket.socketpair()
                             server_process = subprocess.Popen(
                                 cmd,

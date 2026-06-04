@@ -28,6 +28,9 @@ import re
 import logging
 from pathlib import Path
 from collections import defaultdict
+
+from ignore_engine import generate_ignore_file, filter_files
+from graph_cluster import detect_domains
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -38,36 +41,36 @@ LAYER_PRESETS = {
         "layers": {
             "api": {
                 "dir_keywords": {"controller", "api", "router", "web", "endpoint", "rest", "graphql", "gateway", "handler", "action", "resource"},
-                "name_patterns": r"(?:controller|api|router|web|endpoint|resource|gateway"
+                "name_patterns": r"(?:^|_)(?:controller|api|router|web|endpoint|resource|gateway"
                                  r"|rest|graphql|grpc|handler|action)"
-                                 r"(?:impl|base|abstract|interface)?$",
+                                 r"(?:impl|base|abstract|interface)?(?:$|_)",
             },
             "business": {
                 "dir_keywords": {"service", "manager", "impl", "processor", "orchestrator", "coordinator", "logic", "engine", "workflow", "usecase", "use_case", "command", "query"},
-                "name_patterns": r"(?:service|manager|impl|handler|processor|orchestrator"
+                "name_patterns": r"(?:^|_)(?:service|manager|impl|handler|processor|orchestrator"
                                  r"|coordinator|logic|engine|workflow|usecase|use_case"
                                  r"|command|query|interactor|executor|provider)"
-                                 r"(?:impl|base|abstract|interface)?$",
+                                 r"(?:impl|base|abstract|interface)?(?:$|_)",
             },
             "data": {
                 "dir_keywords": {"repository", "dao", "mapper", "db", "database", "store", "persistence", "cache", "client", "datasource", "storage"},
-                "name_patterns": r"(?:repository|dao|mapper|db|database|store|persistence"
+                "name_patterns": r"(?:^|_)(?:repository|dao|mapper|db|database|store|persistence"
                                  r"|cache|client|datasource|storage|crud|access)"
-                                 r"(?:impl|base|abstract|interface)?$",
+                                 r"(?:impl|base|abstract|interface)?(?:$|_)",
             },
             "domain": {
                 "dir_keywords": {"entity", "model", "dto", "vo", "domain", "record", "bean", "pojo", "proto", "message"},
-                "name_patterns": r"(?:entity|model|dto|vo|value[_-]?object|aggregate"
+                "name_patterns": r"(?:^|_)(?:entity|model|dto|vo|value[_-]?object|aggregate"
                                  r"|domain|record|struct|dataclass|bean|pojo|proto|message)"
-                                 r"(?:impl|base|abstract|interface)?$",
+                                 r"(?:impl|base|abstract|interface)?(?:$|_)",
             },
             "infrastructure": {
                 "dir_keywords": {"config", "util", "helper", "common", "base", "constant", "exception", "middleware", "interceptor", "filter", "aspect", "validator", "converter", "factory", "builder", "adapter"},
-                "name_patterns": r"(?:config|util|helper|common|base|abstract|constant"
+                "name_patterns": r"(?:^|_)(?:config|util|helper|common|base|abstract|constant"
                                  r"|exception|error|logger|middleware|interceptor|filter"
                                  r"|aspect|validator|converter|mapper|factory|builder"
                                  r"|singleton|adapter|wrapper|decorator|proxy|serializer)"
-                                 r"(?:impl|base|abstract|interface)?$",
+                                 r"(?:impl|base|abstract|interface)?(?:$|_)",
             },
         },
         "layer_names": {
@@ -84,40 +87,40 @@ LAYER_PRESETS = {
         "layers": {
             "ui_page": {
                 "dir_keywords": {"pages", "views", "screens", "routes", "layouts", "app"},
-                "name_patterns": r"(?:page|view|screen|layout|app|route)"
-                                 r"(?:component|container|wrapper)?$",
+                "name_patterns": r"(?:^|_)(?:page|view|screen|layout|app|route)"
+                                 r"(?:component|container|wrapper)?(?:$|_)",
             },
             "ui_component": {
                 "dir_keywords": {"components", "widgets", "ui", "shared", "common", "elements", "atoms", "molecules", "organisms", "templates"},
-                "name_patterns": r"(?:component|widget|card|modal|dialog|drawer|popover"
+                "name_patterns": r"(?:^|_)(?:component|widget|card|modal|dialog|drawer|popover"
                                  r"|dropdown|tooltip|badge|avatar|button|input|form"
                                  r"|table|list|grid|menu|tab|accordion|carousel"
                                  r"|skeleton|spinner|progress|alert|toast|notification)"
-                                 r"(?:component|wrapper|container)?$",
+                                 r"(?:component|wrapper|container)?(?:$|_)",
             },
             "state": {
                 "dir_keywords": {"store", "stores", "state", "redux", "pinia", "vuex", "context", "providers", "hooks"},
-                "name_patterns": r"(?:store|use[_]?store|state|reducer|action|selector|dispatch"
+                "name_patterns": r"(?:^|_)(?:store|use[_]?store|state|reducer|action|selector|dispatch"
                                  r"|provider|context|pinia|vuex|mobx|zustand|recoil|jotai)"
-                                 r"(?:store|provider|context)?$",
+                                 r"(?:store|provider|context)?(?:$|_)",
             },
             "logic": {
                 "dir_keywords": {"hooks", "composables", "utils", "helpers", "lib", "libs", "services", "logic", "core"},
-                "name_patterns": r"(?:use[_]|hook|composable|util|helper|format|transform"
+                "name_patterns": r"(?:^|_)(?:use[_]|hook|composable|util|helper|format|transform"
                                  r"|validate|parse|calculate|compute|process|handler)"
-                                 r"(?:hook|util|helper|service)?$",
+                                 r"(?:hook|util|helper|service)?(?:$|_)",
             },
             "api_client": {
                 "dir_keywords": {"api", "services", "requests", "http", "client", "endpoints", "queries", "mutations"},
-                "name_patterns": r"(?:api|service|request|fetch|axios|http|client|endpoint"
+                "name_patterns": r"(?:^|_)(?:api|service|request|fetch|axios|http|client|endpoint"
                                  r"|query|mutation|graphql|rest|rpc|swagger)"
-                                 r"(?:service|client|handler)?$",
+                                 r"(?:service|client|handler)?(?:$|_)",
             },
             "infrastructure": {
                 "dir_keywords": {"config", "constants", "types", "interfaces", "styles", "assets", "public", "static", "middleware", "plugins"},
-                "name_patterns": r"(?:config|constant|type|interface|style|theme|plugin"
+                "name_patterns": r"(?:^|_)(?:config|constant|type|interface|style|theme|plugin"
                                  r"|middleware|guard|interceptor|router|i18n|locale)"
-                                 r"(?:config|type|style|plugin)?$",
+                                 r"(?:config|type|style|plugin)?(?:$|_)",
             },
         },
         "layer_names": {
@@ -139,8 +142,47 @@ def sniff_project_type(root_dir: str) -> str:
     backend_signals = 0
     frontend_signals = 0
 
+    # 具体框架检测标记
+    detected_framework = None
+
+    # Java/Spring
+    if (root / "pom.xml").is_file() or (root / "build.gradle").is_file() or (root / "build.gradle.kts").is_file():
+        detected_framework = "java"
+    # Go
+    if (root / "go.mod").is_file():
+        detected_framework = "go"
+    # Rust
+    if (root / "Cargo.toml").is_file():
+        detected_framework = "rust"
+    # C/C++
+    if (root / "CMakeLists.txt").is_file() or (root / "Makefile").is_file():
+        if not detected_framework:
+            detected_framework = "cpp"
+    # .NET
+    if (root / "*.sln") and not detected_framework:
+        for f in root.iterdir():
+            if f.suffix == ".sln":
+                detected_framework = "dotnet"
+                break
+
+    # Node.js / 前端框架
+    frontend_marker_files = {"package.json", "tsconfig.json", "vite.config.ts", "vite.config.js",
+                              "next.config.js", "next.config.ts", "nuxt.config.ts",
+                              "angular.json", "svelte.config.js"}
+    for marker in frontend_marker_files:
+        if (root / marker).is_file():
+            detected_framework = "node"
+            break
+
+    # Python (检查 pyproject.toml, setup.py, requirements.txt, manage.py)
+    python_markers = {"pyproject.toml", "setup.py", "requirements.txt", "Pipfile", "manage.py", "django_settings.py"}
+    for marker in python_markers:
+        if (root / marker).is_file():
+            if not detected_framework:
+                detected_framework = "python"
+            break
+
     backend_marker_files = {"pom.xml", "build.gradle", "build.gradle.kts", "Cargo.toml", "go.mod", "settings.gradle", "ivy.xml", "Makefile"}
-    frontend_marker_files = {"package.json", "tsconfig.json", "vite.config.ts", "vite.config.js", "next.config.js", "next.config.ts", "nuxt.config.ts", "angular.json", "svelte.config.js"}
 
     for marker in backend_marker_files:
         if (root / marker).is_file():
@@ -174,6 +216,18 @@ def sniff_project_type(root_dir: str) -> str:
 
     backend_signals += backend_file_count
     frontend_signals += frontend_file_count
+
+    # 如果没有通过标记文件检测到框架，通过文件扩展名推断
+    if not detected_framework:
+        if backend_file_count > frontend_file_count:
+            # 根据主要后端扩展名推断
+            if backend_file_count > 0:
+                detected_framework = "python"  # 默认后端
+        elif frontend_file_count > 0:
+            detected_framework = "node"
+
+    # 存储具体框架类型供 ignore_engine 使用
+    sniff_project_type._last_detected_framework = detected_framework or "auto"
 
     if frontend_signals > backend_signals:
         return "FRONTEND"
@@ -334,7 +388,14 @@ class ProjectGrapher:
             return f"{rel}::{parent_name}.{name}"
         return f"{rel}::{name}"
 
+    # 允许进入图谱的节点类型（禁止目录/文件夹节点）
+    VALID_NODE_TYPES = {"File", "Class", "Interface", "Function", "Method"}
+
     def _add_node(self, node_id: str, node_type: str, name: str, file_path: str, **extra):
+        # 严格过滤：只允许代码实体节点，禁止目录/文件夹节点
+        if node_type not in self.VALID_NODE_TYPES:
+            logger.debug(f"跳过非代码节点: type={node_type}, name={name}, id={node_id}")
+            return
         if node_id in self._node_ids:
             return
         self._node_ids.add(node_id)
@@ -789,22 +850,57 @@ class ProjectGrapher:
             "preset": self.preset,
         }
 
-    def write_json(self, output_path: Optional[str] = None):
+    def write_json(self, output_path: Optional[str] = None, modified_file_paths: Optional[list] = None):
         if output_path is None:
             output_path = os.path.join(self.root_dir, "project_structure.json")
 
-        data = self.to_dict()
+        new_graph = self.to_dict()
+
+        # ── Diff Integration: 读取旧图谱，计算变更影响 ──
+        old_graph = None
+        if os.path.exists(output_path):
+            try:
+                with open(output_path, "r", encoding="utf-8") as f:
+                    old_graph = json.load(f)
+                logger.info(f"读取到旧图谱: {len(old_graph.get('nodes', []))} 节点, {len(old_graph.get('edges', []))} 边")
+            except Exception as e:
+                logger.warning(f"读取旧图谱失败，跳过 Diff 计算: {e}")
+                old_graph = None
+
+        if old_graph is not None:
+            try:
+                from graph_diff import calculate_graph_diff
+                final_graph = calculate_graph_diff(old_graph, new_graph, modified_file_paths)
+                summary = final_graph.get("diff_summary", {})
+                change_count = summary.get("added_nodes", 0) + summary.get("deleted_nodes", 0) + summary.get("modified_nodes", 0)
+                logger.info(f"📊 图谱 Diff 计算完成，发现 {change_count} 个修改点 "
+                            f"(+{summary.get('added_nodes', 0)} -{summary.get('deleted_nodes', 0)} "
+                            f"~{summary.get('modified_nodes', 0)} ⚡{summary.get('impacted_nodes', 0)} "
+                            f"爆炸半径: {summary.get('blast_radius', 0)})")
+                # 保留 layers 和 preset 信息
+                final_graph["layers"] = new_graph.get("layers", [])
+                final_graph["preset"] = new_graph.get("preset", "")
+            except ImportError:
+                logger.warning("graph_diff 模块未找到，跳过 Diff 计算，直接写入新图谱")
+                final_graph = new_graph
+            except Exception as e:
+                logger.warning(f"Diff 计算异常，回退到直接写入: {e}")
+                final_graph = new_graph
+        else:
+            final_graph = new_graph
+            logger.info("无旧图谱，跳过 Diff 计算")
+
         with open(output_path, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
+            json.dump(final_graph, f, indent=2, ensure_ascii=False)
 
         logger.info(f"项目图谱已写入: {output_path}")
-        logger.info(f"  节点数: {len(self.nodes)}")
-        logger.info(f"  边数: {len(self.edges)}")
+        logger.info(f"  节点数: {len(final_graph.get('nodes', []))}")
+        logger.info(f"  边数: {len(final_graph.get('edges', []))}")
         if self._dropped_calls:
             logger.info(f"  Drop 外部调用: {self._dropped_calls} 条")
 
         layer_counts = defaultdict(int)
-        for node in self.nodes:
+        for node in final_graph.get("nodes", []):
             layer_counts[node.get("layer", "unknown")] += 1
         if layer_counts:
             logger.info("  架构分层:")
@@ -817,15 +913,37 @@ class ProjectGrapher:
     # Main entry point
     # ================================================================
 
-    def run(self, output_path: Optional[str] = None) -> dict:
+    def run(self, output_path: Optional[str] = None, modified_file_paths: Optional[list] = None) -> dict:
         logger.info(f"开始构建项目图谱: {self.root_dir}")
 
-        file_paths = self.scan_files()
-        logger.info(f"扫描到 {len(file_paths)} 个代码文件")
+        # ── Phase 1: 扫描文件 ──
+        raw_file_paths = self.scan_files()
+        logger.info(f"🔍 智能降噪引擎启动: 扫描到 {len(raw_file_paths)} 个原始文件...")
 
+        # ── 降噪过滤: 生成 .eruitahignore + 过滤噪声文件 ──
+        # 使用嗅探器检测到的具体框架类型（java/python/node/cpp/go/rust）
+        fw_type = getattr(sniff_project_type, '_last_detected_framework', None) or "auto"
+
+        generate_ignore_file(self.root_dir, framework_type=fw_type)
+        file_paths = filter_files(self.root_dir, raw_file_paths)
+
+        if len(file_paths) < len(raw_file_paths):
+            removed = len(raw_file_paths) - len(file_paths)
+            logger.info(
+                f"🔇 命中黑名单策略 ({fw_type})，已剔除 {removed} 个噪声文件 "
+                f"(node_modules, dist, __pycache__ 等)"
+            )
+            logger.info(
+                f"✨ 提纯完成: 仅保留 {len(file_paths)} 个核心业务文件进行 AST 解析！"
+            )
+        else:
+            logger.info(f"扫描到 {len(file_paths)} 个代码文件 (无需降噪过滤)")
+
+        # ── Phase 2: AST 提取 ──
         self.extract_all(file_paths)
         logger.info(f"完成 AST 提取: {len(self._file_analyses)} 个文件")
 
+        # ── Phase 3: 符号表 + 导入解析 ──
         self.build_symbol_table()
         logger.info(f"符号表构建完成: {len(self._symbol_table)} 个符号")
 
@@ -833,15 +951,19 @@ class ProjectGrapher:
         resolved_count = sum(len(v) for v in self._import_map.values())
         logger.info(f"导入解析完成: {resolved_count} 条解析结果")
 
+        # ── Phase 4: 构建图谱 + 社区发现 + Diff + 写入 ──
         self.build_graph()
 
-        self.write_json(output_path)
+        # 社区发现: 将紧密连接的节点聚类为业务领域
+        self.nodes = detect_domains(self.nodes, self.edges)
+
+        self.write_json(output_path, modified_file_paths=modified_file_paths)
         return self.to_dict()
 
 
-def build_project_graph(root_dir: str, output_path: Optional[str] = None, preset: str = None) -> dict:
+def build_project_graph(root_dir: str, output_path: Optional[str] = None, preset: str = None, modified_file_paths: Optional[list] = None) -> dict:
     grapher = ProjectGrapher(root_dir, preset=preset)
-    return grapher.run(output_path)
+    return grapher.run(output_path, modified_file_paths=modified_file_paths)
 
 
 if __name__ == "__main__":
