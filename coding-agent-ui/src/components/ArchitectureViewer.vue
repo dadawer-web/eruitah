@@ -204,8 +204,8 @@ async function computeElkLayout(rawNodes, rawEdges) {
           icon: cfg.icon,
           file: node.file || '',
           diffStatus: node.diff_status || null,
-          clusterId: node.cluster_id || null,
-          clusterName: node.cluster_name || null,
+          clusterId: node.cluster_id || node.data?.cluster_id || null,
+          clusterName: node.cluster_name || node.data?.cluster_name || null,
           extra: node,
         },
         style: {
@@ -216,6 +216,76 @@ async function computeElkLayout(rawNodes, rawEdges) {
         targetPosition: Position.TOP,
       }
     })
+
+    // ── Domain Group 结界：根据 cluster_id 自动生成父节点并撑大 ──
+    const clusterMap = new Map() // clusterId → [nodeIndex, ...]
+    vfNodes.forEach((n, i) => {
+      const cid = n.data?.clusterId
+      if (cid) {
+        if (!clusterMap.has(cid)) clusterMap.set(cid, [])
+        clusterMap.get(cid).push(i)
+      }
+    })
+
+    const domainGroupNodes = []
+    for (const [clusterId, childIndices] of clusterMap) {
+      const children = childIndices.map(i => vfNodes[i])
+
+      // 计算子节点的包围盒
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+      for (const child of children) {
+        const cx = child.position.x
+        const cy = child.position.y
+        const w = parseFloat(child.style?.width) || 200
+        const h = parseFloat(child.style?.height) || 44
+        minX = Math.min(minX, cx)
+        minY = Math.min(minY, cy)
+        maxX = Math.max(maxX, cx + w)
+        maxY = Math.max(maxY, cy + h)
+      }
+
+      const padding = 40
+      const groupX = minX - padding
+      const groupY = minY - padding
+      const groupW = (maxX - minX) + padding * 2
+      const groupH = (maxY - minY) + padding * 2
+
+      // 将子节点坐标转为相对于 domain group 的偏移
+      for (const child of children) {
+        child.position.x -= groupX
+        child.position.y -= groupY
+        child.parentNode = String(clusterId)
+        child.extent = 'parent'
+      }
+
+      const firstChild = children[0]
+      const clusterName = firstChild?.data?.clusterName || clusterId
+
+      domainGroupNodes.push({
+        id: String(clusterId),
+        type: 'group',
+        position: { x: groupX, y: groupY },
+        style: {
+          backgroundColor: 'rgba(30, 58, 138, 0.1)',
+          border: '2px dashed rgba(59, 130, 246, 0.5)',
+          borderRadius: '16px',
+          width: groupW + 'px',
+          height: groupH + 'px',
+          zIndex: -1,
+        },
+        data: {
+          label: `📦 领域: ${clusterName}`,
+          nodeType: 'domain-group',
+          color: '#3b82f6',
+          bg: 'rgba(30, 58, 138, 0.1)',
+          icon: '📦',
+          isDomainGroup: true,
+        },
+      })
+    }
+
+    // Domain Group 节点放在最前面
+    const allVfNodes = [...domainGroupNodes, ...vfNodes]
 
     const vfEdges = rawEdges
       .filter(e => validIds.has(e.source) && validIds.has(e.target))
@@ -247,7 +317,7 @@ async function computeElkLayout(rawNodes, rawEdges) {
         }
       })
 
-    return { nodes: vfNodes, edges: vfEdges }
+    return { nodes: allVfNodes, edges: vfEdges }
   } catch (err) {
     console.error('ELK layout failed:', err)
     error.value = `布局计算失败: ${err.message}`
@@ -311,134 +381,12 @@ const filteredNodes = computed(() => {
 })
 
 const displayNodes = computed(() => {
-  if (!filteredNodes.value) return [];
+  const sourceNodes = (typeof props !== 'undefined' && props.nodes) ? props.nodes : (nodes && nodes.value ? nodes.value : nodes);
+  if (!sourceNodes || !Array.isArray(sourceNodes)) return [];
 
-  const allNodes = filteredNodes.value
-
-  // ── 1. 构建文件组 → cluster_id 映射 ──
-  // 如果一个文件组（type=group）内的子节点有 cluster_id，则整个文件组继承该 cluster_id
-  const fileGroupClusterMap = new Map() // groupId → clusterId
-  for (const node of allNodes) {
-    if (node.type === 'group') {
-      // 查找该文件组下的子节点（通过 ELK 布局的 groupNodesByFile 逻辑）
-      // 文件组 id 格式为 'file:xxx'，子节点 id 格式为 'file:xxx:class:yyy' 或 'file:xxx:func:zzz'
-      const groupId = node.id
-      const childClusterIds = new Set()
-      for (const child of allNodes) {
-        if (child.id !== groupId && child.id.startsWith(groupId + ':')) {
-          const cid = child.data?.clusterId || child.data?.extra?.cluster_id
-          if (cid) childClusterIds.add(cid)
-        }
-      }
-      // 如果所有子节点属于同一个 cluster，文件组继承该 cluster
-      if (childClusterIds.size === 1) {
-        fileGroupClusterMap.set(groupId, [...childClusterIds][0])
-      }
-    }
-  }
-
-  // ── 2. 提取所有非空的 cluster_id（包括文件组继承的） ──
-  const clusterIds = new Set()
-  for (const node of allNodes) {
-    const cid = node.data?.clusterId || node.data?.extra?.cluster_id
-    if (cid) clusterIds.add(cid)
-  }
-  for (const cid of fileGroupClusterMap.values()) {
-    clusterIds.add(cid)
-  }
-
-  // ── 3. 为每个 cluster_id 生成 DDD 领域 Group 父节点 ──
-  const domainGroupNodes = []
-  for (const clusterId of clusterIds) {
-    // 收集该 cluster 下所有直接子节点（含继承了 cluster 的文件组）
-    const children = allNodes.filter(n => {
-      const cid = n.data?.clusterId || n.data?.extra?.cluster_id || fileGroupClusterMap.get(n.id)
-      return cid === clusterId
-    })
-    if (children.length === 0) continue
-
-    // 计算子节点的包围盒
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
-    for (const child of children) {
-      const cx = child.position?.x || 0
-      const cy = child.position?.y || 0
-      const w = parseFloat(child.style?.width) || 200
-      const h = parseFloat(child.style?.height) || 44
-      minX = Math.min(minX, cx)
-      minY = Math.min(minY, cy)
-      maxX = Math.max(maxX, cx + w)
-      maxY = Math.max(maxY, cy + h)
-    }
-
-    const padding = 40
-    const groupW = Math.max(300, (maxX - minX) + padding * 2)
-    const groupH = Math.max(300, (maxY - minY) + padding * 2)
-
-    // 取 cluster_name（如果有）
-    const firstChild = children[0]
-    const clusterName = firstChild?.data?.clusterName || firstChild?.data?.extra?.cluster_name || clusterId
-
-    domainGroupNodes.push({
-      id: clusterId,
-      type: 'domain-group',
-      position: { x: minX - padding, y: minY - padding },
-      style: {
-        backgroundColor: 'rgba(30, 58, 138, 0.1)',
-        border: '1px dashed #3b82f6',
-        borderRadius: '12px',
-        width: groupW + 'px',
-        height: groupH + 'px',
-        zIndex: -1,
-      },
-      data: {
-        label: `[Domain: ${clusterName}]`,
-        nodeType: 'domain-group',
-        color: '#3b82f6',
-        bg: 'rgba(30, 58, 138, 0.1)',
-        icon: '🛡️',
-        isDomainGroup: true,
-      },
-    })
-  }
-
-  // ── 4. 处理子节点：追加 parentNode 和 extent ──
-  // 策略：文件组节点继承 cluster_id 后整体作为 domain-group 的子节点
-  //       文件组内部的子节点不再重复设置 parentNode（避免破坏 ELK 布局嵌套）
-  const processedNodes = allNodes.map(node => {
-    // 跳过已经是 domain-group 的节点
-    if (node.type === 'domain-group') return node
-
-    // 判断该节点是否应该属于某个领域组
-    let cid = node.data?.clusterId || node.data?.extra?.cluster_id
-
-    // 文件组节点：从子节点继承 cluster_id
-    if (!cid && node.type === 'group') {
-      cid = fileGroupClusterMap.get(node.id)
-    }
-
-    // 如果是文件组内部的子节点，且其文件组已经有 cluster_id，则不单独设置 parentNode
-    // （避免与文件组的 parentNode 冲突）
-    if (node.type !== 'group' && !cid) {
-      // 检查是否属于某个有 cluster_id 的文件组
-      for (const [groupId, clusterId] of fileGroupClusterMap) {
-        if (node.id.startsWith(groupId + ':')) {
-          // 该节点在文件组内，文件组会整体被包裹，不需要单独设置
-          return node
-        }
-      }
-    }
-
-    if (!cid) return node
-
-    return {
-      ...node,
-      parentNode: cid,
-      extent: 'parent',
-    }
-  })
-
-  // ── 5. 领域 Group 节点放在最前面，子节点在后 ──
-  return [...domainGroupNodes, ...processedNodes];
+  // Domain Group 节点已在 computeElkLayout 中生成并插入到数组最前面
+  // 这里直接返回，不再重复处理
+  return sourceNodes;
 })
 
 // ── Diff Mode: 内联样式计算（绕过 Tailwind PurgeCSS 和子元素遮挡） ──
@@ -456,35 +404,18 @@ const getDiffNodeStyle = (nodeProps) => {
 const filteredNodeIds = computed(() => new Set(filteredNodes.value.map(n => n.id)))
 
 const displayEdges = computed(() => {
-  if (!flowEdges.value) return [];
-  const ids = filteredNodeIds.value
+  const sourceEdges = (typeof props !== 'undefined' && props.edges) ? props.edges : (edges && edges.value ? edges.value : edges);
+  if (!sourceEdges || !Array.isArray(sourceEdges)) return [];
 
-  return flowEdges.value
-    .filter(e => ids.has(e.source) && ids.has(e.target))
-    .map(edge => {
-      let edgeStyle = edge.style || { stroke: '#6b7280', strokeWidth: 1 };
-      let animated = edge.animated || false;
-      const status = edge.diff_status || edge.diffStatus || edge.data?.diff_status;
-
-      if (isDiffMode.value) {
-        if (status === 'impacted') {
-          edgeStyle = { stroke: '#f97316', strokeWidth: 3, filter: 'drop-shadow(0 0 5px #f97316)' }; // 橙色电流
-          animated = true;
-        } else if (status === 'added') {
-          edgeStyle = { stroke: '#22c55e', strokeWidth: 3, filter: 'drop-shadow(0 0 5px #22c55e)' }; // 绿色电流
-          animated = true;
-        } else if (status === 'modified') {
-          edgeStyle = { stroke: '#facc15', strokeWidth: 3, filter: 'drop-shadow(0 0 5px #facc15)' }; // 黄色电流
-          animated = true;
-        } else if (status === 'deleted') {
-          edgeStyle = { stroke: '#ef4444', strokeWidth: 1.5, strokeDasharray: '4 4', opacity: 0.5 };
-        } else {
-          edgeStyle = { ...edgeStyle, stroke: '#374151', opacity: 0.1 }; // 未波及的线隐身
-        }
-      }
-
-      return { ...edge, style: edgeStyle, animated };
-    });
+  return sourceEdges.map((edge, i) => ({
+    ...edge,
+    id: edge.id || `e-${edge.source}-${edge.target}-${i}`, // 强制加 ID！这是连线显示的命脉！
+    source: String(edge.source),
+    target: String(edge.target),
+    type: 'smoothstep',
+    animated: true,
+    style: { stroke: '#60a5fa', strokeWidth: 2 },
+  }));
 })
 
 function handleNodeClick(event) {
@@ -587,7 +518,16 @@ function handlePaneClick() {
             />
 
             <template #node-group="groupNodeProps">
+              <!-- DDD 领域聚合结界 -->
+              <div v-if="groupNodeProps.data?.isDomainGroup" class="arch-domain-group-node">
+                <div class="arch-domain-group-label">
+                  <span class="text-[10px] mr-1">📦</span>
+                  <span class="text-[10px] font-bold text-blue-400">{{ groupNodeProps.data?.label }}</span>
+                </div>
+              </div>
+              <!-- 文件组节点（原有逻辑） -->
               <div
+                v-else
                 class="arch-group-node"
                 :style="{
                   borderColor: groupNodeProps.data?.color + '40',
@@ -605,16 +545,6 @@ function handlePaneClick() {
                   <span class="text-[11px] font-bold truncate" :style="{ color: groupNodeProps.data?.color }">
                     {{ groupNodeProps.data?.label }}
                   </span>
-                </div>
-              </div>
-            </template>
-
-            <!-- DDD 领域聚合结界 Group 节点 -->
-            <template #node-domain-group="domainGroupProps">
-              <div class="arch-domain-group-node">
-                <div class="arch-domain-group-label">
-                  <span class="text-[10px] mr-1">🛡️</span>
-                  <span class="text-[10px] font-bold text-blue-400">{{ domainGroupProps.data?.label }}</span>
                 </div>
               </div>
             </template>

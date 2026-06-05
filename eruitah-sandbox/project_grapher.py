@@ -388,8 +388,8 @@ class ProjectGrapher:
             return f"{rel}::{parent_name}.{name}"
         return f"{rel}::{name}"
 
-    # 允许进入图谱的节点类型（禁止目录/文件夹节点）
-    VALID_NODE_TYPES = {"File", "Class", "Interface", "Function", "Method"}
+    # 允许进入图谱的节点类型（彻底封杀 File/folder/directory，只保留纯业务代码实体）
+    VALID_NODE_TYPES = {"Class", "Interface", "Function", "Method"}
 
     def _add_node(self, node_id: str, node_type: str, name: str, file_path: str, **extra):
         # 严格过滤：只允许代码实体节点，禁止目录/文件夹节点
@@ -856,16 +856,17 @@ class ProjectGrapher:
 
         new_graph = self.to_dict()
 
-        # ── Diff Integration: 读取旧图谱，计算变更影响 ──
+        # ── Diff Integration: 强制禁用旧图谱缓存，避免垃圾节点回注 ──
         old_graph = None
-        if os.path.exists(output_path):
-            try:
-                with open(output_path, "r", encoding="utf-8") as f:
-                    old_graph = json.load(f)
-                logger.info(f"读取到旧图谱: {len(old_graph.get('nodes', []))} 节点, {len(old_graph.get('edges', []))} 边")
-            except Exception as e:
-                logger.warning(f"读取旧图谱失败，跳过 Diff 计算: {e}")
-                old_graph = None
+        # if os.path.exists(output_path):
+        #     try:
+        #         with open(output_path, "r", encoding="utf-8") as f:
+        #             old_graph = json.load(f)
+        #         logger.info(f"读取到旧图谱: {len(old_graph.get('nodes', []))} 节点, {len(old_graph.get('edges', []))} 边")
+        #     except Exception as e:
+        #         logger.warning(f"读取旧图谱失败，跳过 Diff 计算: {e}")
+        #         old_graph = None
+        logger.info("旧图谱缓存已禁用，强制使用 100% 净化后的新节点")
 
         if old_graph is not None:
             try:
@@ -955,7 +956,19 @@ class ProjectGrapher:
         self.build_graph()
 
         # 社区发现: 将紧密连接的节点聚类为业务领域
-        self.nodes = detect_domains(self.nodes, self.edges)
+        try:
+            self.nodes = detect_domains(self.nodes, self.edges)
+            # 强制双写：将 cluster_id 复制到 node['data'] 中，确保前端框架绝对能读到
+            for n in self.nodes:
+                if 'cluster_id' in n:
+                    if 'data' not in n:
+                        n['data'] = {}
+                    n['data']['cluster_id'] = n['cluster_id']
+                    if 'cluster_name' in n:
+                        n['data']['cluster_name'] = n['cluster_name']
+            logger.info(f"社区发现完成: {len(set(n.get('cluster_id', '') for n in self.nodes))} 个领域")
+        except Exception as e:
+            logger.error(f"聚类算法调用失败: {e}")
 
         self.write_json(output_path, modified_file_paths=modified_file_paths)
         return self.to_dict()

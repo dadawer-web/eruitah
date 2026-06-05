@@ -89,6 +89,10 @@ def detect_domains(nodes: list[dict], edges: list[dict]) -> list[dict]:
         for node in nodes:
             node["cluster_id"] = "domain_0"
             node["cluster_name"] = "全部"
+            if "data" not in node:
+                node["data"] = {}
+            node["data"]["cluster_id"] = "domain_0"
+            node["data"]["cluster_name"] = "全部"
         return nodes
 
     try:
@@ -114,6 +118,10 @@ def detect_domains(nodes: list[dict], edges: list[dict]) -> list[dict]:
             for node in nodes:
                 node["cluster_id"] = "domain_0"
                 node["cluster_name"] = "孤立节点"
+                if "data" not in node:
+                    node["data"] = {}
+                node["data"]["cluster_id"] = "domain_0"
+                node["data"]["cluster_name"] = "孤立节点"
             return nodes
 
         # 2. 社区发现: 贪心模块度算法
@@ -157,16 +165,27 @@ def detect_domains(nodes: list[dict], edges: list[dict]) -> list[dict]:
                     "cluster_name": cluster_name,
                 }
 
-        # 4. 将 cluster_id 和 cluster_name 追加到节点
+        # 4. 将 cluster_id 和 cluster_name 追加到节点（暴力双写，确保前端一定能读到）
         for node in nodes:
             nid = node.get("id", "")
             if nid in node_cluster_map:
-                node["cluster_id"] = node_cluster_map[nid]["cluster_id"]
-                node["cluster_name"] = node_cluster_map[nid]["cluster_name"]
+                cid = node_cluster_map[nid]["cluster_id"]
+                cname = node_cluster_map[nid]["cluster_name"]
+                node["cluster_id"] = cid
+                node["cluster_name"] = cname
+                # 双写：同时写入 node.data 层级，防患于未然
+                if "data" not in node:
+                    node["data"] = {}
+                node["data"]["cluster_id"] = cid
+                node["data"]["cluster_name"] = cname
             else:
                 # 孤立节点（没有边连接的）
                 node["cluster_id"] = "domain_orphan"
                 node["cluster_name"] = "孤立节点"
+                if "data" not in node:
+                    node["data"] = {}
+                node["data"]["cluster_id"] = "domain_orphan"
+                node["data"]["cluster_name"] = "孤立节点"
 
         domain_count = len(cluster_info)
         logger.info(

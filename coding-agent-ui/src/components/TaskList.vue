@@ -165,9 +165,8 @@ onMounted(fetchTasks)
           <div class="flex-1 min-w-0">
             <div class="truncate text-geek-text">{{ task.title }}</div>
             <div class="flex items-center gap-1 text-[10px] text-geek-text-dim">
-              <span v-if="task.updated_at_str || task.created_at_str">🕒 {{ task.updated_at_str || task.created_at_str }}</span>
-              <span v-else>🕒 {{ safeFormatDate(task.updated_at || task.created_at || task.timestamp || task.time) }}</span>
-              <span v-if="task.baseTaskId" class="text-purple-400">🔗{{ task.baseTaskId.slice(5, 13) }}</span>
+              <span>🕒 {{ task.created_at_str || task.updated_at_str || '无时间数据' }}</span>
+              <span v-if="task.baseTaskId || task.base_task_id" class="text-purple-400">🔗{{ (task.baseTaskId || task.base_task_id).slice(5, 13) }}</span>
             </div>
           </div>
 

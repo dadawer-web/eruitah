@@ -1,0 +1,21 @@
+{
+  "files": [
+    {
+      "id": "1780590050961v1hl9h4ar",
+      "name": "final-test.txt",
+      "path": "my-documents/final-test.txt",
+      "size": 21,
+      "mimeType": "text/plain",
+      "createdAt": "2026-06-04T16:20:50.961Z",
+      "updatedAt": "2026-06-04T16:20:50.961Z"
+    }
+  ],
+  "folders": [
+    {
+      "id": "1780590050849rtk9pfk0v",
+      "name": "my-documents",
+      "path": "my-documents",
+      "createdAt": "2026-06-04T16:20:50.849Z"
+    }
+  ]
+}

@@ -1079,32 +1079,19 @@ export const useAgentStore = defineStore('agent', () => {
 
       console.log('[API] fetchTaskRegistry extracted tasks count:', backendTasks.length)
 
-      const newList = []
-      for (const t of backendTasks) {
-        const taskId = t.task_id || t.id
-        if (!taskId) continue
-
-        newList.push({
-          id: taskId,
-          title: t.summary || '未命名任务',
-          status: t.status || 'active',
-          created_at: t.created_at_iso || t.created_at_str || t.created_at || null,
-          updated_at: t.updated_at_iso || t.updated_at_str || t.updated_at || null,
-          created_at_str: t.created_at_str || null,
-          updated_at_str: t.updated_at_str || null,
-          baseTaskId: t.base_task_id || '',
-          mergeCommitHash: t.merge_commit_hash || '',
-          workDir: t.work_dir || '',
-        })
-      }
-
-      newList.sort((a, b) => {
+      // 最小映射：只补齐前端模板需要的别名，其余字段原样透传（不丢弃任何后端字段）
+      taskList.value = backendTasks.map(t => ({
+        ...t,
+        id: t.task_id || t.id,
+        title: t.summary || t.title || '未命名任务',
+        baseTaskId: t.base_task_id || t.baseTaskId || '',
+        workDir: t.work_dir || t.workDir || '',
+        mergeCommitHash: t.merge_commit_hash || t.mergeCommitHash || '',
+      })).sort((a, b) => {
         const ta = a.created_at ? new Date(a.created_at).getTime() : 0
         const tb = b.created_at ? new Date(b.created_at).getTime() : 0
         return tb - ta
       })
-
-      taskList.value = newList
     } catch (e) {
       console.error('[API] fetchTaskRegistry error:', e)
     }

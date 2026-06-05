@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cloud Storage</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <div id="app">
+    <header>
+      <div class="header-left">
+        <h1><i class="fas fa-cloud"></i> Cloud Storage</h1>
+        <span class="breadcrumb" id="breadcrumb">/</span>
+      </div>
+      <div class="header-right">
+        <div class="storage-bar">
+          <div class="storage-fill" id="storageFill"></div>
+        </div>
+        <span class="storage-text" id="storageText">0 B / 1 GB</span>
+      </div>
+    </header>
+
+    <div class="container">
+      <aside class="sidebar">
+        <div class="nav-section">
+          <h3>导航</h3>
+          <a href="#" class="nav-item active" data-action="files"><i class="fas fa-folder"></i> 全部文件</a>
+          <a href="#" class="nav-item" data-action="recent"><i class="fas fa-clock"></i> 最近文件</a>
+        </div>
+        <div class="nav-section">
+          <h3>存储</h3>
+          <div class="storage-info">
+            <div class="storage-detail"><i class="fas fa-file"></i> <span id="fileCount">0</span> 个文件</div>
+            <div class="storage-detail"><i class="fas fa-folder"></i> <span id="folderCount">0</span> 个文件夹</div>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <button class="btn btn-primary" id="btnUpload"><i class="fas fa-upload"></i> 上传</button>
+            <button class="btn" id="btnNewFolder"><i class="fas fa-folder-plus"></i> 新建文件夹</button>
+            <input type="file" id="fileInput" multiple style="display:none">
+          </div>
+          <div class="toolbar-right">
+            <div class="search-box">
+              <i class="fas fa-search"></i>
+              <input type="text" id="searchInput" placeholder="搜索文件...">
+            </div>
+            <button class="btn btn-icon" id="btnViewGrid" title="网格视图"><i class="fas fa-th"></i></button>
+            <button class="btn btn-icon" id="btnViewList" title="列表视图"><i class="fas fa-list"></i></button>
+          </div>
+        </div>
+
+        <div class="file-area" id="fileArea">
+          <div class="file-grid" id="fileGrid">
+            <!-- Files rendered here -->
+          </div>
+          <div class="empty-state" id="emptyState" style="display:none">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <h3>暂无文件</h3>
+            <p>点击"上传"按钮或拖拽文件到此处</p>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Upload Modal -->
+    <div class="modal" id="uploadModal" style="display:none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>上传文件</h3>
+          <button class="btn btn-icon close-modal" data-modal="uploadModal"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="upload-drop" id="uploadDrop">
+          <i class="fas fa-cloud-upload-alt"></i>
+          <p>拖拽文件到此处或点击选择</p>
+        </div>
+        <div class="upload-list" id="uploadList"></div>
+      </div>
+    </div>
+
+    <!-- Preview Modal -->
+    <div class="modal" id="previewModal" style="display:none">
+      <div class="modal-content modal-preview">
+        <div class="modal-header">
+          <h3 id="previewName">预览</h3>
+          <div class="modal-actions">
+            <a class="btn" id="previewDownload" href="#"><i class="fas fa-download"></i> 下载</a>
+            <button class="btn btn-icon close-modal" data-modal="previewModal"><i class="fas fa-times"></i></button>
+          </div>
+        </div>
+        <div class="preview-body" id="previewBody"></div>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast-container" id="toastContainer"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
