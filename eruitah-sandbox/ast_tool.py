@@ -791,7 +791,15 @@ def _parse_file_fallback(file_path: str, language: str) -> dict:
             (re.compile(r"^import\s+(.+)"), "import"),
             (re.compile(r"^from\s+([\w.]+)\s+import\s+(.+)"), "from_import"),
         ]
-    elif language in ("c", "cpp", "java", "c_sharp"):
+    elif language == "java":
+        patterns = [
+            (re.compile(r"^\s*(?:public\s+|protected\s+|private\s+)?(?:abstract\s+|final\s+|static\s+)*class\s+(\w+)"), "class"),
+            (re.compile(r"^\s*(?:public\s+|protected\s+|private\s+)?(?:abstract\s+)?interface\s+(\w+)"), "class"),
+            (re.compile(r"^\s*(?:public\s+|protected\s+|private\s+)?enum\s+(\w+)"), "class"),
+            (re.compile(r"^\s*(?:public\s+|protected\s+|private\s+)?(?:static\s+)?(?:\w+(?:\s*<[^>]*>)?(?:\[\])*\s+)+(\w+)\s*\("), "function"),
+            (re.compile(r"^\s*import\s+(?:static\s+)?([\w.]+(?:\.\*)?)\s*;"), "java_import"),
+        ]
+    elif language in ("c", "cpp", "c_sharp"):
         patterns = [
             (re.compile(r"^\s*class\s+(\w+)"), "class"),
             (re.compile(r"^\s*struct\s+(\w+)"), "class"),
@@ -853,6 +861,18 @@ def _parse_file_fallback(file_path: str, language: str) -> dict:
                     "return_type": "",
                     "parent_name": parent,
                     "docstring": "",
+                })
+            elif kind == "java_import":
+                import_path = match.group(1).strip()
+                # 去掉 static 导入的前缀部分和通配符
+                if import_path.endswith(".*"):
+                    specifiers = ["*"]
+                else:
+                    specifiers = [import_path.split(".")[-1]]
+                imports.append({
+                    "source": import_path,
+                    "specifiers": specifiers,
+                    "line": i,
                 })
             elif kind == "import":
                 import_text = match.group(1).strip()

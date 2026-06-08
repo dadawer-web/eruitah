@@ -401,6 +401,7 @@ onBeforeUnmount(() => {
     <ArchitectureViewer
       :visible="store.architectureVisible"
       :graph-data="store.architectureData"
+      :active-tour-node-id="store.tourActiveNodeId"
       @close="store.hideArchitecture()"
     />
 

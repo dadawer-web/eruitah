@@ -1053,6 +1053,101 @@ async def _handle_system_command(websocket, data: dict, safe_send):
             })
         return
 
+    elif action == "analyze_node":
+        try:
+            from tour_generator import _call_llm
+            node_info = data.get("node_info", {})
+            node_id = node_info.get("id", "unknown")
+            node_label = node_info.get("label", "unknown")
+            node_type = node_info.get("nodeType", "unknown")
+            node_file = node_info.get("filePath", "")
+            node_layer = node_info.get("layer", "")
+            symbols = node_info.get("extra", {}).get("methods", []) or node_info.get("extra", {}).get("symbols", [])
+            params = node_info.get("extra", {}).get("params", [])
+            return_type = node_info.get("extra", {}).get("return_type", "")
+            work_dir = data.get("work_dir", SANDBOX_DIR)
+
+            # 读取节点源文件内容（截取前 200 行）
+            source_snippet = ""
+            if node_file:
+                try:
+                    file_path = os.path.join(work_dir, node_file)
+                    if os.path.isfile(file_path):
+                        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+                            lines = f.readlines()[:200]
+                            source_snippet = "".join(lines)
+                except Exception:
+                    source_snippet = "(无法读取源文件)"
+
+            # 读取 project_structure.json 获取关联信息
+            related_context = ""
+            try:
+                ps_path = os.path.join(work_dir, "project_structure.json")
+                if os.path.isfile(ps_path):
+                    with open(ps_path, "r", encoding="utf-8") as f:
+                        ps_data = json.load(f)
+                    # 找到与该节点相关的边
+                    related_edges = [
+                        e for e in ps_data.get("edges", [])
+                        if e.get("source") == node_id or e.get("target") == node_id
+                    ]
+                    if related_edges:
+                        related_context = "\n关联依赖:\n"
+                        for e in related_edges[:20]:
+                            edge_type = e.get("type", "unknown")
+                            related_context += f"  - {e.get('source', '?')} --[{edge_type}]--> {e.get('target', '?')}\n"
+            except Exception:
+                pass
+
+            symbols_str = ", ".join(symbols[:20]) if symbols else "无"
+            params_str = ", ".join(params) if params else "无"
+
+            prompt = f"""你是一位资深架构师，正在分析一个代码项目的架构图。请对以下节点进行深度架构分析。
+
+## 节点信息
+- 名称: {node_label}
+- 类型: {node_type}
+- 所属层级: {node_layer or '未知'}
+- 文件路径: {node_file or '未知'}
+- 内部符号/方法: {symbols_str}
+- 参数: {params_str}
+- 返回类型: {return_type or '未知'}
+
+{related_context}
+
+## 源代码片段（前200行）
+```
+{source_snippet[:3000]}
+```
+
+请从以下维度分析，使用简洁的中文回答：
+
+1. **职责定位**: 这个模块的核心职责是什么？在整体架构中扮演什么角色？
+2. **设计模式**: 是否体现了某种设计模式或架构原则？
+3. **依赖分析**: 它依赖了哪些模块？被哪些模块依赖？耦合度如何？
+4. **潜在风险**: 是否存在架构层面的潜在问题（如循环依赖、过度耦合、职责不清等）？
+5. **优化建议**: 有什么改进建议？
+
+请保持回答简洁专业，每个维度 2-3 句话即可。"""
+
+            messages = [{"role": "user", "content": prompt}]
+            analysis = _call_llm(messages)
+
+            await safe_send({
+                "type": "node_analysis",
+                "node_id": node_id,
+                "analysis": analysis,
+            })
+        except Exception as e:
+            logger.error(f"节点分析失败: {e}")
+            await safe_send({
+                "type": "node_analysis",
+                "node_id": data.get("node_info", {}).get("id", "unknown"),
+                "analysis": f"分析失败: {str(e)}",
+                "error": True,
+            })
+        return
+
     else:
         await safe_send({
             "type": "system_msg",
@@ -2128,6 +2223,74 @@ async def switch_task(task_id: str, request: dict):
         }
     else:
         return {"success": False, "error": switch_result.get("message", "切换失败")}
+
+
+# ============================================================================
+# 语义向量检索
+# ============================================================================
+
+@app.get("/api/v1/semantic_search")
+async def semantic_search(q: str = "", top_k: int = 5, project_dir: str = ""):
+    """
+    语义向量检索接口
+    接收自然语言查询，返回最相似的节点 ID 列表
+    """
+    import json
+    import os
+    import math
+
+    if not q or not q.strip():
+        return {"status": "success", "matches": []}
+
+    # 定位 embeddings.json
+    if not project_dir:
+        project_dir = SANDBOX_DIR
+    cache_dir = os.path.join(project_dir, ".eruitah_cache")
+    embeddings_path = os.path.join(cache_dir, "embeddings.json")
+
+    if not os.path.isfile(embeddings_path):
+        return {"status": "success", "matches": [], "message": "embeddings.json not found"}
+
+    # 加载 embeddings
+    try:
+        with open(embeddings_path, "r", encoding="utf-8") as f:
+            node_embeddings = json.load(f)
+    except (json.JSONDecodeError, IOError):
+        return {"status": "success", "matches": [], "message": "embeddings.json corrupted"}
+
+    if not node_embeddings:
+        return {"status": "success", "matches": [], "message": "no embeddings available"}
+
+    # 获取查询向量
+    try:
+        from semantic_search_tool import _VectorEngine
+        engine = _VectorEngine()
+        if not engine.available:
+            return {"status": "success", "matches": [], "message": "embedding engine unavailable"}
+        query_embedding = engine._encode([q.strip()])[0].tolist()
+    except Exception as e:
+        return {"status": "success", "matches": [], "message": f"embedding failed: {e}"}
+
+    # 计算余弦相似度
+    def cosine_similarity(a, b):
+        dot = sum(x * y for x, y in zip(a, b))
+        norm_a = math.sqrt(sum(x * x for x in a))
+        norm_b = math.sqrt(sum(x * x for x in b))
+        if norm_a == 0 or norm_b == 0:
+            return 0.0
+        return dot / (norm_a * norm_b)
+
+    scores = []
+    for node_id, embedding in node_embeddings.items():
+        if not isinstance(embedding, list) or len(embedding) == 0:
+            continue
+        sim = cosine_similarity(query_embedding, embedding)
+        scores.append((node_id, sim))
+
+    scores.sort(key=lambda x: x[1], reverse=True)
+    top_matches = [node_id for node_id, _ in scores[:top_k]]
+
+    return {"status": "success", "matches": top_matches}
 
 
 # ============================================================================

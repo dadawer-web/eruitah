@@ -84,6 +84,9 @@ export const useAgentStore = defineStore('agent', () => {
   const codeGraphData = ref({ nodes: [], edges: [] })
   const codeGraphLoading = ref(false)
 
+  // 节点 AI 分析状态
+  const nodeAnalysisMap = ref({})       // { nodeId: { analysis: string, loading: boolean, error: boolean } }
+
   const tourSteps = ref([])
   const tourActiveIdx = ref(-1)
   const tourActiveNodeId = ref(null)
@@ -816,6 +819,16 @@ export const useAgentStore = defineStore('agent', () => {
       case 'graph_data':
         codeGraphData.value = data.data || { nodes: [], edges: [] }
         codeGraphLoading.value = false
+        break
+
+      case 'node_analysis':
+        if (data.node_id) {
+          nodeAnalysisMap.value[data.node_id] = {
+            analysis: data.analysis || '',
+            loading: false,
+            error: !!data.error,
+          }
+        }
         break
 
       case 'code_tour_data':
@@ -1764,6 +1777,7 @@ export const useAgentStore = defineStore('agent', () => {
     codeGraphVisible,
     codeGraphLoading,
     codeGraphData,
+    nodeAnalysisMap,
     tourSteps,
     tourActiveIdx,
     tourActiveNodeId,
@@ -1786,6 +1800,37 @@ export const useAgentStore = defineStore('agent', () => {
         type: 'system_command',
         action: 'generate_graph',
         work_dir: basePath.value,
+      })
+      ws.value.send(JSON.stringify(payload))
+      return true
+    },
+
+    analyzeNode(nodeInfo) {
+      if (!ws.value || ws.value.readyState !== WebSocket.OPEN) {
+        return false
+      }
+      const nodeId = nodeInfo.id
+      if (!nodeId) return false
+
+      // 标记加载中
+      nodeAnalysisMap.value[nodeId] = {
+        analysis: '',
+        loading: true,
+        error: false,
+      }
+
+      const payload = _injectIdentity({
+        type: 'system_command',
+        action: 'analyze_node',
+        work_dir: basePath.value,
+        node_info: {
+          id: nodeId,
+          label: nodeInfo.label || nodeInfo.data?.label || '',
+          nodeType: nodeInfo.nodeType || nodeInfo.data?.nodeType || '',
+          filePath: nodeInfo.filePath || nodeInfo.data?.filePath || '',
+          layer: nodeInfo.layer || nodeInfo.data?.layer || '',
+          extra: nodeInfo.extra || nodeInfo.data?.extra || {},
+        },
       })
       ws.value.send(JSON.stringify(payload))
       return true

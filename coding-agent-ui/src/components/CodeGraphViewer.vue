@@ -1,14 +1,18 @@
 <script setup>
-import { ref, computed, watch, nextTick } from 'vue'
-import { VueFlow, Position, MarkerType } from '@vue-flow/core'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { VueFlow, useVueFlow, Position, MarkerType } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import { MiniMap } from '@vue-flow/minimap'
+import { toPng } from 'html-to-image'
 import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
 import '@vue-flow/controls/dist/style.css'
 import '@vue-flow/minimap/dist/style.css'
 import { getLayoutedElements } from '../utils/elkLayout.js'
+import { useAgentStore } from '../stores/agent.js'
+
+const store = useAgentStore()
 
 const props = defineProps({
   visible: Boolean,
@@ -29,8 +33,27 @@ const error = ref(null)
 const flowNodes = ref([])
 const flowEdges = ref([])
 const selectedNode = ref(null)
+const learnNode = ref(null)
 const searchQuery = ref('')
+const searchInputRef = ref(null)
 const hasData = ref(false)
+
+// ── 语义向量检索状态 ──
+const semanticMatches = ref([])  // 后端返回的语义匹配节点 ID
+const isSearching = ref(false)
+let searchTimeout = null
+
+// ── Persona 角色自适应 UI ──
+const currentPersona = ref('dev')  // 'manager' | 'dev' | 'geek'
+const collapsedGroups = ref(new Set())
+
+// ── 布局模式切换 ──
+const layoutMode = ref('structural')  // 'structural' | 'flow'
+
+// ── 层级过滤器 (Layer Filter) ──
+const availableLayers = ref([])
+const visibleLayers = ref([])
+const showFilterPanel = ref(false)
 
 // ── Path Finder 状态 ──
 const selectedPathNodes = ref([])   // 最多 2 个 nodeId：[起点, 终点]
@@ -38,6 +61,75 @@ const highlightedPath = ref({ nodeIds: new Set(), edgeIds: new Set() })
 
 // ── Diff Mode 状态 ──
 const isDiffMode = ref(false)
+
+// ── Persona 自动折叠逻辑 ──
+watch(currentPersona, (newRole) => {
+  const allGroupIds = []
+  const rawNodes = props.graphData?.nodes || []
+  const groupSet = new Set()
+  rawNodes.forEach(n => {
+    const cid = n.cluster_id || (n.data && n.data.cluster_id)
+    if (cid) groupSet.add(String(cid))
+  })
+  groupSet.forEach(id => allGroupIds.push(id))
+
+  if (newRole === 'manager') {
+    collapsedGroups.value = new Set(allGroupIds)
+  } else {
+    collapsedGroups.value = new Set()
+  }
+  processGraph()
+})
+
+// ── 漫游导览状态机 ──
+const { setCenter, fitView } = useVueFlow()
+const isTouring = ref(false)
+const currentTourIndex = ref(0)
+const tourSteps = ref([])
+
+function startTour() {
+  const allCodeNodes = flowNodes.value.filter(n => n.type !== 'group')
+  if (allCodeNodes.length === 0) return
+  tourSteps.value = allCodeNodes.slice(0, Math.min(10, allCodeNodes.length))
+  currentTourIndex.value = 0
+  isTouring.value = true
+  executeCameraMove()
+}
+
+function stopTour() {
+  isTouring.value = false
+  currentTourIndex.value = 0
+  setTimeout(() => fitView({ duration: 800, padding: 0.2 }), 100)
+}
+
+function prevStep() {
+  if (currentTourIndex.value > 0) {
+    currentTourIndex.value--
+    executeCameraMove()
+  }
+}
+
+function nextStep() {
+  if (currentTourIndex.value < tourSteps.value.length - 1) {
+    currentTourIndex.value++
+    executeCameraMove()
+  }
+}
+
+function executeCameraMove() {
+  const targetId = tourSteps.value[currentTourIndex.value]?.id
+  const targetNode = flowNodes.value.find(n => n.id === targetId)
+  if (targetNode) {
+    const width = parseFloat(targetNode.style?.width) || 240
+    const height = parseFloat(targetNode.style?.height) || 60
+    setCenter({
+      x: targetNode.position.x + width / 2,
+      y: targetNode.position.y + height / 2,
+      zoom: 1.6,
+      duration: 1200
+    })
+  }
+}
 
 const isAnalyzing = computed(() => props.isLoading || layoutLoading.value)
 
@@ -245,13 +337,69 @@ const EDGE_CONFIG = {
   CALLS:    { color: '#34d399', width: 2, dash: null, animated: true, label: 'calls' },
 }
 
+// 领域聚合配色方案
+const DOMAIN_COLORS = [
+  { border: '#3b82f6', bg: 'rgba(59,130,246,0.06)', text: '#60a5fa' },   // 蓝
+  { border: '#a855f7', bg: 'rgba(168,85,247,0.06)', text: '#c084fc' },   // 紫
+  { border: '#f59e0b', bg: 'rgba(245,158,11,0.06)', text: '#fbbf24' },   // 琥珀
+  { border: '#10b981', bg: 'rgba(16,185,129,0.06)', text: '#34d399' },   // 翠绿
+  { border: '#ef4444', bg: 'rgba(239,68,68,0.06)', text: '#f87171' },    // 红
+  { border: '#ec4899', bg: 'rgba(236,72,153,0.06)', text: '#f472b6' },   // 粉
+  { border: '#06b6d4', bg: 'rgba(6,182,212,0.06)', text: '#22d3ee' },    // 青
+  { border: '#8b5cf6', bg: 'rgba(139,92,246,0.06)', text: '#a78bfa' },   // 靛
+]
+
 function mapBackendToVueFlow(backendData) {
   if (!backendData?.nodes?.length) return { nodes: [], edges: [] }
 
+  // 1. 收集所有 cluster_id → 创建 Domain Group 结界节点
+  const clusterMap = new Map()  // cluster_id → { name, colorIdx, nodes[] }
+  for (const n of backendData.nodes) {
+    const cid = n.cluster_id || n.data?.cluster_id
+    if (!cid) continue
+    if (!clusterMap.has(cid)) {
+      const cname = n.cluster_name || n.data?.cluster_name || cid
+      clusterMap.set(cid, { name: cname, colorIdx: clusterMap.size % DOMAIN_COLORS.length, nodes: [] })
+    }
+    clusterMap.get(cid).nodes.push(n)
+  }
+
+  const groupNodes = []
+  for (const [cid, info] of clusterMap) {
+    const dc = DOMAIN_COLORS[info.colorIdx]
+    groupNodes.push({
+      id: cid,
+      type: 'group',
+      position: { x: 0, y: 0 },
+      style: {
+        backgroundColor: dc.bg,
+        border: `2px dashed ${dc.border}80`,
+        borderRadius: '16px',
+        zIndex: -1,
+        width: '400px',
+        height: '300px',
+      },
+      data: {
+        label: info.name,
+        nodeType: 'domain-group',
+        color: dc.text,
+        border: dc.border,
+        bg: dc.bg,
+        icon: '📦',
+        isDomainGroup: true,
+      },
+    })
+  }
+
+  // 2. 映射业务节点
   const vfNodes = backendData.nodes.map((n) => {
     const layer = n.layer || 'unknown'
     const layerStyle = resolveLayerStyle(layer)
     const nodeType = n.type || 'Function'
+    const cid = n.cluster_id || n.data?.cluster_id
+    const cname = n.cluster_name || n.data?.cluster_name
+    const domainColor = cid ? DOMAIN_COLORS[clusterMap.get(cid)?.colorIdx ?? 0] : null
+
     return {
       id: n.id,
       type: nodeType === 'File' ? 'file' : nodeType === 'Class' ? 'classNode' : 'funcNode',
@@ -266,18 +414,30 @@ function mapBackendToVueFlow(backendData) {
         color: layerStyle.text,
         filePath: n.file_path || '',
         diffStatus: n.diff_status || null,
+        clusterId: cid || null,
+        clusterName: cname || null,
+        domainColor: domainColor ? domainColor.text : null,
+        domainBorder: domainColor ? domainColor.border : null,
         extra: n,
       },
       style: {
         width: (nodeType === 'File' ? 260 : nodeType === 'Class' ? 200 : 180) + 'px',
         height: (nodeType === 'File' ? 56 : nodeType === 'Class' ? 44 : 40) + 'px',
+        // 如果属于某个 domain，给节点加微妙的领域色边框
+        ...(domainColor ? { borderLeft: `3px solid ${domainColor.border}` } : {}),
       },
       sourcePosition: Position.RIGHT,
       targetPosition: Position.LEFT,
+      // 标记归属 domain（用于 ELK 布局分组）
+      _domainGroup: cid || null,
     }
   })
 
-  const validIds = new Set(backendData.nodes.map((n) => n.id))
+  // 3. 合并 group 节点 + 业务节点
+  const allNodes = [...groupNodes, ...vfNodes]
+
+  // 4. 映射边
+  const validIds = new Set(allNodes.map((n) => n.id))
   const vfEdges = (backendData.edges || [])
     .filter((e) => validIds.has(e.source) && validIds.has(e.target))
     .map((e, i) => {
@@ -308,7 +468,7 @@ function mapBackendToVueFlow(backendData) {
       }
     })
 
-  return { nodes: vfNodes, edges: vfEdges }
+  return { nodes: allNodes, edges: vfEdges }
 }
 
 async function processGraph() {
@@ -319,7 +479,134 @@ async function processGraph() {
 
   try {
     const { nodes: rawNodes, edges: rawEdges } = mapBackendToVueFlow(props.graphData)
-    const { nodes: layouted, edges } = await getLayoutedElements(rawNodes, rawEdges)
+    const collapsed = collapsedGroups.value
+    const layers = visibleLayers.value
+
+    // ── 层级检测 ──
+    const layerSet = new Set()
+    for (const n of rawNodes) {
+      const layer = n.data?.layer || 'unknown'
+      if (layer !== 'unknown') layerSet.add(layer)
+    }
+    const detectedLayers = [...layerSet].sort()
+    if (availableLayers.value.length === 0 || availableLayers.value.join(',') !== detectedLayers.join(',')) {
+      availableLayers.value = detectedLayers
+      if (visibleLayers.value.length === 0) visibleLayers.value = [...detectedLayers]
+    }
+
+    // ── 层级过滤 ──
+    let filteredNodes = rawNodes
+    if (layers.length > 0) {
+      filteredNodes = rawNodes.filter(n => {
+        if (n.type === 'group') return true
+        const layer = n.data?.layer || 'unknown'
+        return layers.includes(layer)
+      })
+    }
+
+    // ── 容器折叠：隐藏折叠组内的子节点 ──
+    const collapsedSet = collapsed
+    const groupNodeIds = new Set(filteredNodes.filter(n => n.type === 'group').map(n => n.id))
+    const visibleNodes = filteredNodes.filter(n => {
+      if (n.type === 'group') return true
+      const domainGroup = n._domainGroup
+      if (domainGroup && collapsedSet.has(domainGroup)) return false
+      return true
+    })
+
+    // 更新折叠的 group 节点样式
+    const finalNodes = visibleNodes.map(n => {
+      if (n.type === 'group' && n.data?.isDomainGroup) {
+        const isCollapsed = collapsedSet.has(n.id)
+        return {
+          ...n,
+          style: {
+            ...n.style,
+            backgroundColor: isCollapsed ? 'rgba(30, 58, 138, 0.12)' : n.style.backgroundColor,
+            border: isCollapsed ? '2px solid rgba(59, 130, 246, 0.8)' : n.style.border,
+            ...(isCollapsed ? { width: '280px', height: '80px' } : {}),
+          },
+          data: {
+            ...n.data,
+            isCollapsed,
+            label: isCollapsed ? `${n.data.label} (➕)` : `${n.data.label} (➖)`,
+          },
+        }
+      }
+      return n
+    })
+
+    // ── 边聚合：折叠时重定向边到父组 ──
+    const visibleIds = new Set(finalNodes.map(n => n.id))
+    // 从所有原始节点（含被过滤的子节点）构建 nodeToGroup 映射
+    const nodeToGroup = new Map()
+    for (const n of filteredNodes) {
+      if (n.type !== 'group' && n._domainGroup) {
+        nodeToGroup.set(n.id, n._domainGroup)
+      }
+    }
+
+    const edgeAggregationMap = new Map()
+    for (const edge of rawEdges) {
+      let sourceId = edge.source
+      let targetId = edge.target
+
+      if (!visibleIds.has(sourceId)) {
+        const group = nodeToGroup.get(sourceId)
+        if (group && collapsedSet.has(group)) {
+          sourceId = group
+        } else {
+          continue
+        }
+      }
+
+      if (!visibleIds.has(targetId)) {
+        const group = nodeToGroup.get(targetId)
+        if (group && collapsedSet.has(group)) {
+          targetId = group
+        } else {
+          continue
+        }
+      }
+
+      if (sourceId === targetId) continue
+
+      const edgeKey = `${sourceId}→${targetId}`
+      if (edgeAggregationMap.has(edgeKey)) {
+        const existing = edgeAggregationMap.get(edgeKey)
+        existing.count++
+      } else {
+        edgeAggregationMap.set(edgeKey, {
+          source: sourceId,
+          target: targetId,
+          count: 1,
+          edge,
+        })
+      }
+    }
+
+    const finalEdges = []
+    let edgeIdx = 0
+    const isFlowMode = layoutMode.value === 'flow'
+    for (const [, agg] of edgeAggregationMap) {
+      const e = agg.edge
+      const isAggregated = agg.count > 1
+      finalEdges.push({
+        ...e,
+        id: `e-${agg.source}-${agg.target}-${edgeIdx++}`,
+        source: agg.source,
+        target: agg.target,
+        type: isFlowMode ? 'step' : (e.type || 'smoothstep'),
+        style: {
+          ...e.style,
+          ...(isAggregated ? { strokeWidth: Math.min(2 + agg.count * 0.5, 5) } : {}),
+          ...(isFlowMode ? { strokeWidth: Math.max(e.style?.strokeWidth || 2, 3) } : {}),
+        },
+        label: isAggregated ? `${e.label || 'ref'} ×${agg.count}` : e.label,
+      })
+    }
+
+    const { nodes: layouted, edges } = await getLayoutedElements(finalNodes, finalEdges, { mode: layoutMode.value })
 
     flowNodes.value = []
     flowEdges.value = []
@@ -328,6 +615,10 @@ async function processGraph() {
     flowNodes.value = layouted
     flowEdges.value = edges
     hasData.value = true
+
+    // 布局完成后自动适配视图
+    await nextTick()
+    setTimeout(() => fitView({ duration: 400, padding: 0.15 }), 50)
   } catch (err) {
     console.error('[CodeGraphViewer] layout failed:', err)
     error.value = err.message
@@ -381,12 +672,84 @@ const activeLayerStyles = computed(() => {
 })
 
 const filteredNodes = computed(() => {
-  if (!searchQuery.value) return flowNodes.value
+  if (!searchQuery.value && !isTouring.value && semanticMatches.value.length === 0) return flowNodes.value
   const q = searchQuery.value.toLowerCase()
-  return flowNodes.value.filter((n) => {
-    const label = (n.data?.label || '').toLowerCase()
-    const nodeType = (n.data?.nodeType || '').toLowerCase()
-    return label.includes(q) || nodeType.includes(q)
+
+  // 漫游模式：高亮当前节点 + 相邻节点，暗化其余
+  if (isTouring.value && tourSteps.value.length > 0) {
+    const activeNodeId = tourSteps.value[currentTourIndex.value]?.id
+    const neighborIds = new Set()
+    for (const e of flowEdges.value) {
+      if (e.source === activeNodeId) neighborIds.add(e.target)
+      if (e.target === activeNodeId) neighborIds.add(e.source)
+    }
+
+    return flowNodes.value.map(n => {
+      let style = { ...n.style }
+      if (n.id === activeNodeId) {
+        style.opacity = 1
+        style.boxShadow = '0 0 30px rgba(59,130,246,0.9)'
+        style.zIndex = 100
+      } else if (neighborIds.has(n.id)) {
+        style.opacity = 1
+        style.boxShadow = '0 0 12px rgba(59,130,246,0.3)'
+      } else {
+        style.opacity = 0.08
+      }
+      return { ...n, style }
+    })
+  }
+
+  // 语义搜索模式：后端返回的匹配节点发蓝光
+  const semanticIds = new Set(semanticMatches.value)
+  const hasSemanticResults = semanticIds.size > 0
+
+  // 关键词匹配
+  const keywordMatchedIds = new Set()
+  if (q) {
+    for (const n of flowNodes.value) {
+      const label = (n.data?.label || '').toLowerCase()
+      const nodeType = (n.data?.nodeType || '').toLowerCase()
+      if (label.includes(q) || nodeType.includes(q)) {
+        keywordMatchedIds.add(n.id)
+      }
+    }
+  }
+
+  // 合并匹配：语义匹配 + 关键词匹配
+  const allMatchedIds = new Set([...semanticIds, ...keywordMatchedIds])
+
+  // 找出匹配节点的所属 group
+  const groupIdsToShow = new Set()
+  for (const n of flowNodes.value) {
+    if (allMatchedIds.has(n.id) && n._domainGroup) {
+      groupIdsToShow.add(n._domainGroup)
+    }
+  }
+
+  // 没有任何匹配时，返回原始节点
+  if (allMatchedIds.size === 0 && !q) return flowNodes.value
+
+  return flowNodes.value.map(n => {
+    const isSemanticMatch = semanticIds.has(n.id)
+    const isKeywordMatch = keywordMatchedIds.has(n.id)
+    const isMatch = isSemanticMatch || isKeywordMatch
+    const isGroupToShow = n.type === 'group' && groupIdsToShow.has(n.id)
+    let style = { ...n.style }
+    if (isMatch || isGroupToShow || n.type === 'group') {
+      style.opacity = isMatch ? 1 : 0.6
+      if (isSemanticMatch) {
+        // 语义匹配：蓝光
+        style.boxShadow = '0 0 25px rgba(59,130,246,0.8)'
+        style.borderColor = '#3b82f6'
+      } else if (isKeywordMatch) {
+        // 关键词匹配：琥珀光
+        style.boxShadow = '0 0 20px rgba(245, 158, 11, 0.6)'
+      }
+    } else {
+      style.opacity = 0.08
+    }
+    return { ...n, style }
   })
 })
 
@@ -455,12 +818,33 @@ const displayEdges = computed(() => {
   const pathNodeIds = highlightedPath.value.nodeIds
   const pathActive = pathNodeIds.size > 0
   const dm = isDiffMode.value
+  const semanticIds = new Set(semanticMatches.value)
+  const hasSemantic = semanticIds.size > 0
+
+  // 漫游模式：高亮当前节点相连的边
+  if (isTouring.value && tourSteps.value.length > 0) {
+    const activeNodeId = tourSteps.value[currentTourIndex.value]?.id
+    return flowEdges.value.map(e => {
+      if (e.source === activeNodeId || e.target === activeNodeId) {
+        return {
+          ...e,
+          style: { ...e.style, stroke: '#3b82f6', opacity: 1, strokeWidth: 3 },
+          animated: true,
+          markerEnd: { type: MarkerType.ArrowClosed, color: '#3b82f6', width: 12, height: 12 },
+        }
+      }
+      return { ...e, style: { ...e.style, opacity: 0.05 } }
+    })
+  }
 
   return flowEdges.value
     .filter((e) => ids.has(e.source) && ids.has(e.target))
     .map((e) => {
       const isOnPath = pathActive && pathEdgeIds.has(e.id)
       const ds = e.diffStatus
+
+      // 语义搜索：匹配节点相连的边发红光
+      const isSemanticEdge = hasSemantic && (semanticIds.has(e.source) || semanticIds.has(e.target))
 
       // Diff Mode 边样式
       let diffStyle = null
@@ -511,6 +895,16 @@ const displayEdges = computed(() => {
             : e.labelBgStyle,
           labelBgPadding: [4, 6],
           labelBgBorderRadius: 3,
+        }
+      }
+
+      // 语义搜索边高亮
+      if (isSemanticEdge) {
+        return {
+          ...e,
+          animated: true,
+          style: { stroke: '#ef4444', strokeWidth: 2, opacity: 1 },
+          markerEnd: { type: MarkerType.ArrowClosed, color: '#ef4444', width: 12, height: 12 },
         }
       }
 
@@ -566,15 +960,15 @@ function handlePathNodeClick(event) {
   const isShift = event.event?.shiftKey
 
   if (!isShift) {
-    // 普通点击：走原有逻辑
+    // 普通点击：走原有逻辑 + 打开 Learn Panel
     selectedNode.value = event.node?.data?.extra || null
+    learnNode.value = event.node || null
     emit('nodeClick', event.node?.data?.extra)
     return
   }
 
   // Shift + Click: Path Finder 逻辑
   if (selectedPathNodes.value.length >= 2) {
-    // 已满 2 个，重置
     selectedPathNodes.value = [nodeId]
     highlightedPath.value = { nodeIds: new Set(), edgeIds: new Set() }
     return
@@ -583,7 +977,6 @@ function handlePathNodeClick(event) {
   selectedPathNodes.value.push(nodeId)
 
   if (selectedPathNodes.value.length === 2) {
-    // 选满 2 个，触发寻路
     const [source, target] = selectedPathNodes.value
     const result = findShortestPath(source, target, flowEdges.value)
     if (result) {
@@ -599,9 +992,47 @@ function clearPathFinder() {
   highlightedPath.value = { nodeIds: new Set(), edgeIds: new Set() }
 }
 
+// ── 双击折叠/展开结界 ──
+function onNodeDoubleClick(event) {
+  const node = event.node
+  if (!node?.data?.isDomainGroup) return
+  const gid = node.id
+  const newCollapsed = new Set(collapsedGroups.value)
+  if (newCollapsed.has(gid)) {
+    newCollapsed.delete(gid)
+  } else {
+    newCollapsed.add(gid)
+  }
+  collapsedGroups.value = newCollapsed
+  processGraph()
+}
+
 function handlePaneClick() {
   selectedNode.value = null
+  learnNode.value = null
   clearPathFinder()
+}
+
+// AI 分析：重试/手动触发
+function retryAnalysis() {
+  if (learnNode.value?.id) {
+    // 清除旧结果，强制重新分析
+    delete store.nodeAnalysisMap[learnNode.value.id]
+    store.analyzeNode(learnNode.value)
+  }
+}
+
+// 渲染 AI 分析结果（Markdown 粗体/列表 → HTML）
+function renderAnalysis(text) {
+  if (!text) return ''
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\*\*(.*?)\*\*/g, '<strong class="text-blue-300">$1</strong>')
+    .replace(/^(\d+)\.\s/gm, '<span class="text-purple-400 font-bold">$1.</span> ')
+    .replace(/^- /gm, '<span class="text-purple-400">•</span> ')
+    .replace(/\n/g, '<br>')
 }
 
 const isNodeActive = (nodeId) => {
@@ -612,6 +1043,130 @@ const isNodeActive = (nodeId) => {
 const isNodeHighlighted = (nodeId) => {
   return props.activeNodeId && nodeId === props.activeNodeId
 }
+
+// ── 全局快捷键引擎 ──
+function handleGlobalKeydown(e) {
+  const isInputFocused = document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA'
+
+  // / 键：聚焦搜索框
+  if (e.key === '/' && !isInputFocused) {
+    e.preventDefault()
+    searchInputRef.value?.focus()
+    return
+  }
+
+  // Esc 键：关闭面板 > 清空搜索 > 退出漫游 > 关闭 viewer
+  if (e.key === 'Escape') {
+    if (learnNode.value) {
+      learnNode.value = null
+      selectedNode.value = null
+    } else if (searchQuery.value) {
+      searchQuery.value = ''
+      searchInputRef.value?.blur()
+    } else if (isTouring.value) {
+      stopTour()
+    } else if (!selectedNode.value) {
+      emit('close')
+    }
+    return
+  }
+
+  // ← → 键：漫游控制
+  if (isTouring.value && !isInputFocused) {
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault()
+      prevStep()
+      return
+    }
+    if (e.key === 'ArrowRight') {
+      e.preventDefault()
+      nextStep()
+      return
+    }
+  }
+
+  // d 键：切换 Diff Mode
+  if (e.key === 'd' && !isInputFocused) {
+    isDiffMode.value = !isDiffMode.value
+    return
+  }
+}
+
+// ── 语义向量检索：防抖 watch ──
+watch(searchQuery, (newVal) => {
+  // 清除旧定时器
+  if (searchTimeout) {
+    clearTimeout(searchTimeout)
+    searchTimeout = null
+  }
+
+  // 空查询时清空语义匹配
+  if (!newVal || !newVal.trim()) {
+    semanticMatches.value = []
+    isSearching.value = false
+    return
+  }
+
+  // 500ms 防抖后调用语义搜索 API
+  isSearching.value = true
+  searchTimeout = setTimeout(async () => {
+    try {
+      const resp = await fetch(`/api/v1/semantic_search?q=${encodeURIComponent(newVal.trim())}&top_k=10`)
+      if (resp.ok) {
+        const data = await resp.json()
+        if (data.status === 'success' && data.matches) {
+          semanticMatches.value = data.matches
+        }
+      }
+    } catch (e) {
+      // 语义搜索失败时静默降级，仅使用关键词匹配
+      semanticMatches.value = []
+    } finally {
+      isSearching.value = false
+    }
+  }, 500)
+})
+
+// ── 一键高清导出图谱 ──
+const isExporting = ref(false)
+const downloadImage = async () => {
+  const flowElement = document.querySelector('.vue-flow__viewport')
+  if (!flowElement) return
+
+  isExporting.value = true
+  try {
+    // 截图前居中视图，保证完整性
+    fitView({ padding: 0.1, duration: 0 })
+    await new Promise(resolve => setTimeout(resolve, 300))
+
+    const dataUrl = await toPng(flowElement, {
+      backgroundColor: '#0a0a0a',
+      pixelRatio: 2,
+      filter: (node) => {
+        // 过滤掉 Vue Flow 自带的面板控件
+        if (node?.classList?.contains('vue-flow__panel')) return false
+        return true
+      }
+    })
+
+    const link = document.createElement('a')
+    link.download = `architecture-graph-${new Date().getTime()}.png`
+    link.href = dataUrl
+    link.click()
+  } catch (error) {
+    console.error('导出图片失败:', error)
+  } finally {
+    isExporting.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('keydown', handleGlobalKeydown)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleGlobalKeydown)
+})
 
 // ── Diff Mode: 节点 Tailwind class 计算 ──
 function getDiffNodeClasses(diffStatus) {
@@ -632,17 +1187,6 @@ function getDiffNodeClasses(diffStatus) {
 </script>
 
 <template>
-  <!-- Diff Mode Toggle - fixed 定位，脱离所有嵌套，z-index 最大值 -->
-  <button
-    v-if="visible"
-    @click="isDiffMode = !isDiffMode"
-    style="position: fixed; top: 80px; right: 30px; z-index: 2147483647;"
-    :class="isDiffMode ? 'bg-orange-600 border-orange-500 shadow-[0_0_20px_rgba(234,88,12,0.9)]' : 'bg-gray-800 border-gray-600'"
-    class="px-4 py-2 rounded-lg border text-white font-bold transition-all duration-300 cursor-pointer hover:scale-110"
-  >
-    {{ isDiffMode ? '🔥 Diff模式: 开启' : '👁️ Diff模式: 关闭' }}
-  </button>
-
   <Transition name="graph-slide">
     <div v-if="visible" class="fixed inset-0 z-[100] flex flex-col" @click.self="emit('close')">
       <div class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
@@ -662,10 +1206,13 @@ function getDiffNodeClasses(diffStatus) {
           <div class="flex items-center gap-3">
             <div class="relative">
               <input
+                ref="searchInputRef"
                 v-model="searchQuery"
-                placeholder="搜索节点..."
-                class="w-36 px-2.5 py-1 text-[11px] bg-slate-900/80 border border-slate-700/60 rounded-md text-slate-300 placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                placeholder="搜索节点 (支持语义)..."
+                class="w-44 px-2.5 py-1 text-[11px] bg-slate-900/80 border border-slate-700/60 rounded-md text-slate-300 placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 transition-colors"
               />
+              <span v-if="isSearching" class="absolute right-2 top-1/2 -translate-y-1/2 animate-spin text-blue-400 text-[10px]">⟳</span>
+              <span v-else-if="semanticMatches.length > 0" class="absolute right-2 top-1/2 -translate-y-1/2 text-blue-400 text-[10px]">✦</span>
             </div>
             <button @click="emit('close')" class="text-slate-500 hover:text-slate-300 text-lg leading-none transition-colors">×</button>
           </div>
@@ -683,8 +1230,72 @@ function getDiffNodeClasses(diffStatus) {
             <span>返回代码</span>
           </button>
 
-          <!-- 右上角按钮组 -->
-          <div class="absolute right-4 top-4 z-50 flex items-center gap-2">
+          <!-- 右上角全息控制面板 -->
+          <div class="absolute right-4 top-4 z-50 flex flex-col gap-2 items-end">
+            <!-- Persona 切换器 -->
+            <div class="persona-switcher">
+              <button
+                @click="currentPersona = 'manager'"
+                :class="currentPersona === 'manager' ? 'persona-btn-active' : 'persona-btn'"
+                title="架构师视角：全部折叠，只看模块大框"
+              >👔 宏观</button>
+              <button
+                @click="currentPersona = 'dev'"
+                :class="currentPersona === 'dev' ? 'persona-btn-active' : 'persona-btn'"
+                title="开发视角：标准展开"
+              >💻 业务</button>
+              <button
+                @click="currentPersona = 'geek'"
+                :class="currentPersona === 'geek' ? 'persona-btn-active' : 'persona-btn'"
+                title="极客视角：全部展开，细致入微"
+              >🔬 微观</button>
+            </div>
+
+            <!-- 过滤面板切换按钮 -->
+            <button @click="showFilterPanel = !showFilterPanel" class="filter-toggle-btn">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+              </svg>
+              <span class="text-[10px]">LAYER</span>
+              <span v-if="visibleLayers.length < availableLayers.length" class="filter-count-badge">{{ visibleLayers.length }}/{{ availableLayers.length }}</span>
+            </button>
+
+            <!-- 层级过滤面板 -->
+            <Transition name="filter-slide">
+              <div v-if="showFilterPanel" class="filter-panel">
+                <div class="filter-panel-header">
+                  <span class="text-[10px] font-bold text-gray-400 tracking-wider">LAYER FILTER</span>
+                  <div class="flex gap-2">
+                    <button @click="visibleLayers = [...availableLayers]; processGraph()" class="filter-action-btn">全选</button>
+                    <button @click="visibleLayers = []; processGraph()" class="filter-action-btn">清空</button>
+                  </div>
+                </div>
+                <div class="filter-panel-body">
+                  <label
+                    v-for="layer in availableLayers"
+                    :key="layer"
+                    class="filter-checkbox-row"
+                  >
+                    <input
+                      type="checkbox"
+                      :value="layer"
+                      v-model="visibleLayers"
+                      @change="processGraph()"
+                      class="filter-checkbox"
+                    />
+                    <span class="filter-layer-dot" :style="{ background: getLayerStyle(layer).miniMap }"></span>
+                    <span class="filter-layer-label" :style="{ color: getLayerStyle(layer).text }">
+                      {{ getLayerStyle(layer).label }}
+                    </span>
+                    <span class="filter-layer-count">
+                      {{ props.graphData?.nodes?.filter(n => (n.layer || n.data?.layer || 'unknown') === layer).length || 0 }}
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </Transition>
+
+            <!-- 解析项目架构按钮 -->
             <button
               v-if="!isAnalyzing"
               @click="handleAnalyze"
@@ -704,6 +1315,52 @@ function getDiffNodeClasses(diffStatus) {
             >
               <span class="analyze-spinner-sm"></span>
               <span>解析中...</span>
+            </button>
+
+            <!-- Diff 时光机控制区 -->
+            <button
+              @click="isDiffMode = !isDiffMode"
+              :class="isDiffMode
+                ? 'bg-orange-600/90 border-orange-500 shadow-[0_0_12px_rgba(234,88,12,0.7)] text-white'
+                : 'bg-gray-900/80 border-gray-700 text-gray-400 hover:text-gray-200 hover:border-gray-500'"
+              class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-bold font-mono tracking-wider transition-all duration-300 cursor-pointer hover:scale-105"
+            >
+              <span>{{ isDiffMode ? '🔥' : '⏳' }}</span>
+              <span>{{ isDiffMode ? 'DIFF: ON' : '时光机' }}</span>
+            </button>
+
+            <!-- Diff 图例 -->
+            <Transition name="filter-slide">
+              <div v-if="isDiffMode" class="mt-2 flex flex-col gap-1.5 text-[10px] font-mono bg-black/50 p-2.5 rounded border border-gray-800">
+                <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]"></span> 新增 (Added)</div>
+                <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-[0_0_8px_#f59e0b]"></span> 修改 (Modified)</div>
+                <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444] border border-dashed"></span> 移除 (Removed)</div>
+              </div>
+            </Transition>
+
+            <!-- 布局模式切换 -->
+            <div class="flex bg-gray-900/50 rounded-lg p-1 border border-gray-700/50 mt-2">
+              <button
+                @click="layoutMode = 'structural'; processGraph()"
+                :class="layoutMode === 'structural' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-400 hover:text-gray-200'"
+                class="flex-1 py-1.5 text-[10px] font-bold rounded transition-all font-mono"
+              >🕸️ 结构拓扑</button>
+              <button
+                @click="layoutMode = 'flow'; processGraph()"
+                :class="layoutMode === 'flow' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-400 hover:text-gray-200'"
+                class="flex-1 py-1.5 text-[10px] font-bold rounded transition-all font-mono"
+              >➡️ 业务流程</button>
+            </div>
+
+            <!-- 一键高清导出 -->
+            <button
+              @click="downloadImage"
+              :disabled="isExporting"
+              class="mt-2 w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-wait text-white text-xs font-bold rounded-lg shadow-[0_0_15px_rgba(79,70,229,0.5)] transition-all transform hover:scale-105 active:scale-95"
+            >
+              <svg v-if="!isExporting" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+              <span v-else class="animate-spin text-[10px]">⟳</span>
+              <span>{{ isExporting ? '导出中...' : '一键导出高清图' }}</span>
             </button>
           </div>
 
@@ -779,6 +1436,7 @@ function getDiffNodeClasses(diffStatus) {
             class="code-graph-flow w-full h-full"
             @node-click="handlePathNodeClick"
             @pane-click="handlePaneClick"
+            @node-double-click="onNodeDoubleClick"
           >
             <Background :gap="24" :size="1" pattern-color="#333" />
             <Controls
@@ -892,7 +1550,45 @@ function getDiffNodeClasses(diffStatus) {
                 <span class="node-badge" :style="{ color: getLayerStyle(nodeProps.data?.layer).border, background: getLayerStyle(nodeProps.data?.layer).border + '1a' }">{{ nodeProps.data?.badge }}</span>
               </div>
             </template>
+
+            <!-- Domain Group 结界节点 -->
+            <template #node-group="groupNodeProps">
+              <div v-if="groupNodeProps.data?.isDomainGroup" class="code-domain-group-node" :class="{ 'code-domain-collapsed': groupNodeProps.data?.isCollapsed }" @dblclick.stop="onNodeDoubleClick({ node: groupNodeProps })">
+                <div class="code-domain-group-label" :class="{ 'code-domain-label-collapsed': groupNodeProps.data?.isCollapsed }" :style="{ borderColor: groupNodeProps.data?.border + '60' }">
+                  <span class="text-[10px] mr-1">{{ groupNodeProps.data?.isCollapsed ? '➕' : '➖' }}</span>
+                  <span class="text-[10px] font-bold" :style="{ color: groupNodeProps.data?.color }">{{ groupNodeProps.data?.label }}</span>
+                </div>
+                <div v-if="groupNodeProps.data?.isCollapsed" class="code-domain-collapsed-hint">双击展开</div>
+              </div>
+            </template>
           </VueFlow>
+
+          <!-- AI 沉浸式漫游导览控制器 -->
+          <div v-if="flowNodes.length && !isTouring" class="absolute bottom-10 left-1/2 -translate-x-1/2 z-[9999]">
+            <button
+              @click="startTour"
+              class="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-full shadow-[0_0_20px_rgba(59,130,246,0.6)] transition-all transform hover:scale-105"
+            >
+              ▶ 启动全息漫游
+            </button>
+          </div>
+
+          <div v-if="isTouring && tourSteps.length > 0" class="absolute bottom-10 left-1/2 -translate-x-1/2 z-[9999]">
+            <div class="flex items-center gap-6 px-6 py-4 bg-gray-900/90 backdrop-blur-xl border border-gray-700 rounded-2xl shadow-2xl">
+              <div class="flex flex-col">
+                <span class="text-xs text-gray-400 font-mono">STEP {{ currentTourIndex + 1 }} / {{ tourSteps.length }}</span>
+                <span class="text-sm text-blue-400 font-bold max-w-[200px] truncate">
+                  {{ tourSteps[currentTourIndex]?.data?.label || 'Unknown Node' }}
+                </span>
+              </div>
+
+              <div class="flex items-center gap-2 border-l border-gray-700 pl-6">
+                <button @click="prevStep" :disabled="currentTourIndex === 0" class="p-2 hover:bg-gray-800 rounded disabled:opacity-30 text-white">⏪</button>
+                <button @click="stopTour" class="px-4 py-2 bg-red-500/20 hover:bg-red-500/40 text-red-400 rounded text-sm font-bold transition-colors">⏹ 退出</button>
+                <button @click="nextStep" :disabled="currentTourIndex === tourSteps.length - 1" class="p-2 hover:bg-gray-800 rounded disabled:opacity-30 text-white">⏩</button>
+              </div>
+            </div>
+          </div>
 
           <div class="absolute top-3 left-3 z-10 flex flex-col gap-1.5 pointer-events-none">
             <!-- Path Finder 提示条 -->
@@ -928,6 +1624,15 @@ function getDiffNodeClasses(diffStatus) {
               <span class="flex items-center gap-1"><span class="w-4 h-0 border-t-2 border-emerald-400"></span><span class="text-slate-400">calls</span></span>
               <span class="text-slate-600">|</span>
               <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 rounded bg-slate-800 border border-slate-600 text-[8px] text-slate-300">Shift</kbd><span class="text-slate-400">+点击寻路</span></span>
+            </div>
+            <div class="flex items-center gap-2 text-[9px] bg-black/70 backdrop-blur-sm border border-slate-700/40 rounded-md px-2.5 py-1.5 pointer-events-auto">
+              <kbd class="px-1 py-0.5 rounded bg-slate-800 border border-slate-600 text-[8px] text-slate-300">/</kbd><span class="text-slate-400">搜索</span>
+              <kbd class="px-1 py-0.5 rounded bg-slate-800 border border-slate-600 text-[8px] text-slate-300">Esc</kbd><span class="text-slate-400">关闭</span>
+              <kbd class="px-1 py-0.5 rounded bg-slate-800 border border-slate-600 text-[8px] text-slate-300">d</kbd><span class="text-slate-400">Diff</span>
+              <kbd class="px-1 py-0.5 rounded bg-slate-800 border border-slate-600 text-[8px] text-slate-300">←→</kbd><span class="text-slate-400">漫游</span>
+            </div>
+            <div class="flex items-center gap-2 text-[9px] bg-black/70 backdrop-blur-sm border border-slate-700/40 rounded-md px-2.5 py-1.5 pointer-events-auto">
+              <span class="text-slate-400">双击结界</span><span class="text-blue-400">折叠/展开</span>
             </div>
           </div>
         </div>
@@ -969,6 +1674,103 @@ function getDiffNodeClasses(diffStatus) {
             <div class="text-[9px] text-slate-600">ELK Layered → RIGHT · Orthogonal</div>
           </div>
         </div>
+
+        <!-- 右侧全息属性抽屉 (Learn Panel) — 最外层容器，z-[10000] -->
+        <transition name="slide-right">
+          <div v-if="learnNode" class="absolute top-0 right-0 h-full w-96 bg-gray-900/95 backdrop-blur-2xl border-l border-gray-700 shadow-2xl z-[10000] flex flex-col" style="pointer-events: auto;">
+
+            <div class="p-6 border-b border-gray-700/50 flex justify-between items-start">
+              <div>
+                <div class="text-xs text-blue-400 font-mono mb-1">NODE INSPECTOR</div>
+                <h2 class="text-xl font-bold text-white break-all">{{ learnNode.data?.label || learnNode.id }}</h2>
+              </div>
+              <button @click="learnNode = null" class="text-gray-400 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-full w-8 h-8 flex items-center justify-center transition-colors shrink-0 ml-2">✕</button>
+            </div>
+
+            <div class="p-6 overflow-y-auto flex-1 space-y-8 custom-scrollbar">
+
+              <div>
+                <h3 class="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">System Domain</h3>
+                <div class="flex flex-wrap gap-1.5">
+                  <span v-if="learnNode.data?.clusterName" class="inline-flex items-center gap-1 px-3 py-1 rounded text-sm border" :style="{ color: learnNode.data?.domainColor || '#60a5fa', background: (learnNode.data?.domainBorder || '#3b82f6') + '12', borderColor: (learnNode.data?.domainBorder || '#3b82f6') + '40' }">
+                    <span class="text-[10px]">📦</span>{{ learnNode.data.clusterName }}
+                  </span>
+                  <span class="inline-block px-3 py-1 bg-blue-900/30 text-blue-300 rounded text-sm border border-blue-800/50">
+                    {{ learnNode.data?.layerLabel || learnNode.data?.layer || 'Unknown Layer' }}
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <h3 class="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">Node Type</h3>
+                <span class="inline-block px-3 py-1 bg-purple-900/30 text-purple-300 rounded text-sm border border-purple-800/50">
+                  {{ learnNode.data?.nodeType || learnNode.data?.badge || 'Unknown' }}
+                </span>
+              </div>
+
+              <div v-if="learnNode.data?.filePath">
+                <h3 class="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">File Path</h3>
+                <div class="text-sm text-gray-400 font-mono bg-gray-800/40 p-2.5 rounded-lg border border-gray-700/50 break-all">{{ learnNode.data.filePath }}</div>
+              </div>
+
+              <div>
+                <h3 class="text-xs text-gray-500 font-bold uppercase tracking-wider mb-3">AST Symbols (Functions)</h3>
+                <div v-if="(learnNode.data?.extra?.methods?.length || learnNode.data?.extra?.symbols?.length)" class="space-y-2">
+                  <div v-for="(sym, idx) in (learnNode.data?.extra?.symbols || learnNode.data?.extra?.methods || [])" :key="idx" class="flex items-center gap-3 text-sm text-gray-300 bg-gray-800/40 p-2.5 rounded-lg border border-gray-700/50 hover:bg-gray-700 transition-colors">
+                    <span class="text-purple-400 font-mono bg-purple-900/30 px-1.5 rounded">ƒ</span>
+                    <span class="truncate font-mono text-xs">{{ typeof sym === 'string' ? sym : sym.name || sym }}</span>
+                  </div>
+                </div>
+                <div v-else class="text-sm text-gray-500 italic bg-gray-800/20 p-4 rounded-lg border border-gray-800 border-dashed text-center">
+                  No internal symbols extracted.
+                </div>
+              </div>
+
+              <div v-if="learnNode.data?.extra?.params?.length || learnNode.data?.extra?.return_type">
+                <h3 class="text-xs text-gray-500 font-bold uppercase tracking-wider mb-3">Signature</h3>
+                <div class="space-y-2">
+                  <div v-if="learnNode.data?.extra?.params?.length" class="text-sm text-gray-400 bg-gray-800/40 p-2.5 rounded-lg border border-gray-700/50">
+                    <span class="text-gray-500 text-xs">params:</span> <span class="font-mono text-xs">{{ learnNode.data.extra.params.join(', ') }}</span>
+                  </div>
+                  <div v-if="learnNode.data?.extra?.return_type" class="text-sm text-gray-400 bg-gray-800/40 p-2.5 rounded-lg border border-gray-700/50">
+                    <span class="text-gray-500 text-xs">returns:</span> <span class="font-mono text-xs">{{ learnNode.data.extra.return_type }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 class="text-xs text-gray-500 font-bold uppercase tracking-wider mb-3">AI Architecture Analysis</h3>
+
+                <!-- 加载中 -->
+                <div v-if="store.nodeAnalysisMap[learnNode.id]?.loading" class="text-sm text-gray-400 leading-relaxed bg-blue-900/10 p-4 rounded-lg border border-blue-900/30 relative overflow-hidden">
+                  <div class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-900/10 to-transparent animate-[shimmer_2s_infinite]"></div>
+                  <div class="flex items-center gap-2">
+                    <span class="inline-block w-3 h-3 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin"></span>
+                    <span class="animate-pulse text-blue-300">AI 正在深度分析该模块...</span>
+                  </div>
+                </div>
+
+                <!-- 分析结果 -->
+                <div v-else-if="store.nodeAnalysisMap[learnNode.id]?.analysis" class="text-sm text-gray-300 leading-relaxed bg-gradient-to-br from-blue-900/10 to-purple-900/10 p-4 rounded-lg border border-blue-900/30">
+                  <div class="whitespace-pre-wrap" v-html="renderAnalysis(store.nodeAnalysisMap[learnNode.id].analysis)"></div>
+                </div>
+
+                <!-- 分析失败 -->
+                <div v-else-if="store.nodeAnalysisMap[learnNode.id]?.error" class="text-sm text-red-400 bg-red-900/10 p-4 rounded-lg border border-red-900/30">
+                  分析失败，<button @click="retryAnalysis" class="text-blue-400 underline hover:text-blue-300">点击重试</button>
+                </div>
+
+                <!-- 未分析：手动触发 -->
+                <div v-else class="text-sm text-gray-400 bg-gray-800/20 p-4 rounded-lg border border-gray-800 border-dashed text-center">
+                  <button @click="retryAnalysis" class="text-blue-400 hover:text-blue-300 transition-colors">
+                    <span class="mr-1">🧠</span>点击启动 AI 架构分析
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </transition>
       </div>
     </div>
   </Transition>
@@ -1463,5 +2265,259 @@ function getDiffNodeClasses(diffStatus) {
 }
 .graph-slide-leave-active > :nth-child(2) {
   transition: transform 0.25s cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* ══════════════════════════════════════════════════════════
+   右侧全息属性抽屉 (Learn Panel) 过渡动画
+   ══════════════════════════════════════════════════════════ */
+.slide-right-enter-active,
+.slide-right-leave-active {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.slide-right-enter-from,
+.slide-right-leave-to {
+  transform: translateX(100%);
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Domain Group 结界节点 */
+.code-domain-group-node {
+  width: 100%;
+  height: 100%;
+  padding: 8px 12px;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.code-domain-group-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 6px;
+  background: rgba(15, 17, 21, 0.7);
+  backdrop-filter: blur(8px);
+  border: 1px solid;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+.code-graph-flow :deep(.vue-flow__node-group) {
+  padding: 0 !important;
+  border-radius: 16px !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+/* ══════════════════════════════════════════════════════════
+   Persona 切换器
+   ══════════════════════════════════════════════════════════ */
+.persona-switcher {
+  display: flex;
+  gap: 1px;
+  background: rgba(15, 17, 21, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(55, 65, 81, 0.5);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.persona-btn {
+  padding: 6px 12px;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  color: #64748b;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.persona-btn:hover {
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.persona-btn-active {
+  padding: 6px 12px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  color: #e2e8f0;
+  background: rgba(59, 130, 246, 0.15);
+  border: none;
+  cursor: pointer;
+  box-shadow: inset 0 -2px 0 #3b82f6;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+/* ══════════════════════════════════════════════════════════
+   过滤面板
+   ══════════════════════════════════════════════════════════ */
+.filter-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  color: #94a3b8;
+  background: rgba(15, 17, 21, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(55, 65, 81, 0.5);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
+}
+
+.filter-toggle-btn:hover {
+  color: #e2e8f0;
+  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow: 0 0 16px rgba(59, 130, 246, 0.15);
+}
+
+.filter-count-badge {
+  font-size: 8px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+  font-weight: 700;
+}
+
+.filter-panel {
+  width: 220px;
+  background: rgba(15, 17, 21, 0.92);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(55, 65, 81, 0.5);
+  border-radius: 10px;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.5), 0 0 1px rgba(59, 130, 246, 0.3);
+  overflow: hidden;
+}
+
+.filter-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(55, 65, 81, 0.3);
+}
+
+.filter-action-btn {
+  font-size: 9px;
+  color: #64748b;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  padding: 2px 6px;
+  border-radius: 3px;
+  transition: all 0.15s;
+}
+
+.filter-action-btn:hover {
+  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.filter-panel-body {
+  padding: 6px 8px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.filter-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 6px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.filter-checkbox-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.filter-checkbox {
+  width: 12px;
+  height: 12px;
+  accent-color: #3b82f6;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.filter-layer-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.filter-layer-label {
+  font-size: 10px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-weight: 600;
+  flex: 1;
+}
+
+.filter-layer-count {
+  font-size: 9px;
+  color: #475569;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* 过滤面板滑入动画 */
+.filter-slide-enter-active {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.filter-slide-leave-active {
+  transition: all 0.2s cubic-bezier(0.4, 0, 1, 1);
+}
+.filter-slide-enter-from {
+  opacity: 0;
+  transform: translateY(-8px) scale(0.95);
+}
+.filter-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-4px) scale(0.97);
+}
+
+/* ══════════════════════════════════════════════════════════
+   Domain Group 折叠样式
+   ══════════════════════════════════════════════════════════ */
+.code-domain-collapsed {
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+
+.code-domain-label-collapsed {
+  top: 50% !important;
+  right: 50% !important;
+  transform: translate(50%, -50%) !important;
+  background: rgba(30, 58, 138, 0.5) !important;
+  border-color: rgba(59, 130, 246, 0.6) !important;
+  white-space: nowrap;
+}
+
+.code-domain-collapsed-hint {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 8px;
+  color: rgba(96, 165, 250, 0.5);
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  pointer-events: none;
 }
 </style>

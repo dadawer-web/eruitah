@@ -25,6 +25,7 @@ import os
 import sys
 import json
 import re
+import hashlib
 import logging
 from pathlib import Path
 from collections import defaultdict
@@ -34,6 +35,96 @@ from graph_cluster import detect_domains
 from typing import Optional
 
 logger = logging.getLogger(__name__)
+
+
+def compute_file_hash(filepath: str) -> str:
+    """计算文件的 SHA-256 哈希指纹，用于增量缓存比对"""
+    sha256 = hashlib.sha256()
+    try:
+        with open(filepath, "rb") as f:
+            for chunk in iter(lambda: f.read(8192), b""):
+                sha256.update(chunk)
+    except (IOError, OSError):
+        return ""
+    return sha256.hexdigest()
+
+
+# ================================================================
+# 框架级探针: 导入包名 → 架构层级映射
+# ================================================================
+FRAMEWORK_SIGNATURES = {
+    # ── API 接口层 ──
+    "api": {
+        "flask", "fastapi", "django.urls", "django.views", "django.http",
+        "spring.web", "express", "gin", "koa", "hapi", "restify",
+        "falcon", "bottle", "tornado.web", "aiohttp", "sanic",
+        "starlette", "uvicorn", "gunicorn", "werkzeug",
+        "grpc", "protobuf", "thrift",
+        "django.rest_framework", "rest_framework",
+        "flask_restful", "flask_restx", "flask_api",
+        "swagger", "openapi",
+    },
+    # ── 数据访问层 ──
+    "data": {
+        "sqlalchemy", "django.db", "pymongo", "motor",
+        "mybatis", "hibernate", "jpa", "jdbc",
+        "redis", "redis_store", "aioredis", "redis-py",
+        "sqlmodel", "tortoise", "orm", "peewee", "pony",
+        "alembic", "flyway", "liquibase",
+        "psycopg2", "pymysql", "sqlite3", "cx_Oracle",
+        "elasticsearch", "elasticapm",
+        "cassandra", "dynamodb", "firebase",
+        "prisma", "sequelize", "typeorm", "mongoose", "knex",
+        "sql", "database", "db", "repository", "dao",
+    },
+    # ── 基础设施层 ──
+    "infrastructure": {
+        "logging", "loguru", "structlog", "sentry_sdk",
+        "celery", "dramatiq", "rq", "huey",
+        "kafka", "confluent_kafka", "pika", "aio_pika", "rabbitmq",
+        "docker", "kubernetes", "k8s",
+        "config", "dotenv", "pydantic", "dynaconf",
+        "prometheus_client", "opentelemetry", "jaeger",
+        "consul", "etcd", "zookeeper",
+        "boto3", "botocore", "google.cloud", "azure",
+        "cron", "apscheduler", "schedule",
+        "httpx", "requests", "aiohttp",
+    },
+    # ── UI 展示层 ──
+    "ui": {
+        "react", "vue", "angular", "svelte", "solid_js",
+        "html", "jinja2", "template", "mako", "chameleon",
+        "django.template", "flask.templating",
+        "tkinter", "pyqt", "pyside", "kivy",
+        "next", "nuxt", "gatsby", "remix",
+        "ant_design", "element_ui", "vuetify", "material_ui",
+        "tailwind", "bootstrap", "sass", "less", "css",
+        "storybook",
+    },
+    # ── 状态管理 / 消息 ──
+    "state": {
+        "redux", "vuex", "pinia", "mobx", "zustand", "recoil", "jotai",
+        "xstate", "effector", "overmind",
+        "event_emitter", "events", "blinker",
+    },
+    # ── 测试 ──
+    "test": {
+        "pytest", "unittest", "mock", "pytest_mock",
+        "jest", "mocha", "chai", "sinon", "cypress", "playwright", "selenium",
+        "testing", "test",
+    },
+}
+
+# 构建反向查找表: top_level_package → layer (加速匹配)
+_FRAMEWORK_LOOKUP = {}
+for _layer, _packages in FRAMEWORK_SIGNATURES.items():
+    for _pkg in _packages:
+        _FRAMEWORK_LOOKUP[_pkg] = _layer
+        # 也注册顶层包名 (如 "django.db" → 同时注册 "django")
+        top = _pkg.split(".")[0]
+        if top not in _FRAMEWORK_LOOKUP:
+            _FRAMEWORK_LOOKUP[top] = _layer
+
 
 LAYER_PRESETS = {
     "BACKEND_MVC": {
@@ -258,10 +349,27 @@ def _compile_preset_rules(preset_name: str) -> tuple[dict, list[tuple]]:
 def detect_layer(node_id: str, node_type: str, name: str, file_path: str,
                  preset_name: str = "BACKEND_MVC",
                  dir_keywords: dict = None,
-                 name_rules: list = None) -> str:
+                 name_rules: list = None,
+                 imports_list: list = None) -> str:
     if dir_keywords is None or name_rules is None:
         dir_keywords, name_rules = _compile_preset_rules(preset_name)
 
+    # ── 第一优先级: 框架探针嗅探 (Framework-Aware Probe) ──
+    if imports_list:
+        for imp_source in imports_list:
+            if not imp_source:
+                continue
+            # 精确匹配: "django.db" → data
+            if imp_source in _FRAMEWORK_LOOKUP:
+                return _FRAMEWORK_LOOKUP[imp_source]
+            # 逐级向上匹配: "django.db.models" → "django.db" → "django"
+            parts = imp_source.split(".")
+            for i in range(len(parts), 0, -1):
+                prefix = ".".join(parts[:i])
+                if prefix in _FRAMEWORK_LOOKUP:
+                    return _FRAMEWORK_LOOKUP[prefix]
+
+    # ── 第二优先级: 目录关键词 + 命名约定 fallback ──
     rel_path = file_path
     parts = Path(rel_path).with_suffix("").parts
     dir_parts = parts[:-1] if len(parts) > 1 else []
@@ -286,6 +394,7 @@ def detect_layer(node_id: str, node_type: str, name: str, file_path: str,
                 if dp.lower() in keywords:
                     return layer
 
+    # ── 兜底: unknown ──
     return "unknown"
 
 SUPPORTED_EXTENSIONS = {
@@ -370,11 +479,140 @@ class ProjectGrapher:
         self._import_map = defaultdict(list)
         self._dropped_calls = 0
 
+        # ── 增量指纹缓存引擎 ──
+        self._cache_dir = os.path.join(self.root_dir, ".eruitah_cache")
+        self._cache_path = os.path.join(self._cache_dir, "fingerprints.json")
+        self.cache = self._load_cache()
+        self._cache_hits = 0
+        self._cache_misses = 0
+
+        # ── 语义向量缓存 ──
+        self._embeddings_path = os.path.join(self._cache_dir, "embeddings.json")
+        self._node_embeddings = {}  # { node_id: [float, ...] }
+        self._vector_engine = None
+
         if preset is None:
             preset = sniff_project_type(self.root_dir)
         self.preset = preset
         self._dir_keywords, self._name_rules = _compile_preset_rules(preset)
         logger.info(f"项目类型嗅探: {preset} — {LAYER_PRESETS[preset]['description']}")
+
+    def _load_cache(self) -> dict:
+        """读取指纹缓存文件，损坏时自动重置"""
+        if not os.path.isfile(self._cache_path):
+            return {}
+        try:
+            with open(self._cache_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if isinstance(data, dict):
+                logger.info(f"指纹缓存加载成功: {len(data)} 条记录")
+                return data
+            logger.warning("指纹缓存格式异常，自动重置")
+            return {}
+        except (json.JSONDecodeError, IOError, OSError) as e:
+            logger.warning(f"指纹缓存损坏，自动重置: {e}")
+            return {}
+
+    def _save_cache(self):
+        """持久化指纹缓存到磁盘"""
+        try:
+            os.makedirs(self._cache_dir, exist_ok=True)
+            with open(self._cache_path, "w", encoding="utf-8") as f:
+                json.dump(self.cache, f, indent=2, ensure_ascii=False)
+            logger.info(f"指纹缓存已持久化: {len(self.cache)} 条记录 → {self._cache_path}")
+        except (IOError, OSError) as e:
+            logger.warning(f"指纹缓存写入失败: {e}")
+
+    def _init_vector_engine(self):
+        """懒加载向量引擎（复用 semantic_search_tool._VectorEngine）"""
+        if self._vector_engine is not None:
+            return
+        try:
+            from semantic_search_tool import _VectorEngine
+            self._vector_engine = _VectorEngine()
+            if not self._vector_engine.available:
+                logger.info("向量引擎不可用 (API/Local 均未配置)，跳过 Embedding 生成")
+                self._vector_engine = None
+        except ImportError:
+            logger.info("semantic_search_tool 未找到，跳过 Embedding 生成")
+            self._vector_engine = None
+
+    def generate_embeddings(self):
+        """为所有节点生成语义向量并持久化"""
+        self._init_vector_engine()
+        if self._vector_engine is None:
+            return
+
+        # 加载已有 embeddings 缓存
+        if os.path.isfile(self._embeddings_path):
+            try:
+                with open(self._embeddings_path, "r", encoding="utf-8") as f:
+                    self._node_embeddings = json.load(f)
+                if not isinstance(self._node_embeddings, dict):
+                    self._node_embeddings = {}
+                logger.info(f"Embeddings 缓存加载: {len(self._node_embeddings)} 条记录")
+            except (json.JSONDecodeError, IOError):
+                self._node_embeddings = {}
+
+        # 构建待编码文本：为每个节点拼接摘要文本
+        texts = []
+        node_ids = []
+        for node in self.nodes:
+            nid = node.get("id", "")
+            # 已有缓存且指纹未变，跳过
+            if nid in self._node_embeddings:
+                continue
+            label = node.get("label", "")
+            ntype = node.get("type", "")
+            layer = node.get("layer", "")
+            fp = node.get("file_path", "")
+            # 拼接节点语义描述
+            parts = [f"{ntype} {label}"]
+            if layer:
+                parts.append(f"layer: {layer}")
+            if fp:
+                parts.append(f"file: {fp}")
+            # 从指纹缓存中取 ai_summary（如果有的话）
+            cached_file = self.cache.get(fp, {})
+            ai_summary = cached_file.get("ai_summary", "")
+            if ai_summary:
+                parts.append(ai_summary[:500])
+            # 从符号表补充
+            data = node.get("data", {})
+            symbols = data.get("symbols", [])
+            if symbols:
+                sym_names = [s.get("name", "") for s in symbols if s.get("name")]
+                parts.append("symbols: " + ", ".join(sym_names[:20]))
+            text = " ".join(parts)
+            if len(text.strip()) > 3:
+                texts.append(text)
+                node_ids.append(nid)
+
+        if not texts:
+            logger.info("所有节点 Embedding 已缓存，无需重新生成")
+            return
+
+        logger.info(f"🔄 生成 {len(texts)} 个节点的语义向量 (mode={self._vector_engine.mode})...")
+        try:
+            embeddings = self._vector_engine._encode(texts)
+            for i, nid in enumerate(node_ids):
+                if i < len(embeddings):
+                    self._node_embeddings[nid] = embeddings[i].tolist()
+            logger.info(f"✅ Embedding 生成完成: {len(node_ids)} 个新节点")
+        except Exception as e:
+            logger.warning(f"Embedding 生成失败: {e}")
+
+    def _save_embeddings(self):
+        """持久化 Embeddings 到磁盘"""
+        if not self._node_embeddings:
+            return
+        try:
+            os.makedirs(self._cache_dir, exist_ok=True)
+            with open(self._embeddings_path, "w", encoding="utf-8") as f:
+                json.dump(self._node_embeddings, f, ensure_ascii=False)
+            logger.info(f"Embeddings 已持久化: {len(self._node_embeddings)} 条 → {self._embeddings_path}")
+        except (IOError, OSError) as e:
+            logger.warning(f"Embeddings 写入失败: {e}")
 
     def _rel(self, fp: str) -> str:
         return os.path.relpath(fp, self.root_dir)
@@ -388,8 +626,8 @@ class ProjectGrapher:
             return f"{rel}::{parent_name}.{name}"
         return f"{rel}::{name}"
 
-    # 允许进入图谱的节点类型（彻底封杀 File/folder/directory，只保留纯业务代码实体）
-    VALID_NODE_TYPES = {"Class", "Interface", "Function", "Method"}
+    # 允许进入图谱的节点类型（File 是 CONTAINS/IMPORTS 边的锚点，必须保留）
+    VALID_NODE_TYPES = {"File", "Class", "Interface", "Function", "Method"}
 
     def _add_node(self, node_id: str, node_type: str, name: str, file_path: str, **extra):
         # 严格过滤：只允许代码实体节点，禁止目录/文件夹节点
@@ -400,9 +638,15 @@ class ProjectGrapher:
             return
         self._node_ids.add(node_id)
         node = {"id": node_id, "type": node_type, "name": name, "file_path": file_path}
+
+        # 提取该文件的导入源列表，用于框架探针嗅探
+        file_imports = self._file_analyses.get(file_path, {}).get("imports", [])
+        imports_list = [imp.get("source", "") for imp in file_imports if imp.get("source")]
+
         node["layer"] = detect_layer(node_id, node_type, name, file_path,
                                      dir_keywords=self._dir_keywords,
-                                     name_rules=self._name_rules)
+                                     name_rules=self._name_rules,
+                                     imports_list=imports_list)
         node.update(extra)
         self.nodes.append(node)
 
@@ -445,6 +689,24 @@ class ProjectGrapher:
             if not language:
                 continue
 
+            # ── 增量指纹缓存: 计算当前文件哈希 ──
+            current_hash = compute_file_hash(fp)
+            cached = self.cache.get(fp)
+
+            if cached and cached.get("hash") == current_hash:
+                # 短路机制: 哈希匹配，直接使用缓存数据
+                logger.info(f"[INFO] 命中缓存: 跳过解析 {fp}")
+                self._file_analyses[fp] = {
+                    "definitions": cached.get("symbols", []),
+                    "calls": cached.get("calls", []),
+                    "imports": cached.get("imports", []),
+                }
+                self._cache_hits += 1
+                continue
+
+            # ── 缓存未命中: 正常走 AST 提取流程 ──
+            self._cache_misses += 1
+
             try:
                 result = parse_file_with_treesitter(fp, language)
                 if not result["definitions"] and not result["imports"]:
@@ -457,6 +719,14 @@ class ProjectGrapher:
                     result = {"definitions": [], "calls": [], "imports": []}
 
             self._file_analyses[fp] = result
+
+            # ── 将最新解析结果写入内存缓存 ──
+            self.cache[fp] = {
+                "hash": current_hash,
+                "symbols": result.get("definitions", []),
+                "calls": result.get("calls", []),
+                "imports": result.get("imports", []),
+            }
 
     # ================================================================
     # Phase 3: Build symbol table & file index
@@ -640,15 +910,58 @@ class ProjectGrapher:
         return None
 
     def _resolve_java_import(self, from_file: str, source: str) -> Optional[str]:
+        # Java import 如 com.example.provider.controller.ProviderController
+        # 需要找到对应的 .java 文件，支持多模块 Maven/Gradle 项目
         parts = source.split(".")
-        for ext in (".java",):
-            rel = os.sep.join(parts) + ext
-            for search_dir in [os.path.join(self.root_dir, "src"),
-                               os.path.join(self.root_dir, "src", "main", "java"),
-                               self.root_dir]:
-                probe = os.path.join(search_dir, rel)
-                if os.path.isfile(probe):
-                    return probe
+        rel = os.sep.join(parts) + ".java"
+
+        # 策略1: 利用已有的 _file_analyses，直接用文件名匹配
+        # 这是最可靠的方式，因为所有被解析的文件都在 _file_analyses 中
+        class_name = parts[-1] if parts else ""
+        if class_name:
+            for fp in self._file_analyses:
+                basename = os.path.basename(fp)
+                if basename == class_name + ".java":
+                    # 验证包路径匹配
+                    package_dir = os.sep.join(parts[:-1])
+                    if fp.replace(os.sep, "/").endswith(package_dir.replace(".", "/") + "/" + basename):
+                        return fp
+            # 第二轮：宽松匹配（仅类名一致）
+            candidates = []
+            for fp in self._file_analyses:
+                if os.path.basename(fp) == class_name + ".java":
+                    candidates.append(fp)
+            if len(candidates) == 1:
+                return candidates[0]
+            elif len(candidates) > 1:
+                # 多个同名类，选择包路径最匹配的
+                package_path = "/".join(parts[:-1])
+                for c in candidates:
+                    if package_path in c.replace(os.sep, "/"):
+                        return c
+                return candidates[0]
+
+        # 策略2: 递归搜索所有 src/main/java 目录（多模块项目）
+        # 缓存 java_roots 避免每次调用都 walk 整个目录树
+        if not hasattr(self, '_java_roots_cache'):
+            java_roots = []
+            for dirpath, dirnames, filenames in os.walk(self.root_dir):
+                if dirpath.endswith(os.sep.join(["src", "main", "java"])) or \
+                   dirpath.endswith("/src/main/java"):
+                    java_roots.append(dirpath)
+                for d in list(dirnames):
+                    candidate = os.path.join(dirpath, d, "src", "main", "java")
+                    if os.path.isdir(candidate) and candidate not in java_roots:
+                        java_roots.append(candidate)
+            if not java_roots:
+                java_roots = [self.root_dir]
+            self._java_roots_cache = java_roots
+
+        for java_root in self._java_roots_cache:
+            probe = os.path.join(java_root, rel)
+            if os.path.isfile(probe):
+                return probe
+
         return None
 
     def _resolve_rust_import(self, from_file: str, source: str) -> Optional[str]:
@@ -894,6 +1207,12 @@ class ProjectGrapher:
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(final_graph, f, indent=2, ensure_ascii=False)
 
+        # ── 持久化指纹缓存 ──
+        self._save_cache()
+
+        # ── 持久化语义向量 ──
+        self._save_embeddings()
+
         logger.info(f"项目图谱已写入: {output_path}")
         logger.info(f"  节点数: {len(final_graph.get('nodes', []))}")
         logger.info(f"  边数: {len(final_graph.get('edges', []))}")
@@ -943,6 +1262,11 @@ class ProjectGrapher:
         # ── Phase 2: AST 提取 ──
         self.extract_all(file_paths)
         logger.info(f"完成 AST 提取: {len(self._file_analyses)} 个文件")
+        if self._cache_hits > 0 or self._cache_misses > 0:
+            total = self._cache_hits + self._cache_misses
+            hit_rate = (self._cache_hits / total * 100) if total > 0 else 0
+            logger.info(f"⚡ 指纹缓存: 命中 {self._cache_hits}/{total} ({hit_rate:.0f}%), "
+                        f"跳过 {self._cache_hits} 次 AST 解析 + LLM 调用")
 
         # ── Phase 3: 符号表 + 导入解析 ──
         self.build_symbol_table()
@@ -969,6 +1293,9 @@ class ProjectGrapher:
             logger.info(f"社区发现完成: {len(set(n.get('cluster_id', '') for n in self.nodes))} 个领域")
         except Exception as e:
             logger.error(f"聚类算法调用失败: {e}")
+
+        # ── Phase 5: 语义向量生成 ──
+        self.generate_embeddings()
 
         self.write_json(output_path, modified_file_paths=modified_file_paths)
         return self.to_dict()

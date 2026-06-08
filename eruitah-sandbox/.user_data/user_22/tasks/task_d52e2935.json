@@ -179,6 +179,7 @@
     }
   ],
   "created_at": 1780410162.9063828,
+  "updated_at": 1780745457.8898153,
   "status": "active",
   "current_turn": 8,
   "base_checkpoint_id": "task/task_d52e2935",
