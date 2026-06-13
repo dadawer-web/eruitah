@@ -23,6 +23,7 @@ import uuid
 import shutil
 import logging
 import threading
+from contextvars import ContextVar
 from dataclasses import dataclass, field
 from typing import Optional, Dict, List, Any
 
@@ -97,7 +98,12 @@ class TaskSession:
 class SessionManager:
     def __init__(self, user_id: int):
         if not user_id:
-            logger.warning("SessionManager created with user_id=0, falling back to 1 for tenant isolation")
+            import traceback
+            stack = ''.join(traceback.format_stack()[-6:-1])
+            logger.error(
+                f"SessionManager created with user_id=0, falling back to 1 for tenant isolation! "
+                f"Call stack:\n{stack}"
+            )
             user_id = 1
         self._user_id = user_id
         self._sessions: Dict[str, TaskSession] = {}
@@ -741,21 +747,29 @@ class SessionManager:
 _session_managers: Dict[int, SessionManager] = {}
 _managers_lock = threading.Lock()
 
+# ── 多租户上下文变量：在 API/WebSocket 入口处 set，深层调用自动 get ──
+ctx_user_id: ContextVar = ContextVar('ctx_user_id', default=None)
 
-def get_session_manager(user_id: int = 0) -> SessionManager:
-    if not user_id:
-        user_id = int(os.environ.get("ERUITAH_DEFAULT_USER_ID", "0"))
-    if not user_id:
-        user_id = 1
-        logger.warning(
-            "get_session_manager() called without user_id, falling back to 1. "
-            "This breaks tenant isolation! Pass user_id explicitly or set ERUITAH_DEFAULT_USER_ID."
+
+def get_session_manager(user_id=None) -> SessionManager:
+    # 隐式获取：优先从上下文变量中取
+    if user_id is None:
+        user_id = ctx_user_id.get()
+    if user_id is None:
+        import traceback
+        stack = ''.join(traceback.format_stack()[-6:-1])
+        user_id = int(os.environ.get("ERUITAH_DEFAULT_USER_ID", "1"))
+        logger.error(
+            f"get_session_manager() called without user_id, falling back to {user_id}. "
+            "This breaks tenant isolation! Pass user_id explicitly or set ERUITAH_DEFAULT_USER_ID. "
+            f"Call stack:\n{stack}"
         )
+    user_id = int(user_id)
     with _managers_lock:
         if user_id not in _session_managers:
             _session_managers[user_id] = SessionManager(user_id=user_id)
         return _session_managers[user_id]
 
 
-def get_task_manager(user_id: int = 0) -> SessionManager:
+def get_task_manager(user_id=None) -> SessionManager:
     return get_session_manager(user_id=user_id)

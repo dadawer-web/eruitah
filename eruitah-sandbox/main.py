@@ -49,6 +49,7 @@ from pydantic import BaseModel, Field
 
 from agent_runner import run_agent, MAX_TURNS
 from agent_swarm import run_swarm
+from task_manager import ctx_user_id
 
 logger = logging.getLogger(__name__)
 
@@ -129,6 +130,7 @@ class ExecuteRequest(BaseModel):
     model: Optional[str] = Field(None, description="模型名称")
     base_url: Optional[str] = Field(None, description="API 基础 URL")
     provider: Optional[str] = Field(None, description="API 提供商: openai 或 anthropic")
+    user_id: int = Field(0, description="多租户用户 ID")
 
 
 class HealthResponse(BaseModel):
@@ -242,6 +244,9 @@ async def _run_agent_async(
     loop = asyncio.get_event_loop()
 
     def _sync_worker():
+        # ── 多租户上下文传播：线程池中手动恢复 ContextVar ──
+        if user_id:
+            ctx_user_id.set(user_id)
         try:
             if USE_SUBPROCESS_AGENT:
                 from agent_process import start_agent_process
@@ -548,6 +553,7 @@ async def _run_agent_async(
                         main_repo_dir=main_repo_dir,
                         auto_approve=auto_approve,
                         yield_events=True,
+                        user_id=user_id,
                     ):
                         loop.call_soon_threadsafe(queue.put_nowait, event)
 
@@ -621,11 +627,15 @@ async def _run_swarm_async(
     base_url: str = None,
     max_loops: int = 5,
     main_repo_dir: str = "",
+    user_id: int = 0,
 ):
     queue = asyncio.Queue()
     loop = asyncio.get_event_loop()
 
     def _sync_worker():
+        # ── 多租户上下文传播：线程池中手动恢复 ContextVar ──
+        if user_id:
+            ctx_user_id.set(user_id)
         try:
             for event in run_swarm(
                 task_description=task_description,
@@ -637,6 +647,7 @@ async def _run_swarm_async(
                 max_loops=max_loops,
                 main_repo_dir=main_repo_dir,
                 yield_events=True,
+                user_id=user_id,
             ):
                 loop.call_soon_threadsafe(queue.put_nowait, event)
         except Exception as e:
@@ -1291,6 +1302,9 @@ async def websocket_coding(websocket: WebSocket, user_id: int = 0):
     
     ws_connected = True
     effective_user_id = user_id if user_id else 0
+    # ── 多租户上下文绑定：确保深层调用能获取 user_id ──
+    if effective_user_id:
+        ctx_user_id.set(effective_user_id)
     has_analyzed = False
     skip_career_analysis = False
 
@@ -1492,7 +1506,7 @@ async def websocket_coding(websocket: WebSocket, user_id: int = 0):
                         logger.info(f"[Supervisor] 🧠 chat_continue 意图判定: {cont_intent} | 输入: {user_input[:60]}")
 
                         if cont_intent == 'AMBIGUOUS':
-                            loop.call_soon_threadsafe(queue.put_nowait, {
+                            await safe_send({
                                 "type": "ui_card",
                                 "content": "我需要澄清一下。您是想要阅读代码还是修改代码？",
                                 "actions": [
@@ -1508,12 +1522,11 @@ async def websocket_coding(websocket: WebSocket, user_id: int = 0):
                                     ],
                                 },
                             })
-                            loop.call_soon_threadsafe(queue.put_nowait, None)
-                            return
+                            continue
 
                         if cont_intent == 'TOUR':
                             # 强制重新路由到导览模式
-                            loop.call_soon_threadsafe(queue.put_nowait, {
+                            await safe_send({
                                 "type": "ui_card",
                                 "content": "检测到导览意图。如果确认，请点击下方按钮：",
                                 "actions": [
@@ -1528,8 +1541,7 @@ async def websocket_coding(websocket: WebSocket, user_id: int = 0):
                                     ],
                                 },
                             })
-                            loop.call_soon_threadsafe(queue.put_nowait, None)
-                            return
+                            continue
 
                     session = sm.get_or_create_session(
                         task_id=task_id,
@@ -1632,6 +1644,8 @@ async def websocket_coding(websocket: WebSocket, user_id: int = 0):
             if not effective_user_id:
                 effective_user_id = 1
                 logger.warning(f"WebSocket message missing user_id, falling back to 1")
+            # ── 多租户上下文同步：消息中提取到新 user_id 时更新 ──
+            ctx_user_id.set(effective_user_id)
 
             agent_params = {
                 "user_input": user_input,
@@ -1928,6 +1942,9 @@ async def websocket_coding_persistent(websocket: WebSocket):
     from task_manager import get_task_manager
     from rewind_system import get_rewind_system
     persistent_user_id = 0
+    # ── 多租户上下文绑定：persistent WS 入口 ──
+    if persistent_user_id:
+        ctx_user_id.set(persistent_user_id)
     task_manager = get_task_manager(user_id=persistent_user_id or 1)
     rewind_system = get_rewind_system(user_id=1, session_id="persistent")
     
@@ -2053,6 +2070,7 @@ async def websocket_coding_persistent(websocket: WebSocket):
                     provider=provider,
                     task_id=task_id,
                     use_swarm=use_swarm,
+                    user_id=persistent_user_id,
                 ):
                     if not await safe_send(event):
                         break
@@ -2114,6 +2132,10 @@ async def execute_sync(request: ExecuteRequest):
 
     os.makedirs(work_dir, exist_ok=True)
 
+    # ── 多租户上下文绑定：REST API 入口 ──
+    if request.user_id:
+        ctx_user_id.set(request.user_id)
+
     final_result = None
     all_events = []
 
@@ -2125,6 +2147,7 @@ async def execute_sync(request: ExecuteRequest):
         model=model,
         base_url=base_url,
         provider=provider,
+        user_id=request.user_id,
     ):
         all_events.append(event)
         if event.get("type") in ("finish", "error"):
@@ -2225,6 +2248,8 @@ async def read_file_content(path: str):
 
 @app.get("/api/v1/tasks")
 async def list_tasks(project_path: str = "", user_id: int = 0):
+    if user_id:
+        ctx_user_id.set(user_id)
     from task_manager import get_session_manager
     sm = get_session_manager(user_id=user_id)
     tasks = sm.list_sessions(work_dir=project_path)
@@ -2243,6 +2268,7 @@ async def list_tasks(project_path: str = "", user_id: int = 0):
 async def list_task_registry(work_dir: str = "", user_id: int = 0):
     if not user_id:
         user_id = 1
+    ctx_user_id.set(user_id)
     from task_manager import get_session_manager
     sm = get_session_manager(user_id=user_id)
     tasks = sm.list_sessions(work_dir="")

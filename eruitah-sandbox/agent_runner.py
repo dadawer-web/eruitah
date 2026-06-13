@@ -138,8 +138,14 @@ from tour_generator import (
 )
 from graph_context_tool import (
     get_graph_context,
+    analyze_blast_radius,
+    trace_execution_flow,
     GRAPH_CONTEXT_TOOL_DEFINITION_OPENAI,
     GRAPH_CONTEXT_TOOL_DEFINITION_ANTHROPIC,
+    ANALYZE_BLAST_RADIUS_TOOL_DEFINITION_OPENAI,
+    ANALYZE_BLAST_RADIUS_TOOL_DEFINITION_ANTHROPIC,
+    TRACE_EXECUTION_FLOW_TOOL_DEFINITION_OPENAI,
+    TRACE_EXECUTION_FLOW_TOOL_DEFINITION_ANTHROPIC,
 )
 from interactive_terminal import (
     execute_bg_service_tool,
@@ -548,10 +554,13 @@ dispatch_subtasks(subtasks=[
 - 示例：`get_graph_context(target_node_name="UserService")` → 立即知道它在业务层，被 Controller 调用，依赖 Repository
 
 ### 原则二：安全爆炸半径检查
-**修改代码前，必须观察图谱中该节点的[被谁调用 (上游)]。你需要意识到你的修改可能会波及这些上游节点。**
-- 如果上游节点很多（≥3个），说明这是核心模块，修改必须极其谨慎，确保向后兼容
-- 如果修改了函数签名或返回值，必须检查所有上游调用者是否需要同步修改
-- 如果上游涉及不同分层（如 data 层的修改波及 api 层），这是跨层影响，必须格外小心
+**修改代码前，必须使用 `analyze_blast_radius` 工具评估修改的影响范围。**
+- `analyze_blast_radius(symbol_name="目标符号")` → 返回所有下游依赖者和风险等级
+- 风险等级: High Risk (>5个文件依赖) → 必须极其谨慎，确保向后兼容
+- 风险等级: Medium Risk (2-5个文件) → 需要仔细检查所有受影响的调用者
+- 风险等级: Low Risk (1个文件) → 影响面小，可以放心修改
+- 如果修改了函数签名或返回值，必须检查所有下游调用者是否需要同步修改
+- 如果影响涉及不同分层（如 data 层的修改波及 api 层），这是跨层影响，必须格外小心
 
 ### 原则三：按需读取 (Token 节约)
 **通过图谱了解了依赖关系后，只使用 file_read 或 get_function_definition 去读取你真正需要的那个下游依赖的接口定义，绝对禁止盲目读取不相关的文件全文。**
@@ -561,10 +570,11 @@ dispatch_subtasks(subtasks=[
 
 **图谱制导工作流（推荐）**：
 1. `get_graph_context(target_node_name="目标模块")` → 获取架构位置和上下游
-2. 评估爆炸半径 → 上游多则谨慎，上游少则放心
-3. `get_function_definition(file_path, function_name)` → 只读需要修改的函数
-4. 执行修改 → 确保向后兼容
-5. 验证 → 运行测试确认上游未受影响
+2. `analyze_blast_radius(symbol_name="目标符号")` → 评估修改影响面和风险等级
+3. `trace_execution_flow(entry_point="入口函数")` → 追踪完整执行流（调用链树 + Mermaid 时序图）
+4. `get_function_definition(file_path, function_name)` → 只读需要修改的函数
+5. 执行修改 → 确保向后兼容
+6. 验证 → 运行测试确认上游未受影响
 
 ## 6.5 🔍 Codebase RAG 语义搜索优先策略
 - **当你不确定某个功能在哪个文件，或者需要理解业务逻辑时，优先使用 `semantic_search_code`。**
@@ -1020,6 +1030,8 @@ def _get_tools_definition(provider: str = "openai") -> list[dict]:
             AST_FUNCTION_DEFINITION_TOOL_DEFINITION_ANTHROPIC,
             CODE_TOUR_TOOL_DEFINITION_ANTHROPIC,
             GRAPH_CONTEXT_TOOL_DEFINITION_ANTHROPIC,
+            ANALYZE_BLAST_RADIUS_TOOL_DEFINITION_ANTHROPIC,
+            TRACE_EXECUTION_FLOW_TOOL_DEFINITION_ANTHROPIC,
             {
                 "name": "read_project_memory",
                 "description": "搜索项目记忆库，查找以前踩过的坑和解决方案。遇到 Bug 时先查记忆，避免重复踩坑。",
@@ -1194,6 +1206,8 @@ def _get_tools_definition(provider: str = "openai") -> list[dict]:
             AST_FUNCTION_DEFINITION_TOOL_DEFINITION_OPENAI,
             CODE_TOUR_TOOL_DEFINITION_OPENAI,
             GRAPH_CONTEXT_TOOL_DEFINITION_OPENAI,
+            ANALYZE_BLAST_RADIUS_TOOL_DEFINITION_OPENAI,
+            TRACE_EXECUTION_FLOW_TOOL_DEFINITION_OPENAI,
             {
                 "type": "function",
                 "function": {
@@ -1702,6 +1716,7 @@ def _execute_tool_local(
                 base_url=base_url,
                 max_loops=int(max_loops),
                 main_repo_dir=main_repo_dir,
+                user_id=user_id,
             )
             return result_str, is_error, meta
 
@@ -1833,6 +1848,21 @@ def _execute_tool_local(
             if not target_node_name:
                 return "target_node_name 不能为空", True, meta
             result_str, is_error = get_graph_context(target_node_name, work_dir)
+            return result_str, is_error, meta
+
+        elif name == "analyze_blast_radius":
+            symbol_name = args.get("symbol_name", "")
+            if not symbol_name:
+                return "symbol_name 不能为空", True, meta
+            result_str, is_error = analyze_blast_radius(symbol_name, work_dir)
+            return result_str, is_error, meta
+
+        elif name == "trace_execution_flow":
+            entry_point = args.get("entry_point", "")
+            if not entry_point:
+                return "entry_point 不能为空", True, meta
+            max_depth = args.get("max_depth", 5)
+            result_str, is_error = trace_execution_flow(entry_point, max_depth, work_dir)
             return result_str, is_error, meta
 
         elif name == "get_function_definition":
@@ -2068,6 +2098,22 @@ def run_agent(
     plan_mode: bool = False,
 ) -> Generator[Dict[str, Any], None, None]:
     """Agent 主循环"""
+    # ── 防弹拦截：user_id==0 或 None 时从上下文恢复 ──
+    from task_manager import ctx_user_id
+    if not user_id:
+        ctx_val = ctx_user_id.get()
+        if ctx_val:
+            logger.info(f"[多租户] run_agent 收到 user_id={user_id}，从 ctx_user_id 恢复为 {ctx_val}")
+            user_id = ctx_val
+    if not user_id:
+        user_id = int(os.environ.get('ERUITAH_DEFAULT_USER_ID', '1'))
+        logger.error(
+            f"CRITICAL: run_agent received invalid user_id=0 after context recovery. "
+            f"Falling back to {user_id}. Traceback:", stack_info=True
+        )
+    # 确保上下文变量始终同步
+    ctx_user_id.set(user_id)
+
     if not task_id:
         task_id = f"task_{uuid.uuid4().hex[:8]}"
 
@@ -3685,6 +3731,7 @@ def _call_openai(
                     "read_project_memory", "record_learning",
                     "get_code_structure", "get_function_definition",
                     "code_tour",
+                    "get_graph_context", "analyze_blast_radius", "trace_execution_flow",
                     "start_background_service", "read_service_logs", "kill_service",
                     "coder_reviewer_swarm",
                 }

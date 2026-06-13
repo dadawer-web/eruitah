@@ -149,6 +149,53 @@ class CodeIndexDB:
             CREATE INDEX IF NOT EXISTS idx_symbols_file ON symbols(file_path);
             CREATE INDEX IF NOT EXISTS idx_symbols_name_kind ON symbols(name, kind);
         """)
+        # ── FTS5 全文检索虚拟表 ──
+        try:
+            conn.execute("""
+                CREATE VIRTUAL TABLE IF NOT EXISTS symbols_fts USING fts5(
+                    name,
+                    kind,
+                    signature,
+                    parent_name,
+                    docstring,
+                    file_path,
+                    content='symbols',
+                    content_rowid='id'
+                )
+            """)
+            # 插入同步触发器
+            conn.execute("""
+                CREATE TRIGGER IF NOT EXISTS symbols_fts_ai AFTER INSERT ON symbols BEGIN
+                    INSERT INTO symbols_fts(rowid, name, kind, signature, parent_name, docstring, file_path)
+                    VALUES (new.id, new.name, new.kind, new.signature, new.parent_name, new.docstring, new.file_path);
+                END
+            """)
+            conn.execute("""
+                CREATE TRIGGER IF NOT EXISTS symbols_fts_ad AFTER DELETE ON symbols BEGIN
+                    INSERT INTO symbols_fts(symbols_fts, rowid, name, kind, signature, parent_name, docstring, file_path)
+                    VALUES ('delete', old.id, old.name, old.kind, old.signature, old.parent_name, old.docstring, old.file_path);
+                END
+            """)
+            conn.execute("""
+                CREATE TRIGGER IF NOT EXISTS symbols_fts_au AFTER UPDATE ON symbols BEGIN
+                    INSERT INTO symbols_fts(symbols_fts, rowid, name, kind, signature, parent_name, docstring, file_path)
+                    VALUES ('delete', old.id, old.name, old.kind, old.signature, old.parent_name, old.docstring, old.file_path);
+                    INSERT INTO symbols_fts(rowid, name, kind, signature, parent_name, docstring, file_path)
+                    VALUES (new.id, new.name, new.kind, new.signature, new.parent_name, new.docstring, new.file_path);
+                END
+            """)
+        except Exception as e:
+            logger.warning(f"FTS5 初始化失败（将降级到 LIKE 搜索）: {e}")
+        else:
+            # 自动重建：如果 FTS 表为空但 symbols 表有数据，触发一次 rebuild
+            try:
+                fts_count = conn.execute("SELECT COUNT(*) FROM symbols_fts").fetchone()[0]
+                sym_count = conn.execute("SELECT COUNT(*) FROM symbols").fetchone()[0]
+                if fts_count == 0 and sym_count > 0:
+                    conn.execute('INSERT INTO symbols_fts(symbols_fts) VALUES("rebuild")')
+                    logger.info(f"FTS5 索引自动重建完成: {sym_count} 条记录")
+            except Exception:
+                pass
         conn.commit()
 
     def upsert_symbols(self, file_path: str, symbols: list[Symbol], language: str, mtime: float):
@@ -217,6 +264,55 @@ class CodeIndexDB:
 
         rows = conn.execute(query, params).fetchall()
         return [dict(row) for row in rows]
+
+    def search_fts(self, query_text: str, limit: int = 20) -> list[tuple[dict, float]]:
+        """
+        FTS5 全文检索，返回 (symbol_dict, rank_score) 列表。
+
+        使用 bm25 排名算法，按相关度降序返回。
+        如果 FTS5 不可用，降级到 LIKE 搜索。
+        """
+        conn = self._get_conn()
+
+        # 清理查询文本：FTS5 不支持前缀 * 语法中的某些特殊字符
+        import re
+        clean_query = re.sub(r'[^\w\s]', ' ', query_text)
+        # 将空格分隔的词用 OR 连接，扩大召回率
+        tokens = [t for t in clean_query.split() if len(t) > 1]
+        if not tokens:
+            return []
+        fts_expr = " OR ".join(tokens)
+
+        try:
+            rows = conn.execute(
+                """
+                SELECT s.*, fts.rank
+                FROM symbols_fts fts
+                JOIN symbols s ON s.id = fts.rowid
+                WHERE symbols_fts MATCH ?
+                ORDER BY bm25(symbols_fts)
+                LIMIT ?
+                """,
+                (fts_expr, limit),
+            ).fetchall()
+            return [(dict(row), float(row["rank"])) for row in rows]
+        except Exception as e:
+            logger.debug(f"FTS5 搜索失败，降级到 LIKE: {e}")
+            # 降级：LIKE 模糊搜索
+            conditions = []
+            params = []
+            for token in tokens:
+                conditions.append(
+                    "(name LIKE ? OR signature LIKE ? OR docstring LIKE ? OR parent_name LIKE ?)"
+                )
+                params.extend([f"%{token}%"] * 4)
+            where_clause = " AND ".join(conditions)
+            params.append(limit)
+            rows = conn.execute(
+                f"SELECT *, 0.0 AS rank FROM symbols WHERE {where_clause} LIMIT ?",
+                params,
+            ).fetchall()
+            return [(dict(row), 0.0) for row in rows]
 
     def get_file_symbols(self, file_path: str) -> list[dict]:
         conn = self._get_conn()
@@ -291,50 +387,65 @@ def parse_file_with_treesitter(file_path: str, language: str) -> list[Symbol]:
         return _parse_file_fallback(file_path, language)
 
 
+def _make_ts_language(lang_obj):
+    """
+    兼容 tree-sitter 多版本的 Language 构造。
+
+    tree-sitter >= 0.22: lang_module.language() 直接返回 Language 对象，
+                         再次 Language() 包装会抛出 TypeError (PyCapsule)。
+    tree-sitter < 0.22:  lang_module.language() 返回 PyCapsule，需要 Language() 包装。
+    """
+    import tree_sitter
+    try:
+        return tree_sitter.Language(lang_obj)
+    except TypeError:
+        return lang_obj
+
+
 def _get_tree_sitter_language(language: str):
     try:
         if language == "python":
             import tree_sitter_python as tsp
-            return tsp.language()
+            return _make_ts_language(tsp.language())
         elif language in ("c",):
             import tree_sitter_c as tsp
-            return tsp.language()
+            return _make_ts_language(tsp.language())
         elif language == "cpp":
             import tree_sitter_cpp as tsp
-            return tsp.language()
+            return _make_ts_language(tsp.language())
         elif language == "java":
             import tree_sitter_java as tsp
-            return tsp.language()
+            return _make_ts_language(tsp.language())
         elif language == "javascript":
             import tree_sitter_javascript as tsp
-            return tsp.language()
+            return _make_ts_language(tsp.language())
         elif language == "typescript":
             import tree_sitter_typescript as tsp
-            return tsp.language().typescript()
+            return _make_ts_language(tsp.language().typescript())
         elif language == "tsx":
             import tree_sitter_typescript as tsp
-            return tsp.language().tsx()
+            return _make_ts_language(tsp.language().tsx())
         elif language == "go":
             import tree_sitter_go as tsp
-            return tsp.language()
+            return _make_ts_language(tsp.language())
         elif language == "rust":
             import tree_sitter_rust as tsp
-            return tsp.language()
+            return _make_ts_language(tsp.language())
         elif language == "ruby":
             import tree_sitter_ruby as tsp
-            return tsp.language()
+            return _make_ts_language(tsp.language())
         elif language == "php":
             import tree_sitter_php as tsp
-            return tsp.language()
+            return _make_ts_language(tsp.language())
         elif language == "swift":
             import tree_sitter_swift as tsp
-            return tsp.language()
+            return _make_ts_language(tsp.language())
         elif language == "kotlin":
             import tree_sitter_kotlin as tsp
-            return tsp.language()
+            return _make_ts_language(tsp.language())
         elif language == "c_sharp":
             import tree_sitter_c_sharp as tsp
-            return tsp.language()
+            return _make_ts_language(tsp.language())
         else:
             return None
     except ImportError:
@@ -345,9 +456,11 @@ def _get_tree_sitter_language(language: str):
 KIND_MAP = {
     "class_declaration": KIND_CLASS,
     "class_definition": KIND_CLASS,
+    "class_specifier": KIND_CLASS,
     "interface_declaration": KIND_INTERFACE,
     "struct_declaration": KIND_STRUCT,
     "struct_definition": KIND_STRUCT,
+    "struct_specifier": KIND_STRUCT,
     "function_declaration": KIND_FUNCTION,
     "function_definition": KIND_FUNCTION,
     "method_declaration": KIND_METHOD,
@@ -359,10 +472,12 @@ KIND_MAP = {
     "import_declaration": KIND_IMPORT,
     "import_statement": KIND_IMPORT,
     "enum_declaration": KIND_ENUM,
+    "enum_specifier": KIND_ENUM,
     "trait_declaration": KIND_TRAIT,
     "namespace_declaration": KIND_NAMESPACE,
     "property_declaration": KIND_PROPERTY,
     "field_definition": KIND_FIELD,
+    "field_declaration": KIND_METHOD,
     "decorated_definition": None,
 }
 
@@ -401,6 +516,17 @@ def _get_node_name(node, source: bytes, language: str) -> str:
     name_field = node.child_by_field_name("name")
     if name_field:
         return source[name_field.start_byte:name_field.end_byte].decode("utf-8", errors="replace")
+
+    # C/C++: function_definition 的 name 在 function_declarator 子节点中
+    for child in node.children:
+        if child.type == "function_declarator":
+            decl_name = child.child_by_field_name("declarator")
+            if decl_name:
+                return source[decl_name.start_byte:decl_name.end_byte].decode("utf-8", errors="replace")
+            # 回退：取第一个 identifier
+            for gc in child.children:
+                if gc.type in ("identifier", "qualified_identifier", "field_identifier"):
+                    return source[gc.start_byte:gc.end_byte].decode("utf-8", errors="replace")
 
     for child in node.children:
         if child.type in ("identifier", "property_identifier", "type_identifier", "name"):

@@ -21,6 +21,22 @@ from tree_sitter import Language, Parser, Node, Query, QueryCursor
 
 logger = logging.getLogger(__name__)
 
+
+def _make_language(lang_obj):
+    """
+    兼容 tree-sitter 多版本的 Language 构造。
+
+    tree-sitter >= 0.22: lang_module.language() 直接返回 Language 对象，
+                         再次 Language() 包装会抛出 TypeError (PyCapsule)。
+    tree-sitter < 0.22:  lang_module.language() 返回 PyCapsule，需要 Language() 包装。
+
+    策略：先尝试 Language() 包装，失败则直接使用原对象。
+    """
+    try:
+        return Language(lang_obj)
+    except TypeError:
+        return lang_obj
+
 # ════════════════════════════════════════════════════════════════
 # 语言注册表
 # ════════════════════════════════════════════════════════════════
@@ -36,7 +52,7 @@ def _init_registry():
     # Python
     try:
         import tree_sitter_python as tspython
-        py_lang = Language(tspython.language())
+        py_lang = _make_language(tspython.language())
         _LANGUAGE_REGISTRY["python"] = {
             "language": py_lang,
             "extensions": {".py"},
@@ -51,7 +67,7 @@ def _init_registry():
     # Java
     try:
         import tree_sitter_java as tsjava
-        java_lang = Language(tsjava.language())
+        java_lang = _make_language(tsjava.language())
         _LANGUAGE_REGISTRY["java"] = {
             "language": java_lang,
             "extensions": {".java"},
@@ -67,7 +83,7 @@ def _init_registry():
     # C/C++
     try:
         import tree_sitter_cpp as tscpp
-        cpp_lang = Language(tscpp.language())
+        cpp_lang = _make_language(tscpp.language())
         _LANGUAGE_REGISTRY["cpp"] = {
             "language": cpp_lang,
             "extensions": {".c", ".cpp", ".cc", ".cxx", ".h", ".hpp", ".hxx"},

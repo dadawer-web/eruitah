@@ -826,12 +826,12 @@ def semantic_search_code(
     project_dir: Optional[str] = None,
 ) -> tuple[str, bool]:
     """
-    Codebase RAG 混合检索 (Hybrid Search)
+    Codebase RAG 混合检索 (Hybrid Search) - RRF 融合管道
 
     双通道检索 + RRF 融合：
-    - 通道 A: Lexical Search（AST 关键词多维度加权）
-    - 通道 B: Semantic Search（向量余弦相似度）
-    - 通道 C: RRF 倒数排名融合
+    - 通道 A: FTS5 全文检索 (SQLite MATCH + bm25)
+    - 通道 B: 语义向量检索 (Embedding 余弦相似度)
+    - RRF 倒数排名融合: Score = 1/(k+rank_A) + 1/(k+rank_B), k=60
 
     Returns:
         (formatted_result, is_error)
@@ -848,83 +848,31 @@ def semantic_search_code(
 
         db = get_db()
 
+        # 构建向量索引
         all_symbols = db.search_symbols(limit=5000)
-
         _vector_engine.build_index(all_symbols, project_dir or os.getcwd())
 
+        # 提取关键词用于 FTS5 查询
         keywords = _extract_keywords(query)
-        logger.info(f"🔍 Hybrid Search: query='{query}', keywords={keywords}")
+        fts_query = " ".join(keywords)
+        logger.info(f"🔍 Hybrid Search: query='{query}', fts_query='{fts_query}'")
 
-        # ── 通道 A: Lexical Search (AST 关键词加权) ──
-        channel_a = []
-        for sym in all_symbols:
-            score = 0.0
-            name = sym.get("name", "").lower()
-            sig = sym.get("signature", "").lower()
-            doc = sym.get("docstring", "").lower()
-            fpath = sym.get("file_path", "").lower()
-            kind = sym.get("kind", "")
-            parent = sym.get("parent_name", "").lower()
+        # ── 通道 A: FTS5 全文检索 (SQLite MATCH + bm25) ──
+        fts_results = db.search_fts(fts_query, limit=20)
+        channel_a_ranked = []
+        sym_lookup = {}
+        for sym, _rank_score in fts_results:
+            sym_id = f"{sym.get('file_path', '')}:{sym.get('line', 0)}:{sym.get('name', '')}"
+            channel_a_ranked.append((sym_id, _rank_score))
+            sym_lookup[sym_id] = sym
 
-            for kw in keywords:
-                kw_lower = kw.lower()
-
-                if kw_lower == name:
-                    score += 10.0
-                elif kw_lower in name:
-                    score += 5.0
-
-                if kw_lower in sig:
-                    score += 3.0
-
-                if kw_lower in doc:
-                    score += 2.0
-
-                if kw_lower in parent:
-                    score += 2.0
-
-                parts = fpath.replace('/', ' ').replace('_', ' ').replace('.', ' ').split()
-                for part in parts:
-                    if kw_lower == part:
-                        score += 1.5
-                    elif kw_lower in part:
-                        score += 0.5
-
-            if kind in ("class", "interface"):
-                score *= 1.3
-            elif kind in ("function", "method"):
-                score *= 1.2
-            elif kind == "variable":
-                score *= 0.7
-
-            if score > 0:
-                sym_id = f"{sym.get('file_path', '')}:{sym.get('line', 0)}:{sym.get('name', '')}"
-                channel_a.append((sym_id, score, sym))
-
-        channel_a.sort(key=lambda x: x[1], reverse=True)
-        channel_a_ranked = [(sid, score) for sid, score, _sym in channel_a]
-
-        # ── 通道 B: Semantic Search (向量余弦相似度) ──
+        # ── 通道 B: 语义向量检索 (Embedding 余弦相似度) ──
         channel_b_raw = _vector_engine.search(query, top_k=20)
         channel_b_ranked = [(sid, score) for sid, score in channel_b_raw]
 
-        # ── 通道 C: RRF 融合 ──
-        if channel_b_ranked:
-            fused = _rrf_fuse(channel_a_ranked, channel_b_ranked, k=60)
-            search_mode = "Hybrid (Lexical + Semantic RRF)"
-            logger.info(f"🔀 RRF 融合: Lexical {len(channel_a_ranked)} 条 + Semantic {len(channel_b_ranked)} 条 → {len(fused)} 条")
-        else:
-            fused = [(sid, score) for sid, score in channel_a_ranked]
-            search_mode = "Lexical Only (向量引擎不可用)"
-            logger.info(f"📝 纯词法搜索: {len(fused)} 条")
-
-        # ── 构建符号查找表 ──
-        sym_lookup = {}
-        for sid, score, sym in channel_a:
-            sym_lookup[sid] = sym
-
-        if not channel_a and channel_b_ranked:
-            for sid, _vec_score in channel_b_raw:
+        # 补充向量通道的符号到 lookup
+        for sid, _vec_score in channel_b_raw:
+            if sid not in sym_lookup:
                 parts = sid.rsplit(":", 2)
                 if len(parts) >= 3:
                     fp, line_str, name = parts[0], parts[1], parts[2]
@@ -937,6 +885,19 @@ def semantic_search_code(
                         "docstring": "",
                         "parent_name": "",
                     }
+
+        # ── RRF 融合: Score = 1/(k + rank_A) + 1/(k + rank_B), k=60 ──
+        if channel_b_ranked:
+            fused = _rrf_fuse(channel_a_ranked, channel_b_ranked, k=60)
+            search_mode = "Hybrid (FTS5 + Semantic RRF)"
+            logger.info(f"🔀 RRF 融合: FTS5 {len(channel_a_ranked)} 条 + Semantic {len(channel_b_ranked)} 条 → {len(fused)} 条")
+        elif channel_a_ranked:
+            fused = [(sid, score) for sid, score in channel_a_ranked]
+            search_mode = "FTS5 Only (向量引擎不可用)"
+            logger.info(f"📝 纯 FTS5 搜索: {len(fused)} 条")
+        else:
+            fused = []
+            search_mode = "No Results"
 
         # ── 取 Top-K 结果 ──
         top_results = []

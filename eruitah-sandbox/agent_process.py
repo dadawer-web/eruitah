@@ -45,6 +45,12 @@ def _agent_entrypoint(event_queue: multiprocessing.Queue, config: dict):
     try:
         _ensure_import_path(config)
 
+        # ── 跨进程上下文恢复：子进程第一件事就是注入 user_id ──
+        user_id = config.get("user_id", 0)
+        if user_id:
+            from task_manager import ctx_user_id
+            ctx_user_id.set(user_id)
+
         from agent_runner import run_agent, route_task, build_system_prompt, MAX_TURNS
 
         user_input = config["user_input"]
@@ -60,7 +66,6 @@ def _agent_entrypoint(event_queue: multiprocessing.Queue, config: dict):
         main_repo_dir = config.get("main_repo_dir")
         auto_approve = config.get("auto_approve", False)
         use_swarm = config.get("use_swarm", False)
-        user_id = config.get("user_id", 0)
         enable_routing = config.get("enable_routing", False)
         images = config.get("images") or []
         skills = config.get("skills") or []
@@ -190,6 +195,7 @@ def _agent_entrypoint(event_queue: multiprocessing.Queue, config: dict):
                 task_id=task_id,
                 yield_events=True,
                 images=effective_images,
+                user_id=user_id,
             ):
                 event_queue.put(event)
 
@@ -228,6 +234,7 @@ def _agent_entrypoint(event_queue: multiprocessing.Queue, config: dict):
                 auto_approve=auto_approve,
                 yield_events=True,
                 images=effective_images,
+                user_id=user_id,
             ):
                 event_queue.put(event)
 
@@ -253,6 +260,7 @@ def _agent_entrypoint(event_queue: multiprocessing.Queue, config: dict):
                 main_repo_dir=main_repo_dir,
                 auto_approve=auto_approve,
                 yield_events=True,
+                user_id=user_id,
             ):
                 event_queue.put(event)
 

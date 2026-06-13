@@ -1456,7 +1456,12 @@ def run_sdd_loop(
     max_review_retries: int = SDD_MAX_REVIEW_RETRIES,
     yield_events: bool = True,
     images: Optional[list] = None,
+    user_id: int = 0,
 ):
+    # ── 多租户上下文传播 ──
+    if user_id:
+        from task_manager import ctx_user_id
+        ctx_user_id.set(user_id)
     """
     SDD (Subagent-Driven Development) 主循环
 
@@ -1813,7 +1818,12 @@ def start_debate_loop(
     auto_approve: bool = False,
     yield_events: bool = True,
     images: Optional[list] = None,
+    user_id: int = 0,
 ):
+    # ── 多租户上下文传播 ──
+    if user_id:
+        from task_manager import ctx_user_id
+        ctx_user_id.set(user_id)
     """
     红蓝对抗引擎 — 高级 API
 
@@ -1890,6 +1900,7 @@ def start_debate_loop(
         custom_coder_prompt=custom_coder_prompt,
         custom_reviewer_prompt=custom_reviewer_prompt,
         images=images,
+        user_id=user_id,
     )
 
 
@@ -2192,6 +2203,7 @@ def _run_role_agent(
     session_id: str = None,
     yield_events: bool = False,
     images: Optional[list] = None,
+    user_id: int = 0,
 ):
     if yield_events:
         yield from _run_role_agent_events(
@@ -2207,6 +2219,7 @@ def _run_role_agent(
             task_id=task_id,
             session_id=session_id,
             images=images,
+            user_id=user_id,
         )
         return
 
@@ -2224,6 +2237,7 @@ def _run_role_agent(
         task_id=task_id,
         session_id=session_id,
         images=images,
+        user_id=user_id,
     ):
         if event.get("type") == "assistant":
             result_text = event.get("data", result_text)
@@ -2386,10 +2400,45 @@ _IMPLICIT_APPROVAL_PATTERNS = (
 )
 
 
+_IMPLICIT_REJECTION_PATTERNS = (
+    "REJECT",
+    "REJECTED",
+    "❌",
+    "DENIED",
+    "拒绝",
+    "打回",
+    "未通过",
+    "不通过",
+    "需要修复",
+    "需要修改",
+    "存在致命",
+    "存在严重",
+    "存在 Bug",
+    "半成品",
+    "不合规",
+    "FATAL",
+    "CRITICAL",
+    "致命 Bug",
+    "严重 Bug",
+)
+
+
 def _is_approval(text: str) -> bool:
     if not text:
         return False
     upper = text.upper()
+
+    # 优先检查显式拒绝标记：如果包含 REJECT/拒绝 等关键词，直接返回 False
+    for pattern in _IMPLICIT_REJECTION_PATTERNS:
+        if pattern.upper() in upper:
+            return False
+
+    # 检查 <DECISION> 标签（最高优先级）
+    decision_match = re.search(r'<DECISION>\s*(APPROVE|REJECT)\s*</DECISION>', text, re.IGNORECASE)
+    if decision_match:
+        return decision_match.group(1).upper() == "APPROVE"
+
+    # 最后检查隐式通过模式
     for pattern in _IMPLICIT_APPROVAL_PATTERNS:
         if pattern.upper() in upper:
             return True
@@ -2423,7 +2472,13 @@ def _run_role_agent_events(
     custom_coder_prompt: str = "",
     custom_reviewer_prompt: str = "",
     images: Optional[list] = None,
+    user_id: int = 0,
 ):
+    # ── 多租户上下文传播 ──
+    if user_id:
+        from task_manager import ctx_user_id
+        ctx_user_id.set(user_id)
+
     from agent_runner import run_agent as _run_agent
 
     if role == "coder" and custom_coder_prompt:
@@ -2501,6 +2556,7 @@ def _run_role_agent_events(
         initial_messages=initial_messages if initial_messages else None,
         main_repo_dir=main_repo_dir,
         auto_approve=auto_approve,
+        user_id=user_id,
     ):
         if _is_terminal_signal(event):
             continue
@@ -2589,6 +2645,11 @@ def run_swarm(
     images: Optional[list] = None,
     user_id: int = 0,
 ):
+    # ── 多租户上下文传播：确保 Swarm 线程中 user_id 可被深层调用获取 ──
+    if user_id:
+        from task_manager import ctx_user_id
+        ctx_user_id.set(user_id)
+
     task_desc = task_description or user_input or ""
     if not task_desc:
         if yield_events:
@@ -2662,6 +2723,11 @@ def _run_swarm_events(
     images: Optional[list] = None,
     user_id: int = 0,
 ):
+    # ── 多租户上下文传播 ──
+    if user_id:
+        from task_manager import ctx_user_id
+        ctx_user_id.set(user_id)
+
     loop_count = 0
     coder_instruction = task_description
     all_coder_output = ""
@@ -2730,6 +2796,7 @@ def _run_swarm_events(
             custom_coder_prompt=custom_coder_prompt,
             custom_reviewer_prompt=custom_reviewer_prompt,
             images=images,
+            user_id=user_id,
         ):
             if event.get("type") == "role_finish":
                 coder_text = event.get("data", "")
@@ -2876,6 +2943,7 @@ def _run_swarm_events(
             custom_coder_prompt=custom_coder_prompt,
             custom_reviewer_prompt=custom_reviewer_prompt,
             images=images,
+            user_id=user_id,
         ):
             if event.get("type") == "role_finish":
                 reviewer_text = event.get("data", "")
@@ -3239,9 +3307,15 @@ def execute_coder_reviewer_swarm(
     main_repo_dir: str = "",
     custom_coder_prompt: str = "",
     custom_reviewer_prompt: str = "",
+    user_id: int = 0,
 ) -> tuple[str, bool]:
     if not task_description.strip():
         return "❌ 任务描述不能为空", True
+
+    # ── 多租户上下文传播 ──
+    if user_id:
+        from task_manager import ctx_user_id
+        ctx_user_id.set(user_id)
 
     result = run_swarm(
         task_description=task_description,
@@ -3254,6 +3328,7 @@ def execute_coder_reviewer_swarm(
         main_repo_dir=main_repo_dir,
         custom_coder_prompt=custom_coder_prompt,
         custom_reviewer_prompt=custom_reviewer_prompt,
+        user_id=user_id,
     )
 
     lines = [
