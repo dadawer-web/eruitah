@@ -97,7 +97,26 @@ class LSPClient:
                             "definition": {"dynamicRegistration": False},
                             "references": {"dynamicRegistration": False},
                             "documentSymbol": {"dynamicRegistration": False},
-                        }
+                            # 显式关闭高级特性，防止前端发送不支持的请求
+                            "codeLens": {"dynamicRegistration": False},
+                            "documentLink": {"dynamicRegistration": False},
+                            "semanticTokens": {
+                                "dynamicRegistration": False,
+                                "requests": {"full": False, "range": False},
+                            },
+                            "foldingRange": {"dynamicRegistration": False},
+                            "documentHighlight": {"dynamicRegistration": False},
+                            "colorProvider": {"dynamicRegistration": False},
+                            "formatting": {"dynamicRegistration": False},
+                            "rangeFormatting": {"dynamicRegistration": False},
+                            "onTypeFormatting": {"dynamicRegistration": False},
+                            "rename": {"dynamicRegistration": False},
+                            "publishDiagnostics": {
+                                "relatedInformation": False,
+                                "tagSupport": {"valueSet": []},
+                                "versionSupport": False,
+                            },
+                        },
                     },
                 })
                 await self._send_notification(language, "initialized", {})
@@ -135,6 +154,17 @@ class LSPClient:
 
             # 读取响应
             response = await self._read_response(proc)
+            if response and 'error' in response:
+                error_info = response['error']
+                error_code = error_info.get('code', 0) if isinstance(error_info, dict) else 0
+                if error_code == -32601:
+                    # MethodNotFound: 服务器不支持该方法，静音处理
+                    method_name = error_info.get('message', 'unknown') if isinstance(error_info, dict) else ''
+                    logger.debug(f"LSP Server skipped unsupported method: {method_name}")
+                    return {"result": None}
+                else:
+                    logger.error(f"LSP 错误: {error_info}")
+                return None
             return response.get("result") if response else None
         except Exception as e:
             logger.error(f"LSP 请求失败: {method} -> {e}")
@@ -159,7 +189,7 @@ class LSPClient:
             proc.stdin.write(message.encode())
             await proc.stdin.drain()
         except Exception as e:
-            logger.error(f"LSP 通知失败: {method} -> {e}")
+            logger.debug(f"LSP 通知发送失败 (fire-and-forget): {method} -> {e}")
 
     async def _read_response(self, proc: asyncio.subprocess.Process) -> Optional[dict]:
         """读取 LSP 响应"""

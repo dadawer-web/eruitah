@@ -325,14 +325,27 @@ async def _run_agent_async(
                             f"[Supervisor] 检测到图片输入，直接指定视觉架构师 | 图片数: {len(effective_images)}"
                         )
                     else:
-                        from agent_runner import _is_tour_intent
+                        from agent_runner import classify_intent
 
-                        if _is_tour_intent(user_input):
+                        intent = classify_intent(user_input)
+                        logger.info(f"[Supervisor] 🧠 意图判定: {intent} | 原始输入: {user_input[:60]}")
+
+                        # ── TOUR: 明确导览 ──
+                        if intent == 'TOUR':
+                            # 提取 /tour 前缀后的问题（如果有）
+                            tour_question = user_input.strip()
+                            for prefix in ("/tour ", "/tour"):
+                                if tour_question.startswith(prefix):
+                                    tour_question = tour_question[len(prefix):].strip()
+                                    break
+                            if not tour_question:
+                                tour_question = user_input
+
                             route_result = {
                                 "is_predefined": True,
                                 "target_agent_name": "code_tour_guide",
                                 "dynamic_system_prompt": "",
-                                "sub_task": f"用户请求讲解知识点。请立即使用 code_tour 工具，将用户的需求：\"{user_input}\"作为 question 参数传入并执行。不要做任何其他操作。",
+                                "sub_task": f"用户请求讲解知识点。请立即使用 code_tour 工具，将用户的需求：\"{tour_question}\"作为 question 参数传入并执行。不要做任何其他操作。",
                             }
                             expert_label = "code_tour_guide (代码导览)"
                             effective_input = route_result["sub_task"]
@@ -346,10 +359,6 @@ async def _run_agent_async(
                             dynamic_prompt = ""
                             cto_execution_env = "native"
 
-                            logger.info(
-                                f"[Supervisor] 🗺️ 检测到代码导览意图，跳过 CTO 路由，直接进入导览模式 | 原始输入: {user_input[:60]}"
-                            )
-
                             loop.call_soon_threadsafe(queue.put_nowait, {
                                 "type": "task_routed",
                                 "data": {
@@ -359,6 +368,31 @@ async def _run_agent_async(
                                     "mode": "tour",
                                 },
                             })
+
+                        # ── AMBIGUOUS: 暧昧区间，返回反问卡片，阻断 Agent 消耗 ──
+                        elif intent == 'AMBIGUOUS':
+                            loop.call_soon_threadsafe(queue.put_nowait, {
+                                "type": "ui_card",
+                                "content": "我需要澄清一下。您是想要阅读代码还是修改代码？",
+                                "actions": [
+                                    {"label": "🗺️ 架构导览", "command": f"/tour {user_input.strip()}"},
+                                    {"label": "💻 编写代码", "command": f"/code {user_input.strip()}"},
+                                ],
+                                "data": {
+                                    "original_input": user_input,
+                                    "message": "我需要澄清一下。您是想要阅读代码还是修改代码？",
+                                    "options": [
+                                        {"id": "tour", "label": "🗺️ 架构导览", "description": "进入代码导览模式"},
+                                        {"id": "code", "label": "💻 编写代码", "description": "进入编程助手模式"},
+                                    ],
+                                },
+                            })
+
+                            # 阻断 Agent 执行，等待用户选择
+                            loop.call_soon_threadsafe(queue.put_nowait, None)
+                            return
+
+                        # ── CODE: 明确开发，正常 CTO 路由 ──
                         else:
                             loop.call_soon_threadsafe(queue.put_nowait, {
                                 "type": "status",
@@ -1348,13 +1382,36 @@ async def websocket_coding(websocket: WebSocket, user_id: int = 0):
             if data.get("type") == "command_confirm":
                 continue
 
+            # 意图确认卡片选择 → 重新路由
+            if data.get("type") == "intent_choice":
+                choice = data.get("choice", "code")
+                original_input = data.get("original_input", "")
+                if choice == "tour" and original_input:
+                    # 用户选择导览模式，重新以 /tour 前缀发送
+                    data = {
+                        "type": "chat_new_task",
+                        "task": f"/tour {original_input}",
+                        "work_dir": data.get("work_dir", SANDBOX_DIR),
+                        "user_id": data.get("user_id", effective_user_id),
+                    }
+                else:
+                    # 用户选择编程模式，正常走 CTO 路由
+                    data = {
+                        "type": "chat_new_task",
+                        "task": original_input,
+                        "work_dir": data.get("work_dir", SANDBOX_DIR),
+                        "user_id": data.get("user_id", effective_user_id),
+                    }
+                # 继续走下面的正常处理流程
+
             msg_type = data.get("type", "")
             user_input = data.get("task") or data.get("prompt") or data.get("content", "")
             images = data.get("images") or []
 
             if user_input and msg_type in ("chat_new_task", "chat"):
-                from agent_runner import _is_tour_intent
-                if _is_tour_intent(user_input):
+                from agent_runner import classify_intent
+                intent = classify_intent(user_input)
+                if intent == 'TOUR':
                     skip_career_analysis = True
                     logger.info(f"ℹ️ 检测到导览/讲解意图，设置 skip_career_analysis=True")
             if images and not isinstance(images, list):
@@ -1397,6 +1454,21 @@ async def websocket_coding(websocket: WebSocket, user_id: int = 0):
             try:
                 if msg_type == "chat_new_task":
                     base_task_id = data.get("base_task_id", "")
+
+                    # ── 双轨制：判断是否为独立任务 ──
+                    is_independent_task = bool(data.get("is_independent_task", False))
+                    if not is_independent_task and not base_task_id:
+                        # 自动检测：用户输入包含独立任务关键词 → 空白沙盒
+                        _INDEPENDENT_KEYWORDS = [
+                            "demo", "示例", "写一个", "创建一个", "新建一个",
+                            "从零开始", "从0开始", "空白项目", "独立项目",
+                            "spring-cloud-demo", "hello world",
+                        ]
+                        user_lower = user_input.lower()
+                        is_independent_task = any(kw in user_lower for kw in _INDEPENDENT_KEYWORDS)
+                        if is_independent_task:
+                            logger.info(f"🆓 [双轨制] 检测到独立任务关键词，将创建空白沙盒: {user_input[:60]}")
+
                     session = sm.get_or_create_session(
                         task_id=None,
                         first_prompt=user_input,
@@ -1404,14 +1476,61 @@ async def websocket_coding(websocket: WebSocket, user_id: int = 0):
                         existing_messages=None,
                         base_task_id=base_task_id,
                         use_worktree=use_worktree,
+                        is_independent_task=is_independent_task,
                     )
                     task_id = session.id
                     initial_messages = None
                     work_dir = session.worktree_dir or work_dir
-                    mode_label = "worktree" if use_worktree else "直通"
+                    mode_label = "独立沙盒" if is_independent_task else ("worktree" if use_worktree else "直通")
                     logger.info(f"🆕 新任务 {task_id}: {session.summary[:50]} ({mode_label}: {work_dir})" + (f" 基于 {base_task_id}" if base_task_id else ""))
 
                 elif msg_type == "chat_continue" and task_id:
+                    # ── chat_continue 意图拦截 ──
+                    if user_input:
+                        from agent_runner import classify_intent
+                        cont_intent = classify_intent(user_input)
+                        logger.info(f"[Supervisor] 🧠 chat_continue 意图判定: {cont_intent} | 输入: {user_input[:60]}")
+
+                        if cont_intent == 'AMBIGUOUS':
+                            loop.call_soon_threadsafe(queue.put_nowait, {
+                                "type": "ui_card",
+                                "content": "我需要澄清一下。您是想要阅读代码还是修改代码？",
+                                "actions": [
+                                    {"label": "🗺️ 架构导览", "command": f"/tour {user_input.strip()}"},
+                                    {"label": "💻 编写代码", "command": f"/code {user_input.strip()}"},
+                                ],
+                                "data": {
+                                    "original_input": user_input,
+                                    "message": "我需要澄清一下。您是想要阅读代码还是修改代码？",
+                                    "options": [
+                                        {"id": "tour", "label": "🗺️ 架构导览", "description": "进入代码导览模式"},
+                                        {"id": "code", "label": "💻 编写代码", "description": "进入编程助手模式"},
+                                    ],
+                                },
+                            })
+                            loop.call_soon_threadsafe(queue.put_nowait, None)
+                            return
+
+                        if cont_intent == 'TOUR':
+                            # 强制重新路由到导览模式
+                            loop.call_soon_threadsafe(queue.put_nowait, {
+                                "type": "ui_card",
+                                "content": "检测到导览意图。如果确认，请点击下方按钮：",
+                                "actions": [
+                                    f"/tour {user_input.strip()}",
+                                ],
+                                "data": {
+                                    "original_input": user_input,
+                                    "message": "检测到导览意图。如果确认，请点击下方按钮：",
+                                    "options": [
+                                        {"id": "tour", "label": "🗺️ 确认导览", "description": "进入代码导览模式"},
+                                        {"id": "code", "label": "💻 取消，继续编码", "description": "继续编程助手模式"},
+                                    ],
+                                },
+                            })
+                            loop.call_soon_threadsafe(queue.put_nowait, None)
+                            return
+
                     session = sm.get_or_create_session(
                         task_id=task_id,
                         first_prompt=user_input,
@@ -2234,29 +2353,43 @@ async def semantic_search(q: str = "", top_k: int = 5, project_dir: str = ""):
     """
     语义向量检索接口
     接收自然语言查询，返回最相似的节点 ID 列表
+    从 SQLite 数据库读取 embeddings
     """
     import json
     import os
     import math
+    import sqlite3
 
     if not q or not q.strip():
         return {"status": "success", "matches": []}
 
-    # 定位 embeddings.json
+    # 定位 SQLite 数据库
     if not project_dir:
         project_dir = SANDBOX_DIR
     cache_dir = os.path.join(project_dir, ".eruitah_cache")
-    embeddings_path = os.path.join(cache_dir, "embeddings.json")
+    db_path = os.path.join(cache_dir, "codegraph.db")
 
-    if not os.path.isfile(embeddings_path):
-        return {"status": "success", "matches": [], "message": "embeddings.json not found"}
+    if not os.path.isfile(db_path):
+        return {"status": "success", "matches": [], "message": "codegraph.db not found"}
 
-    # 加载 embeddings
+    # 从 SQLite 加载 embeddings
+    node_embeddings = {}
     try:
-        with open(embeddings_path, "r", encoding="utf-8") as f:
-            node_embeddings = json.load(f)
-    except (json.JSONDecodeError, IOError):
-        return {"status": "success", "matches": [], "message": "embeddings.json corrupted"}
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            "SELECT id, embedding FROM nodes WHERE embedding IS NOT NULL AND embedding != ''"
+        ).fetchall()
+        conn.close()
+        for row in rows:
+            try:
+                emb = json.loads(row["embedding"])
+                if isinstance(emb, list) and len(emb) > 0:
+                    node_embeddings[row["id"]] = emb
+            except (json.JSONDecodeError, TypeError):
+                continue
+    except Exception as e:
+        return {"status": "success", "matches": [], "message": f"SQLite read failed: {e}"}
 
     if not node_embeddings:
         return {"status": "success", "matches": [], "message": "no embeddings available"}

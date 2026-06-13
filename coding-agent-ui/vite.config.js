@@ -38,11 +38,14 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: 1500,
+    target: 'esnext',
     rollupOptions: {
       output: {
-        manualChunks: {
-          monaco: ['monaco-editor'],
-          xterm: ['@xterm/xterm', '@xterm/addon-fit'],
+        format: 'es',
+        inlineDynamicImports: false,
+        manualChunks(id) {
+          if (id.includes('monaco-editor')) return 'monaco'
+          if (id.includes('@xterm')) return 'xterm'
         },
       },
     },

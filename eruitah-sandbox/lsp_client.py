@@ -42,6 +42,25 @@ class LSPConnection:
                         "dynamicRegistration": False,
                         "completionItem": {"snippetSupport": False},
                     },
+                    # 显式关闭高级特性，防止前端发送不支持的请求
+                    "codeLens": {"dynamicRegistration": False},
+                    "documentLink": {"dynamicRegistration": False},
+                    "semanticTokens": {
+                        "dynamicRegistration": False,
+                        "requests": {"full": False, "range": False},
+                    },
+                    "foldingRange": {"dynamicRegistration": False},
+                    "documentHighlight": {"dynamicRegistration": False},
+                    "colorProvider": {"dynamicRegistration": False},
+                    "formatting": {"dynamicRegistration": False},
+                    "rangeFormatting": {"dynamicRegistration": False},
+                    "onTypeFormatting": {"dynamicRegistration": False},
+                    "rename": {"dynamicRegistration": False},
+                    "publishDiagnostics": {
+                        "relatedInformation": False,
+                        "tagSupport": {"valueSet": []},
+                        "versionSupport": False,
+                    },
                 },
                 "workspace": {
                     "symbol": {"dynamicRegistration": False},
@@ -123,21 +142,29 @@ class LSPConnection:
         return self._receive_response(request_id)
 
     def send_notification(self, method: str, params: Dict[str, Any]):
-        """发送 LSP 通知（无 id，不期望响应）"""
+        """发送 LSP 通知（无 id，不期望响应，严格发后即忘）"""
         notification = {
             "jsonrpc": "2.0",
             "method": method,
             "params": params,
         }
+        # 通知绝不能包含 "id" 字段，否则服务器会尝试响应
+        assert "id" not in notification, f"LSP 通知不应包含 id 字段: {method}"
 
         data = json.dumps(notification).encode('utf-8')
         header = f"Content-Length: {len(data)}\r\n\r\n"
         message = header.encode('utf-8') + data
 
-        try:
-            self.sock.sendall(message)
-        except Exception as e:
-            logger.error(f"LSP 通知失败: {e}")
+        with self._lock:
+            try:
+                # 临时移除 socket 超时，避免被 _receive_response 遗留的超时设置影响
+                old_timeout = self.sock.gettimeout()
+                self.sock.settimeout(None)
+                self.sock.sendall(message)
+                # 恢复原有超时
+                self.sock.settimeout(old_timeout)
+            except Exception as e:
+                logger.debug(f"LSP 通知发送失败 (fire-and-forget): {method} - {e}")
 
     def _receive_response(self, request_id: int, timeout: float = 10.0) -> Optional[Dict[str, Any]]:
         """接收 LSP 响应"""
@@ -177,10 +204,28 @@ class LSPConnection:
                         response = json.loads(body.decode('utf-8'))
                         if 'id' in response and response['id'] == request_id:
                             if 'error' in response:
-                                logger.error(f"LSP 错误: {response['error']}")
+                                error_info = response['error']
+                                error_code = error_info.get('code', 0) if isinstance(error_info, dict) else 0
+                                if error_code == -32601:
+                                    # MethodNotFound: 服务器不支持该方法，静音处理
+                                    method_name = error_info.get('message', 'unknown') if isinstance(error_info, dict) else ''
+                                    logger.debug(f"LSP Server skipped unsupported method: {method_name}")
+                                    return {"result": None}
+                                elif error_code == -32603:
+                                    # InternalError: 检查是否为已知的 diagnostic 不支持请求
+                                    error_data = str(error_info.get('data', '')) if isinstance(error_info, dict) else ''
+                                    error_msg = str(error_info.get('message', '')) if isinstance(error_info, dict) else ''
+                                    if 'UnsupportedOperationException' in error_data or 'diagnostic' in error_data.lower() or 'diagnostic' in error_msg.lower():
+                                        logger.debug("LSP 忽略不支持的 diagnostic 请求 (Java)")
+                                        return {"result": {"kind": "full", "items": []}}
+                                    else:
+                                        logger.error(f"LSP 错误: {error_info}")
+                                else:
+                                    logger.error(f"LSP 错误: {error_info}")
                                 return None
                             return response.get('result', {})
                         elif 'method' in response:
+                            # 服务器主动推送的通知（如 publishDiagnostics），静默忽略
                             pass
                     except json.JSONDecodeError:
                         pass

@@ -993,7 +993,13 @@ function clearPathFinder() {
 }
 
 // ── 双击折叠/展开结界 ──
+let _lastToggleTime = 0
 function onNodeDoubleClick(event) {
+  // 防抖：300ms 内只允许一次切换（防止 VueFlow 事件 + 自定义模板事件双重触发）
+  const now = Date.now()
+  if (now - _lastToggleTime < 300) return
+  _lastToggleTime = now
+
   const node = event.node
   if (!node?.data?.isDomainGroup) return
   const gid = node.id
@@ -1004,7 +1010,9 @@ function onNodeDoubleClick(event) {
     newCollapsed.add(gid)
   }
   collapsedGroups.value = newCollapsed
-  processGraph()
+
+  // 用 nextTick 确保 collapsedGroups 响应式更新后再布局
+  nextTick(() => processGraph())
 }
 
 function handlePaneClick() {

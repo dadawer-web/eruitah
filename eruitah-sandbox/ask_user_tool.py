@@ -269,13 +269,15 @@ ASK_USER_TOOL_DEFINITION_OPENAI = {
             "4.需要用户提供密码、API Key等敏感信息；"
             "5.存在两种以上截然不同的技术方案，需要人类做决策。"
             "调用后静静等待人类指令，不要自己乱猜。"
+            "【铁律】绝不提供 A/B/C/D 选项！请清晰列出选项，让用户明确说出他们想执行的动作"
+            "（例如：请说出'删除文件夹'或'解释代码'）。"
         ),
         "parameters": {
             "type": "object",
             "properties": {
                 "question": {
                     "type": "string",
-                    "description": "向用户提出的问题或确认信息（必须具体、明确，不能含糊）"
+                    "description": "向用户提出的问题或确认信息（必须具体、明确，不能含糊。绝不使用A/B/C/D选项，而是让用户直接说出想执行的动作）"
                 },
                 "context": {
                     "type": "string",
@@ -297,13 +299,15 @@ ASK_USER_TOOL_DEFINITION_ANTHROPIC = {
         "4.需要用户提供密码、API Key等敏感信息；"
         "5.存在两种以上截然不同的技术方案，需要人类做决策。"
         "调用后静静等待人类指令，不要自己乱猜。"
+        "【铁律】绝不提供 A/B/C/D 选项！请清晰列出选项，让用户明确说出他们想执行的动作"
+        "（例如：请说出'删除文件夹'或'解释代码'）。"
     ),
     "input_schema": {
         "type": "object",
         "properties": {
             "question": {
                 "type": "string",
-                "description": "向用户提出的问题或确认信息（必须具体、明确，不能含糊）"
+                "description": "向用户提出的问题或确认信息（必须具体、明确，不能含糊。绝不使用A/B/C/D选项，而是让用户直接说出想执行的动作）"
             },
             "context": {
                 "type": "string",

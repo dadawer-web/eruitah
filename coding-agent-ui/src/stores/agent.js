@@ -91,6 +91,9 @@ export const useAgentStore = defineStore('agent', () => {
   const tourActiveIdx = ref(-1)
   const tourActiveNodeId = ref(null)
 
+  // 意图确认卡片状态
+  const pendingIntentConfirm = ref(null)  // { original_input, message, options }
+
   const tourActiveStep = computed(() => {
     if (tourActiveIdx.value < 0 || tourActiveIdx.value >= tourSteps.value.length) return null
     return tourSteps.value[tourActiveIdx.value]
@@ -835,6 +838,20 @@ export const useAgentStore = defineStore('agent', () => {
         if (Array.isArray(data.data) && data.data.length > 0) {
           _startTour(data.data)
         }
+        break
+
+      case 'intent_confirm':
+      case 'ui_card':
+        pendingIntentConfirm.value = data.data || null
+        pushMessage({
+          role: 'agent',
+          content: data.content || data.data?.message || '请选择意图',
+          timestamp: Date.now(),
+          msgType: 'intent_confirm',
+          intentOptions: data.data?.options || [],
+          intentActions: data.actions || [],
+          originalInput: data.data?.original_input || '',
+        })
         break
 
       case 'system_msg':
@@ -1782,6 +1799,7 @@ export const useAgentStore = defineStore('agent', () => {
     tourActiveIdx,
     tourActiveNodeId,
     tourActiveStep,
+    pendingIntentConfirm,
     showCodeGraph(data) {
       codeGraphData.value = data || { nodes: [], edges: [] }
       codeGraphVisible.value = true
@@ -1856,6 +1874,26 @@ export const useAgentStore = defineStore('agent', () => {
       tourSteps.value = []
       tourActiveIdx.value = -1
       tourActiveNodeId.value = null
+    },
+
+    chooseIntent(choice) {
+      if (!pendingIntentConfirm.value) return false
+      const originalInput = pendingIntentConfirm.value.original_input || ''
+      pendingIntentConfirm.value = null
+
+      if (!ws.value || ws.value.readyState !== WebSocket.OPEN) {
+        console.warn('[WS] Not connected, cannot send intent choice')
+        return false
+      }
+
+      ws.value.send(JSON.stringify(_injectIdentity({
+        type: 'intent_choice',
+        choice: choice,
+        original_input: originalInput,
+        work_dir: basePath.value,
+      })))
+
+      return true
     },
   }
 })

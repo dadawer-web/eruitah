@@ -1,0 +1,28 @@
+# ========== 服务消费者配置 ==========
+server:
+  port: 8080
+
+spring:
+  application:
+    name: consumer-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        namespace: public
+
+# Feign 配置
+feign:
+  sentinel:
+    enabled: true  # 开启 Sentinel 对 Feign 的熔断降级支持
+
+# Sentinel 配置
+spring.cloud.sentinel:
+  transport:
+    dashboard: 127.0.0.1:8858  # Sentinel 控制台地址（避免与 consumer 端口冲突）
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

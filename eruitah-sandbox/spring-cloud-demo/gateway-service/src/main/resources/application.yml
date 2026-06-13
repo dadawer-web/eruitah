@@ -1,0 +1,45 @@
+# ========== API 网关配置 ==========
+server:
+  port: 9000  # 网关统一入口端口
+
+spring:
+  application:
+    name: gateway-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        namespace: public
+    gateway:
+      # 路由规则配置
+      routes:
+        # 路由1：将 /api/provider/** 转发到 provider-service
+        - id: provider-route
+          uri: lb://provider-service  # lb:// 表示通过 LoadBalancer 负载均衡
+          predicates:
+            - Path=/api/provider/**   # 匹配路径
+          filters:
+            - StripPrefix=0            # 不去掉前缀（保留 /api/provider）
+
+        # 路由2：将 /api/consumer/** 转发到 consumer-service
+        - id: consumer-route
+          uri: lb://consumer-service
+          predicates:
+            - Path=/api/consumer/**
+          filters:
+            - StripPrefix=0
+
+      # 全局跨域配置
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            allowCredentials: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway

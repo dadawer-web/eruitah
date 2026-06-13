@@ -1,0 +1,26 @@
+# ========== 服务提供者配置 ==========
+server:
+  port: 8070
+
+spring:
+  application:
+    name: provider-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        namespace: public
+      config:
+        server-addr: 127.0.0.1:8848
+        file-extension: yml
+        namespace: public
+
+# 自定义配置项（可通过 Nacos Config 动态刷新）
+provider:
+  greeting: "Hello from Provider Service"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

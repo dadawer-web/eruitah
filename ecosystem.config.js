@@ -34,6 +34,10 @@ module.exports = {
       interpreter: 'none',
       watch: false,
       autorestart: true,
+      env: {
+        JDTLS_HOME: '/home/xmy/.local/share/jdtls',
+        JAVA_HOME: '/usr/lib/jvm/java-21-openjdk-amd64',
+      },
       out_file: path.join(LOG_DIR, 'python-sandbox-out.log'),
       error_file: path.join(LOG_DIR, 'python-sandbox-error.log'),
       log_date_format: 'YYYY-MM-DD HH:mm:ss',

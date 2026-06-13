@@ -32,6 +32,7 @@ from collections import defaultdict
 
 from ignore_engine import generate_ignore_file, filter_files
 from graph_cluster import detect_domains
+from tree_sitter_engine import UniversalExtractor, _extract_imports
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -173,6 +174,52 @@ LAYER_PRESETS = {
             "unknown": "未分类",
         },
     },
+    "C_CPP_NATIVE": {
+        "description": "C/C++ 原生工程 (CMake/Makefile 构建, Socket/系统编程, etc.)",
+        "layers": {
+            "entry": {
+                "dir_keywords": {"src", "app", "main", "bin", "cmd"},
+                "name_patterns": r"(?:^|_)(?:main|app|entry|start|init)"
+                                 r"(?:impl|base|abstract)?(?:$|_)",
+            },
+            "network": {
+                "dir_keywords": {"net", "network", "socket", "tcp", "udp", "http", "server", "client", "connection", "io", "epoll", "select"},
+                "name_patterns": r"(?:^|_)(?:server|client|socket|connection|listener"
+                                 r"|acceptor|connector|channel|session|epoll|poll"
+                                 r"|tcp|udp|http|request|response|handler)"
+                                 r"(?:impl|base|abstract)?(?:$|_)",
+            },
+            "core": {
+                "dir_keywords": {"core", "engine", "logic", "processor", "service", "manager", "dispatcher", "event", "loop", "reactor"},
+                "name_patterns": r"(?:^|_)(?:engine|processor|service|manager|dispatcher"
+                                 r"|handler|worker|scheduler|reactor|loop|event"
+                                 r"|task|job|timer|clock|thread|pool)"
+                                 r"(?:impl|base|abstract)?(?:$|_)",
+            },
+            "data": {
+                "dir_keywords": {"data", "model", "entity", "proto", "message", "buffer", "packet", "codec", "serialize", "db", "store"},
+                "name_patterns": r"(?:^|_)(?:model|entity|message|packet|buffer"
+                                 r"|frame|proto|codec|serializer|parser|db"
+                                 r"|store|repository|dao|record|payload)"
+                                 r"(?:impl|base|abstract)?(?:$|_)",
+            },
+            "infrastructure": {
+                "dir_keywords": {"util", "helper", "common", "base", "config", "constant", "include", "lib", "third_party", "vendor", "external", "debug", "log", "test"},
+                "name_patterns": r"(?:^|_)(?:util|helper|common|base|config|constant"
+                                 r"|logger|log|error|exception|singleton|factory"
+                                 r"|builder|adapter|wrapper|lock|mutex|atomic)"
+                                 r"(?:impl|base|abstract)?(?:$|_)",
+            },
+        },
+        "layer_names": {
+            "entry": "入口层",
+            "network": "网络通信层",
+            "core": "核心逻辑层",
+            "data": "数据/协议层",
+            "infrastructure": "基础设施层",
+            "unknown": "未分类",
+        },
+    },
     "FRONTEND": {
         "description": "前端 SPA / 组件化项目 (Vue/React/Angular/Svelte, etc.)",
         "layers": {
@@ -228,33 +275,37 @@ LAYER_PRESETS = {
 
 
 def sniff_project_type(root_dir: str) -> str:
+    """项目类型嗅探，优先级: 特定构建文件 > 代码文件后缀比例 > 文件夹名称"""
     root = Path(root_dir)
 
-    backend_signals = 0
-    frontend_signals = 0
-
-    # 具体框架检测标记
-    detected_framework = None
+    # ── 第一优先级: 特定构建文件 / 包管理文件 ──
+    # 这些标记文件能唯一确定项目类型，优先级最高
 
     # Java/Spring
     if (root / "pom.xml").is_file() or (root / "build.gradle").is_file() or (root / "build.gradle.kts").is_file():
-        detected_framework = "java"
+        sniff_project_type._last_detected_framework = "java"
+        return "BACKEND_MVC"
+
+    # C/C++ 原生: CMakeLists.txt / Makefile 是强信号
+    if (root / "CMakeLists.txt").is_file() or (root / "Makefile").is_file():
+        sniff_project_type._last_detected_framework = "cpp"
+        return "C_CPP_NATIVE"
+
     # Go
     if (root / "go.mod").is_file():
-        detected_framework = "go"
+        sniff_project_type._last_detected_framework = "go"
+        return "BACKEND_MVC"
+
     # Rust
     if (root / "Cargo.toml").is_file():
-        detected_framework = "rust"
-    # C/C++
-    if (root / "CMakeLists.txt").is_file() or (root / "Makefile").is_file():
-        if not detected_framework:
-            detected_framework = "cpp"
+        sniff_project_type._last_detected_framework = "rust"
+        return "BACKEND_MVC"
+
     # .NET
-    if (root / "*.sln") and not detected_framework:
-        for f in root.iterdir():
-            if f.suffix == ".sln":
-                detected_framework = "dotnet"
-                break
+    for f in root.iterdir():
+        if f.suffix == ".sln":
+            sniff_project_type._last_detected_framework = "dotnet"
+            return "BACKEND_MVC"
 
     # Node.js / 前端框架
     frontend_marker_files = {"package.json", "tsconfig.json", "vite.config.ts", "vite.config.js",
@@ -262,30 +313,24 @@ def sniff_project_type(root_dir: str) -> str:
                               "angular.json", "svelte.config.js"}
     for marker in frontend_marker_files:
         if (root / marker).is_file():
-            detected_framework = "node"
-            break
+            sniff_project_type._last_detected_framework = "node"
+            return "FRONTEND"
 
-    # Python (检查 pyproject.toml, setup.py, requirements.txt, manage.py)
+    # Python
     python_markers = {"pyproject.toml", "setup.py", "requirements.txt", "Pipfile", "manage.py", "django_settings.py"}
     for marker in python_markers:
         if (root / marker).is_file():
-            if not detected_framework:
-                detected_framework = "python"
-            break
+            sniff_project_type._last_detected_framework = "python"
+            return "BACKEND_MVC"
 
-    backend_marker_files = {"pom.xml", "build.gradle", "build.gradle.kts", "Cargo.toml", "go.mod", "settings.gradle", "ivy.xml", "Makefile"}
+    # ── 第二优先级: 代码文件后缀比例 ──
+    # 构建文件缺失时，通过扫描源文件后缀推断项目类型
 
-    for marker in backend_marker_files:
-        if (root / marker).is_file():
-            backend_signals += 3
-
-    for marker in frontend_marker_files:
-        if (root / marker).is_file():
-            frontend_signals += 3
-
+    cpp_exts = {".c", ".cpp", ".cc", ".cxx", ".h", ".hpp", ".hxx", ".hh"}
     backend_exts = {".java", ".kt", ".go", ".rs", ".py", ".rb", ".php", ".cs", ".swift"}
     frontend_exts = {".vue", ".jsx", ".tsx", ".svelte"}
 
+    cpp_file_count = 0
     backend_file_count = 0
     frontend_file_count = 0
 
@@ -294,42 +339,38 @@ def sniff_project_type(root_dir: str) -> str:
             dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS and not d.startswith(".")]
             for fname in filenames:
                 ext = os.path.splitext(fname)[1].lower()
-                if ext in backend_exts:
+                if ext in cpp_exts:
+                    cpp_file_count += 1
+                elif ext in backend_exts:
                     backend_file_count += 1
                 elif ext in frontend_exts:
                     frontend_file_count += 1
-                if backend_file_count + frontend_file_count > 500:
+                if cpp_file_count + backend_file_count + frontend_file_count > 500:
                     break
-            if backend_file_count + frontend_file_count > 500:
+            if cpp_file_count + backend_file_count + frontend_file_count > 500:
                 break
     except Exception:
         pass
 
-    backend_signals += backend_file_count
-    frontend_signals += frontend_file_count
+    total_code_files = cpp_file_count + backend_file_count + frontend_file_count
 
-    # 如果没有通过标记文件检测到框架，通过文件扩展名推断
-    if not detected_framework:
-        if backend_file_count > frontend_file_count:
-            # 根据主要后端扩展名推断
-            if backend_file_count > 0:
-                detected_framework = "python"  # 默认后端
-        elif frontend_file_count > 0:
-            detected_framework = "node"
+    # C/C++ 文件占主导 → C_CPP_NATIVE
+    if total_code_files > 0 and cpp_file_count > backend_file_count and cpp_file_count > frontend_file_count:
+        sniff_project_type._last_detected_framework = "cpp"
+        return "C_CPP_NATIVE"
 
-    # 存储具体框架类型供 ignore_engine 使用
-    sniff_project_type._last_detected_framework = detected_framework or "auto"
-
-    if frontend_signals > backend_signals:
+    # 前端文件占主导 → FRONTEND
+    if frontend_file_count > cpp_file_count and frontend_file_count > backend_file_count:
+        sniff_project_type._last_detected_framework = "node"
         return "FRONTEND"
-    if backend_signals > frontend_signals:
+
+    # 后端文件占主导 → BACKEND_MVC
+    if backend_file_count > 0:
+        sniff_project_type._last_detected_framework = "python"
         return "BACKEND_MVC"
 
-    if frontend_file_count > 0 and backend_file_count == 0:
-        return "FRONTEND"
-    if backend_file_count > 0 and frontend_file_count == 0:
-        return "BACKEND_MVC"
-
+    # ── 第三优先级: 兜底默认 ──
+    sniff_project_type._last_detected_framework = "auto"
     return "BACKEND_MVC"
 
 
@@ -479,15 +520,15 @@ class ProjectGrapher:
         self._import_map = defaultdict(list)
         self._dropped_calls = 0
 
-        # ── 增量指纹缓存引擎 ──
+        # ── SQLite 本地数据库引擎 ──
         self._cache_dir = os.path.join(self.root_dir, ".eruitah_cache")
-        self._cache_path = os.path.join(self._cache_dir, "fingerprints.json")
-        self.cache = self._load_cache()
+        os.makedirs(self._cache_dir, exist_ok=True)
+        self._db_path = os.path.join(self._cache_dir, "codegraph.db")
+        self._conn = self._init_db()
         self._cache_hits = 0
         self._cache_misses = 0
 
         # ── 语义向量缓存 ──
-        self._embeddings_path = os.path.join(self._cache_dir, "embeddings.json")
         self._node_embeddings = {}  # { node_id: [float, ...] }
         self._vector_engine = None
 
@@ -497,31 +538,531 @@ class ProjectGrapher:
         self._dir_keywords, self._name_rules = _compile_preset_rules(preset)
         logger.info(f"项目类型嗅探: {preset} — {LAYER_PRESETS[preset]['description']}")
 
-    def _load_cache(self) -> dict:
-        """读取指纹缓存文件，损坏时自动重置"""
-        if not os.path.isfile(self._cache_path):
-            return {}
-        try:
-            with open(self._cache_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            if isinstance(data, dict):
-                logger.info(f"指纹缓存加载成功: {len(data)} 条记录")
-                return data
-            logger.warning("指纹缓存格式异常，自动重置")
-            return {}
-        except (json.JSONDecodeError, IOError, OSError) as e:
-            logger.warning(f"指纹缓存损坏，自动重置: {e}")
-            return {}
+    def _init_db(self):
+        """初始化 SQLite 数据库，创建表结构"""
+        import sqlite3
+        conn = sqlite3.connect(self._db_path)
+        conn.row_factory = sqlite3.Row  # 支持按列名访问
+        conn.execute("PRAGMA journal_mode=WAL")  # WAL 模式，提升并发性能
+        conn.execute("PRAGMA synchronous=NORMAL")
+        with conn:
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS files (
+                    path TEXT PRIMARY KEY,
+                    hash TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    symbols TEXT,
+                    ai_summary TEXT
+                )
+            """)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS nodes (
+                    id TEXT PRIMARY KEY,
+                    file_path TEXT NOT NULL,
+                    name TEXT,
+                    layer TEXT,
+                    symbols TEXT,
+                    ai_summary TEXT,
+                    embedding TEXT
+                )
+            """)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS edges (
+                    source TEXT NOT NULL,
+                    target TEXT NOT NULL,
+                    type TEXT NOT NULL,
+                    detail TEXT DEFAULT '',
+                    PRIMARY KEY (source, target, type)
+                )
+            """)
+            # 平滑升级: 为旧表增加 detail 字段
+            try:
+                conn.execute("ALTER TABLE edges ADD COLUMN detail TEXT DEFAULT ''")
+            except Exception:
+                pass  # 字段已存在
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_nodes_file_path ON nodes(file_path)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_nodes_embedding ON nodes(embedding)")
 
-    def _save_cache(self):
-        """持久化指纹缓存到磁盘"""
+            # ── FTS5 全文索引 ──
+            conn.execute("""
+                CREATE VIRTUAL TABLE IF NOT EXISTS nodes_fts USING fts5(
+                    node_id UNINDEXED,
+                    name,
+                    ai_summary,
+                    symbols
+                )
+            """)
+            # 插入同步触发器
+            conn.execute("""
+                CREATE TRIGGER IF NOT EXISTS nodes_ai AFTER INSERT ON nodes BEGIN
+                    INSERT INTO nodes_fts(rowid, node_id, name, ai_summary, symbols)
+                    VALUES (new.rowid, new.id, new.name, new.ai_summary, new.symbols);
+                END
+            """)
+            # 删除同步触发器
+            conn.execute("""
+                CREATE TRIGGER IF NOT EXISTS nodes_ad AFTER DELETE ON nodes BEGIN
+                    DELETE FROM nodes_fts WHERE rowid = old.rowid;
+                END
+            """)
+            # 更新同步触发器
+            conn.execute("""
+                CREATE TRIGGER IF NOT EXISTS nodes_au AFTER UPDATE ON nodes BEGIN
+                    DELETE FROM nodes_fts WHERE rowid = old.rowid;
+                    INSERT INTO nodes_fts(rowid, node_id, name, ai_summary, symbols)
+                    VALUES (new.rowid, new.id, new.name, new.ai_summary, new.symbols);
+                END
+            """)
+            # 将现有数据灌入 FTS5 索引（仅首次创建时需要）
+            try:
+                existing_count = conn.execute("SELECT count(*) FROM nodes_fts").fetchone()[0]
+                nodes_count = conn.execute("SELECT count(*) FROM nodes").fetchone()[0]
+                if existing_count == 0 and nodes_count > 0:
+                    conn.execute("""
+                        INSERT INTO nodes_fts(rowid, node_id, name, ai_summary, symbols)
+                        SELECT rowid, id, name, ai_summary, symbols FROM nodes
+                    """)
+                    logger.info(f"FTS5 索引初始化: 已灌入 {nodes_count} 条记录")
+            except Exception as e:
+                logger.debug(f"FTS5 现有数据灌入跳过: {e}")
+        logger.info(f"SQLite 数据库初始化完成: {self._db_path}")
+        return conn
+
+    def _db_get_file_hash(self, file_path: str) -> str | None:
+        """查询文件缓存哈希，命中返回哈希值，否则返回 None"""
+        row = self._conn.execute("SELECT hash FROM files WHERE path = ?", (file_path,)).fetchone()
+        return row["hash"] if row else None
+
+    def _db_get_cached_file_data(self, file_path: str) -> dict | None:
+        """获取文件的完整缓存数据 (symbols, calls, imports)"""
+        row = self._conn.execute(
+            "SELECT hash, symbols, ai_summary FROM files WHERE path = ?",
+            (file_path,)
+        ).fetchone()
+        if not row:
+            return None
+        result = {"hash": row["hash"]}
+        if row["symbols"]:
+            try:
+                result["symbols"] = json.loads(row["symbols"])
+            except (json.JSONDecodeError, TypeError):
+                result["symbols"] = []
+        else:
+            result["symbols"] = []
+        result["ai_summary"] = row["ai_summary"] or ""
+        return result
+
+    # 代码文件后缀集合，用于缓存防毒化判断
+    _CODE_EXTENSIONS = set(SUPPORTED_EXTENSIONS.keys())
+
+    def _db_upsert_file(self, file_path: str, file_hash: str, symbols: list = None,
+                        calls: list = None, imports: list = None, ai_summary: str = ""):
+        """写入/更新文件记录（含缓存防毒化：代码文件 0 符号不缓存）"""
+        from datetime import datetime
+
+        # ── 缓存防毒化: 代码文件提取到 0 个符号时，不写入缓存 ──
+        # 这样下次扫描时缓存未命中，会强制重新 AST 解析
+        ext = os.path.splitext(file_path)[1].lower()
+        if ext in self._CODE_EXTENSIONS and not symbols:
+            logger.debug(f"缓存防毒化: 跳过写入空符号缓存 {file_path}")
+            return
+
+        symbols_json = json.dumps(symbols or [], ensure_ascii=False)
+        # 同时存储 calls 和 imports 在 symbols 字段中（兼容旧逻辑）
+        combined = {
+            "symbols": symbols or [],
+            "calls": calls or [],
+            "imports": imports or [],
+        }
+        combined_json = json.dumps(combined, ensure_ascii=False)
+        with self._conn:
+            self._conn.execute(
+                """INSERT OR REPLACE INTO files (path, hash, updated_at, symbols, ai_summary)
+                   VALUES (?, ?, ?, ?, ?)""",
+                (file_path, file_hash, datetime.utcnow().isoformat(), combined_json, ai_summary)
+            )
+
+    def _db_upsert_nodes(self, nodes: list):
+        """批量写入/更新节点记录"""
+        if not nodes:
+            return
+        with self._conn:
+            for n in nodes:
+                nid = n.get("id", "")
+                fp = n.get("file_path", "")
+                name = n.get("name", "")
+                layer = n.get("layer", "")
+                symbols_json = json.dumps(n.get("data", {}).get("symbols", []), ensure_ascii=False)
+                ai_summary = ""
+                embedding_json = ""
+                # 检查是否有 embedding
+                if nid in self._node_embeddings:
+                    embedding_json = json.dumps(self._node_embeddings[nid])
+                self._conn.execute(
+                    """INSERT OR REPLACE INTO nodes (id, file_path, name, layer, symbols, ai_summary, embedding)
+                       VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                    (nid, fp, name, layer, symbols_json, ai_summary, embedding_json)
+                )
+
+    def _db_upsert_edges(self, edges: list):
+        """批量写入/更新边记录"""
+        if not edges:
+            return
+        with self._conn:
+            # 先清空旧边
+            self._conn.execute("DELETE FROM edges")
+            for e in edges:
+                self._conn.execute(
+                    """INSERT OR REPLACE INTO edges (source, target, type, detail)
+                       VALUES (?, ?, ?, ?)""",
+                    (e.get("source", ""), e.get("target", ""), e.get("type", ""), e.get("detail", ""))
+                )
+
+    def _db_update_embeddings(self):
+        """将内存中的 embeddings 更新到 SQLite"""
+        if not self._node_embeddings:
+            return
+        with self._conn:
+            for nid, emb in self._node_embeddings.items():
+                emb_json = json.dumps(emb) if isinstance(emb, list) else ""
+                self._conn.execute(
+                    "UPDATE nodes SET embedding = ? WHERE id = ?",
+                    (emb_json, nid)
+                )
+
+    def _db_close(self):
+        """关闭数据库连接"""
+        if self._conn:
+            self._conn.close()
+            self._conn = None
+
+    def _ensure_db_conn(self):
+        """确保数据库连接存活（断线重连）"""
+        if self._conn is None:
+            self._conn = self._init_db()
+
+    def update_single_file(self, filepath: str):
+        """
+        实时局部热更新：仅针对单个文件执行增量更新
+        适用于 watchdog 监听到文件变更后的即时响应
+        """
+        self._ensure_db_conn()
+
+        ext = os.path.splitext(filepath)[1]
+        language = SUPPORTED_EXTENSIONS.get(ext, "")
+        if not language:
+            return
+
+        # ── Step 1: 计算最新 Hash ──
+        current_hash = compute_file_hash(filepath)
+        if not current_hash:
+            logger.debug(f"文件读取失败，跳过: {filepath}")
+            return
+
+        # ── Step 2: 查 SQLite，Hash 没变则直接 return ──
+        cached_hash = self._db_get_file_hash(filepath)
+        if cached_hash == current_hash:
+            return
+
+        # ── Step 3: 使用 Tree-Sitter UniversalExtractor 提取多语言符号 ──
+        logger.info(f"[⚡ 实时脉冲] 检测到变更: {filepath}")
+
         try:
-            os.makedirs(self._cache_dir, exist_ok=True)
-            with open(self._cache_path, "w", encoding="utf-8") as f:
-                json.dump(self.cache, f, indent=2, ensure_ascii=False)
-            logger.info(f"指纹缓存已持久化: {len(self.cache)} 条记录 → {self._cache_path}")
-        except (IOError, OSError) as e:
-            logger.warning(f"指纹缓存写入失败: {e}")
+            with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
+                code_content = f.read()
+        except Exception as e:
+            logger.warning(f"文件读取失败 {filepath}: {e}")
+            return
+
+        try:
+            extractor = UniversalExtractor()
+            extract_result = extractor.extract_symbols(filepath, code_content)
+            raw_symbols = extract_result.get("definitions", [])
+            raw_calls = extract_result.get("calls", [])
+            raw_routes = extract_result.get("routes", [])
+            imports_list = _extract_imports(filepath, code_content)
+
+            # 转换为 definitions 格式供图谱构建使用
+            definitions = []
+            for sym in raw_symbols:
+                defn = {
+                    "name": sym["name"],
+                    "kind": sym["kind"],
+                    "line": sym["line"],
+                    "end_line": sym["line"],
+                    "parent_name": sym.get("parent", ""),
+                }
+                definitions.append(defn)
+
+            # 转换为 calls 格式
+            calls = []
+            for call in raw_calls:
+                calls.append({
+                    "caller": call.get("caller", ""),
+                    "callee": call["name"],
+                    "line": call["line"],
+                })
+
+            result = {
+                "definitions": definitions,
+                "calls": calls,
+                "imports": imports_list,
+                "_raw_symbols": raw_symbols,
+                "_raw_calls": raw_calls,
+                "_raw_routes": raw_routes,
+            }
+        except Exception as e:
+            logger.debug(f"Tree-Sitter 解析失败 {filepath}: {e}")
+            result = {"definitions": [], "calls": [], "imports": [], "_raw_symbols": [], "_raw_calls": [], "_raw_routes": []}
+
+        # ── Step 4: 更新内存中的 _file_analyses ──
+        self._file_analyses[filepath] = result
+
+        # ── Step 5: 更新符号表（仅该文件的符号）──
+        rel = self._rel(filepath)
+        module_path = self._file_to_module(rel)
+        self._file_index[module_path] = filepath
+
+        # 先清理该文件的旧符号
+        for sym_name in list(self._symbol_table.keys()):
+            self._symbol_table[sym_name] = [
+                s for s in self._symbol_table[sym_name] if s["file"] != filepath
+            ]
+            if not self._symbol_table[sym_name]:
+                del self._symbol_table[sym_name]
+
+        # 重新注册该文件的符号
+        for defn in result.get("definitions", []):
+            name = defn.get("name", "")
+            kind = defn.get("kind", "")
+            parent_name = defn.get("parent_name", "")
+            if name and kind in ("function", "method", "class"):
+                self._symbol_table[name].append({
+                    "file": filepath,
+                    "kind": kind,
+                    "line": defn.get("line", 0),
+                    "parent_name": parent_name,
+                })
+
+        # ── Step 6: 重新解析该文件的导入 ──
+        self._import_map[filepath] = []
+        for imp in result.get("imports", []):
+            source = imp.get("source", "")
+            if not source:
+                continue
+            resolved = self._file_index.get(source) or self._file_index.get(source + ".__init__")
+            self._import_map[filepath].append({
+                "source": source,
+                "specifiers": imp.get("specifiers", []),
+                "resolved_file": resolved,
+            })
+
+        # ── Step 7: 重建该文件的图谱节点 ──
+        # 先删除该文件的旧节点
+        old_node_ids = set()
+        for n in self.nodes:
+            if n.get("file_path") == filepath:
+                old_node_ids.add(n["id"])
+        self.nodes = [n for n in self.nodes if n.get("file_path") != filepath]
+        self.edges = [e for e in self.edges if e["source"] not in old_node_ids and e["target"] not in old_node_ids]
+        self._node_ids -= old_node_ids
+
+        # 重新添加该文件的节点
+        raw_symbols = result.get("_raw_symbols", [])
+        raw_calls = result.get("_raw_calls", [])
+        self._register_file_node(filepath, symbols=raw_symbols, calls=raw_calls)
+        for defn in result.get("definitions", []):
+            name = defn.get("name", "")
+            kind = defn.get("kind", "")
+            parent_name = defn.get("parent_name", "")
+            if not name:
+                continue
+            if kind in ("class", "struct", "enum", "record"):
+                node_id = self._make_def_id(filepath, name)
+                self._add_node(node_id, "Class", name, filepath)
+            elif kind == "interface":
+                node_id = self._make_def_id(filepath, name)
+                self._add_node(node_id, "Interface", name, filepath)
+            elif kind in ("method", "constructor", "destructor") and parent_name:
+                node_id = self._make_def_id(filepath, name, parent_name, kind)
+                self._add_node(node_id, "Method", name, filepath)
+            elif kind == "function":
+                node_id = self._make_def_id(filepath, name)
+                self._add_node(node_id, "Function", name, filepath)
+
+        # 重建该文件的 CONTAINS 和 CALLS 边
+        self._build_file_contains_edges(filepath)
+        self._build_file_calls_edges(filepath)
+
+        # ── Step 8: 重新执行社区发现 ──
+        try:
+            self.nodes = detect_domains(self.nodes, self.edges)
+            for n in self.nodes:
+                if 'cluster_id' in n:
+                    if 'data' not in n:
+                        n['data'] = {}
+                    n['data']['cluster_id'] = n['cluster_id']
+                    if 'cluster_name' in n:
+                        n['data']['cluster_name'] = n['cluster_name']
+        except Exception as e:
+            logger.debug(f"社区发现失败: {e}")
+
+        # ── Step 9: 生成该文件新节点的 Embedding ──
+        self._init_vector_engine()
+        if self._vector_engine is not None:
+            texts = []
+            node_ids = []
+            for node in self.nodes:
+                if node.get("file_path") != filepath:
+                    continue
+                nid = node.get("id", "")
+                if nid in self._node_embeddings:
+                    continue
+                label = node.get("name", "")
+                ntype = node.get("type", "")
+                layer = node.get("layer", "")
+                parts = [f"{ntype} {label}"]
+                if layer:
+                    parts.append(f"layer: {layer}")
+                parts.append(f"file: {self._rel(filepath)}")
+                text = " ".join(parts)
+                if len(text.strip()) > 3:
+                    texts.append(text)
+                    node_ids.append(nid)
+            if texts:
+                try:
+                    embeddings = self._vector_engine._encode(texts)
+                    for i, nid in enumerate(node_ids):
+                        if i < len(embeddings):
+                            self._node_embeddings[nid] = embeddings[i].tolist()
+                    self._db_update_embeddings()
+                except Exception as e:
+                    logger.debug(f"Embedding 生成失败: {e}")
+
+        # ── Step 10: 写入 SQLite ──
+        self._db_upsert_file(
+            file_path=filepath,
+            file_hash=current_hash,
+            symbols=result.get("definitions", []),
+            calls=result.get("calls", []),
+            imports=result.get("imports", []),
+        )
+        self._db_upsert_nodes(self.nodes)
+        self._db_upsert_edges(self.edges)
+
+        # ── Step 11: 写入 project_structure.json ──
+        output_path = os.path.join(self.root_dir, "project_structure.json")
+        try:
+            final_graph = self.to_dict()
+            with open(output_path, "w", encoding="utf-8") as f:
+                json.dump(final_graph, f, indent=2, ensure_ascii=False)
+        except Exception as e:
+            logger.warning(f"写入 JSON 失败: {e}")
+
+        logger.info(f"[⚡ 实时脉冲] 增量更新完毕: {filepath}")
+
+    def _register_file_node(self, filepath: str, symbols: list = None, calls: list = None):
+        """注册单个文件节点，symbols 为高清符号表，calls 为调用表（写入 nodes 表）"""
+        file_id = self._make_file_id(filepath)
+        file_imports = self._file_analyses.get(filepath, {}).get("imports", [])
+        imports_list = [imp.get("source", "") for imp in file_imports if imp.get("source")]
+        layer = detect_layer(file_id, "File", os.path.basename(filepath), filepath,
+                             dir_keywords=self._dir_keywords,
+                             name_rules=self._name_rules,
+                             imports_list=imports_list)
+        extra = {}
+        if symbols:
+            extra["data"] = {"symbols": symbols}
+        if calls:
+            if "data" not in extra:
+                extra["data"] = {}
+            extra["data"]["calls"] = calls
+        self._add_node(file_id, "File", os.path.basename(filepath), filepath, layer=layer, **extra)
+
+    def _build_file_contains_edges(self, filepath: str):
+        """构建单个文件的 CONTAINS 边"""
+        file_id = self._make_file_id(filepath)
+        analysis = self._file_analyses.get(filepath, {})
+        for defn in analysis.get("definitions", []):
+            name = defn.get("name", "")
+            kind = defn.get("kind", "")
+            parent_name = defn.get("parent_name", "")
+            if not name:
+                continue
+            if kind == "class":
+                node_id = self._make_def_id(filepath, name)
+            elif kind == "method" and parent_name:
+                node_id = self._make_def_id(filepath, name, parent_name, kind)
+            elif kind == "function":
+                node_id = self._make_def_id(filepath, name)
+            else:
+                continue
+            if node_id in self._node_ids:
+                self.edges.append({
+                    "source": file_id,
+                    "target": node_id,
+                    "type": "CONTAINS",
+                })
+
+    def _build_file_calls_edges(self, filepath: str):
+        """构建单个文件的 CALLS / IMPORTS 边"""
+        analysis = self._file_analyses.get(filepath, {})
+        file_id = self._make_file_id(filepath)
+
+        # IMPORTS 边
+        for imp in analysis.get("imports", []):
+            source = imp.get("source", "")
+            if not source:
+                continue
+            resolved = self._file_index.get(source) or self._file_index.get(source + ".__init__")
+            if resolved:
+                target_file_id = self._make_file_id(resolved)
+                if target_file_id in self._node_ids and target_file_id != file_id:
+                    self.edges.append({
+                        "source": file_id,
+                        "target": target_file_id,
+                        "type": "IMPORTS",
+                    })
+
+        # CALLS 边
+        for defn in analysis.get("definitions", []):
+            name = defn.get("name", "")
+            kind = defn.get("kind", "")
+            parent_name = defn.get("parent_name", "")
+            if kind == "class":
+                caller_id = self._make_def_id(filepath, name)
+            elif kind == "method" and parent_name:
+                caller_id = self._make_def_id(filepath, name, parent_name, kind)
+            elif kind == "function":
+                caller_id = self._make_def_id(filepath, name)
+            else:
+                continue
+
+            for call in defn.get("calls", []):
+                call_name = call.get("name", "") if isinstance(call, dict) else str(call)
+                if not call_name:
+                    continue
+                candidates = self._symbol_table.get(call_name, [])
+                resolved = False
+                for cand in candidates:
+                    if cand["file"] == filepath and cand.get("parent_name") == parent_name:
+                        continue
+                    if cand["kind"] == "class":
+                        target_id = self._make_def_id(cand["file"], call_name)
+                    elif cand["kind"] == "method" and cand.get("parent_name"):
+                        target_id = self._make_def_id(cand["file"], call_name, cand["parent_name"], "method")
+                    else:
+                        target_id = self._make_def_id(cand["file"], call_name)
+                    if target_id in self._node_ids:
+                        self.edges.append({
+                            "source": caller_id,
+                            "target": target_id,
+                            "type": "CALLS",
+                        })
+                        resolved = True
+                        break
+                if not resolved:
+                    self._dropped_calls += 1
 
     def _init_vector_engine(self):
         """懒加载向量引擎（复用 semantic_search_tool._VectorEngine）"""
@@ -538,21 +1079,23 @@ class ProjectGrapher:
             self._vector_engine = None
 
     def generate_embeddings(self):
-        """为所有节点生成语义向量并持久化"""
+        """为所有节点生成语义向量并持久化到 SQLite"""
         self._init_vector_engine()
         if self._vector_engine is None:
             return
 
-        # 加载已有 embeddings 缓存
-        if os.path.isfile(self._embeddings_path):
+        # 从 SQLite 加载已有 embeddings
+        rows = self._conn.execute(
+            "SELECT id, embedding FROM nodes WHERE embedding IS NOT NULL AND embedding != ''"
+        ).fetchall()
+        for row in rows:
             try:
-                with open(self._embeddings_path, "r", encoding="utf-8") as f:
-                    self._node_embeddings = json.load(f)
-                if not isinstance(self._node_embeddings, dict):
-                    self._node_embeddings = {}
-                logger.info(f"Embeddings 缓存加载: {len(self._node_embeddings)} 条记录")
-            except (json.JSONDecodeError, IOError):
-                self._node_embeddings = {}
+                emb = json.loads(row["embedding"])
+                if isinstance(emb, list) and len(emb) > 0:
+                    self._node_embeddings[row["id"]] = emb
+            except (json.JSONDecodeError, TypeError):
+                pass
+        logger.info(f"SQLite Embeddings 缓存加载: {len(self._node_embeddings)} 条记录")
 
         # 构建待编码文本：为每个节点拼接摘要文本
         texts = []
@@ -572,9 +1115,9 @@ class ProjectGrapher:
                 parts.append(f"layer: {layer}")
             if fp:
                 parts.append(f"file: {fp}")
-            # 从指纹缓存中取 ai_summary（如果有的话）
-            cached_file = self.cache.get(fp, {})
-            ai_summary = cached_file.get("ai_summary", "")
+            # 从 SQLite 中取 ai_summary
+            cached_data = self._db_get_cached_file_data(fp)
+            ai_summary = cached_data.get("ai_summary", "") if cached_data else ""
             if ai_summary:
                 parts.append(ai_summary[:500])
             # 从符号表补充
@@ -599,20 +1142,10 @@ class ProjectGrapher:
                 if i < len(embeddings):
                     self._node_embeddings[nid] = embeddings[i].tolist()
             logger.info(f"✅ Embedding 生成完成: {len(node_ids)} 个新节点")
+            # 实时写入 SQLite
+            self._db_update_embeddings()
         except Exception as e:
             logger.warning(f"Embedding 生成失败: {e}")
-
-    def _save_embeddings(self):
-        """持久化 Embeddings 到磁盘"""
-        if not self._node_embeddings:
-            return
-        try:
-            os.makedirs(self._cache_dir, exist_ok=True)
-            with open(self._embeddings_path, "w", encoding="utf-8") as f:
-                json.dump(self._node_embeddings, f, ensure_ascii=False)
-            logger.info(f"Embeddings 已持久化: {len(self._node_embeddings)} 条 → {self._embeddings_path}")
-        except (IOError, OSError) as e:
-            logger.warning(f"Embeddings 写入失败: {e}")
 
     def _rel(self, fp: str) -> str:
         return os.path.relpath(fp, self.root_dir)
@@ -627,7 +1160,7 @@ class ProjectGrapher:
         return f"{rel}::{name}"
 
     # 允许进入图谱的节点类型（File 是 CONTAINS/IMPORTS 边的锚点，必须保留）
-    VALID_NODE_TYPES = {"File", "Class", "Interface", "Function", "Method"}
+    VALID_NODE_TYPES = {"File", "Class", "Interface", "Function", "Method", "Route"}
 
     def _add_node(self, node_id: str, node_type: str, name: str, file_path: str, **extra):
         # 严格过滤：只允许代码实体节点，禁止目录/文件夹节点
@@ -677,11 +1210,7 @@ class ProjectGrapher:
     # ================================================================
 
     def extract_all(self, file_paths: list[str]):
-        try:
-            from ast_tool import parse_file_with_treesitter, _parse_file_fallback
-        except ImportError:
-            logger.error("无法导入 ast_tool，请确保 ast_tool.py 在同一目录下")
-            return
+        extractor = UniversalExtractor()
 
         for fp in file_paths:
             ext = os.path.splitext(fp)[1]
@@ -691,42 +1220,104 @@ class ProjectGrapher:
 
             # ── 增量指纹缓存: 计算当前文件哈希 ──
             current_hash = compute_file_hash(fp)
-            cached = self.cache.get(fp)
+            cached_hash = self._db_get_file_hash(fp)
 
-            if cached and cached.get("hash") == current_hash:
-                # 短路机制: 哈希匹配，直接使用缓存数据
-                logger.info(f"[INFO] 命中缓存: 跳过解析 {fp}")
-                self._file_analyses[fp] = {
-                    "definitions": cached.get("symbols", []),
-                    "calls": cached.get("calls", []),
-                    "imports": cached.get("imports", []),
-                }
-                self._cache_hits += 1
-                continue
+            if cached_hash and cached_hash == current_hash:
+                # 短路机制: 哈希匹配，直接使用 DB 缓存数据
+                cached_data = self._db_get_cached_file_data(fp)
+                if cached_data:
+                    combined = cached_data.get("symbols", {})
 
-            # ── 缓存未命中: 正常走 AST 提取流程 ──
+                    # ── 缓存防毒化: 代码文件缓存中 0 符号视为无效 ──
+                    # 避免因环境异常导致的空结果被反复命中
+                    cached_definitions = []
+                    if isinstance(combined, dict):
+                        cached_definitions = combined.get("symbols", [])
+                    else:
+                        cached_definitions = cached_data.get("symbols", [])
+
+                    if ext.lower() in self._CODE_EXTENSIONS and not cached_definitions:
+                        logger.debug(f"缓存防毒化: 命中空符号缓存，强制重新解析 {fp}")
+                        # 不 continue，走到下面的 AST 解析逻辑
+                    else:
+                        logger.info(f"[INFO] 命中 DB 缓存: 跳过解析 {fp}")
+                        if isinstance(combined, dict):
+                            self._file_analyses[fp] = {
+                                "definitions": combined.get("symbols", []),
+                                "calls": combined.get("calls", []),
+                                "imports": combined.get("imports", []),
+                                "_raw_symbols": combined.get("symbols", []),
+                            }
+                        else:
+                            self._file_analyses[fp] = {
+                                "definitions": cached_data.get("symbols", []),
+                                "calls": [],
+                                "imports": [],
+                                "_raw_symbols": cached_data.get("symbols", []),
+                            }
+                        self._cache_hits += 1
+                        continue
+
+            # ── 缓存未命中: 使用 Tree-Sitter UniversalExtractor 提取 ──
             self._cache_misses += 1
 
             try:
-                result = parse_file_with_treesitter(fp, language)
-                if not result["definitions"] and not result["imports"]:
-                    result = _parse_file_fallback(fp, language)
+                with open(fp, 'r', encoding='utf-8', errors='ignore') as f:
+                    code_content = f.read()
             except Exception as e:
-                logger.debug(f"解析失败 {fp}: {e}")
-                try:
-                    result = _parse_file_fallback(fp, language)
-                except Exception:
-                    result = {"definitions": [], "calls": [], "imports": []}
+                logger.warning(f"文件读取失败 {fp}: {e}")
+                continue
+
+            try:
+                extract_result = extractor.extract_symbols(fp, code_content)
+                raw_symbols = extract_result.get("definitions", [])
+                raw_calls = extract_result.get("calls", [])
+                raw_routes = extract_result.get("routes", [])
+                imports_list = _extract_imports(fp, code_content)
+
+                # 转换为 definitions 格式供图谱构建使用
+                definitions = []
+                for sym in raw_symbols:
+                    defn = {
+                        "name": sym["name"],
+                        "kind": sym["kind"],
+                        "line": sym["line"],
+                        "end_line": sym["line"],
+                        "parent_name": sym.get("parent", ""),
+                    }
+                    definitions.append(defn)
+
+                # 转换为 calls 格式
+                calls = []
+                for call in raw_calls:
+                    calls.append({
+                        "caller": call.get("caller", ""),
+                        "callee": call["name"],
+                        "line": call["line"],
+                    })
+
+                result = {
+                    "definitions": definitions,
+                    "calls": calls,
+                    "imports": imports_list,
+                    "_raw_symbols": raw_symbols,
+                    "_raw_calls": raw_calls,
+                    "_raw_routes": raw_routes,
+                }
+            except Exception as e:
+                logger.debug(f"Tree-Sitter 解析失败 {fp}: {e}")
+                result = {"definitions": [], "calls": [], "imports": [], "_raw_symbols": [], "_raw_calls": [], "_raw_routes": []}
 
             self._file_analyses[fp] = result
 
-            # ── 将最新解析结果写入内存缓存 ──
-            self.cache[fp] = {
-                "hash": current_hash,
-                "symbols": result.get("definitions", []),
-                "calls": result.get("calls", []),
-                "imports": result.get("imports", []),
-            }
+            # ── 将最新解析结果写入 SQLite ──
+            self._db_upsert_file(
+                file_path=fp,
+                file_hash=current_hash,
+                symbols=result.get("definitions", []),
+                calls=result.get("calls", []),
+                imports=result.get("imports", []),
+            )
 
     # ================================================================
     # Phase 3: Build symbol table & file index
@@ -999,11 +1590,123 @@ class ProjectGrapher:
 
         self._build_import_edges()
         self._build_cross_file_call_edges()
+        self.resolve_symbol_edges()
+        self.build_route_nodes_and_edges()
+
+    def build_route_nodes_and_edges(self):
+        """
+        构建路由虚拟节点和 routes_to 边。
+        遍历所有文件的 routes 列表，为每个 API 路由创建虚拟节点，
+        并将路由指向其 handler 函数。
+        """
+        for fp, analysis in self._file_analyses.items():
+            routes = analysis.get("_raw_routes", [])
+            if not routes:
+                continue
+
+            file_id = self._make_file_id(fp)
+
+            for route in routes:
+                method = route.get("method", "ANY")
+                path = route.get("path", "")
+                handler = route.get("handler", "")
+
+                if not path:
+                    continue
+
+                # 生成路由虚拟节点 ID
+                route_id = f"[Route] {method} {path}"
+                route_name = f"{method} {path}"
+
+                # 添加路由虚拟节点
+                self._add_node(
+                    route_id,
+                    "Route",
+                    route_name,
+                    fp,
+                    layer="api_route",
+                )
+
+                # 查找 handler 对应的节点 ID
+                handler_id = None
+                # 优先查找 File::handler 格式
+                for node in self.nodes:
+                    if node.get("name") == handler and node.get("file_path") == fp:
+                        handler_id = node["id"]
+                        break
+
+                # 如果找不到精确的 handler 节点，指向文件
+                if not handler_id:
+                    handler_id = file_id
+
+                # 添加 routes_to 边
+                self._add_edge(route_id, handler_id, "routes_to")
+
+    def resolve_symbol_edges(self):
+        """
+        全局符号解析器：遍历所有文件的 calls 列表，
+        将被调用的符号名与全局 nodes 表中的 definitions 匹配，
+        生成 symbol_call 类型的精细边。
+
+        边格式:
+          source: 调用方文件 ID
+          target: 定义方文件 ID
+          type: "symbol_call"
+          detail: "bind_port, listen" (具体调用的符号名，逗号分隔)
+        """
+        # 1. 构建全局符号索引: symbol_name → [file_id, ...]
+        symbol_index = defaultdict(list)
+        for node in self.nodes:
+            if node.get("type") == "File":
+                syms = node.get("data", {}).get("symbols", [])
+                for sym in syms:
+                    name = sym.get("name", "")
+                    if name:
+                        symbol_index[name].append(node["id"])
+
+        # 2. 遍历所有文件的 calls，按 (source_file, target_file) 聚合
+        symbol_edges = defaultdict(set)  # (source, target) → {callee_name, ...}
+        for node in self.nodes:
+            if node.get("type") != "File":
+                continue
+            source_id = node["id"]
+            calls = node.get("data", {}).get("calls", [])
+            for call in calls:
+                callee_name = call.get("name", "")
+                if not callee_name:
+                    continue
+                # 简化 callee_name: 取最后一段 (obj.method → method, Server::start → start)
+                simple_name = callee_name.split(".")[-1].split("::")[-1]
+                # 在全局符号索引中查找定义方
+                for target_id in symbol_index.get(simple_name, []):
+                    if target_id != source_id:  # 排除文件内部调用
+                        symbol_edges[(source_id, target_id)].add(simple_name)
+
+        # 3. 生成 symbol_call 边
+        for (source, target), callee_names in symbol_edges.items():
+            detail = ", ".join(sorted(callee_names))
+            self._add_edge(source, target, "symbol_call")
+            # 将 detail 写入对应的边
+            for edge in self.edges:
+                if edge["source"] == source and edge["target"] == target and edge["type"] == "symbol_call":
+                    edge["detail"] = detail
+                    break
 
     def _register_file_nodes_and_contains(self, fp: str, analysis: dict):
         file_id = self._make_file_id(fp)
         basename = os.path.basename(fp)
-        self._add_node(file_id, "File", basename, fp)
+
+        # 将高清符号表和调用表附加到 File 节点，写入 nodes 表
+        raw_symbols = analysis.get("_raw_symbols", [])
+        raw_calls = analysis.get("_raw_calls", [])
+        file_extra = {}
+        if raw_symbols:
+            file_extra["data"] = {"symbols": raw_symbols}
+        if raw_calls:
+            if "data" not in file_extra:
+                file_extra["data"] = {}
+            file_extra["data"]["calls"] = raw_calls
+        self._add_node(file_id, "File", basename, fp, **file_extra)
 
         for defn in analysis.get("definitions", []):
             name = defn.get("name", "")
@@ -1012,10 +1715,16 @@ class ProjectGrapher:
             if not name:
                 continue
 
-            if kind == "class":
+            if kind in ("class", "struct", "enum", "record"):
                 node_type = "Class"
                 node_id = self._make_def_id(fp, name, parent_name="", kind="class")
-            elif kind in ("function", "method"):
+            elif kind == "interface":
+                node_type = "Interface"
+                node_id = self._make_def_id(fp, name, parent_name="", kind="interface")
+            elif kind in ("method", "constructor", "destructor"):
+                node_type = "Method"
+                node_id = self._make_def_id(fp, name, parent_name=parent_name, kind=kind)
+            elif kind == "function":
                 node_type = "Function"
                 node_id = self._make_def_id(fp, name, parent_name=parent_name, kind=kind)
             else:
@@ -1207,11 +1916,9 @@ class ProjectGrapher:
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(final_graph, f, indent=2, ensure_ascii=False)
 
-        # ── 持久化指纹缓存 ──
-        self._save_cache()
-
-        # ── 持久化语义向量 ──
-        self._save_embeddings()
+        # ── 持久化到 SQLite ──
+        self._db_upsert_nodes(final_graph.get("nodes", []))
+        self._db_upsert_edges(final_graph.get("edges", []))
 
         logger.info(f"项目图谱已写入: {output_path}")
         logger.info(f"  节点数: {len(final_graph.get('nodes', []))}")
@@ -1298,6 +2005,7 @@ class ProjectGrapher:
         self.generate_embeddings()
 
         self.write_json(output_path, modified_file_paths=modified_file_paths)
+        self._db_close()
         return self.to_dict()
 
 

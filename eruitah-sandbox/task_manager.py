@@ -211,6 +211,7 @@ class SessionManager:
         existing_messages: Optional[List[Dict[str, Any]]] = None,
         base_task_id: str = "",
         use_worktree: bool = True,
+        is_independent_task: bool = False,
     ) -> TaskSession:
         with self._lock:
             if task_id and task_id in self._sessions:
@@ -231,6 +232,7 @@ class SessionManager:
                     base_task_id=base_task_id,
                     user_id=self._user_id,
                     session_id=new_id,
+                    is_independent_task=is_independent_task,
                 )
             else:
                 worktree_dir = work_dir

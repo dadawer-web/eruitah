@@ -24,6 +24,7 @@ const CAPABILITIES = [
 ]
 
 const SLASH_COMMANDS = [
+  { id: 'tour', slash: '/tour', icon: '🗺️', label: '代码导览', desc: '梳理架构、讲解逻辑、走一遍流程', action: 'tour' },
   { id: 'plan', slash: '/plan', icon: '🤔', label: 'PM需求澄清', desc: '深度理解需求再动手', skill: 'doubt' },
   { id: 'sdd', slash: '/sdd', icon: '🤖', label: '多智能体开发', desc: 'Lead→Implementer→Reviewer 三角色协作', skill: 'sdd' },
   { id: 'tdd', slash: '/tdd', icon: '🧪', label: 'TDD测试驱动', desc: '先写测试再写实现', skill: 'tdd' },
@@ -87,13 +88,25 @@ function selectCommand(cmd) {
   const textAfterCursor = inputText.value.substring(cursorPos)
 
   const match = textBeforeCursor.match(/(?:^|\s)\/\S*$/)
-  if (match) {
-    const before = textBeforeCursor.substring(0, match.index)
-    inputText.value = before + textAfterCursor
-  }
 
-  if (!activeTags.value.find(t => t.id === cmd.id)) {
-    activeTags.value.push({ id: cmd.id, icon: cmd.icon, label: cmd.label, skill: cmd.skill })
+  if (cmd.action === 'tour') {
+    // /tour 特殊处理：保留斜杠命令在输入框中，让用户继续输入问题
+    if (match) {
+      const before = textBeforeCursor.substring(0, match.index).trim()
+      inputText.value = (before ? before + ' ' : '') + '/tour ' + textAfterCursor
+    } else {
+      inputText.value = '/tour ' + textAfterCursor
+    }
+  } else {
+    // 其他命令：替换为 skill tag
+    if (match) {
+      const before = textBeforeCursor.substring(0, match.index)
+      inputText.value = before + textAfterCursor
+    }
+
+    if (!activeTags.value.find(t => t.id === cmd.id)) {
+      activeTags.value.push({ id: cmd.id, icon: cmd.icon, label: cmd.label, skill: cmd.skill })
+    }
   }
 
   nextTick(() => {
@@ -149,16 +162,10 @@ watch(() => store.messages.length, async () => {
   if (chatContainer.value) {
     chatContainer.value.scrollTop = chatContainer.value.scrollHeight
   }
-  for (let i = 0; i < store.messages.length; i++) {
-    const msg = store.messages[i]
-    if (!_processedTourMsgs.has(i)) {
-      const tourData = isCodeTourContent(msg.content)
-      if (tourData && !store.tourSteps.length) {
-        _processedTourMsgs.add(i)
-        store.startTour(tourData)
-      }
-    }
-  }
+  // 不再自动检测 isCodeTourContent 并启动导览
+  // 导览只通过两种方式启动：
+  // 1. code_tour_data WebSocket 消息（后端 code_tour 工具调用后主动推送）
+  // 2. 用户手动点击 "▶ 播放导览" 按钮
 })
 
 function handleSend() {
@@ -250,6 +257,7 @@ function toggleThought(idx) {
 }
 
 function getMsgType(msg) {
+  if (msg.msgType === 'intent_confirm') return 'intent_confirm'
   if (msg.msgType === 'sdd_status') return 'sdd_status'
   if (msg.msgType === 'sdd_review') return 'sdd_review'
   if (msg.msgType === 'agent_state') return 'agent_state'
@@ -572,6 +580,44 @@ function handlePaste(e) {
             </div>
             <div v-if="msg.answered" class="mt-1 pl-4 text-green-400 text-[10px]">
               已回答: {{ msg.answer }}
+            </div>
+          </div>
+
+          <!-- ═══ intent_confirm 意图确认卡片 ═══ -->
+          <div v-else-if="getMsgType(msg) === 'intent_confirm'" class="text-xs leading-relaxed">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="font-bold text-[11px] text-purple-400">🤖 Agent</span>
+              <span class="text-geek-text-dim text-[10px]">{{ formatTime(msg.timestamp) }}</span>
+              <span class="text-[10px] bg-purple-900/50 text-purple-400 px-1.5 py-0.5 rounded animate-pulse">意图确认</span>
+            </div>
+            <div class="pl-4 border-l-2 border-purple-500/30 whitespace-pre-wrap break-words text-geek-text mb-2">
+              {{ msg.content }}
+            </div>
+            <div class="pl-4 flex gap-2 mt-2">
+              <button
+                v-for="opt in msg.intentOptions"
+                :key="opt.id"
+                @click="store.chooseIntent(opt.id)"
+                class="px-3 py-1.5 text-[11px] rounded-lg border transition-all duration-200 cursor-pointer"
+                :class="opt.id === 'tour'
+                  ? 'bg-purple-900/30 border-purple-500/50 text-purple-300 hover:bg-purple-900/50 hover:border-purple-400'
+                  : 'bg-blue-900/30 border-blue-500/50 text-blue-300 hover:bg-blue-900/50 hover:border-blue-400'"
+              >
+                {{ opt.label }}
+              </button>
+            </div>
+            <div v-if="msg.intentActions && msg.intentActions.length" class="pl-4 flex flex-wrap gap-1.5 mt-1.5">
+              <button
+                v-for="action in msg.intentActions"
+                :key="typeof action === 'string' ? action : action.command"
+                @click="inputText = typeof action === 'string' ? action : action.command; handleSend()"
+                class="px-2.5 py-1.5 text-[11px] rounded-lg border transition-all duration-200 cursor-pointer"
+                :class="typeof action !== 'string' && action.command?.startsWith('/tour')
+                  ? 'bg-purple-900/30 border-purple-500/50 text-purple-300 hover:bg-purple-900/50 hover:border-purple-400'
+                  : 'bg-blue-900/30 border-blue-500/50 text-blue-300 hover:bg-blue-900/50 hover:border-blue-400'"
+              >
+                {{ typeof action === 'string' ? action : action.label }}
+              </button>
             </div>
           </div>
 

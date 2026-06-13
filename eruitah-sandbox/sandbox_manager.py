@@ -385,7 +385,7 @@ class GitSandboxManager:
         except Exception as e:
             logger.warning(f"⚠️ 修复 worktree gitdir 失败: {e}")
 
-    def create_task_workspace(self, task_id: str, base_task_id: str = "", user_id: int = 0, session_id: str = "") -> str:
+    def create_task_workspace(self, task_id: str, base_task_id: str = "", user_id: int = 0, session_id: str = "", is_independent_task: bool = False) -> str:
         safe_branch = f"{TASK_BRANCH_PREFIX}{task_id}"
         task_dir = self._get_worktree_dir(task_id, user_id=user_id, session_id=session_id)
 
@@ -395,6 +395,10 @@ class GitSandboxManager:
 
         os.makedirs(os.path.dirname(task_dir), exist_ok=True)
         os.makedirs(self.worktree_base, exist_ok=True)
+
+        # ── 双轨制：独立任务 → 空白沙盒 ──
+        if is_independent_task:
+            return self._create_independent_workspace(task_id, task_dir, safe_branch)
 
         if base_task_id:
             return self._create_workspace_slow(task_id, task_dir, safe_branch, base_task_id)
@@ -446,6 +450,51 @@ class GitSandboxManager:
                 self._run_git_ok("branch", "-D", safe_branch)
 
         return self._create_workspace_slow(task_id, task_dir, safe_branch, base_task_id)
+
+    def _create_independent_workspace(self, task_id: str, task_dir: str, safe_branch: str) -> str:
+        """
+        双轨制 - 独立任务轨道：创建一个完全空白的沙盒环境。
+        不从预热池分配，不继承主仓库代码，Agent 在纯净环境中工作。
+        """
+        logger.info(f"🆓 [独立轨道] 为任务 {task_id} 创建空白沙盒...")
+
+        # 如果目录已存在，先清理
+        if os.path.exists(task_dir):
+            import shutil
+            shutil.rmtree(task_dir, ignore_errors=True)
+
+        os.makedirs(task_dir, exist_ok=True)
+
+        # 在空目录中初始化一个全新的 Git 仓库（不继承主仓库任何代码）
+        self._run_git("init", cwd=task_dir)
+        self._run_git("config", "user.email", "eruitah@sandbox.local", cwd=task_dir)
+        self._run_git("config", "user.name", "Eruitah Sandbox", cwd=task_dir)
+
+        # 创建 .gitignore
+        gitignore_path = os.path.join(task_dir, ".gitignore")
+        with open(gitignore_path, "w", encoding="utf-8") as f:
+            f.write("\n".join([
+                "node_modules/",
+                "__pycache__/",
+                "venv/",
+                ".venv/",
+                "dist/",
+                "build/",
+                ".next/",
+                ".gradle/",
+                "target/",
+                ".DS_Store",
+            ]) + "\n")
+
+        self._run_git("add", ".", cwd=task_dir)
+        self._run_git("commit", "-m", f"Empty sandbox for independent task {task_id}", "--allow-empty", cwd=task_dir)
+
+        self._worktrees[task_id] = task_dir
+        logger.info(
+            f"🆓 [独立轨道] 任务 {task_id} 的空白沙盒已就绪: {task_dir}\n"
+            f"  → Agent 将在纯净环境中工作，无历史代码干扰"
+        )
+        return task_dir
 
     def _create_workspace_slow(
         self, task_id: str, task_dir: str, safe_branch: str, base_task_id: str = ""

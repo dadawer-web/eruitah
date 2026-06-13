@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spring Cloud 微服务演示</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+        .header { text-align: center; padding: 20px 0 10px; }
+        .header h1 {
+            font-size: 2rem;
+            background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header p { color: #8892b0; margin-top: 6px; font-size: 0.9rem; }
+
+        .arch-diagram {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 16px 24px;
+            margin: 16px auto;
+            max-width: 750px;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            white-space: pre;
+            overflow-x: auto;
+        }
+
+        .panel {
+            max-width: 950px;
+            margin: 16px auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 14px;
+        }
+        .card {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 18px;
+            transition: all 0.3s;
+        }
+        .card:hover {
+            border-color: #3a7bd5;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(58,123,213,0.15);
+        }
+        .card h3 { color: #64ffda; margin-bottom: 8px; font-size: 0.95rem; }
+        .card p { color: #8892b0; font-size: 0.8rem; margin-bottom: 12px; }
+
+        .btn {
+            background: linear-gradient(135deg, #3a7bd5, #00d2ff);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            width: 100%;
+        }
+        .btn:hover { opacity: 0.85; }
+        .btn:active { transform: scale(0.98); }
+        .btn.secondary {
+            background: linear-gradient(135deg, #636e72, #b2bec3);
+            margin-top: 8px;
+        }
+
+        .input-group { display: flex; gap: 8px; margin-bottom: 10px; }
+        .input-group input {
+            flex: 1;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: white;
+            font-size: 0.85rem;
+        }
+        .input-group input::placeholder { color: #666; }
+
+        .result-area {
+            max-width: 950px;
+            margin: 16px auto;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 18px;
+        }
+        .result-area h3 {
+            color: #64ffda;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+        #result {
+            font-family: 'Courier New', monospace;
+            font-size: 0.82rem;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            word-break: break-all;
+            color: #a8b2d1;
+            min-height: 50px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .loading { color: #f9a825 !important; }
+        .error { color: #ff5252 !important; }
+        .success { color: #69f0ae !important; }
+
+        .flow-tag {
+            display: inline-block;
+            background: rgba(58,123,213,0.2);
+            border: 1px solid rgba(58,123,213,0.4);
+            border-radius: 20px;
+            padding: 2px 10px;
+            font-size: 0.72rem;
+            color: #64b5f6;
+            margin: 3px 2px;
+        }
+        .footer { text-align: center; padding: 20px 0; color: #4a5568; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>🚀 Spring Cloud 微服务演示</h1>
+    <p>Nacos 注册中心 + OpenFeign 远程调用 + LoadBalancer 负载均衡 + Gateway 网关</p>
+</div>
+
+<div class="arch-diagram">
+┌──────────┐     ┌─────────────────┐     ┌─────────────────┐   Feign   ┌─────────────────┐
+│  浏览器   │ ──▶ │ gateway-service │ ──▶ │ consumer-service │ ────────▶ │ provider-service │
+│ (前端)   │     │   (端口 9000)   │     │    (端口 8080)   │  HTTP调用  │    (端口 8070)   │
+└──────────┘     └───────┬─────────┘     └───────┬─────────┘          └───────┬─────────┘
+                         │                       │                           │
+                         │                       │    ┌─────────────┐        │
+                         └───────────────────────┴───▶│    Nacos     │◀───────┘
+                                               注册   │  (端口 8848) │  注册
+                                                     │   注册中心    │
+                                                     └─────────────┘</div>
+
+<div class="panel">
+    <div class="card">
+        <h3>💚 健康检查</h3>
+        <p>测试 provider 和 consumer 是否正常</p>
+        <button class="btn" onclick="checkHealth()">检查服务状态</button>
+    </div>
+
+    <div class="card">
+        <h3>👥 用户列表</h3>
+        <p>通过 Feign 分页查询用户数据</p>
+        <div class="input-group">
+            <input type="number" id="page" value="1" placeholder="页码">
+            <input type="number" id="size" value="10" placeholder="每页条数">
+        </div>
+        <button class="btn" onclick="getUsers()">查询用户列表</button>
+    </div>
+
+    <div class="card">
+        <h3>👤 查询用户</h3>
+        <p>通过 Feign 调用 provider 获取单个用户</p>
+        <div class="input-group">
+            <input type="number" id="userId" value="1" placeholder="输入用户ID">
+        </div>
+        <button class="btn" onclick="getUser()">查询用户</button>
+    </div>
+
+    <div class="card">
+        <h3>➕ 创建用户</h3>
+        <p>通过 Feign POST 请求创建新用户</p>
+        <div class="input-group">
+            <input type="text" id="newName" value="新用户" placeholder="用户名">
+            <input type="number" id="newAge" value="20" placeholder="年龄">
+        </div>
+        <button class="btn" onclick="createUser()">创建用户</button>
+    </div>
+
+    <div class="card">
+        <h3>🧮 远程计算</h3>
+        <p>consumer 接收参数，通过 Feign 调用 provider 计算</p>
+        <div class="input-group">
+            <input type="number" id="numA" value="10" placeholder="数字A">
+            <input type="number" id="numB" value="20" placeholder="数字B">
+        </div>
+        <button class="btn" onclick="calculate()">远程计算</button>
+    </div>
+
+    <div class="card">
+        <h3>📢 回显测试</h3>
+        <p>测试带查询参数的 Feign 远程调用</p>
+        <div class="input-group">
+            <input type="text" id="echoMsg" value="Hello Spring Cloud!" placeholder="输入消息">
+        </div>
+        <button class="btn" onclick="echo()">发送回显</button>
+    </div>
+</div>
+
+<div class="result-area">
+    <h3>📋 调用结果 <span id="flowTags"></span></h3>
+    <div id="result">点击上方按钮发起测试...</div>
+</div>
+
+<div class="footer">Spring Cloud Demo | Spring Boot 2.7.5 + Spring Cloud 2021.0.5 + Nacos 2.x</div>
+
+<script>
+    /**
+     * 前端 JavaScript - 调用 consumer-service 的 REST 接口
+     *
+     * 调用链路：
+     *   浏览器 JS → consumer-service(:8080) → provider-service(:8070)
+     */
+    const BASE_URL = '/api/consumer';
+    const resultEl = document.getElementById('result');
+    const flowTagsEl = document.getElementById('flowTags');
+
+    function showFlow(tags) {
+        flowTagsEl.innerHTML = tags.map(t => `<span class="flow-tag">${t}</span>`).join(' → ');
+    }
+
+    async function request(url, options = {}) {
+        resultEl.className = 'loading';
+        resultEl.textContent = '⏳ 请求中...';
+        showFlow(options._flow || []);
+
+        try {
+            const resp = await fetch(url, {
+                headers: { 'Content-Type': 'application/json' },
+                ...options
+            });
+            const data = await resp.json();
+            resultEl.className = 'success';
+            resultEl.textContent = JSON.stringify(data, null, 2);
+            return data;
+        } catch (err) {
+            resultEl.className = 'error';
+            resultEl.textContent = `❌ 请求失败: ${err.message}\n\n请确保:\n1. Nacos 已启动 (localhost:8848)\n2. provider-service 已启动 (端口 8070)\n3. consumer-service 已启动 (端口 8080)`;
+            flowTagsEl.innerHTML = '';
+        }
+    }
+
+    function checkHealth() {
+        request(`${BASE_URL}/health-check`, {
+            _flow: ['浏览器', 'consumer:8080', 'Nacos查询', 'provider:8070', '返回状态']
+        });
+    }
+
+    function getUsers() {
+        const page = document.getElementById('page').value || 1;
+        const size = document.getElementById('size').value || 10;
+        request(`${BASE_URL}/users?page=${page}&size=${size}`, {
+            _flow: ['浏览器', 'consumer:8080', 'Feign GET', 'provider:8070', '返回列表']
+        });
+    }
+
+    function getUser() {
+        const id = document.getElementById('userId').value || 1;
+        request(`${BASE_URL}/user/${id}`, {
+            _flow: ['浏览器', 'consumer:8080', 'Feign GET', 'provider:8070', '返回用户']
+        });
+    }
+
+    function createUser() {
+        const name = document.getElementById('newName').value || '新用户';
+        const age = document.getElementById('newAge').value || 20;
+        request(`${BASE_URL}/user`, {
+            method: 'POST',
+            body: JSON.stringify({ name, age: parseInt(age) }),
+            _flow: ['浏览器', 'consumer:8080', 'Feign POST', 'provider:8070', '创建成功']
+        });
+    }
+
+    function calculate() {
+        const a = document.getElementById('numA').value || 0;
+        const b = document.getElementById('numB').value || 0;
+        request(`${BASE_URL}/calculate?a=${a}&b=${b}`, {
+            _flow: ['浏览器', 'consumer:8080', 'Feign调用', 'provider:8070', '返回结果']
+        });
+    }
+
+    function echo() {
+        const msg = document.getElementById('echoMsg').value || 'Hello';
+        request(`${BASE_URL}/echo?message=${encodeURIComponent(msg)}`, {
+            _flow: ['浏览器', 'consumer:8080', 'Feign GET', 'provider:8070', '返回回显']
+        });
+    }
+</script>
+</body>
+</html>

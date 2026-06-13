@@ -299,35 +299,30 @@ BASE_SYSTEM_PROMPT = """你是一个受限沙盒中的「任务型 AI 编码智�
 你的生命周期严格绑定于用户当前下发的【单一任务】。你没有系统级的上下文管理权限。
 
 🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴
-🔴 【核心工作流强制路由 - 绝对不可违背】 🔴
+🔴 【意图路由规则 - 绝对不可违背】 🔴
 🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴
 
-你的核心能力之一是基于现有代码库生成"源码级互动导览 (Code Tour)"。
+系统已在前端自动处理意图路由。你不需要判断用户是要"导览"还是"写代码"。
+规则如下：
 
-**触发条件**：当用户的话中包含以下任意词汇或意图时：
-- "复习"、"讲解"、"梳理"、"分析"、"理解"、"怎么写"、"如何实现"
-- 并且涉及到具体的架构、模式、模块（如"线程池"、"Reactor"、"登录"、"连接"、"请求"等）
+1. **如果 code_tour 工具在你的可用工具列表中**：说明系统判定用户意图为导览，你唯一被允许的操作是调用 code_tour。
+2. **如果 code_tour 工具不在你的可用工具列表中**：说明系统判定用户意图为编码，你绝对禁止调用 code_tour！即使你觉得用户想"理解代码"，也必须使用 bash、file_edit 等编码工具完成任务。
 
-**你唯一被允许的操作**：立即调用 `code_tour` 工具，将用户的查询作为 question 参数传入。
+🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴
 
-**禁止行为一**：绝对禁止使用自然语言直接解释概念！
-**禁止行为二**：绝对禁止使用 bash 或 file_edit 试图自己去写一套教程代码或生成文件给用户看！
-**禁止行为三**：绝对禁止用 grep/file_read 等工具搜索代码后自己总结！
+🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴
+🔴 【状态重置规则 - 最新意图优先】 🔴
+🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴
 
-**你的唯一目标**：传入查询关键字给 `code_tour` 工具，工具会自动结合本地知识库生成多步导览路径。
+当用户的最新回复明确表明意图发生转变时，你必须优先遵循用户最新的指令，而不是历史记录中更早的冲突指令。
 
-**正确示例**：
-- 用户: "带我复习 Reactor 模式" → 你必须调用 code_tour(question="复习 Reactor 模式")
-- 用户: "梳理一下新连接的处理流程" → 你必须调用 code_tour(question="梳理新连接的处理流程")
-- 用户: "讲解线程池的实现" → 你必须调用 code_tour(question="讲解线程池的实现")
-- 用户: "分析 HTTP 请求链路" → 你必须调用 code_tour(question="分析 HTTP 请求链路")
-- 用户: "这个项目的登录是怎么写的" → 你必须调用 code_tour(question="登录功能的实现")
+例如：
+- 历史指令："给我讲讲这段代码" + 用户最新回复："删掉 spring-cloud-demo，在 /tmp 下重新创建"
+  → 你必须执行删除和重建，而不是继续讲解代码！
+- 历史指令："优化性能" + 用户最新回复："我想先看看整体架构"
+  → 你必须切换到架构讲解，而不是继续优化！
 
-**调用 code_tour 后的输出规范**：
-1. 工具会返回导览结果，前端会自动接管展示
-2. 你只需用一句话确认即可，例如："🗺️ 代码导览已生成，请在底部播放器中逐步查看。"
-3. 绝对禁止在回复中重复输出导览的 JSON 内容
-4. 绝对禁止对导览结果进行二次总结或改写
+**判断标准：用户的最新回复 > 历史对话中的任何早期指令。当冲突时，以最新为准。**
 
 🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴
 
@@ -612,46 +607,94 @@ dispatch_subtasks(subtasks=[
 如果需要截图或查看网页，严禁使用 `browser_vision` 工具（该工具不存在且已被废弃）。你必须使用 MCP 提供的真实工具：先调用 `mcp_puppeteer_puppeteer_navigate` 打开网址，然后调用 `mcp_puppeteer_puppeteer_screenshot` 获取截图。如果你尝试调用 `browser_vision`，系统将返回错误并要求你重新使用正确的 MCP 工具。
 """
 
-_TOUR_TRIGGER_WORDS = {
-    "复习", "讲解", "梳理", "导览", "依赖关系", "调用链路", "原理解析",
-    "执行流程", "调用链", "链路", "调用关系", "执行路径",
-    "代码流程", "代码结构", "实现原理", "工作原理",
-    "给我讲", "帮我理", "走一遍", "过一遍",
-    "分析", "理解",
-}
+# ============================================================================
+# 意图路由：四层优先级判定 → 返回 'TOUR' | 'CODE' | 'AMBIGUOUS'
+# ============================================================================
 
-_TOUR_EXCLUDE_WORDS = {
-    "写一段", "写一个", "帮我写", "生成", "创建",
-    "修改", "重构", "编写", "开发", "写个", "写个示例",
-    "简单示例", "代码示例", "写代码", "帮我生成", "帮我创建",
-    "新增", "添加", "删除", "修复", "fix", "bug",
-    "实现一个", "实现一个简单",
-}
+# 会话级 code_tour 拦截注册表：当意图判定为 CODE 时，注册 session_id，
+# _execute_tool_local 会拒绝执行 code_tour，即使 LLM 幻觉调用
+_tour_blocked_sessions: set = set()
 
-_TOUR_TOPIC_WORDS = {
-    "线程池", "reactor", "连接", "请求", "登录", "注册",
-    "路由", "中间件", "数据库", "缓存", "消息", "事件",
-    "socket", "http", "tcp", "udp", "epoll", "select",
-    "pool", "queue", "handler", "server", "client",
-    "dispatcher", "scheduler", "observer", "factory",
-    "singleton", "adapter", "proxy", "decorator",
-    "模式", "架构", "模块", "组件", "框架",
-    "初始化", "启动", "关闭", "销毁", "配置",
-    "connection", "request", "response", "session",
-    "thread", "process", "async", "sync", "callback",
-    "代码", "项目", "系统", "流程", "依赖",
-    "调用", "链路",
-}
+# P1: Slash Commands — 斜杠命令，用户显式声明意图
+_SLASH_TOUR_PREFIXES = ("/tour",)
+_SLASH_CODE_PREFIXES = ("/code", "/dev")
 
-def _is_tour_intent(user_message: str) -> bool:
+# P2: Write 动作强否决词 — 包含这些词 = 绝对不是导览
+_WRITE_VERBS = frozenset([
+    "继续", "完成", "写", "改", "修复", "优化", "实现",
+    "报错", "添加", "完善", "生成", "创建", "删除",
+    "重构", "编写", "开发", "调试", "排查", "测试",
+    "安装", "配置", "部署", "编译", "打包", "运行",
+    "引入", "集成", "接入", "替换", "切换", "升级", "改造",
+    "改进", "新增", "fix", "bug",
+])
+
+# P3: 纯 Read 意图短语 — 只有这些明确短语才判定为导览
+_TOUR_PHRASES = frozenset([
+    "带我导览", "梳理架构", "讲解源码", "整体骨架",
+    "代码导览", "代码讲解", "原理解析",
+    "走一遍", "过一遍", "帮我理",
+    "给我讲", "复习一下",
+])
+
+# P3.5: 暧昧词库 — 不是强动作，也不是明确导览，需要反问
+_AMBIGUOUS_PHRASES = frozenset([
+    "分析", "看代码", "理解系统", "理一下",
+    "看一下", "看看", "了解", "理解",
+    "研究", "搞懂", "搞清楚", "弄懂",
+    "看看代码", "看看逻辑", "看看流程",
+])
+
+
+def classify_intent(user_message: str) -> str:
+    """
+    四层优先级意图判定，返回 'TOUR' | 'CODE' | 'AMBIGUOUS'：
+      'TOUR'      → 明确导览（启动 code_tour_guide）
+      'CODE'      → 明确开发（走 CTO 路由）
+      'AMBIGUOUS' → 暧昧区间（前端反问卡片，阻断 Agent 消耗）
+
+    P1: /tour → TOUR, /code|/dev → CODE
+    P2: Write 动作词 → CODE（强否决）
+    P3: Tour 短语 → TOUR
+    P3.5: 暧昧词 → AMBIGUOUS
+    P4: 兜底 → CODE
+    """
     if not user_message or not isinstance(user_message, str):
-        return False
-    msg_lower = user_message.lower()
-    if any(w in msg_lower for w in _TOUR_EXCLUDE_WORDS):
-        return False
-    has_trigger = any(w in msg_lower for w in _TOUR_TRIGGER_WORDS)
-    has_topic = any(w in msg_lower for w in _TOUR_TOPIC_WORDS)
-    return has_trigger and has_topic
+        return 'CODE'
+    msg = user_message.strip()
+
+    # ── P1: Slash Command ──
+    if any(msg.startswith(p) for p in _SLASH_TOUR_PREFIXES):
+        return 'TOUR'
+    if any(msg.startswith(p) for p in _SLASH_CODE_PREFIXES):
+        return 'CODE'
+
+    # ── P2: Write 动作强否决 ──
+    if any(w in msg for w in _WRITE_VERBS):
+        return 'CODE'
+
+    # ── P3: 纯 Read 意图短语 ──
+    if any(p in msg for p in _TOUR_PHRASES):
+        return 'TOUR'
+
+    # ── P3.5: 暧昧词库 ──
+    if any(p in msg for p in _AMBIGUOUS_PHRASES):
+        return 'AMBIGUOUS'
+
+    # ── P4: 兜底 → 默认走开发 ──
+    return 'CODE'
+
+
+# ── 向后兼容的薄包装 ──
+def _is_slash_tour(user_message: str) -> bool:
+    return bool(user_message) and any(user_message.strip().startswith(p) for p in _SLASH_TOUR_PREFIXES)
+
+def _is_slash_code(user_message: str) -> bool:
+    return bool(user_message) and any(user_message.strip().startswith(p) for p in _SLASH_CODE_PREFIXES)
+
+def _is_tour_intent(user_message: str) -> int:
+    """向后兼容: TOUR→2, AMBIGUOUS→1, CODE→0"""
+    return {'TOUR': 2, 'AMBIGUOUS': 1, 'CODE': 0}[classify_intent(user_message)]
 
 def _extract_tour_question(user_message: str) -> str:
     return user_message.strip()[:200]
@@ -1368,6 +1411,16 @@ def _execute_tool_local(
     # =======================================================
     # 🛡️ 终极防御墙：拦截大模型 JSON 幻觉与类型崩塌
     # =======================================================
+    # 🚫 非导览模式拦截 code_tour：即使 LLM 幻觉调用也会被拒绝
+    if name == "code_tour" and session_id in _tour_blocked_sessions:
+        logger.warning(f"🚫 [意图拦截] session={session_id} 非导览模式，拒绝执行 code_tour")
+        return (
+            "Error: code_tour is blocked for this session because the user's intent was classified as CODE (not tour). "
+            "Do NOT call code_tour again. Instead, use coding tools (bash, file_edit, etc.) to complete the user's task.",
+            True,
+            meta,
+        )
+
     if plan_mode:
         from prompt_builder import PLAN_MODE_TOOLS
         if name not in PLAN_MODE_TOOLS and not name.startswith("mcp_"):
@@ -1637,12 +1690,13 @@ def _execute_tool_local(
         elif name == "coder_reviewer_swarm":
             task_desc = args.get("task_description", "")
             max_loops = args.get("max_loops", 5)
+            swarm_provider = args.get("provider", "openai")
             if not task_desc:
                 return "❌ task_description 不能为空", True, meta
             result_str, is_error = execute_coder_reviewer_swarm(
                 task_description=task_desc,
                 work_dir=work_dir,
-                provider=provider,
+                provider=swarm_provider,
                 api_key=api_key,
                 model=model,
                 base_url=base_url,
@@ -2026,8 +2080,8 @@ def run_agent(
 
     blackboard = StateBlackboard()
 
-    # 🗺️ 短路路由：导览意图时，跳过 LLM，直接本地执行 code_tour
-    if _is_tour_intent(user_input) and not initial_messages:
+    # 🗺️ 短路路由：/tour 斜杠命令或明确导览意图时，跳过 LLM，直接本地执行 code_tour
+    if (_is_slash_tour(user_input) or _is_tour_intent(user_input) == 2) and not initial_messages:
         logger.info(f"🗺️ [短路路由] 检测到代码导览意图，跳过 LLM 直接本地执行 | 原始输入: {user_input[:80]}")
         yield {"type": "system_alert", "content": "🗺️ 检测到代码讲解请求，正在生成代码导览..."}
         try:
@@ -2332,8 +2386,8 @@ def run_agent(
             logger.info(f"🔒 PM模式: 工具列表已过滤 {len(tools)} → {len(filtered_tools)} (仅保留: {PLAN_MODE_TOOLS})")
             tools = filtered_tools
 
-        # 🗺️ 动态工具过滤：讲解/复习意图时，绝对白名单——仅保留 code_tour
-        if _is_tour_intent(user_input):
+        # 🗺️ 动态工具过滤：/tour 斜杠命令或明确导览意图时，绝对白名单——仅保留 code_tour
+        if _is_slash_tour(user_input) or _is_tour_intent(user_input) >= 2:
             filtered_tools = []
             for t in tools:
                 func_info = t.get("function", t)
@@ -2343,6 +2397,20 @@ def run_agent(
             if len(filtered_tools) < len(tools):
                 logger.info(f"🗺️ [导览模式] 工具列表已过滤 {len(tools)} → {len(filtered_tools)} (绝对白名单: 仅 code_tour)")
                 yield {"type": "system_alert", "content": "🗺️ 检测到代码讲解请求，已切换到导览模式（仅保留 code_tour 工具）"}
+            tools = filtered_tools
+
+        # 🚫 明确不是导览意图时，移除 code_tour 工具，防止 LLM 误用
+        elif _is_tour_intent(user_input) == 0 and not _is_slash_tour(user_input):
+            filtered_tools = []
+            for t in tools:
+                func_info = t.get("function", t)
+                name = func_info.get("name", "")
+                if name != "code_tour":
+                    filtered_tools.append(t)
+            if len(filtered_tools) < len(tools):
+                logger.info(f"🚫 [非导览模式] 工具列表已过滤 {len(tools)} → {len(filtered_tools)} (移除 code_tour)")
+                # 注册会话级拦截，即使 LLM 幻觉调用 code_tour 也会被拒绝
+                _tour_blocked_sessions.add(session_id)
             tools = filtered_tools
 
         try:
@@ -2393,7 +2461,7 @@ def run_agent(
 
             # 🗺️ 代码导览意图拦截：检测用户是否在请求复习/讲解，但 LLM 没有调用 code_tour
             tour_intent_violation = False
-            if _is_tour_intent(user_input) and not tour_already_generated:
+            if (_is_slash_tour(user_input) or _is_tour_intent(user_input) >= 2) and not tour_already_generated:
                 called_tour = tool_calls and any(tc.get('name') == 'code_tour' for tc in tool_calls)
                 if not called_tour:
                     tour_intent_violation = True
@@ -2574,7 +2642,7 @@ def run_agent(
 
             if not tool_calls:
                 # 🗺️ 导览意图二次拦截：无工具调用 + 用户意图是复习/讲解
-                if _is_tour_intent(user_input) and not tour_already_generated and text:
+                if (_is_slash_tour(user_input) or _is_tour_intent(user_input) >= 2) and not tour_already_generated and text:
                     tour_question = _extract_tour_question(user_input)
                     logger.warning(f"🗺️ [导览意图拦截-无工具] 用户请求讲解，LLM 输出纯文本，强制重定向！")
                     yield {"type": "system_alert", "content": "Agent 试图用纯文本回答讲解请求，正在强制重定向到导览工具..."}

@@ -14,3 +14,7 @@ pexpect>=4.8.0
 pyautogui>=0.9.54
 mss>=9.0.0
 protobuf>=4.25.0
+tree-sitter>=0.22.3
+tree-sitter-python>=0.21.0
+tree-sitter-java>=0.21.0
+tree-sitter-cpp>=0.22.0
