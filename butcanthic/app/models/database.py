@@ -124,6 +124,24 @@ class ChunkExposureHistory(Base):
         }
 
 
+class DocumentCache(Base):
+    """增量 Hash 缓存表：避免重复处理相同文件浪费 LLM Token"""
+    __tablename__ = "document_cache"
+
+    file_path = Column(String(500), primary_key=True)
+    user_id = Column(String, ForeignKey("users.id"), index=True, nullable=False)
+    file_hash = Column(String(64), nullable=False)
+    last_processed_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "file_path": self.file_path,
+            "user_id": self.user_id,
+            "file_hash": self.file_hash,
+            "last_processed_at": self.last_processed_at.isoformat() if self.last_processed_at else None,
+        }
+
+
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "metadata.db")
 ENGINE = create_engine(f"sqlite:///{DB_PATH}", echo=False)
 SessionLocal = sessionmaker(bind=ENGINE)

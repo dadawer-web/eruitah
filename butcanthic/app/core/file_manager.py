@@ -3,6 +3,7 @@
 所有文件存放在 temp_workspace/ 下，按类型隔离
 """
 
+import hashlib
 import logging
 import os
 import uuid
@@ -10,6 +11,15 @@ from datetime import datetime
 from typing import Optional
 
 logger = logging.getLogger(__name__)
+
+
+def calculate_file_hash(file_path: str) -> str:
+    """计算文件的 SHA-256 哈希值，用于增量缓存判断"""
+    sha256 = hashlib.sha256()
+    with open(file_path, "rb") as f:
+        for chunk in iter(lambda: f.read(8192), b""):
+            sha256.update(chunk)
+    return sha256.hexdigest()
 
 
 class FileManager:

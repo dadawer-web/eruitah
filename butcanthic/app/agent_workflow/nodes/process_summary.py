@@ -116,7 +116,7 @@ async def generate_summary_node(state: WorkflowState, llm_client) -> dict:
             <h2>🚨 生成中断：模型调度失败</h2>
             <p>系统已成功提取文档和图片，但底层 AI 模型拒绝了包含图片的请求。这通常是因为：</p>
             <ul style='color: #d1d5db; margin-top: 10px;'>
-                <li>当前配置的模型（如 mimo-v2.5-pro）是纯文本模型，不支持多模态视觉 (Vision)。</li>
+                <li>当前配置的模型是纯文本模型，不支持多模态视觉 (Vision)。</li>
                 <li>API 提供商未开放该模型的图片传入接口。</li>
             </ul>
             <p style='margin-top: 10px;'><b>💡 解决方案：</b>请在 <code>ai_models_config.json</code> 中将模型切换为 <code>gpt-4o</code>、<code>claude-3.5-sonnet</code> 或 <code>qwen-vl-plus</code> 等支持视觉的多模态模型。</p>

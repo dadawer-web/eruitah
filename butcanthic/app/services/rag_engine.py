@@ -8,7 +8,7 @@ RAG 引擎 - 三路混合检索 + 重排序 (Hybrid Search + GraphRAG + Reranker
   - 稀疏检索: BM25 + jieba 中文分词
   - 图谱检索: NetworkX + LLM 实体关系抽取 (GraphRAG)
   - 重排序: BGE-Reranker-V2-m3 via SiliconFlow Rerank API
-  - 三路召回: 向量 Top10 + BM25 Top10 + GraphRAG → 去重合并 → Rerank Top5
+  - 三路召回: 向量 Top10 + BM25 Top10 + GraphRAG → RRF 分数融合 → Rerank Top5
 """
 
 import asyncio
@@ -62,8 +62,8 @@ class RAGEngine:
 
         self._graph_engine = None
         try:
-            from app.services.graph_engine import GraphRAGEngine
-            self._graph_engine = GraphRAGEngine(ai_client=ai_client)
+            from app.services.graph_engine import create_graph_engine
+            self._graph_engine = create_graph_engine(ai_client=ai_client)
         except Exception as e:
             logger.warning(f"GraphRAGEngine init skipped: {e}")
 
@@ -354,22 +354,35 @@ class RAGEngine:
             if use_graph and self._graph_engine:
                 graph_results = await self._graph_search(query, user_id=user_id)
 
+            # ── RRF 分数融合：替换简单拼接 ──
+            active_lists = []
+            if vector_results:
+                active_lists.append(vector_results)
             if use_hybrid and bm25_results:
-                merged = self._merge_results(vector_results, bm25_results)
-                logger.info(f"Hybrid merge: vector={len(vector_results)} + bm25={len(bm25_results)} → merged={len(merged)}")
-            else:
-                merged = vector_results
-
+                active_lists.append(bm25_results)
             if graph_results:
-                merged = self._merge_results(merged, graph_results)
-                logger.info(f"GraphRAG merge: + graph={len(graph_results)} → total={len(merged)}")
+                active_lists.append(graph_results)
+
+            if len(active_lists) > 1:
+                merged = self._rrf_merge(active_lists)
+                sources_desc = []
+                if vector_results:
+                    sources_desc.append(f"vector={len(vector_results)}")
+                if bm25_results:
+                    sources_desc.append(f"bm25={len(bm25_results)}")
+                if graph_results:
+                    sources_desc.append(f"graph={len(graph_results)}")
+                logger.info(f"RRF merge: {' + '.join(sources_desc)} → merged={len(merged)}")
+            elif len(active_lists) == 1:
+                merged = active_lists[0]
+            else:
+                merged = []
 
             if use_reranker and len(merged) > 0 and self._reranker_api_key:
                 final = self._rerank_documents(query, merged, top_k=top_k)
                 logger.info(f"Reranked: {len(merged)} candidates → {len(final)} final results")
                 return final
             else:
-                merged.sort(key=lambda x: x.get("score", 0), reverse=True)
                 return merged[:top_k]
 
         except PermissionError:
@@ -517,7 +530,67 @@ class RAGEngine:
             return []
 
     @staticmethod
+    def _rrf_merge(
+        result_lists: List[List[Dict[str, Any]]],
+        k: int = 60,
+    ) -> List[Dict[str, Any]]:
+        """
+        Reciprocal Rank Fusion (RRF) 分数融合
+
+        参考 llm_wiki search.rs: apply_rrf_scores
+        算法: rrf_score(d) = Σ 1/(k + rank_i(d))  对每个出现文档 d 的排名列表 i
+
+        k=60 是 Cormack et al. (2009) 论文推荐值，越大排名靠前加分越少，排序越平滑
+
+        Args:
+            result_lists: 多路检索结果列表（如 [vector_results, bm25_results, graph_results]）
+            k: RRF 平滑参数，默认 60
+        """
+        # 1. 构建文档唯一键 → 文档内容的映射
+        def _doc_key(doc: Dict[str, Any]) -> str:
+            return doc.get("content", "")[:300]
+
+        # 2. 为每路结果构建排名表 (1-based)
+        rank_maps: List[Dict[str, int]] = []
+        for results in result_lists:
+            ranked = sorted(results, key=lambda x: x.get("score", 0), reverse=True)
+            rank_map = {}
+            for rank_0, doc in enumerate(ranked):
+                key = _doc_key(doc)
+                # 保留最高排名（同一文档可能因去重不彻底出现多次）
+                if key not in rank_map:
+                    rank_map[key] = rank_0 + 1  # 1-based
+            rank_maps.append(rank_map)
+
+        # 3. 收集所有唯一文档
+        doc_by_key: Dict[str, Dict[str, Any]] = {}
+        for results in result_lists:
+            for doc in results:
+                key = _doc_key(doc)
+                if key not in doc_by_key:
+                    doc_by_key[key] = doc.copy()
+
+        # 4. 计算 RRF 分数
+        for key, doc in doc_by_key.items():
+            rrf_score = 0.0
+            for rank_map in rank_maps:
+                rank = rank_map.get(key)
+                if rank is not None:
+                    rrf_score += 1.0 / (k + rank)
+            # 保留原始分数为 original_score，RRF 分数作为主 score
+            doc["original_score"] = doc.get("score", 0)
+            doc["original_source"] = doc.get("source", "unknown")
+            doc["score"] = rrf_score
+            doc["source"] = "rrf_hybrid"
+
+        # 5. 按 RRF 分数降序排列
+        merged = list(doc_by_key.values())
+        merged.sort(key=lambda x: x["score"], reverse=True)
+        return merged
+
+    @staticmethod
     def _merge_results(vector_results: List[Dict[str, Any]], bm25_results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """向后兼容的简单合并（仅用于非 RRF 场景）"""
         seen_contents = set()
         merged = []
 
@@ -675,7 +748,11 @@ class RAGEngine:
                 source = metadatas[i].get("source", f"doc_{i}") if i < len(metadatas) else f"doc_{i}"
                 triplets = await self._graph_engine.extract_entities_and_relations(text)
                 if triplets:
-                    self._graph_engine.add_triplets(triplets, user_id=user_id, source=source)
+                    self._graph_engine.add_triplets(
+                        triplets, user_id=user_id, source=source,
+                        source_text=text[:500],
+                        source_files=[source],
+                    )
                     logger.info(f"Graph extract: {source} → {len(triplets)} triplets (user={user_id[:8]}...)")
         except Exception as e:
             logger.error(f"Background graph extraction failed: {e}")

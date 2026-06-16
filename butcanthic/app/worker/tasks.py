@@ -20,6 +20,77 @@ FLASHCARD_SYSTEM_PROMPT = """你是一个严苛的考试出题专家。请从以
 - 不要输出任何其他文字，只输出 JSON"""
 
 
+def _repair_truncated_json_cards(json_str: str) -> list:
+    """尝试修复被截断的 JSON，提取已完成的闪卡。"""
+    s = json_str.strip()
+    if not s:
+        return []
+
+    # 策略1: 找最后一个完整的 }，补齐闭合括号
+    last_close = s.rfind('}')
+    if last_close > 0:
+        substring = s[:last_close + 1]
+        # 统计未闭合括号
+        stack = []
+        in_str = False
+        esc = False
+        for ch in substring:
+            if esc:
+                esc = False
+                continue
+            if ch == '\\' and in_str:
+                esc = True
+                continue
+            if ch == '"' and not esc:
+                in_str = not in_str
+                continue
+            if in_str:
+                continue
+            if ch in '{[':
+                stack.append(ch)
+            elif ch == '}' and stack and stack[-1] == '{':
+                stack.pop()
+            elif ch == ']' and stack and stack[-1] == '[':
+                stack.pop()
+        closing = ''
+        for bracket in reversed(stack):
+            closing += '}' if bracket == '{' else ']'
+        candidate = substring + closing
+        try:
+            parsed = json.loads(candidate)
+            cards = parsed.get("cards", [])
+            if cards:
+                logger.warning(f"_repair_truncated_json_cards: repaired truncated JSON, recovered {len(cards)} cards")
+                return cards
+        except json.JSONDecodeError:
+            pass
+
+    # 策略2: 正则提取已完成的闪卡对象
+    card_pattern = re.compile(
+        r'\{\s*"q"\s*:\s*"[^"]*"\s*,\s*"a"\s*:\s*"[^"]*"\s*\}'
+        r'|'
+        r'\{\s*"question"\s*:\s*"[^"]*"\s*,\s*"answer"\s*:\s*"[^"]*"(?:\s*,\s*"document_name"\s*:\s*"[^"]*")?\s*\}',
+        re.DOTALL,
+    )
+    found = card_pattern.findall(s)
+    if found:
+        cards = []
+        for match in found:
+            try:
+                obj = json.loads(match)
+                if "q" in obj and "a" in obj:
+                    cards.append(obj)
+                elif "question" in obj and "answer" in obj:
+                    cards.append({"q": obj["question"], "a": obj["answer"]})
+            except json.JSONDecodeError:
+                continue
+        if cards:
+            logger.warning(f"_repair_truncated_json_cards: regex extracted {len(cards)} cards")
+            return cards
+
+    return []
+
+
 def _extract_flashcard_json(raw_text: str) -> list:
     cleaned = re.sub(r'<think[^>]*>.*?</think\s*>', '', raw_text, flags=re.DOTALL)
     code_block = re.search(r'```(?:json)?\s*\n?(.*?)\n?\s*```', cleaned, re.DOTALL)
@@ -41,9 +112,18 @@ def _extract_flashcard_json(raw_text: str) -> list:
         return parsed.get("cards", [])
     except json.JSONDecodeError:
         pass
+
+    # 尝试截断修复
+    repaired = _repair_truncated_json_cards(cleaned)
+    if repaired:
+        return repaired
+
+    # 最终降级：正则提取 q/a 对
     pairs = re.findall(r'"q"\s*:\s*"(.+?)"\s*,\s*"a"\s*:\s*"(.+?)"', cleaned)
     if not pairs:
         pairs = re.findall(r'"q"\s*:\s*"(.+?)"\s*,\s*"a"\s*:\s*"(.+?)"', fixed)
+    if not pairs:
+        pairs = re.findall(r'"question"\s*:\s*"(.+?)"\s*,\s*"answer"\s*:\s*"(.+?)"', cleaned)
     return [{"q": q, "a": a} for q, a in pairs]
 
 
@@ -76,9 +156,33 @@ def process_kb_document(
     user_id: str,
     files: list,
 ):
-    try:
-        result = asyncio.run(process_kb_files_sync(user_id, files))
+    from app.core.task_log_utils import push_log
+    task_id = self.request.id
 
+    # ── 兜底：如果 Celery 上下文丢失导致 task_id 为 None，生成一个 ──
+    if not task_id:
+        import uuid as _uuid
+        task_id = str(_uuid.uuid4())
+        logger.warning(f"[TaskLogs] self.request.id is None, generated fallback task_id: {task_id}")
+
+    # ── 立即写入首条日志，验证 Redis 管道畅通 ──
+    push_log(task_id, 'STARTED', '🚀 Worker 已接管，正在初始化处理管线...', 2)
+
+    def _progress_callback(state: str, message: str, percent: int = 0, **meta):
+        """进度上报回调：仅使用 Redis 增量日志（push_log）
+
+        不再调用 self.update_state()，因为：
+        1. asyncio.run() 上下文中 self.request.id 会丢失为 None
+        2. self.update_state(task_id=...) 在部分 Celery/billiard 版本中仍会
+           内部读取 self.request.id，导致 "task_id must not be empty" 错误
+        3. Redis 日志管道已经是前端唯一依赖的进度通道（业务终点旗帜机制）
+        """
+        push_log(task_id, state, message, percent, **meta)
+
+    try:
+        result = asyncio.run(process_kb_files_sync(user_id, files, progress_callback=_progress_callback))
+
+        # 闪卡派发也上报日志
         for f in files:
             saved_path = f.get("saved_path", "")
             filename = f.get("filename", "")
@@ -91,12 +195,20 @@ def process_kb_document(
                         document_name=filename,
                     )
                     logger.info(f"🃏 process_kb_document: dispatched flashcard extraction for {filename}")
+                    push_log(task_id, 'FLASHCARD', f'异步激活闪卡提取 Worker，为 {filename} 提取考研核心闪卡...', 95)
                 except Exception as dispatch_err:
                     logger.warning(f"🃏 process_kb_document: failed to dispatch flashcard task for {filename}: {dispatch_err}")
+
+        # ── 绝对业务终点旗帜：所有收尾工作完成后才写入 ──
+        # 前端轮询的唯一终止条件 = 匹配到此信号
+        total_chunks = result.get("total_chunks", "?") if isinstance(result, dict) else "?"
+        push_log(task_id, 'TASK_FULLY_COMPLETED',
+                 f'___TASK_FULLY_COMPLETED___|{total_chunks}', 100)
 
         return result
     except Exception as e:
         logger.error(f"process_kb_document CRASHED for user={user_id}: {e}", exc_info=True)
+        push_log(task_id, 'FAILED', f'处理失败: {str(e)[:100]}', 0)
         try:
             from app.models.database import DocumentMeta, get_session
             session = get_session()
@@ -153,7 +265,7 @@ def extract_flashcards_task(
         ]
 
         logger.info(f"🃏 正在调用大模型提取闪卡: {document_name} ...")
-        response = asyncio.run(llm_client.acall_api(messages, max_tokens=2048))
+        response = asyncio.run(llm_client.acall_api(messages, max_tokens=4096))
 
         if not response or not response.strip():
             logger.warning(f"🃏 大模型返回为空: {document_name}")

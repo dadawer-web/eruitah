@@ -49,10 +49,12 @@ def _init_services():
         if not os.path.exists(config_path):
             config_path = "ai_models_config.json"
         app_state.llm_client = UnifiedAIClient(config_path)
+        app_state.ai_client = app_state.llm_client
         logger.info("LLM Client initialized")
     except Exception as e:
         logger.warning(f"LLM Client init failed: {e}")
         app_state.llm_client = None
+        app_state.ai_client = None
 
     try:
         from app.services.rag_engine import RAGEngine
@@ -88,3 +90,17 @@ def _init_services():
     else:
         logger.warning("Document Service skipped (missing RAG or LLM)")
         app_state.document_service = None
+
+    # ── GraphRAG 引擎初始化 ──
+    if app_state.ai_client:
+        try:
+            from app.services.graph_engine import create_graph_engine
+            app_state.graph_engine = create_graph_engine(ai_client=app_state.ai_client)
+            engine_type = type(app_state.graph_engine).__name__
+            logger.info(f"GraphRAG Engine initialized | type={engine_type}")
+        except Exception as e:
+            logger.warning(f"GraphRAG Engine init failed: {e}")
+            app_state.graph_engine = None
+    else:
+        logger.warning("GraphRAG Engine skipped (missing AI client)")
+        app_state.graph_engine = None

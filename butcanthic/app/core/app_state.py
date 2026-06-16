@@ -13,6 +13,8 @@ class AppState:
         self.rag_engine = None
         self.llm_client = None
         self.document_service = None
+        self.ai_client = None
+        self.graph_engine = None
 
 
 app_state = AppState()

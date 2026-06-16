@@ -22,6 +22,15 @@ temp_workspace/
 # ====== 向量数据库持久化 ======
 chroma_db/
 
+# ====== Wiki 页面持久化 ======
+wiki_pages/
+
+# ====== 图谱数据 ======
+graph_data/
+
+# ====== 元数据数据库 ======
+metadata_db/
+
 # ====== 环境变量文件 ======
 .env
 .env.*

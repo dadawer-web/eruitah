@@ -6,15 +6,51 @@
 import json
 import logging
 import os
+import random
 import time
 import asyncio
 from typing import Dict, List, Optional, Any
 
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage
+import httpx
 import requests
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception,
+    before_sleep_log,
+)
 
 logger = logging.getLogger(__name__)
+
+
+# ── 可重试异常判断：429 / 5xx / 网络超时 ──
+def _is_retryable_error(exc: BaseException) -> bool:
+    """判断异常是否值得重试（429/5xx/网络错误）"""
+    status_code = None
+    if hasattr(exc, 'status_code'):
+        status_code = exc.status_code
+    elif hasattr(exc, 'response') and hasattr(exc.response, 'status_code'):
+        status_code = exc.response.status_code
+    else:
+        import re as _re
+        code_match = _re.search(r'(\d{3})', repr(exc))
+        if code_match:
+            candidate = int(code_match.group(1))
+            if candidate in (429, 500, 502, 503, 504):
+                status_code = candidate
+
+    if status_code in (429, 500, 502, 503, 504):
+        return True
+
+    # 网络级错误（连接超时、DNS 等）也重试
+    error_name = type(exc).__name__.lower()
+    if any(kw in error_name for kw in ('timeout', 'connection', 'network')):
+        return True
+
+    return False
 
 
 class UnifiedAIClient:
@@ -80,7 +116,7 @@ class UnifiedAIClient:
             },
             "default_model": "qwen-plus",
             "common_config": {
-                "api_timeout": 300,
+                "api_timeout": 75,
                 "retry_attempts": 5,
                 "retry_delay": 2,
                 "enable_thinking_mode": False,
@@ -103,7 +139,7 @@ class UnifiedAIClient:
                     temperature=self.current_config.get("temperature", 0.1),
                     max_tokens=max_output,
                     top_p=self.current_config.get("top_p", 0.9),
-                    request_timeout=self.current_config.get("api_timeout", 300),
+                    request_timeout=75.0,
                 )
                 logger.info(f"LangChain LLM initialized: {self.selected_model} (volcano)")
             elif provider == "aliyun":
@@ -117,7 +153,7 @@ class UnifiedAIClient:
                     temperature=self.current_config.get("temperature", 0.0),
                     max_tokens=max_output,
                     top_p=self.current_config.get("top_p", 0.1),
-                    request_timeout=self.current_config.get("api_timeout", 300),
+                    request_timeout=75.0,
                 )
                 logger.info(f"LangChain LLM initialized: {self.selected_model} (openai-compatible)")
             else:
@@ -172,7 +208,7 @@ class UnifiedAIClient:
                 temperature=vision_config.get("temperature", 0.1),
                 max_tokens=max_output,
                 top_p=vision_config.get("top_p", 0.1),
-                request_timeout=vision_config.get("api_timeout", 300),
+                request_timeout=75.0,
             )
             self.vision_model_name = vision_model_key
             logger.info(f"Vision LLM initialized: {vision_model_key} ({vision_config.get('model_name', '')})")
@@ -191,7 +227,7 @@ class UnifiedAIClient:
             temperature: float = 0.1
             max_tokens: int = 32768
             top_p: float = 0.1
-            timeout: int = 300
+            timeout: int = 75
 
             @property
             def _llm_type(self) -> str:
@@ -219,6 +255,30 @@ class UnifiedAIClient:
                 except Exception as e:
                     return f"API call error: {e}"
 
+            async def _acall(self, prompt: str, stop: Optional[List[str]] = None, run_manager=None, **kwargs) -> str:
+                """纯异步 HTTP 调用，替代 requests.post()，避免阻塞事件循环"""
+                try:
+                    messages = [{"role": "user", "content": prompt}]
+                    payload = {
+                        "model": self.model_name,
+                        "input": {"messages": messages},
+                        "parameters": {
+                            "temperature": self.temperature,
+                            "max_tokens": self.max_tokens,
+                            "top_p": self.top_p,
+                            "enable_search": False,
+                            "incremental_output": False,
+                        },
+                    }
+                    headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
+                    async with httpx.AsyncClient(timeout=httpx.Timeout(75.0)) as client:
+                        response = await client.post(self.base_url, headers=headers, json=payload)
+                        if response.status_code == 200:
+                            return response.json().get("output", {}).get("text", "").strip()
+                        return f"API request failed: {response.status_code}"
+                except Exception as e:
+                    return f"Async API call error: {e}"
+
         return AliyunLLM(
             api_key=self.current_config.get("api_key"),
             base_url=self.current_config.get("base_url"),
@@ -226,7 +286,7 @@ class UnifiedAIClient:
             temperature=self.current_config.get("temperature", 0.1),
             max_tokens=self.current_config.get("max_output_tokens", 32768),
             top_p=self.current_config.get("top_p", 0.1),
-            timeout=self.current_config.get("api_timeout", 300),
+            timeout=75,
         )
 
     def _get_current_model_config(self) -> Dict:
@@ -413,8 +473,7 @@ class UnifiedAIClient:
             )
             return None
 
-        max_retries = max_retries or self.current_config.get("retry_attempts", 3)
-        retry_delay = self.current_config.get("retry_delay", 2)
+        max_retries = max_retries or self.current_config.get("retry_attempts", 5)
 
         logger.info(
             f"🚀 [AIClient] acall_api 开始 | "
@@ -506,86 +565,68 @@ class UnifiedAIClient:
 
         active_llm = self.vision_llm if use_vision else self.langchain_llm
 
-        for attempt in range(max_retries):
-            try:
-                current_temperature = self.current_config.get("temperature", 0.1)
+        # ── 使用 tenacity 工业级重试 ──
+        @retry(
+            stop=stop_after_attempt(max_retries),
+            wait=wait_exponential(multiplier=2, min=3, max=30),
+            retry=retry_if_exception(_is_retryable_error),
+            before_sleep=before_sleep_log(logger, logging.WARNING),
+            reraise=True,
+        )
+        async def _invoke_with_retry():
+            current_temperature = self.current_config.get("temperature", 0.1)
+            invoke_kwargs = {
+                "temperature": current_temperature,
+            }
+            if max_tokens is not None:
+                invoke_kwargs["max_tokens"] = max_tokens
 
-                if attempt > 0:
-                    current_temperature = min(0.3, current_temperature + 0.05 * attempt)
+            response = await active_llm.ainvoke(
+                langchain_messages,
+                **invoke_kwargs,
+            )
 
-                invoke_kwargs = {
-                    "temperature": current_temperature,
-                }
-                if max_tokens is not None:
-                    invoke_kwargs["max_tokens"] = max_tokens
+            if not response:
+                raise ValueError("LLM 返回空响应")
 
-                response = await active_llm.ainvoke(
-                    langchain_messages,
-                    **invoke_kwargs,
+            response_text = response.content if hasattr(response, "content") else str(response)
+            metadata = response.response_metadata if hasattr(response, "response_metadata") else {}
+
+            # content 为空时尝试从 reasoning_content / tool_calls 恢复
+            if not response_text and hasattr(response, "additional_kwargs"):
+                reasoning = response.additional_kwargs.get("reasoning_content", "")
+                if reasoning:
+                    response_text = reasoning
+                    logger.info(f"🔄 [AIClient] content 为空，从 reasoning_content 恢复 ({len(reasoning)} chars)")
+            if not response_text and hasattr(response, 'tool_calls') and response.tool_calls:
+                for tc in response.tool_calls:
+                    if isinstance(tc.get("args"), dict) and tc["args"]:
+                        response_text = json.dumps(tc["args"], ensure_ascii=False)
+                        logger.info(f"🔄 [AIClient] content 为空，从 tool_calls 恢复")
+                        break
+
+            if not response_text:
+                finish_reason = metadata.get("finish_reason", "")
+                logger.warning(
+                    f"🚨 [AIClient] 异步调用返回 HTTP 200 但 content 为空！| "
+                    f"finish_reason={finish_reason} | model={self.selected_model}"
                 )
+            else:
+                logger.info(f"Async API call success ({len(response_text)} chars)")
+                logger.info(f"📋 [AIClient] 异步响应元数据: {metadata}")
 
-                if response:
-                    response_text = response.content if hasattr(response, "content") else str(response)
-                    metadata = response.response_metadata if hasattr(response, "response_metadata") else {}
-                    if not response_text and hasattr(response, "additional_kwargs"):
-                        reasoning = response.additional_kwargs.get("reasoning_content", "")
-                        if reasoning:
-                            response_text = reasoning
-                            logger.info(f"🔄 [AIClient] content 为空，从 reasoning_content 恢复 ({len(reasoning)} chars)")
-                    if not response_text and hasattr(response, 'tool_calls') and response.tool_calls:
-                        for tc in response.tool_calls:
-                            if isinstance(tc.get("args"), dict) and tc["args"]:
-                                response_text = json.dumps(tc["args"], ensure_ascii=False)
-                                logger.info(f"🔄 [AIClient] content 为空，从 tool_calls 恢复")
-                                break
-                    logger.info(f"Async API call success ({len(response_text)} chars)")
-                    if not response_text:
-                        finish_reason = metadata.get("finish_reason", "")
-                        token_usage = metadata.get("token_usage", {})
-                        reasoning_tokens = token_usage.get("completion_tokens_details", {}).get("reasoning_tokens", 0) if isinstance(token_usage.get("completion_tokens_details"), dict) else 0
-                        logger.warning(
-                            f"🚨 [AIClient] 异步调用返回 HTTP 200 但 content 为空！| "
-                            f"finish_reason={finish_reason} | reasoning_tokens={reasoning_tokens} | "
-                            f"model={self.selected_model}"
-                        )
-                    else:
-                        logger.info(f"📋 [AIClient] 异步响应元数据: {metadata}")
-                        logger.info(f"📋 [AIClient] 异步返回内容前200字: '{response_text[:200]}'")
-                    return response_text
-                else:
-                    logger.warning(
-                        f"🚨 [AIClient] async attempt {attempt + 1}/{max_retries} 返回空响应 | "
-                        f"model={self.selected_model}"
-                    )
-                    if attempt < max_retries - 1:
-                        await asyncio.sleep(retry_delay)
-                        retry_delay *= 1.5
-                    else:
-                        logger.error(
-                            f"🚨 [AIClient] 所有 {max_retries} 次异步重试均返回空响应！"
-                            f" | model={self.selected_model}"
-                        )
-                        return None
+            return response_text
 
-            except Exception as e:
-                logger.error(
-                    f"🚨 [AIClient] async attempt {attempt + 1}/{max_retries} 调用失败 | "
-                    f"exception_type={type(e).__name__} | exception_repr={repr(e)} | "
-                    f"model={self.selected_model}"
-                )
-                import traceback
-                logger.error(f"🚨 [AIClient] 异步完整堆栈追踪:\n{traceback.format_exc()}")
-                if attempt < max_retries - 1:
-                    await asyncio.sleep(retry_delay)
-                    retry_delay *= 1.5
-                else:
-                    logger.error(
-                        f"🚨 [AIClient] 所有 {max_retries} 次异步重试均失败！"
-                        f" | last_error={repr(e)}"
-                    )
-                    return None
-
-        return None
+        try:
+            result = await _invoke_with_retry()
+            return result
+        except Exception as e:
+            logger.error(
+                f"🚨 [AIClient] 所有重试均失败！| "
+                f"exception_type={type(e).__name__} | exception_repr={repr(e)} | "
+                f"model={self.selected_model}"
+            )
+            return None
 
     def get_model_info(self) -> Dict:
         return {

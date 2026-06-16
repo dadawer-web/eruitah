@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from fastapi import APIRouter, BackgroundTasks, Body, Depends, File, Form, Header, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Body, Depends, File, Form, Header, HTTPException, Query, Request, UploadFile, status
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, Field
@@ -56,6 +56,13 @@ def clean_and_parse_json(raw_text: str) -> dict:
     start = text.find('{')
     end = text.rfind('}')
     if start == -1 or end == -1 or end <= start:
+        # 尝试截断修复：有 { 但没有 }，说明 JSON 被截断
+        if start != -1:
+            truncated = text[start:]
+            fixed = _repair_truncated_json(truncated)
+            if fixed is not None:
+                logger.warning(f"clean_and_parse_json: repaired truncated JSON (no closing brace)")
+                return fixed
         logger.error(f"clean_and_parse_json: no JSON object found, raw (first 500): {raw_text[:500]}")
         raise ValueError("No JSON object found in LLM response")
 
@@ -71,9 +78,126 @@ def clean_and_parse_json(raw_text: str) -> dict:
     fixed = _re.sub(r',\s*]', ']', fixed)
     try:
         return json.loads(fixed)
-    except json.JSONDecodeError as e:
-        logger.error(f"clean_and_parse_json: JSONDecodeError after fix: {e}, raw (first 500): {raw_text[:500]}")
-        raise
+    except json.JSONDecodeError:
+        pass
+
+    # 尝试截断修复
+    repaired = _repair_truncated_json(json_str)
+    if repaired is not None:
+        logger.warning(f"clean_and_parse_json: repaired truncated JSON")
+        return repaired
+
+    logger.error(f"clean_and_parse_json: JSONDecodeError after all fixes, raw (first 500): {raw_text[:500]}")
+    raise json.JSONDecodeError("Unrepairable JSON", raw_text, 0)
+
+
+def _repair_truncated_json(json_str: str) -> dict | None:
+    """尝试修复被截断的 JSON 字符串（如 LLM 输出 max_tokens 不够导致的不完整 JSON）。
+    策略：从末尾找到最后一个完整的对象/数组元素，然后补齐缺失的闭合括号。
+    """
+    import re as _re
+
+    s = json_str.strip()
+    if not s:
+        return None
+
+    # 统计未闭合的括号
+    stack = []
+    in_string = False
+    escape_next = False
+    for ch in s:
+        if escape_next:
+            escape_next = False
+            continue
+        if ch == '\\' and in_string:
+            escape_next = True
+            continue
+        if ch == '"' and not escape_next:
+            in_string = not in_string
+            continue
+        if in_string:
+            continue
+        if ch in '{[':
+            stack.append(ch)
+        elif ch == '}' and stack and stack[-1] == '{':
+            stack.pop()
+        elif ch == ']' and stack and stack[-1] == '[':
+            stack.pop()
+
+    # 如果括号已全部闭合，不需要修复
+    if not stack:
+        try:
+            return json.loads(s)
+        except json.JSONDecodeError:
+            return None
+
+    # 尝试截断到最后一个完整的 key-value 对
+    # 找最后一个 , 或 : 后面的位置，截断并补齐
+    repaired = s.rstrip()
+
+    # 移除末尾不完整的部分（在字符串外的逗号、不完整的键值对）
+    # 策略1: 找最后一个完整的 }, 然后截断
+    last_obj_close = repaired.rfind('}')
+    last_arr_close = repaired.rfind(']')
+
+    # 找最深的完整闭合位置
+    candidates = []
+    for pos in [last_obj_close, last_arr_close]:
+        if pos > 0:
+            substring = repaired[:pos + 1]
+            # 补齐缺失的闭合括号
+            sub_stack = []
+            in_str = False
+            esc = False
+            for ch in substring:
+                if esc:
+                    esc = False
+                    continue
+                if ch == '\\' and in_str:
+                    esc = True
+                    continue
+                if ch == '"' and not esc:
+                    in_str = not in_str
+                    continue
+                if in_str:
+                    continue
+                if ch in '{[':
+                    sub_stack.append(ch)
+                elif ch == '}' and sub_stack and sub_stack[-1] == '{':
+                    sub_stack.pop()
+                elif ch == ']' and sub_stack and sub_stack[-1] == '[':
+                    sub_stack.pop()
+            closing = ''
+            for bracket in reversed(sub_stack):
+                closing += '}' if bracket == '{' else ']'
+            candidate = substring + closing
+            try:
+                result = json.loads(candidate)
+                candidates.append((pos, result))
+            except json.JSONDecodeError:
+                pass
+
+    if candidates:
+        # 选择最长的有效候选
+        candidates.sort(key=lambda x: x[0], reverse=True)
+        return candidates[0][1]
+
+    # 策略2: 正则提取已完成的 cards 数组中的元素
+    # 匹配 {"question": "...", "answer": "...", "document_name": "..."}
+    card_pattern = _re.compile(
+        r'\{\s*"question"\s*:\s*"[^"]*"\s*,\s*"answer"\s*:\s*"[^"]*"(?:\s*,\s*"document_name"\s*:\s*"[^"]*")?\s*\}',
+        _re.DOTALL,
+    )
+    found_cards = card_pattern.findall(repaired)
+    if found_cards:
+        try:
+            cards = [json.loads(c) for c in found_cards]
+            logger.warning(f"_repair_truncated_json: extracted {len(cards)} cards via regex fallback")
+            return {"cards": cards}
+        except json.JSONDecodeError:
+            pass
+
+    return None
 
 
 router = APIRouter()
@@ -908,6 +1032,139 @@ async def knowledge_stats(
     return await rag_engine.get_knowledge_stats(user_id=effective_user_id)
 
 
+@router.get("/graph/data")
+async def graph_data(
+    center_node: str = Query("", description="中心节点名称，为空返回全图"),
+    depth: int = Query(2, description="BFS 扩展深度", ge=1, le=4),
+    max_nodes: int = Query(80, description="最大返回节点数", ge=10, le=500),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
+    current_user_id: Optional[str] = Depends(get_current_user_optional),
+):
+    """获取知识图谱可视化数据（节点 + 边）"""
+    effective_user_id = x_user_id or current_user_id or None
+    if not effective_user_id:
+        raise HTTPException(status_code=401, detail="未提供用户身份")
+
+    logger.info(f"[Graph API] /graph/data called with user_id={effective_user_id[:16]}... (from header={bool(x_user_id)}, from_jwt={bool(current_user_id)})")
+
+    from app.core.app_state import app_state
+    graph_engine = app_state.graph_engine
+    if graph_engine is None:
+        raise HTTPException(status_code=503, detail="图谱引擎未初始化")
+
+    return graph_engine.get_graph_data(effective_user_id, center_node, depth, max_nodes)
+
+
+@router.get("/graph/node/{node_id}")
+async def graph_node_detail(
+    node_id: str,
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
+    current_user_id: Optional[str] = Depends(get_current_user_optional),
+):
+    """获取图谱节点详情（属性 + 相邻关系）"""
+    effective_user_id = x_user_id or current_user_id or None
+    if not effective_user_id:
+        raise HTTPException(status_code=401, detail="未提供用户身份")
+
+    from app.core.app_state import app_state
+    graph_engine = app_state.graph_engine
+    if graph_engine is None:
+        raise HTTPException(status_code=503, detail="图谱引擎未初始化")
+
+    result = graph_engine.get_node_detail(effective_user_id, node_id)
+    if "error" in result:
+        raise HTTPException(status_code=404, detail=result["error"])
+    return result
+
+
+@router.get("/graph/stats")
+async def graph_stats(
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
+    current_user_id: Optional[str] = Depends(get_current_user_optional),
+):
+    """获取图谱统计信息"""
+    effective_user_id = x_user_id or current_user_id or None
+    if not effective_user_id:
+        raise HTTPException(status_code=401, detail="未提供用户身份")
+
+    from app.core.app_state import app_state
+    graph_engine = app_state.graph_engine
+    if graph_engine is None:
+        raise HTTPException(status_code=503, detail="图谱引擎未初始化")
+
+    return graph_engine.get_stats(effective_user_id)
+
+
+@router.post("/knowledge/search")
+async def knowledge_search(
+    query: str = Body(..., embed=True),
+    top_k: int = Body(5, embed=True),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
+    current_user_id: Optional[str] = Depends(get_current_user_optional),
+):
+    """知识库语义搜索（三路混合检索：向量 + BM25 + GraphRAG）"""
+    effective_user_id = x_user_id or current_user_id or None
+    if not effective_user_id:
+        raise HTTPException(status_code=401, detail="未提供用户身份")
+
+    rag_engine = _get_rag_engine()
+    if rag_engine is None:
+        raise HTTPException(status_code=503, detail="RAG引擎未初始化")
+
+    results = await rag_engine.semantic_search(
+        query=query,
+        top_k=top_k,
+        user_id=effective_user_id,
+        use_hybrid=True,
+        use_reranker=True,
+        use_graph=True,
+    )
+    return {"query": query, "results": results, "total": len(results)}
+
+
+@router.get("/graph/search")
+async def graph_search(
+    q: str = Query("", description="搜索关键词"),
+    depth: int = Query(1, description="BFS 扩展深度", ge=1, le=4),
+    max_nodes: int = Query(80, description="最大返回节点数", ge=10, le=500),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
+    current_user_id: Optional[str] = Depends(get_current_user_optional),
+):
+    """图谱可视化搜索（返回 react-force-graph 兼容格式）"""
+    effective_user_id = x_user_id or current_user_id or None
+    if not effective_user_id:
+        raise HTTPException(status_code=401, detail="未提供用户身份")
+
+    from app.core.app_state import app_state
+    graph_engine = app_state.graph_engine
+    if graph_engine is None:
+        raise HTTPException(status_code=503, detail="图谱引擎未初始化")
+
+    return graph_engine.search_subgraph_for_viz(effective_user_id, q, depth, max_nodes)
+
+
+@router.get("/graph/node/{node_id}/sources")
+async def graph_node_sources(
+    node_id: str,
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
+    current_user_id: Optional[str] = Depends(get_current_user_optional),
+):
+    """获取图谱节点的来源文档和原始文本（溯源抽屉）"""
+    effective_user_id = x_user_id or current_user_id or None
+    if not effective_user_id:
+        raise HTTPException(status_code=401, detail="未提供用户身份")
+
+    from app.core.app_state import app_state
+    graph_engine = app_state.graph_engine
+    if graph_engine is None:
+        raise HTTPException(status_code=503, detail="图谱引擎未初始化")
+
+    result = graph_engine.get_node_sources(effective_user_id, node_id)
+    if "error" in result:
+        raise HTTPException(status_code=404, detail=result["error"])
+    return result
+
+
 @router.post("/kb/upload")
 async def kb_upload(
     files: List[UploadFile] = File(...),
@@ -984,13 +1241,15 @@ async def kb_upload(
         session.close()
 
     from app.core.config import settings
+    task_id = None
     if settings.USE_CELERY:
         from app.worker.tasks import process_kb_document
-        process_kb_document.delay(
+        result = process_kb_document.delay(
             user_id=effective_user_id,
             files=saved_files,
         )
-        logger.info(f"KB Upload: {len(saved_files)} files dispatched to Celery for user {effective_user_id}")
+        task_id = result.id
+        logger.info(f"KB Upload: {len(saved_files)} files dispatched to Celery for user {effective_user_id}, task_id={task_id}")
     else:
         import asyncio
         from app.services.kb_processor import process_kb_files_sync
@@ -1003,7 +1262,111 @@ async def kb_upload(
         "file_count": len(saved_files),
         "files": [f["filename"] for f in saved_files],
         "doc_ids": doc_ids,
+        "task_id": task_id,
     }
+
+
+@router.get("/kb/task_status/{task_id}")
+async def kb_task_status(task_id: str):
+    """
+    查询 Celery 任务进度 + Redis 增量日志（读后即焚）+ 防僵尸检测
+
+    返回: { status, message, percent, new_logs: [...] }
+    - new_logs: 自上次轮询以来新增的日志（Redis LRANGE + DELETE 原子操作）
+    - 防僵尸：如果 Celery 状态异常且 Redis 心跳 Key 已过期，强制返回 FAILED
+    - 进度信息优先从 Redis 日志中最新一条提取（不再依赖 Celery update_state）
+    """
+    from app.core.config import settings
+    from app.core.task_log_utils import drain_logs, is_task_alive, mark_task_dead
+
+    # ── 读后即焚：读取并清空 Redis 日志队列 ──
+    new_logs = drain_logs(task_id)
+
+    # ── 从 Redis 日志中提取最新进度（优先级高于 Celery 状态） ──
+    latest_log = new_logs[-1] if new_logs else None
+    redis_status = "PROCESSING"
+    redis_message = "处理中..."
+    redis_percent = 0
+    if latest_log:
+        redis_status = "PROCESSING"
+        redis_message = latest_log.get("message", "处理中...")
+        redis_percent = latest_log.get("percent", 0)
+        # 检测终点旗帜
+        if latest_log.get("state") == "TASK_FULLY_COMPLETED":
+            redis_status = "SUCCESS"
+            redis_percent = 100
+        elif latest_log.get("state") == "FAILED":
+            redis_status = "FAILED"
+
+    if not settings.USE_CELERY:
+        return {"status": "UNKNOWN", "message": "Celery 未启用", "percent": 0, "new_logs": new_logs}
+
+    # ── 读取 Celery 状态（仅用于检测 PENDING/SUCCESS/FAILURE 终态） ──
+    try:
+        from celery.result import AsyncResult
+        task = AsyncResult(task_id)
+
+        if task.state == "PENDING":
+            # PENDING + 有 Redis 日志 → Worker 已接管但 Celery 还没更新
+            if new_logs:
+                return {"status": redis_status, "message": redis_message, "percent": redis_percent, "new_logs": new_logs}
+            return {"status": "PENDING", "message": "任务排队中，等待 Worker 接管...", "percent": 0, "new_logs": new_logs}
+
+        elif task.state == "STARTED":
+            return {"status": redis_status, "message": redis_message, "percent": redis_percent, "new_logs": new_logs}
+
+        elif task.state == "SUCCESS":
+            # Celery 报告成功，但前端以业务旗帜为准
+            # 如果 Redis 日志中有终点旗帜，已经在上面的 latest_log 检测中处理
+            mark_task_dead(task_id)
+            result = task.result or {}
+            return {
+                "status": "SUCCESS",
+                "message": f"知识网络构建完成！共 {result.get('total_chunks', '?')} 个知识块已入库",
+                "percent": 100,
+                "result": result,
+                "new_logs": new_logs,
+            }
+
+        elif task.state == "FAILURE":
+            mark_task_dead(task_id)
+            return {
+                "status": "FAILED",
+                "message": f"处理失败: {str(task.result)[:200]}",
+                "percent": 0,
+                "error": str(task.result),
+                "new_logs": new_logs,
+            }
+
+        else:
+            # 自定义状态 / RETRY / REVOKED 等 → 防僵尸检测
+            if not is_task_alive(task_id):
+                logger.warning(f"[AntiZombie] 检测到僵尸任务 {task_id} (state={task.state}, 心跳已过期)")
+                mark_task_dead(task_id)
+                return {
+                    "status": "FAILED",
+                    "message": "任务执行异常：Worker 进程已被系统回收（可能因内存溢出 SIGKILL），请重新上传",
+                    "percent": 0,
+                    "error": "ZOMBIE_TASK: Worker process killed (SIGKILL/OOM)",
+                    "new_logs": new_logs,
+                }
+
+            # 有 Redis 日志就用 Redis 的进度
+            return {"status": redis_status, "message": redis_message, "percent": redis_percent, "new_logs": new_logs}
+
+    except Exception as e:
+        logger.warning(f"KB task_status query failed for {task_id}: {e}")
+        # ── Celery 查询异常 → 降级到 Redis 日志 ──
+        if not is_task_alive(task_id):
+            return {
+                "status": "FAILED",
+                "message": f"任务状态查询异常且心跳已丢失，任务可能已被系统回收: {str(e)[:100]}",
+                "percent": 0,
+                "error": f"ZOMBIE_TASK: {e}",
+                "new_logs": new_logs,
+            }
+        # 心跳还在，用 Redis 日志的进度
+        return {"status": redis_status, "message": redis_message, "percent": redis_percent, "new_logs": new_logs}
 
 
 @router.get("/kb/documents")
@@ -1066,6 +1429,60 @@ async def delete_kb_document(
                 logger.info(f"KB Delete: removed {deleted_chunks} vector chunks for '{filename}'")
             except Exception as e:
                 logger.warning(f"KB Delete: vector cleanup failed for '{filename}': {e}")
+
+        # ── 图谱级联删除：移除该文档贡献的节点和边 ──
+        try:
+            from app.core.app_state import app_state
+            graph_engine = app_state.graph_engine
+            if graph_engine:
+                graph_engine.remove_document(effective_user_id, filename)
+                logger.info(f"KB Delete: graph cascade delete for '{filename}'")
+        except Exception as e:
+            logger.warning(f"KB Delete: graph cleanup failed for '{filename}': {e}")
+
+        # ── 清理本地派生 Wiki MD 文件（通配符匹配） ──
+        try:
+            from pathlib import Path as _Path
+            base_filename = os.path.splitext(filename)[0]  # "01.数据结构" from "01.数据结构.pdf"
+            wiki_user_dir = _Path("wiki_pages") / effective_user_id.replace("-", "_")
+            if wiki_user_dir.is_dir():
+                # 匹配所有以源文件名开头的 .md 文件
+                # 新命名：01.数据结构 Part3 树与图.md → safe_name: 01_数据结构_Part3_树与图.md
+                # 旧命名：数据结构基础__Part1_.md → 需要通过 frontmatter source_id 匹配
+                import re as _re
+                safe_prefix = _re.sub(r'[^\w\u4e00-\u9fff\-]', '_', base_filename)
+                deleted_wiki_count = 0
+                for md_file in wiki_user_dir.glob("*.md"):
+                    # 新命名格式：文件名以 safe_prefix 开头
+                    if md_file.stem.startswith(safe_prefix):
+                        try:
+                            md_file.unlink()
+                            deleted_wiki_count += 1
+                            logger.info(f"KB Delete: removed wiki file {md_file.name}")
+                        except FileNotFoundError:
+                            pass
+                        except Exception as e:
+                            logger.warning(f"KB Delete: failed to remove wiki file {md_file.name}: {e}")
+                    else:
+                        # 旧命名格式：读取 frontmatter 检查 source_id
+                        try:
+                            with open(md_file, "r", encoding="utf-8") as f:
+                                head = f.read(2048)
+                            fm_match = _re.search(r'^---\s*\n(.*?)\n---', head, _re.DOTALL)
+                            if fm_match:
+                                sid_match = _re.search(r'source_id:\s*["\']?(.+?)["\']?\s*$', fm_match.group(1), _re.MULTILINE)
+                                if sid_match and (filename in sid_match.group(1) or base_filename in sid_match.group(1)):
+                                    md_file.unlink()
+                                    deleted_wiki_count += 1
+                                    logger.info(f"KB Delete: removed legacy wiki file {md_file.name}")
+                        except FileNotFoundError:
+                            pass
+                        except Exception:
+                            pass
+                if deleted_wiki_count > 0:
+                    logger.info(f"KB Delete: cleaned {deleted_wiki_count} wiki files for '{filename}'")
+        except Exception as e:
+            logger.warning(f"KB Delete: wiki file cleanup failed for '{filename}': {e}")
 
         kb_dir = os.path.join("uploads", f"user_{effective_user_id}", "kb_docs")
         if os.path.isdir(kb_dir):
@@ -1288,7 +1705,7 @@ async def flashcards_draw(
             {"role": "user", "content": prompt},
         ]
 
-        response = await llm_client.acall_api(messages, max_tokens=2048)
+        response = await llm_client.acall_api(messages, max_tokens=4096)
 
         if not response or not response.strip():
             logger.warning("flashcards_draw: LLM returned empty")
@@ -1680,3 +2097,56 @@ async def _task_stream_local(task_id: str):
             "X-Accel-Buffering": "no",
         },
     )
+
+
+# ── Debug: 图谱紧急清空接口 ──
+
+@router.post("/debug/graph/wipe_user")
+async def debug_wipe_user_graph(request: Request):
+    """
+    [危险] 一键清空指定用户的图谱数据（开发阶段专用）。
+    只删除 Python 微服务创建的 Concept 节点，不触碰 Java 微服务的静态节点。
+    """
+    try:
+        body = await request.json()
+    except Exception:
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=400, content={"error": "Invalid JSON body"})
+
+    user_id = body.get("user_id", "").strip()
+    if not user_id:
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=400, content={"error": "user_id is required"})
+
+    try:
+        from app.services.graph_engine import create_graph_engine
+        graph_engine = create_graph_engine()
+        if not graph_engine:
+            return {"status": "skipped", "reason": "graph engine not available"}
+
+        with graph_engine._driver.session() as session:
+            # 统计删除前数量
+            count_result = session.run(
+                "MATCH (n:Concept {user_id: $user_id}) RETURN count(n) AS cnt",
+                user_id=user_id,
+            )
+            before_count = count_result.single()["cnt"]
+
+            # DETACH DELETE：删除节点及其所有关系
+            delete_result = session.run(
+                "MATCH (n:Concept {user_id: $user_id}) DETACH DELETE n RETURN count(n) AS deleted",
+                user_id=user_id,
+            )
+            deleted_count = delete_result.single()["deleted"]
+
+        logger.info(f"[Debug] wipe_user_graph: user={user_id}, deleted={deleted_count} nodes")
+        return {
+            "status": "ok",
+            "user_id": user_id,
+            "deleted_nodes": deleted_count,
+            "before_count": before_count,
+        }
+    except Exception as e:
+        logger.error(f"[Debug] wipe_user_graph failed: {e}")
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=500, content={"error": str(e)})

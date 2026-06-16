@@ -8,12 +8,14 @@
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
   <script src="/ppt-viewer/ppt-viewer.iife.js"></script>
     <style>
     .terminal-font { font-family: 'Fira Code', 'Consolas', 'Courier New', monospace; }
     .terminal-line { animation: fadeIn 0.15s ease-in; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    @keyframes kgSlideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
     .pulse-dot { animation: pulse 1.2s ease-in-out infinite; }
     .drop-active { border-color: #6366f1 !important; background-color: rgba(99,102,241,0.08) !important; }
     .progress-bar-track { width: 100%; height: 8px; background: #1e1e2e; border-radius: 4px; overflow: hidden; }
@@ -557,6 +559,14 @@
             🃏 闪卡复习
             <span v-if="deck.length > 0" class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
           </button>
+          <button
+            v-if="sidebarView === 'mydocs'"
+            @click="activeTab = 'knowledge-graph'; initKgView()"
+            class="px-5 py-2 text-xs font-medium transition-all flex items-center gap-1.5"
+            :class="activeTab === 'knowledge-graph' ? 'text-violet-400 border-b-2 border-violet-400' : 'text-gray-500 hover:text-gray-300'"
+          >
+            🧠 知识图谱
+          </button>
           <div class="ml-auto flex items-center gap-2 px-4">
             <span v-if="isProcessing" class="flex items-center gap-1.5 text-xs text-emerald-400">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-dot"></span>
@@ -858,11 +868,92 @@
             </a>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
 
-  <Teleport to="body">
+        <!-- ── 知识图谱大脑视图 ── -->
+        <div v-show="activeTab === 'knowledge-graph'" class="flex-1 overflow-hidden flex" style="min-height: 0;">
+          <!-- 左侧：图谱主区域 -->
+          <div class="flex-1 flex flex-col overflow-hidden" style="min-width: 0;">
+            <!-- 搜索栏 -->
+            <div class="flex items-center gap-2 px-4 py-2" style="background: rgba(15,15,26,0.9); border-bottom: 1px solid rgba(129,140,248,0.12);">
+              <span style="font-size: 18px;">🧠</span>
+              <input type="text" v-model="kgSearchQuery" @keydown.enter="kgSearch" placeholder="搜索概念、实体或关键词..."
+                class="flex-1 px-3 py-1.5 rounded-lg text-xs outline-none transition-colors"
+                style="background: rgba(30,30,50,0.8); border: 1px solid rgba(129,140,248,0.2); color: #e0e0e0;"
+                onfocus="this.style.borderColor='rgba(129,140,248,0.5)'"
+                onblur="this.style.borderColor='rgba(129,140,248,0.2)'" />
+              <button @click="kgSearch" :disabled="kgLoading" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-colors"
+                :style="{ background: kgLoading ? '#444' : '#6366f1', cursor: kgLoading ? 'not-allowed' : 'pointer' }">
+                {{ kgLoading ? '搜索中...' : '搜索' }}
+              </button>
+              <button @click="kgLoadFull" class="px-3 py-1.5 rounded-lg text-xs"
+                style="background: rgba(30,30,50,0.8); color: #aaa; border: 1px solid rgba(129,140,248,0.15); cursor: pointer;">
+                全图
+              </button>
+            </div>
+            <!-- 统计条 -->
+            <div v-if="kgStatsText" class="flex items-center gap-4 px-4 py-1" style="background: rgba(15,15,26,0.5); border-bottom: 1px solid rgba(129,140,248,0.08); font-size: 11px; color: #666;">
+              <span>{{ kgStatsText }}</span>
+            </div>
+            <!-- ECharts 容器 -->
+            <div id="kg-chart-container" class="flex-1" style="width: 100%; height: 100%; min-height: 500px;"></div>
+          </div>
+          <!-- 右侧：溯源抽屉 -->
+          <div v-if="kgSelectedNode" class="flex-shrink-0 overflow-y-auto"
+            style="width: 320px; border-left: 1px solid rgba(129,140,248,0.12); background: rgba(15,15,26,0.95); animation: kgSlideIn 0.2s ease;">
+            <!-- 抽屉头部 -->
+            <div class="flex items-center px-4 py-3" style="border-bottom: 1px solid rgba(129,140,248,0.1);">
+              <span class="flex-1 text-sm font-bold truncate" :style="{ color: kgGetColor(kgSelectedNode.category) }">
+                {{ kgSelectedNode.id }}
+              </span>
+              <button @click="kgSelectedNode = null" class="text-gray-500 hover:text-gray-300 text-lg px-1" style="background: none; border: none; cursor: pointer;">✕</button>
+            </div>
+            <!-- 节点属性 -->
+            <div class="px-4 py-3">
+              <span class="inline-block px-2 py-0.5 rounded text-xs font-semibold mb-3"
+                :style="{ background: kgGetColor(kgSelectedNode.category) + '20', color: kgGetColor(kgSelectedNode.category) }">
+                {{ kgSelectedNode.category }}
+              </span>
+              <!-- 来源文档 -->
+              <div v-if="kgSelectedNode.sources && kgSelectedNode.sources.length > 0" class="mb-4">
+                <div class="text-xs text-gray-500 font-semibold mb-1.5">📄 来源文档</div>
+                <div v-for="src in kgSelectedNode.sources" :key="src" class="flex items-center gap-1.5 px-2 py-1.5 mb-1 rounded"
+                  style="background: rgba(30,30,50,0.6); font-size: 12px; color: #aaa;">
+                  <span>📎</span>
+                  <span class="flex-1 truncate">{{ src }}</span>
+                </div>
+              </div>
+              <!-- 原文片段 -->
+              <div v-if="kgSelectedNode.source_texts && kgSelectedNode.source_texts.length > 0" class="mb-4">
+                <div class="text-xs text-gray-500 font-semibold mb-1.5">📝 原文片段</div>
+                <div v-for="(text, idx) in kgSelectedNode.source_texts" :key="idx" class="px-2 py-1.5 mb-1 rounded text-xs leading-relaxed"
+                  style="background: rgba(30,30,50,0.4); color: #999; max-height: 80px; overflow-y: auto;">
+                  {{ text }}
+                </div>
+              </div>
+              <!-- 相邻关系 -->
+              <div v-if="kgSelectedNode.neighbors && kgSelectedNode.neighbors.length > 0">
+                <div class="text-xs text-gray-500 font-semibold mb-1.5">🔗 关联实体 ({{ kgSelectedNode.neighbors.length }})</div>
+                <div v-for="nb in kgSelectedNode.neighbors.slice(0, 20)" :key="nb.id" @click="kgClickNode(nb.id)"
+                  class="flex items-center gap-1.5 px-2 py-1 mb-0.5 rounded cursor-pointer transition-colors"
+                  style="background: rgba(30,30,50,0.4); font-size: 12px; color: #bbb;"
+                  onmouseenter="this.style.background='rgba(99,102,241,0.15)'"
+                  onmouseleave="this.style.background='rgba(30,30,50,0.4)'">
+                  <span :style="{ color: nb.direction === 'in' ? '#34d399' : '#60a5fa', fontSize: '10px' }">
+                    {{ nb.direction === 'in' ? '←' : '→' }}
+                  </span>
+                  <span class="flex-1 truncate">{{ nb.id }}</span>
+                  <span class="text-gray-600" style="font-size: 9px;">{{ nb.relation }}</span>
+                </div>
+                <div v-if="kgSelectedNode.neighbors.length > 20" class="text-center text-gray-600 py-1" style="font-size: 10px;">
+                  ...还有 {{ kgSelectedNode.neighbors.length - 20 }} 个关联实体
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <Teleport to="body">
     <div v-if="isPptEditorOpen" id="ppt-editor-overlay" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:999999; background-color:#f3f4f6; padding:24px; box-sizing:border-box; display:flex; flex-direction:row; gap:24px;">
       
       <button @click="closePptPreview" style="position:absolute;top:16px;right:16px;z-index:10;width:40px;height:40px;border-radius:50%;background:#fff;border:1px solid #e5e7eb;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:#6b7280;box-shadow:0 2px 8px rgba(0,0,0,0.1);transition:all 0.15s ease;" onmouseover="this.style.background='#fee2e2';this.style.color='#dc2626';this.style.borderColor='#fca5a5'" onmouseout="this.style.background='#fff';this.style.color='#6b7280';this.style.borderColor='#e5e7eb'">✕</button>
@@ -1030,10 +1121,300 @@ createApp({
     const pptFrameReady = ref(false);
     const currentThreadId = ref(null);
     const sessionHistory = ref([]);
-    
+
     // 全屏 PPT 编辑器的状态开关 (核心修复点)
-    const isPptEditorOpen = ref(false); 
+    const isPptEditorOpen = ref(false);
     const pptEditorAnimated = ref(false);
+
+    // ── 知识图谱（纯 ECharts） ──
+    const kgViewInitialized = ref(false);
+    const kgChartInstance = ref(null);
+    const kgGraphData = ref(null);
+    const kgSearchQuery = ref('');
+    const kgLoading = ref(false);
+    const kgSelectedNode = ref(null);
+    const kgStatsText = ref('');
+
+    const KG_CATEGORY_COLORS = {
+      '人': '#f472b6', '公司': '#60a5fa', '技术': '#34d399',
+      '产品': '#fbbf24', '概念': '#a78bfa', '事件': '#fb923c',
+      '组织': '#38bdf8', '地点': '#4ade80', 'entity': '#60a5fa',
+      'concept': '#a78bfa', 'methodology': '#34d399', 'finding': '#fbbf24',
+    };
+
+    function kgGetColor(category) {
+      return KG_CATEGORY_COLORS[category] || '#818cf8';
+    }
+
+    async function kgFetchGraphData(centerNode) {
+      const params = new URLSearchParams({ depth: '2', max_nodes: '80' });
+      if (centerNode) params.set('center_node', centerNode);
+      const res = await apiFetch(`/api/v1/graph/data?${params}`);
+      if (!res.ok) throw new Error(`Graph API error: ${res.status}`);
+      return res.json();
+    }
+
+    async function kgFetchNodeDetail(nodeId) {
+      const res = await apiFetch(`/api/v1/graph/node/${encodeURIComponent(nodeId)}`);
+      if (!res.ok) throw new Error(`Node API error: ${res.status}`);
+      return res.json();
+    }
+
+    function kgBuildEChartsOption(rawData) {
+      // 兼容包裹层：后端可能返回 json.data 或直接返回
+      const data = rawData.data || rawData;
+      const nodes = data.nodes || [];
+      const edges = data.edges || data.links || [];
+
+      if (nodes.length === 0) {
+        console.warn('kgBuildEChartsOption: 后端返回的节点数组为空！rawData keys:', Object.keys(rawData));
+        return null;
+      }
+
+      console.log('kgBuildEChartsOption: nodes=', nodes.length, 'edges=', edges.length, 'first node:', JSON.stringify(nodes[0]));
+
+      // ── 色盘：按名称 hash 分配柔和渐变色 ──
+      const PALETTE = [
+        '#818cf8', '#a78bfa', '#c084fc', '#e879f9', '#f472b6',
+        '#fb923c', '#fbbf24', '#a3e635', '#34d399', '#22d3ee',
+        '#60a5fa', '#818cf8', '#f87171', '#fb7185', '#fdba74',
+      ];
+      function hashColor(name) {
+        let h = 0;
+        for (let i = 0; i < name.length; i++) h = ((h << 5) - h + name.charCodeAt(i)) | 0;
+        return PALETTE[Math.abs(h) % PALETTE.length];
+      }
+
+      // ── 按度分层：热点→暖色大节点，叶子→冷色小节点 ──
+      const degreeMap = {};
+      nodes.forEach(n => { degreeMap[n.id || n.name] = 0; });
+      edges.forEach(e => {
+        degreeMap[e.source] = (degreeMap[e.source] || 0) + 1;
+        degreeMap[e.target] = (degreeMap[e.target] || 0) + 1;
+      });
+      const maxDegree = Math.max(1, ...Object.values(degreeMap));
+
+      const categories = [...new Set(nodes.map(n => n.category || 'entity'))];
+      const categoryMap = new Map(categories.map((c, i) => [c, i]));
+      const echartsCategories = categories.map(c => ({
+        name: c,
+        itemStyle: { color: kgGetColor(c) },
+      }));
+
+      const echartsNodes = nodes.map(node => {
+        const nodeId = node.id || node.name;
+        const degree = degreeMap[nodeId] || 0;
+        const ratio = degree / maxDegree; // 0~1 归一化
+
+        // 节点大小：核心概念大，边缘概念小
+        const symbolSize = Math.max(15, Math.min(ratio * 50 + 10, 60));
+
+        // 颜色：有 category 用 category 色，否则按名称 hash
+        const baseColor = (node.category && node.category !== 'entity')
+          ? kgGetColor(node.category)
+          : hashColor(nodeId);
+
+        // 热点节点发光更强
+        const glowIntensity = Math.round(8 + ratio * 20);
+
+        return {
+          id: nodeId,
+          name: nodeId,
+          value: degree,
+          category: categoryMap.get(node.category || 'entity') ?? 0,
+          symbolSize: symbolSize,
+          itemStyle: {
+            color: baseColor,
+            borderColor: 'rgba(255,255,255,0.12)',
+            borderWidth: 1.5,
+            shadowBlur: glowIntensity,
+            shadowColor: baseColor + '60',
+          },
+          label: {
+            show: symbolSize > 22,
+            fontSize: Math.max(9, Math.min(13, 9 + ratio * 4)),
+            fontWeight: ratio > 0.3 ? 700 : 500,
+            color: ratio > 0.3 ? '#fff' : '#bbb',
+            fontFamily: 'system-ui, sans-serif',
+            formatter: nodeId.length > 8 ? nodeId.slice(0, 8) + '…' : nodeId,
+          },
+        };
+      });
+
+      const echartsLinks = edges.map(edge => {
+        const rel = edge.relation || edge.label || '';
+        return {
+          source: edge.source,
+          target: edge.target,
+          value: rel,
+          label: {
+            show: false,  // 常态隐藏，减少视觉噪声
+            fontSize: 12,
+            color: '#999',
+            formatter: rel.length > 8 ? rel.slice(0, 8) + '…' : rel,
+          },
+          lineStyle: {
+            color: 'rgba(100,100,160,0.25)',
+            width: 1,
+            curveness: 0.2,
+            opacity: 0.4,
+          },
+        };
+      });
+
+      return {
+        backgroundColor: 'transparent',
+        tooltip: {
+          trigger: 'item',
+          backgroundColor: '#1a1a2eee',
+          borderColor: '#333',
+          textStyle: { color: '#e0e0e0', fontSize: 12 },
+          formatter: (params) => {
+            if (params.dataType === 'node') {
+              const cat = categories[params.data.category] || '未知';
+              const deg = params.data.value || 0;
+              return `<b style="font-size:14px">${params.name}</b><br/><span style="color:#888">类型：</span>${cat}<br/><span style="color:#888">连接数：</span>${deg}`;
+            }
+            if (params.dataType === 'edge') {
+              const rel = params.data.value || '';
+              return `<b>${params.data.source}</b> → <b>${params.data.target}</b><br/><span style="color:#888">关系：</span>${rel}`;
+            }
+            return '';
+          },
+        },
+        legend: {
+          data: categories,
+          textStyle: { color: '#aaa', fontSize: 10 },
+          top: 4, left: 4, orient: 'horizontal',
+          itemWidth: 10, itemHeight: 10, itemGap: 8,
+        },
+        series: [{
+          type: 'graph',
+          layout: 'force',
+          data: echartsNodes,
+          links: echartsLinks,
+          categories: echartsCategories,
+          roam: true,
+          draggable: true,
+          force: {
+            repulsion: 400,
+            gravity: 0.04,
+            edgeLength: [50, 150],
+            layoutAnimation: true,
+            friction: 0.6,
+          },
+          emphasis: {
+            focus: 'adjacency',
+            lineStyle: { width: 2.5, color: '#818cf8', opacity: 1 },
+            itemStyle: { shadowBlur: 30, borderWidth: 3, borderColor: '#fff' },
+            label: { fontSize: 14, fontWeight: 700, color: '#fff' },
+            edgeLabel: { show: true, fontSize: 12, color: '#ccc' },
+          },
+          blur: {
+            itemStyle: { opacity: 0.08 },
+            lineStyle: { opacity: 0.04 },
+            label: { color: 'rgba(255,255,255,0.1)' },
+          },
+          edgeSymbol: ['none', 'arrow'],
+          edgeSymbolSize: [0, 5],
+          animationDuration: 800,
+          animationEasingUpdate: 'quinticInOut',
+        }],
+      };
+    }
+
+    function kgRenderChart(data) {
+      const container = document.getElementById('kg-chart-container');
+      if (!container) {
+        console.error('kgRenderChart: #kg-chart-container not found in DOM');
+        return;
+      }
+
+      // 检查容器实际尺寸
+      const rect = container.getBoundingClientRect();
+      console.log('kgRenderChart: container size=', rect.width, 'x', rect.height);
+
+      if (rect.width < 10 || rect.height < 10) {
+        console.warn('kgRenderChart: container too small, retrying after nextTick...');
+        nextTick(() => kgRenderChart(data));
+        return;
+      }
+
+      if (!kgChartInstance.value) {
+        kgChartInstance.value = echarts.init(container, null, { renderer: 'canvas' });
+        kgChartInstance.value.on('click', (params) => {
+          if (params.dataType === 'node') {
+            kgClickNode(params.name);
+          }
+        });
+        window.addEventListener('resize', () => {
+          if (kgChartInstance.value) kgChartInstance.value.resize();
+        });
+      }
+
+      const option = kgBuildEChartsOption(data);
+      if (option) {
+        kgChartInstance.value.setOption(option, true);
+        const nodes = (data.data || data).nodes || [];
+        const edges = (data.data || data).edges || (data.data || data).links || [];
+        const totalNodes = (data.data || data).total_nodes || nodes.length;
+        kgStatsText.value = `📊 ${nodes.length} 个实体 · 🔗 ${edges.length} 条关系` +
+          (totalNodes > nodes.length ? ` （全图 ${totalNodes} 节点，已截断）` : '');
+      } else {
+        kgChartInstance.value.clear();
+        kgStatsText.value = '';
+      }
+    }
+
+    async function kgLoadFull() {
+      kgLoading.value = true;
+      try {
+        const data = await kgFetchGraphData('');
+        console.log('kgLoadFull: backend response:', JSON.stringify(data).slice(0, 500));
+        kgGraphData.value = data;
+        await nextTick();
+        kgRenderChart(data);
+      } catch (e) {
+        console.error('kgLoadFull failed:', e);
+      } finally {
+        kgLoading.value = false;
+      }
+    }
+
+    async function kgSearch() {
+      if (!kgSearchQuery.value.trim()) return;
+      kgLoading.value = true;
+      try {
+        const data = await kgFetchGraphData(kgSearchQuery.value.trim());
+        console.log('kgSearch: backend response:', JSON.stringify(data).slice(0, 500));
+        kgGraphData.value = data;
+        await nextTick();
+        kgRenderChart(data);
+      } catch (e) {
+        console.error('kgSearch failed:', e);
+      } finally {
+        kgLoading.value = false;
+      }
+    }
+
+    async function kgClickNode(nodeId) {
+      try {
+        const [detail, sources] = await Promise.all([
+          kgFetchNodeDetail(nodeId),
+          apiFetch(`/api/v1/graph/node/${encodeURIComponent(nodeId)}/sources`).then(r => r.ok ? r.json() : {}),
+        ]);
+        detail.source_texts = sources.source_texts || [];
+        kgSelectedNode.value = detail;
+      } catch (e) {
+        console.error('kgClickNode failed:', e);
+      }
+    }
+
+    function initKgView() {
+      if (kgViewInitialized.value) return;
+      kgViewInitialized.value = true;
+      kgLoadFull();
+    }
     const showPptTriggerBtn = ref(false);
 
     const kbFileInput = ref(null);
@@ -1122,6 +1503,7 @@ createApp({
           currentUser.value = data.username || authUsername.value;
           localStorage.setItem('access_token', data.access_token);
           localStorage.setItem('current_user', currentUser.value);
+          if (data.user_id) localStorage.setItem('userId', String(data.user_id));
           authError.value = '';
           loadKbStats();
       fetchKbDocuments();
@@ -1142,6 +1524,7 @@ createApp({
           currentUser.value = data.username || authUsername.value;
           localStorage.setItem('access_token', data.access_token);
           localStorage.setItem('current_user', currentUser.value);
+          if (data.user_id) localStorage.setItem('userId', String(data.user_id));
           authError.value = '';
           loadKbStats();
         }
@@ -1720,6 +2103,9 @@ createApp({
 
     async function uploadKnowledgeBatch() {
       if (kbFiles.value.length === 0 || isKbUploading.value) return;
+
+      // ── 上传新文件时，完全重置上一次任务的状态（防串扰） ──
+      kbUploadProgress.value = null;
       isKbUploading.value = true;
       kbUploadProgress.value = { percent: 0, message: '正在上传文件...', status: 'active' };
 
@@ -1735,63 +2121,216 @@ createApp({
           let errMsg = '未知错误';
           try { const err = await res.json(); errMsg = err.detail || errMsg; } catch {}
           kbUploadProgress.value = { percent: 100, message: '上传失败: ' + errMsg, status: 'error' };
+          addLine('[系统] ', '❌ 上传失败: ' + errMsg, 'text-red-400');
           return;
         }
         const result = await res.json();
-        kbUploadProgress.value = { percent: 60, message: '文件已接收，AI 正在后台构建知识网络...', status: 'active' };
-
+        const taskId = result.task_id;
         const fileNames = result.files ? result.files.join(', ') : '';
-        addLine('[知识库] ', `☁️ 已成功加入后台分析队列: ${fileNames}`, 'text-amber-400');
+
+        kbUploadProgress.value = { percent: 5, message: '文件已接收，AI 正在构建知识网络...', status: 'active' };
+        addLine('[神经接入] ', `☁️ 文献已接收: ${fileNames}`, 'text-amber-400');
 
         kbFiles.value = [];
         if (kbFileInput.value) kbFileInput.value.value = '';
 
-        fetchKbDocuments();
-        loadMyDocuments();
+        // ── 如果有 task_id，启动增量日志轮询 ──
+        if (taskId) {
+          addLine('[神经接入] ', '🧠 神经接入池已激活，实时追踪处理进度...', 'text-cyan-400');
+          // 自动切换到 Terminal 视图
+          activeTab.value = 'terminal';
 
-        let baselineChunks = 0;
-        try {
-          await loadKbStats();
-          baselineChunks = kbStats.value ? kbStats.value.total_chunks : 0;
-        } catch {}
+          // 状态 → 图标/颜色映射
+          const stateStyleMap = {
+            'PENDING':            { icon: '⏳', color: 'text-gray-400', prefix: '[神经接入]' },
+            'STARTED':            { icon: '🚀', color: 'text-blue-400', prefix: '[神经接入]' },
+            'INITIALIZING':       { icon: '🔧', color: 'text-blue-400', prefix: '[神经接入]' },
+            'EXTRACTING':         { icon: '📄', color: 'text-yellow-400', prefix: '[文件解析]' },
+            'VISION_PROCESSING':  { icon: '👁️', color: 'text-purple-400', prefix: '[多模态视觉]' },
+            'ANALYZING':          { icon: '🔬', color: 'text-cyan-400', prefix: '[知识分析]' },
+            'GENERATING':         { icon: '✍️', color: 'text-emerald-400', prefix: '[Wiki 生成]' },
+            'EMBEDDING':          { icon: '🔢', color: 'text-amber-400', prefix: '[向量嵌入]' },
+            'GRAPH_BUILDING':     { icon: '🕸️', color: 'text-pink-400', prefix: '[知识图谱]' },
+            'WIKILINK_BACKFILL':  { icon: '🔗', color: 'text-indigo-400', prefix: '[认知链接]' },
+            'FLASHCARD':          { icon: '🃏', color: 'text-orange-400', prefix: '[记忆提取]' },
+            'COMPLETED':          { icon: '✅', color: 'text-green-400', prefix: '[知识网络]' },
+            'FAILED':             { icon: '❌', color: 'text-red-400', prefix: '[系统]' },
+          };
 
-        let pollCount = 0;
-        const MAX_POLLS = 10;
-        const pollInterval = setInterval(async () => {
-          pollCount++;
-          try {
-            const statsRes = await apiFetch('/api/v1/knowledge/stats');
-            if (statsRes.ok) {
-              const newStats = await statsRes.json();
-              kbStats.value = newStats;
-              if (newStats.total_chunks > baselineChunks) {
-                kbUploadProgress.value = { percent: 100, message: `✅ 知识网络构建完成！共 ${newStats.total_chunks} 个知识块`, status: 'done' };
-                clearInterval(pollInterval);
-                fetchKbDocuments();
-                loadMyDocuments();
-                setTimeout(() => { kbUploadProgress.value = null; }, 5000);
-              } else if (pollCount >= MAX_POLLS) {
-                clearInterval(pollInterval);
-                kbUploadProgress.value = { percent: 100, message: '✅ 已成功加入后台分析队列', status: 'done' };
-                fetchKbDocuments();
-                loadMyDocuments();
-                setTimeout(() => { kbUploadProgress.value = null; }, 3000);
-              }
+          // ── 防御性轮询参数 ──
+          let consecutiveErrors = 0;
+          const MAX_CONSECUTIVE_ERRORS = 10;
+          const IDLE_TIMEOUT_MS = 10 * 60 * 1000;  // 10 分钟无新日志 = 后端失联
+          let lastLogTime = Date.now();            // 最后一次收到新日志的时间
+          let pollStopped = false;
+
+          // 闲置超时检查定时器：每 30 秒检查一次是否超过 3 分钟无日志
+          const idleCheckTimer = setInterval(() => {
+            if (pollStopped) {
+              clearInterval(idleCheckTimer);
+              return;
             }
-          } catch {}
-        }, 3000);
+            const idleMs = Date.now() - lastLogTime;
+            if (idleMs > IDLE_TIMEOUT_MS) {
+              pollStopped = true;
+              clearInterval(idleCheckTimer);
+              addLine('[系统警告] ', '⏰ 后端已连续 3 分钟无进度推送，任务可能已失联或被系统回收', 'text-red-400');
+              kbUploadProgress.value = {
+                percent: 0,
+                message: '后端长时间无响应，任务可能已失联',
+                status: 'error',
+              };
+              fetchKbDocuments();
+              loadMyDocuments();
+            }
+          }, 30000);
 
-        setTimeout(() => {
-          clearInterval(pollInterval);
-          if (kbUploadProgress.value && kbUploadProgress.value.status === 'active') {
-            kbUploadProgress.value = { percent: 100, message: '✅ 已成功加入后台分析队列', status: 'done' };
-            fetchKbDocuments();
-            loadMyDocuments();
-            setTimeout(() => { kbUploadProgress.value = null; }, 3000);
-          }
-        }, 30000);
+          const pollKbProgress = async () => {
+            if (pollStopped) return;
+            try {
+              const statusRes = await apiFetch(`/api/v1/kb/task_status/${taskId}`);
+              if (!statusRes.ok) {
+                consecutiveErrors++;
+                if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+                  pollStopped = true;
+                  clearInterval(idleCheckTimer);
+                  addLine('[系统] ', `❌ 连续 ${consecutiveErrors} 次查询失败，停止轮询`, 'text-red-400');
+                  return;
+                }
+                setTimeout(pollKbProgress, 3000);
+                return;
+              }
+              consecutiveErrors = 0;
+
+              const status = await statusRes.json();
+              const taskStatus = status.status || 'UNKNOWN';
+              const message = status.message || '处理中...';
+              const percent = status.percent || 0;
+
+              // ── 增量追加日志 ──
+              const newLogs = status.new_logs || [];
+              let taskFullyCompleted = false;
+              let completedChunks = '?';
+
+              // 收到新日志，刷新闲置计时器
+              if (newLogs.length > 0) {
+                lastLogTime = Date.now();
+              }
+
+              for (const log of newLogs) {
+                // 检测绝对业务终点旗帜
+                if (log.state === 'TASK_FULLY_COMPLETED' && log.message && log.message.includes('___TASK_FULLY_COMPLETED___')) {
+                  taskFullyCompleted = true;
+                  // 提取 total_chunks 信息
+                  const parts = log.message.split('|');
+                  if (parts.length > 1) completedChunks = parts[1];
+                  // 过滤掉系统信号，不显示给用户
+                  continue;
+                }
+                // 检测失败旗帜
+                if (log.state === 'FAILED') {
+                  taskFullyCompleted = true; // 失败也是终态
+                }
+
+                const style = stateStyleMap[log.state] || { icon: '⚡', color: 'text-gray-400', prefix: '[系统]' };
+                const ts = log.ts ? `[${log.ts}] ` : '';
+                addLine(`${style.prefix} `, `${style.icon} ${ts}${log.message}`, style.color);
+              }
+
+              // ── 终态判断：只有匹配到业务终点旗帜才停止轮询 ──
+              if (taskFullyCompleted) {
+                pollStopped = true;
+                clearInterval(idleCheckTimer);
+
+                if (taskStatus === 'FAILED' || (status.error && status.error.includes('ZOMBIE'))) {
+                  // 失败终态
+                  kbUploadProgress.value = { percent: 0, message: message, status: 'error' };
+                } else {
+                  // 成功终态：打印优雅的最终日志
+                  addLine('[知识网络] ', `✅ 终极构建成功！共 ${completedChunks} 个知识块已完美归档入库。`, 'text-green-400');
+                  kbUploadProgress.value = { percent: 100, message: `✅ 知识网络构建完成！共 ${completedChunks} 个知识块`, status: 'done' };
+                  setTimeout(() => { kbUploadProgress.value = null; }, 5000);
+                }
+
+                fetchKbDocuments();
+                loadMyDocuments();
+                return;
+              }
+
+              // 更新进度条（非终态）
+              kbUploadProgress.value = {
+                percent: percent,
+                message: message,
+                status: 'active',
+              };
+
+              // 继续轮询（不管 Celery 状态是什么，只要没收到旗帜就继续）
+              setTimeout(pollKbProgress, 1500);
+
+            } catch (err) {
+              consecutiveErrors++;
+              if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+                pollStopped = true;
+                clearInterval(idleCheckTimer);
+                addLine('[系统] ', `❌ 连续 ${consecutiveErrors} 次网络异常，停止轮询: ${err.message}`, 'text-red-400');
+                return;
+              }
+              setTimeout(pollKbProgress, 3000);
+            }
+          };
+
+          // 启动轮询
+          setTimeout(pollKbProgress, 1000);
+        } else {
+          // 无 task_id（非 Celery 模式），降级为原有轮询逻辑
+          fetchKbDocuments();
+          loadMyDocuments();
+
+          let baselineChunks = 0;
+          try {
+            await loadKbStats();
+            baselineChunks = kbStats.value ? kbStats.value.total_chunks : 0;
+          } catch {}
+
+          let pollCount = 0;
+          const MAX_POLLS = 10;
+          const pollInterval = setInterval(async () => {
+            pollCount++;
+            try {
+              const statsRes = await apiFetch('/api/v1/knowledge/stats');
+              if (statsRes.ok) {
+                const newStats = await statsRes.json();
+                kbStats.value = newStats;
+                if (newStats.total_chunks > baselineChunks) {
+                  kbUploadProgress.value = { percent: 100, message: `✅ 知识网络构建完成！共 ${newStats.total_chunks} 个知识块`, status: 'done' };
+                  clearInterval(pollInterval);
+                  fetchKbDocuments();
+                  loadMyDocuments();
+                  setTimeout(() => { kbUploadProgress.value = null; }, 5000);
+                } else if (pollCount >= MAX_POLLS) {
+                  clearInterval(pollInterval);
+                  kbUploadProgress.value = { percent: 100, message: '✅ 已成功加入后台分析队列', status: 'done' };
+                  fetchKbDocuments();
+                  loadMyDocuments();
+                  setTimeout(() => { kbUploadProgress.value = null; }, 3000);
+                }
+              }
+            } catch {}
+          }, 3000);
+
+          setTimeout(() => {
+            clearInterval(pollInterval);
+            if (kbUploadProgress.value && kbUploadProgress.value.status === 'active') {
+              kbUploadProgress.value = { percent: 100, message: '✅ 已成功加入后台分析队列', status: 'done' };
+              fetchKbDocuments();
+              loadMyDocuments();
+              setTimeout(() => { kbUploadProgress.value = null; }, 3000);
+            }
+          }, 30000);
+        }
       } catch (err) {
         kbUploadProgress.value = { percent: 100, message: '上传错误: ' + (err.message || '网络异常'), status: 'error' };
+        addLine('[系统] ', '❌ 上传错误: ' + (err.message || '网络异常'), 'text-red-400');
       } finally {
         isKbUploading.value = false;
       }
@@ -2234,6 +2773,8 @@ createApp({
       authToken, currentUser, isLoggedIn, authMode, authUsername, authPassword, authError, isAuthLoading,
       handleAuth, handleLogout,
       sidebarView, myDocuments, myDocsTotal, myDocsPage, isLoadingDocs, docProgress, loadMyDocuments,
+      loadKbStats, initKgView,
+      kgSearchQuery, kgLoading, kgSelectedNode, kgStatsText, kgGetColor, kgSearch, kgLoadFull, kgClickNode,
     };
   }
 }).mount('#app');

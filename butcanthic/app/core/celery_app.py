@@ -29,6 +29,8 @@ celery_app.conf.update(
     task_acks_late=True,
     worker_prefetch_multiplier=1,
     worker_concurrency=int(os.getenv("CELERY_WORKER_CONCURRENCY", "2")),
+    worker_max_tasks_per_child=5,       # 处理5个任务后自动重启Worker，防止内存泄漏OOM
+    worker_max_memory_per_child=300000, # 300MB内存上限，超限自动重启
     result_expires=3600,
 )
 
