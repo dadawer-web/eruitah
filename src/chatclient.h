@@ -327,6 +327,8 @@ private slots:
     void farmHarvestResponse(bool success, int plotId, const QString &message, int coins);
     void farmPlotHarvested(int plotId, int ownerId);
     void farmBroadcastReceived(const QString &message);
+    void farmLogReceived(const QJsonArray &logs);
+    void farmLogDeleted(int logId, bool success, const QString &message);
     void careerAdviceReceived(const QString &skills, const QString &resumeHighlight, const QString &learningAdvice);
 };
 

@@ -1,5 +1,6 @@
 package com.chat.ai.service;
 
+import com.chat.ai.annotation.AiosNotify;
 import com.chat.ai.model.HarvestJudgment;
 import com.chat.ai.rpc.RpcPushService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,6 +21,7 @@ public class FarmService {
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
     private final RpcPushService rpcPushService;
+    private final org.springframework.amqp.rabbit.core.RabbitTemplate rabbitTemplate;
 
     private static final String FARM_LOCK_PREFIX = "farm:lock:";
     private static final int FARM_DISPATCH_CHANNEL = 9996;
@@ -29,11 +31,13 @@ public class FarmService {
     public FarmService(FarmAiJudgeService farmAiJudgeService,
                        StringRedisTemplate stringRedisTemplate,
                        ObjectMapper objectMapper,
-                       RpcPushService rpcPushService) {
+                       RpcPushService rpcPushService,
+                       org.springframework.amqp.rabbit.core.RabbitTemplate rabbitTemplate) {
         this.farmAiJudgeService = farmAiJudgeService;
         this.stringRedisTemplate = stringRedisTemplate;
         this.objectMapper = objectMapper;
         this.rpcPushService = rpcPushService;
+        this.rabbitTemplate = rabbitTemplate;
     }
 
     public HarvestJudgment processAnswer(int userId, int plotId, int ownerId,
@@ -46,6 +50,8 @@ public class FarmService {
             log.warn("Farm plot {} is locked by another user, rejecting answer from user {}", plotId, userId);
             HarvestJudgment rejected = new HarvestJudgment(false, 0, "这块地正在被别人回答，请稍后再试~");
             sendAnswerAck(userId, plotId, ownerId, "", rejected);
+            // 收菜失败：只通知收菜者
+            publishAiosEvent(userId, "farm_service", "收菜失败");
             return rejected;
         }
 
@@ -56,6 +62,15 @@ public class FarmService {
             if (judgment.canHarvest()) {
                 sendBroadcast(userId, ownerId, judgment.feedback());
                 farmAiJudgeService.extractAndSaveKnowledgeGraph(userId, question, answer, judgment.score());
+                // 收菜成功：通知收菜者
+                publishAiosEvent(userId, "farm_service", "收菜成功");
+                // 收菜成功：通知菜主人（别人收了你的菜）
+                if (userId != ownerId) {
+                    publishAiosEvent(ownerId, "farm_service", "你的菜被收了！");
+                }
+            } else {
+                // 收菜失败：只通知收菜者
+                publishAiosEvent(userId, "farm_service", "收菜失败");
             }
 
             return judgment;
@@ -80,8 +95,6 @@ public class FarmService {
 
     private void sendBroadcast(int userId, int ownerId, String feedback) {
         try {
-            // [RPC Migration] Replaced Redis convertAndSend with RpcPushService.pushToCpp
-            // Old: stringRedisTemplate.convertAndSend(String.valueOf(FARM_DISPATCH_CHANNEL), broadcastJson);
             String broadcastMsg = String.format("玩家%d 成功收割了玩家%d的菜！AI评语：%s",
                 userId, ownerId, feedback);
 
@@ -91,6 +104,28 @@ public class FarmService {
 
         } catch (Exception e) {
             log.error("Error broadcasting farm harvest", e);
+        }
+    }
+
+    private void publishAiosEvent(int targetUserId, String source, String message) {
+        try {
+            String routingKey = "aios.events.user_" + targetUserId + "." + source;
+
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("action", "notify");
+            payload.put("source", source);
+            payload.put("msg", message);
+            payload.put("timestamp", System.currentTimeMillis());
+
+            rabbitTemplate.convertAndSend(
+                com.chat.ai.config.RabbitEventBusConfig.EXCHANGE_NAME,
+                routingKey,
+                payload
+            );
+
+            log.info("[AIOS] → user_{}: {}", targetUserId, message);
+        } catch (Exception e) {
+            log.error("[AIOS] 事件发布失败: targetUserId={}", targetUserId, e);
         }
     }
 

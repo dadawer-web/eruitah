@@ -58,6 +58,30 @@ services:
     networks:
       - eruitah-net
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: chat-rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"     # AMQP 原生端口（Java/Python 后端连接）
+      - "15672:15672"   # Web 管理控制台
+      - "1883:1883"     # MQTT 端口（C++ 桌面端连接）
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: eruitah2026
+    # 启动时启用 MQTT 插件，然后启动 RabbitMQ 服务
+    command: >
+      bash -c "rabbitmq-plugins enable rabbitmq_mqtt && rabbitmq-server"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    networks:
+      - eruitah-net
+
   chatserver:
     build:
       context: .
@@ -235,6 +259,7 @@ volumes:
   neo4j-logs:
   audio-storage:
   butcanthic-chroma:
+  rabbitmq-data:
 
 networks:
   eruitah-net:

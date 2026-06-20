@@ -16,11 +16,16 @@ FarmDialog::FarmDialog(int userId, const QString &userName, ChatClient *client, 
     , m_exp(0)
 {
     setupUI();
-    requestFarmState();
 }
 
 FarmDialog::~FarmDialog()
 {
+}
+
+void FarmDialog::showEvent(QShowEvent *event)
+{
+    QDialog::showEvent(event);
+    requestFarmState();
 }
 
 void FarmDialog::setupUI()
@@ -89,6 +94,10 @@ void FarmDialog::setupUI()
 
     navLayout->addStretch();
 
+    m_logBtn = new QPushButton(QString::fromUtf8("\xF0\x9F\x93\x9C 收菜日志"));
+    m_logBtn->setStyleSheet("background-color: #e76f51;");
+    navLayout->addWidget(m_logBtn);
+
     mainLayout->addLayout(navLayout);
 
     m_scene = new QGraphicsScene(this);
@@ -134,6 +143,9 @@ void FarmDialog::setupUI()
     connect(m_refreshBtn, &QPushButton::clicked, this, &FarmDialog::onRefreshFarm);
     connect(m_visitBtn, &QPushButton::clicked, this, &FarmDialog::onVisitFarm);
     connect(m_myFarmBtn, &QPushButton::clicked, this, &FarmDialog::onMyFarm);
+    connect(m_logBtn, &QPushButton::clicked, this, &FarmDialog::onFarmLogClicked);
+    connect(m_chatClient, &ChatClient::farmLogReceived, this, &FarmDialog::onFarmLogReceived);
+    connect(m_chatClient, &ChatClient::farmLogDeleted, this, &FarmDialog::onFarmLogDeleted);
 }
 
 void FarmDialog::onPlotClicked(int plotId, int state)
@@ -357,4 +369,198 @@ void FarmDialog::handlePlotHarvested(int plotId, int ownerId)
 void FarmDialog::handleFarmBroadcast(const QString &message)
 {
     m_broadcastLabel->setText(QString::fromUtf8("\xF0\x9F\x93\xA2 ") + message);
+}
+
+void FarmDialog::onFarmLogClicked()
+{
+    QJsonObject farmMsg;
+    farmMsg["msgid"] = MsgType::FARM_LOG_REQ;
+    farmMsg["userid"] = m_userId;
+    if (!m_currentSubject.isEmpty() && m_currentSubject != QString::fromUtf8("全部")) {
+        farmMsg["subject"] = m_currentSubject;
+    }
+    m_chatClient->sendJsonMessage(farmMsg);
+    m_broadcastLabel->setText(QString::fromUtf8("\xF0\x9F\x93\x9C 正在加载收菜日志..."));
+}
+
+void FarmDialog::onFarmLogReceived(const QJsonArray &logs)
+{
+    // Close old dialog if still open
+    if (m_currentLogDialog && m_currentLogDialog->isVisible()) {
+        m_currentLogDialog->close();
+    }
+
+    QDialog *logDialog = new QDialog(this);
+    logDialog->setWindowTitle(QString::fromUtf8("\xF0\x9F\x93\x96 疑问本"));
+    logDialog->setMinimumSize(600, 500);
+    logDialog->setStyleSheet(R"(
+        QDialog { background-color: #1a1a2e; }
+        QLabel { color: #e0e0e0; }
+        QScrollArea { border: none; background-color: #1a1a2e; }
+        QComboBox {
+            background-color: #2a2a3e;
+            color: #ffd700;
+            border: 1px solid #3a3a4e;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 13px;
+            font-weight: bold;
+            min-width: 160px;
+        }
+        QComboBox::drop-down { border: none; }
+        QComboBox QAbstractItemView {
+            background-color: #2a2a3e;
+            color: #e0e0e0;
+            selection-background-color: #3a3a5e;
+            border: 1px solid #3a3a4e;
+        }
+    )");
+
+    m_currentLogDialog = logDialog;
+
+    QVBoxLayout *mainLayout = new QVBoxLayout(logDialog);
+
+    // Subject filter row
+    QHBoxLayout *filterRow = new QHBoxLayout;
+    QLabel *filterLabel = new QLabel(QString::fromUtf8("\xF0\x9F\x8F\xB7\xEF\xB8\x8F 学科筛选:"));
+    filterLabel->setStyleSheet("font-size: 13px; font-weight: bold; color: #ffd700;");
+    filterRow->addWidget(filterLabel);
+
+    QComboBox *subjectCombo = new QComboBox;
+    QStringList subjects = {QString::fromUtf8("全部"),
+                            QString::fromUtf8("DS - 数据结构"),
+                            QString::fromUtf8("CO - 计算机组成原理"),
+                            QString::fromUtf8("OS - 操作系统"),
+                            QString::fromUtf8("NET - 计算机网络")};
+    QStringList subjectCodes = {"", "DS", "CO", "OS", "NET"};
+    subjectCombo->addItems(subjects);
+    // Restore current selection (block signals to avoid re-triggering onFarmLogClicked during init)
+    subjectCombo->blockSignals(true);
+    int idx = subjectCodes.indexOf(m_currentSubject);
+    if (idx >= 0) {
+        subjectCombo->setCurrentIndex(idx);
+    }
+    subjectCombo->blockSignals(false);
+    filterRow->addWidget(subjectCombo);
+    filterRow->addStretch();
+    mainLayout->addLayout(filterRow);
+
+    // Connect filter change
+    connect(subjectCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this, subjectCombo, subjectCodes]() {
+        int idx = subjectCombo->currentIndex();
+        m_currentSubject = subjectCodes.value(idx, "");
+        // Re-query with new subject filter
+        onFarmLogClicked();
+    });
+
+    if (logs.isEmpty()) {
+        QLabel *emptyLabel = new QLabel(QString::fromUtf8("\xF0\x9F\x98\xB4 还没有收菜记录，快去答题吧~"));
+        emptyLabel->setStyleSheet("font-size: 16px; color: #888; padding: 40px;");
+        emptyLabel->setAlignment(Qt::AlignCenter);
+        mainLayout->addWidget(emptyLabel);
+    } else {
+        QLabel *countLabel = new QLabel(QString::fromUtf8("\xE2\x9C\x85 共 %1 条记录").arg(logs.size()));
+        countLabel->setStyleSheet("font-size: 14px; color: #ffd700; font-weight: bold; padding: 5px;");
+        mainLayout->addWidget(countLabel);
+
+        QScrollArea *scrollArea = new QScrollArea;
+        scrollArea->setWidgetResizable(true);
+        QWidget *scrollContent = new QWidget;
+        scrollContent->setStyleSheet("background-color: #1a1a2e;");
+        QVBoxLayout *scrollLayout = new QVBoxLayout(scrollContent);
+        scrollLayout->setSpacing(8);
+
+        for (int i = logs.size() - 1; i >= 0; --i) {
+            QJsonObject log = logs[i].toObject();
+            int logId = log["id"].toInt(-1);
+            int answererId = log["answererid"].toInt(-1);
+            QString question = log["question"].toString();
+            QString answer = log["answer"].toString();
+            int score = log["score"].toInt(0);
+            QString feedback = log["feedback"].toString();
+            QString subject = log["subject"].toString();
+
+            QFrame *card = new QFrame;
+            card->setStyleSheet(R"(
+                QFrame {
+                    background-color: #2a2a3e;
+                    border-radius: 8px;
+                    padding: 10px;
+                    border: 1px solid #3a3a4e;
+                }
+            )");
+            QVBoxLayout *cardLayout = new QVBoxLayout(card);
+            cardLayout->setSpacing(4);
+
+            QHBoxLayout *headerRow = new QHBoxLayout;
+            QString header = QString::fromUtf8("\xF0\x9F\x91\xA4 答题人: User#%1").arg(answererId);
+            if (!subject.isEmpty()) {
+                header += QString("  [%1]").arg(subject);
+            }
+            header += QString::fromUtf8("  \xE2\xAD\x90 %1/100").arg(score);
+
+            QLabel *headerLabel = new QLabel(header);
+            headerLabel->setStyleSheet("font-weight: bold; font-size: 13px; color: #ffd700;");
+            headerRow->addWidget(headerLabel);
+            headerRow->addStretch();
+
+            QPushButton *deleteBtn = new QPushButton(QString::fromUtf8("\xE2\x9C\x85 斩！已掌握"));
+            deleteBtn->setStyleSheet("background-color: #27ae60; color: white; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold;");
+            deleteBtn->setProperty("logId", logId);
+            connect(deleteBtn, &QPushButton::clicked, this, [this, card, logId]() {
+                QJsonObject farmMsg;
+                farmMsg["msgid"] = MsgType::FARM_LOG_DELETE_REQ;
+                farmMsg["userid"] = m_userId;
+                farmMsg["logid"] = logId;
+                m_chatClient->sendJsonMessage(farmMsg);
+                card->hide();
+            });
+            headerRow->addWidget(deleteBtn);
+
+            cardLayout->addLayout(headerRow);
+
+            QLabel *questionLabel = new QLabel(QString::fromUtf8("\xF0\x9F\x93\x8D ") + question);
+            questionLabel->setStyleSheet("color: #7ec8e3; font-size: 13px;");
+            questionLabel->setWordWrap(true);
+            cardLayout->addWidget(questionLabel);
+
+            QLabel *answerLabel = new QLabel(QString::fromUtf8("\xE2\x9C\x8D ") + answer);
+            answerLabel->setStyleSheet("color: #a8dadc; font-size: 12px;");
+            answerLabel->setWordWrap(true);
+            cardLayout->addWidget(answerLabel);
+
+            if (!feedback.isEmpty()) {
+                QLabel *feedbackLabel = new QLabel(QString::fromUtf8("\xF0\x9F\xA4\x96 AI: ") + feedback);
+                feedbackLabel->setStyleSheet("color: #aaa; font-size: 11px; font-style: italic;");
+                feedbackLabel->setWordWrap(true);
+                cardLayout->addWidget(feedbackLabel);
+            }
+
+            scrollLayout->addWidget(card);
+        }
+
+        scrollLayout->addStretch();
+        scrollArea->setWidget(scrollContent);
+        mainLayout->addWidget(scrollArea);
+    }
+
+    QPushButton *closeBtn = new QPushButton(QString::fromUtf8("\xE5\x85\xB3\xE9\x97\xAD"));
+    closeBtn->setStyleSheet("background-color: #6c757d; color: white; padding: 8px 24px; border-radius: 6px; font-weight: bold;");
+    connect(closeBtn, &QPushButton::clicked, logDialog, &QDialog::accept);
+    mainLayout->addWidget(closeBtn, 0, Qt::AlignCenter);
+
+    logDialog->setAttribute(Qt::WA_DeleteOnClose);
+    connect(logDialog, &QObject::destroyed, this, [this]() {
+        m_currentLogDialog = nullptr;
+    });
+    logDialog->show();
+}
+
+void FarmDialog::onFarmLogDeleted(int logId, bool success, const QString &message)
+{
+    if (success) {
+        m_broadcastLabel->setText(QString::fromUtf8("\xE2\x9C\x85 已斩！知识点已掌握"));
+    } else {
+        m_broadcastLabel->setText(QString::fromUtf8("\xE2\x9D\x8C 删除失败：") + message);
+    }
 }

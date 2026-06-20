@@ -54,7 +54,11 @@ enum MsgType {
     FARM_HARVEST_MSG_ACK = 77,
     FARM_BROADCAST_MSG = 78,
     FARM_PLOT_HARVESTED_NOTIFY = 79,
-    CAREER_ADVICE_MSG = 80
+    CAREER_ADVICE_MSG = 80,
+    FARM_LOG_REQ = 81,
+    FARM_LOG_ACK = 82,
+    FARM_LOG_DELETE_REQ = 83,
+    FARM_LOG_DELETE_ACK = 84
 };
 
 constexpr const char* TABLE_USER = "user";

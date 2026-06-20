@@ -8,6 +8,12 @@
     <file>icons/send.png</file>
     <file>icons/refresh.png</file>
     <file>icons/exit.png</file>
+    <file>icons/pet_idle.gif</file>
+    <file>icons/pet_thinking.gif</file>
+    <file>icons/pet_working.gif</file>
+    <file>icons/pet_error.gif</file>
+    <file>icons/pet_success.gif</file>
+    <file>icons/pet_notification.gif</file>
     <file>styles.qss</file>
     <file>styles_dark.qss</file>
     <file>html/graph.html</file>

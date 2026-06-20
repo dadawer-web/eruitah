@@ -1529,7 +1529,7 @@ void ChatClient::processMessage(const QJsonObject &message) {
     }
     
     default: {
-        if (msgType >= 70 && msgType <= 80) {
+        if (msgType >= 70 && msgType <= 84) {
             switch (msgType) {
             case MsgType::FARM_PLANT_MSG_ACK: {
                 int errno_val = message["errno"].toInt();
@@ -1583,6 +1583,18 @@ void ChatClient::processMessage(const QJsonObject &message) {
                 int plotId = message["plotid"].toInt();
                 int ownerId = message["ownerid"].toInt();
                 emit farmPlotHarvested(plotId, ownerId);
+                break;
+            }
+            case MsgType::FARM_LOG_ACK: {
+                QJsonArray logs = message["logs"].toArray();
+                emit farmLogReceived(logs);
+                break;
+            }
+            case MsgType::FARM_LOG_DELETE_ACK: {
+                int logId = message["logid"].toInt();
+                int errno_val = message["errno"].toInt();
+                QString msg = message["errmsg"].toString();
+                emit farmLogDeleted(logId, errno_val == 0, msg);
                 break;
             }
             case MsgType::CAREER_ADVICE_MSG: {

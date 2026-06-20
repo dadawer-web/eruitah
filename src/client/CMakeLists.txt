@@ -104,6 +104,16 @@ set(CLIENT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/../career_dashboard_dialog.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../career_dashboard_dialog.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../career_card_widget.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../desktoppet.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../desktoppet.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../messagebubble.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../messagebubble.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../servicemonitor.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../servicemonitor.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../petmqttclient.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../petmqttclient.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../globaleventbus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../globaleventbus.h
     # 服务器相关的核心文件（为了支持MainWindow中的服务器功能）
     ${CMAKE_CURRENT_SOURCE_DIR}/../server/db/db.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../server/model/usermodel.cpp
@@ -152,6 +162,16 @@ set(QT_CHAT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/../career_dashboard_dialog.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../career_dashboard_dialog.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../career_card_widget.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../desktoppet.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../desktoppet.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../messagebubble.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../messagebubble.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../servicemonitor.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../servicemonitor.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../petmqttclient.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../petmqttclient.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../globaleventbus.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../globaleventbus.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../qtchat.qrc
     # 服务器相关的核心文件
     ${CMAKE_CURRENT_SOURCE_DIR}/../server/db/db.cpp
@@ -169,8 +189,8 @@ add_executable(ChatClient ${CLIENT_SOURCES} ${MATERIAL_SOURCES})
 add_executable(QtChat ${QT_CHAT_SOURCES} ${MATERIAL_SOURCES})
 
 # 指定可执行文件所依赖的库
-target_link_libraries(ChatClient Qt5::Widgets Qt5::Network Qt5::Concurrent Qt5::Svg Qt5::WebEngineWidgets Qt5::Multimedia Qt5::WebSockets muduo_net muduo_base pthread mysqlclient hiredis)
-target_link_libraries(QtChat Qt5::Widgets Qt5::Network Qt5::Concurrent Qt5::Svg Qt5::WebEngineWidgets Qt5::Multimedia Qt5::WebSockets muduo_net muduo_base pthread mysqlclient hiredis)
+target_link_libraries(ChatClient Qt5::Widgets Qt5::Network Qt5::Concurrent Qt5::Svg Qt5::WebEngineWidgets Qt5::Multimedia Qt5::WebSockets muduo_net muduo_base pthread mysqlclient hiredis mosquitto)
+target_link_libraries(QtChat Qt5::Widgets Qt5::Network Qt5::Concurrent Qt5::Svg Qt5::WebEngineWidgets Qt5::Multimedia Qt5::WebSockets muduo_net muduo_base pthread mysqlclient hiredis mosquitto)
 
 # 启用Qt的MOC处理
 set_target_properties(ChatClient PROPERTIES

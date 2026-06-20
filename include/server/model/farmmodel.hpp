@@ -43,6 +43,9 @@ public:
     bool updatePlotState(int ownerid, int plotindex, int state);
     bool answerPlot(int ownerid, int plotindex, int answererid, const string &answer, int score, const string &feedback);
     bool harvestPlot(int ownerid, int plotindex);
+    bool insertHarvestLog(int ownerid, int plotindex, int answererid, const string &question, const string &subject, const string &answer, int score, const string &feedback);
+    bool deleteHarvestLog(int logId);
+    vector<FarmPlot> queryHarvestLogs(int ownerid, const string &subject = "", int limit = 20);
 };
 
 #endif

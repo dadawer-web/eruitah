@@ -5,6 +5,7 @@ import logging
 import os
 import re
 import shutil
+from app.core.decorators import aios_notify
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -16,6 +17,36 @@ logger = logging.getLogger(__name__)
 _worker_rag_engine = None
 _worker_ai_client = None
 _worker_graph_engine = None
+
+
+def _publish_kb_event(user_id: str, state: str, message: str, percent: int):
+    """
+    将知识库处理进度同步到 RabbitMQ 事件总线，供 C++ 桌宠订阅。
+
+    状态映射:
+        INITIALIZING / EXTRACTING / ANALYZING / GENERATING / EMBEDDING / GRAPH_BUILDING → working
+        COMPLETED → success
+        error → error
+    """
+    try:
+        from app.core.event_bus import aios_event_bus
+
+        # 状态 → action 映射
+        if state == "COMPLETED":
+            action = "success"
+        elif state in ("ERROR", "FAILED"):
+            action = "error"
+        else:
+            action = "working"
+
+        aios_event_bus.publish(
+            user_id=str(user_id),
+            source="knowledge_base",
+            action=action,
+            message=message,
+        )
+    except Exception as e:
+        logger.debug(f"[KB] 事件总线发布失败（不阻断）: {e}")
 
 # ── Wiki 页面持久化目录（按 user_id 隔离） ──
 WIKI_PAGES_DIR = os.path.join(
@@ -1133,7 +1164,16 @@ async def backfill_wikilinks_to_graph(user_id: str):
         logger.info(f"[WikilinkBackfill] 用户 {user_id[:8]}... 回填 {total_triplets} 条 wikilink 三元组")
 
 
+@aios_notify(
+    source="knowledge_base",
+    action_start="working",
+    action_error="error",
+    action_success="success",
+    start_msg_template="大模型正在吞噬您的文献，准备生成闪卡...",
+    success_msg_template="图谱构建与闪卡抽取完成！",
+)
 async def process_kb_files_sync(user_id: str, files: List[Dict[str, Any]], progress_callback=None) -> Dict[str, Any]:
+    """知识库文件处理主入口（已接入 AIOS 事件总线装饰器）"""
     rag_engine = _get_rag_engine()
     if rag_engine is None:
         logger.error("KB Processor: RAG engine not initialized (both app_state and standalone)")
@@ -1159,6 +1199,8 @@ async def _process_kb_files_inner(user_id: str, files: List[Dict[str, Any]], rag
                 progress_callback(state, message, percent, **meta)
             except Exception as e:
                 logger.warning(f"[KB] progress_callback failed (state={state}): {e}")
+        # 同步事件到 RabbitMQ → 桌宠大管家
+        _publish_kb_event(user_id, state, message, percent)
 
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=800,

@@ -48,6 +48,7 @@
 #include "careeradvicepopup.h"
 #include "career_history.h"
 #include "career_dashboard_dialog.h"
+#include "desktoppet.h"
 
 // Material 组件前向声明
 class QtMaterialTextField;
@@ -202,6 +203,9 @@ private:
     RealtimeVoiceDialog *m_realtimeVoiceDialog;
     QPushButton *m_realtimeVoiceBtn;
     CompanionReadingDialog *m_companionReadingDialog;
+
+    // 桌宠大管家
+    DesktopPetWidget *m_desktopPet = nullptr;
 
     // 查找联系人方法
     QString getUserNameById(int userId);

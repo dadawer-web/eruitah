@@ -5,6 +5,7 @@
 #include "realtimevoicedialog.h"
 #include "dashboarddialog.h"
 #include "companionreadingdialog.h"
+#include "globaleventbus.h"
 #include <QDebug>
 #include <QDateTime>
 #include <QDesktopServices>
@@ -930,10 +931,28 @@ ChatWindow::ChatWindow(int userId, const QString &userName, ChatClient *client, 
     QTimer::singleShot(100, this, [this, userId]() {
         chatClient->requestGroupList(userId);
     });
-    
+
+    // ── 桌宠大管家 ──
+    m_desktopPet = new DesktopPetWidget();
+
+    // 注入 userId（会自动初始化 GlobalEventBus 并连接事件）
+    QString currentUserId = chatClient ? QString::number(chatClient->getUserId()) : QString::number(userId);
+    m_desktopPet->setUserId(currentUserId);
+
+    // 屏幕右下角定位
+    QRect screenRect = QApplication::primaryScreen()->geometry();
+    int petX = screenRect.width() - m_desktopPet->width() - 50;
+    int petY = screenRect.height() - m_desktopPet->height() - 80;
+    m_desktopPet->move(petX, petY);
+    m_desktopPet->show();
+
 }
 
 ChatWindow::~ChatWindow() {
+    if (m_desktopPet) {
+        delete m_desktopPet;
+        m_desktopPet = nullptr;
+    }
 }
 
 // 生成聊天键
@@ -2918,7 +2937,7 @@ void ChatWindow::uploadVoiceFile() {
     durationPart.setBody(QString::number(duration).toUtf8());
     multiPart->append(durationPart);
     
-    QNetworkRequest request(QUrl("http://127.0.0.1:8081/api/voice/upload"));
+    QNetworkRequest request{QUrl("http://127.0.0.1:8081/api/voice/upload")};
     QNetworkReply *reply = m_voiceUploadManager->post(request, multiPart);
     multiPart->setParent(reply);
     
@@ -2969,8 +2988,14 @@ void ChatWindow::onOpenFarm()
 {
     if (!m_farmDialog) {
         m_farmDialog = new FarmDialog(userId, userName, chatClient, this);
+        m_farmDialog->setWindowModality(Qt::ApplicationModal);
     }
-    m_farmDialog->exec();
+    if (m_farmDialog->isVisible()) {
+        m_farmDialog->raise();
+        m_farmDialog->activateWindow();
+    } else {
+        m_farmDialog->show();
+    }
 }
 
 void ChatWindow::onOpenKnowledgeGraph()
@@ -4177,7 +4202,7 @@ void ChatWindow::onUploadKnowledgeDoc() {
 
     multiPart->append(filePart);
 
-    QNetworkRequest request(QUrl("http://localhost:8081/api/rag/upload"));
+    QNetworkRequest request{QUrl("http://localhost:8081/api/rag/upload")};
     QNetworkReply *reply = ragNetworkManager->post(request, multiPart);
     multiPart->setParent(reply);
 

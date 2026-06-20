@@ -123,6 +123,8 @@ ChatService::ChatService()
     _msgHandlerMap.insert({FARM_ANSWER_MSG, std::bind(&ChatService::farmAnswer, this, _1, _2, _3)});
     _msgHandlerMap.insert({FARM_QUERY_MSG, std::bind(&ChatService::farmQuery, this, _1, _2, _3)});
     _msgHandlerMap.insert({FARM_HARVEST_MSG, std::bind(&ChatService::farmHarvest, this, _1, _2, _3)});
+    _msgHandlerMap.insert({FARM_LOG_REQ, std::bind(&ChatService::farmLog, this, _1, _2, _3)});
+    _msgHandlerMap.insert({FARM_LOG_DELETE_REQ, std::bind(&ChatService::farmLogDelete, this, _1, _2, _3)});
 
     if(_redis.connect()){
         LOG_INFO << "Redis connected successfully!";
@@ -191,8 +193,11 @@ void ChatService::handleRpcPushMessage(int receiverId, int64_t groupId,
                          << " canHarvest=" << canHarvest << " score=" << score;
                 
                 if (canHarvest && plotId >= 0 && ownerId > 0 && userId > 0) {
+                    // Query question/subject before answerPlot overwrites them
+                    FarmPlot plotBefore = _farmModel.queryPlot(ownerId, plotId);
                     if (_farmModel.answerPlot(ownerId, plotId, userId, answer, score, feedback)) {
                         LOG_INFO << "[RPC Push] Farm plot persisted: owner=" << ownerId << " plot=" << plotId;
+                        _farmModel.insertHarvestLog(ownerId, plotId, userId, plotBefore.question, plotBefore.subject, answer, score, feedback);
                         _farmModel.updateFarmUserCoins(userId, 50);
                         _farmModel.updateFarmUserExp(ownerId, 10);
                         LOG_INFO << "[RPC Push] Coins +50 for user " << userId << ", Exp +10 for owner " << ownerId;
@@ -1914,4 +1919,54 @@ void ChatService::farmHarvest(const TcpConnectionPtr& conn, json& js, Timestamp 
         response["errmsg"] = "收菜失败";
         conn->send(response.dump());
     }
+}
+
+void ChatService::farmLog(const TcpConnectionPtr& conn, json& js, Timestamp time)
+{
+    int userid = js["userid"].get<int>();
+    string subject;
+    if (js.contains("subject") && !js["subject"].is_null()) {
+        subject = js["subject"].get<string>();
+    }
+
+    LOG_INFO << "farmLog: userid=" << userid << " subject=" << subject;
+
+    vector<FarmPlot> logs = _farmModel.queryHarvestLogs(userid, subject);
+
+    json response;
+    response["msgid"] = FARM_LOG_ACK;
+    response["errno"] = 0;
+
+    json logsArray = json::array();
+    for (auto &plot : logs) {
+        json logObj;
+        logObj["id"] = plot.id;
+        logObj["answererid"] = plot.answererid;
+        logObj["question"] = plot.question;
+        logObj["answer"] = plot.answer;
+        logObj["score"] = plot.score;
+        logObj["feedback"] = plot.feedback;
+        logObj["subject"] = plot.subject;
+        logsArray.push_back(logObj);
+    }
+    response["logs"] = logsArray;
+
+    conn->send(response.dump());
+}
+
+void ChatService::farmLogDelete(const TcpConnectionPtr& conn, json& js, Timestamp time)
+{
+    int userid = js["userid"].get<int>();
+    int logId = js["logid"].get<int>();
+
+    LOG_INFO << "farmLogDelete: userid=" << userid << " logId=" << logId;
+
+    bool ok = _farmModel.deleteHarvestLog(logId);
+
+    json response;
+    response["msgid"] = FARM_LOG_DELETE_ACK;
+    response["errno"] = ok ? 0 : 1;
+    response["logid"] = logId;
+    response["errmsg"] = ok ? "删除成功" : "删除失败";
+    conn->send(response.dump());
 }

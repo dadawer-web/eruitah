@@ -8,6 +8,8 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor
 from queue import Empty, Queue
 
+from decorators import aios_notify
+
 RPC_BRIDGE_DIR = os.environ.get(
     "RPC_BRIDGE_DIR",
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "protobuf-rpc-bridge", "python"),
@@ -163,8 +165,16 @@ def _event_to_run_code_response(event: dict, session_id: str) -> chat_pb2.RunCod
     return chat_pb2.RunCodeResponse(log_stream="", is_finished=False)
 
 
-def _run_swarm_in_thread(request: chat_pb2.RunCodeRequest, queue: Queue):
-    user_id = request.user_id
+@aios_notify(
+    source="sandbox",
+    action_start="thinking",
+    action_error="error",
+    action_success="idle",
+    start_msg_template="AI Agent 正在您的沙盒中疯狂敲代码...",
+    success_msg_template="代码执行完美！未发现 Bug。",
+)
+def _run_swarm_in_thread(user_id, request, queue: Queue):
+    """Agent 执行入口（user_id 提升为首参，供 @aios_notify 提取）"""
     session_id = request.session_id or f"rpc_{uuid.uuid4().hex[:8]}"
     task_prompt = request.task_prompt
     skills = list(request.skills)
@@ -240,7 +250,7 @@ async def handle_run_agent_task(rpc_msg: chat_pb2.RpcMessage):
     q: Queue = Queue()
     loop = asyncio.get_event_loop()
 
-    loop.run_in_executor(_executor, _run_swarm_in_thread, request, q)
+    loop.run_in_executor(_executor, _run_swarm_in_thread, user_id, request, q)
 
     has_error = False
 

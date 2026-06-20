@@ -7,6 +7,8 @@
 #include <QCoreApplication>
 #include <QDesktopServices>
 #include <QUrl>
+#include <QFile>
+#include <QTextStream>
 #include "chatwindow.h"
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
@@ -18,6 +20,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     initUI();
     setWindowTitle("QtChat 主程序");
     resize(600, 400);
+
+    // 创建桌面宠物
+    desktopPet = new DesktopPetWidget(this);
+    desktopPet->show();
+    desktopPet->startSupervising();
 }
 
 MainWindow::~MainWindow() {
@@ -111,11 +118,10 @@ void MainWindow::startServer() {
     // 连接信号槽
     connect(serverThread, &QThread::started, [=]() {
         bool success = server->startServer(port);
-        emit onServerStarted(success);
+        onServerStarted(success);
     });
     connect(serverThread, &QThread::finished, server, &QObject::deleteLater);
     connect(serverThread, &QThread::finished, serverThread, &QObject::deleteLater);
-    connect(this, &MainWindow::onServerStopped, server, &ChatServer::stopServer);
 
     serverThread->start();
 
@@ -132,7 +138,8 @@ void MainWindow::stopServer() {
     }
 
     if (serverThread && serverThread->isRunning()) {
-        emit onServerStopped();
+        server->stopServer();
+        onServerStopped();
         serverThread->quit();
         serverThread->wait();
     }
@@ -215,6 +222,14 @@ void MainWindow::onServerStopped() {
 void MainWindow::handleLoginSuccess(int userId, const QString &userName) {
     // 保存当前登录的 userId
     m_userId = userId;
+
+    // 桌宠设置用户 ID（事件总线已由 ChatWindow 初始化）
+    if (desktopPet) {
+        desktopPet->setUserId(QString::number(userId));
+    }
+
+    // 初始化全局事件总线
+    GlobalEventBus::instance().init(QString::number(userId));
 
     // 将调试信息写入文件，便于在无图形界面环境下诊断
     QString logFilePath = QCoreApplication::applicationDirPath() + "/login_debug.log";

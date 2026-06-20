@@ -13,7 +13,9 @@
 #include <QLineEdit>
 #include <QTextEdit>
 #include <QScrollArea>
+#include <QComboBox>
 #include <QMap>
+#include <QShowEvent>
 #include "farmplotitem.h"
 
 class ChatClient;
@@ -34,11 +36,17 @@ public:
     void handlePlotHarvested(int plotId, int ownerId);
     void handleFarmBroadcast(const QString &message);
 
+protected:
+    void showEvent(QShowEvent *event) override;
+
 private slots:
     void onPlotClicked(int plotId, int state);
     void onRefreshFarm();
     void onVisitFarm();
     void onMyFarm();
+    void onFarmLogClicked();
+    void onFarmLogReceived(const QJsonArray& logs);
+    void onFarmLogDeleted(int logId, bool success, const QString &message);
 
 private:
     void setupUI();
@@ -57,6 +65,7 @@ private:
     QPushButton *m_refreshBtn;
     QPushButton *m_visitBtn;
     QPushButton *m_myFarmBtn;
+    QPushButton *m_logBtn;
     QLabel *m_broadcastLabel;
 
     QMap<int, FarmPlotItem *> m_plots;
@@ -76,6 +85,9 @@ private:
 
     int m_coins;
     int m_exp;
+
+    QDialog *m_currentLogDialog = nullptr;
+    QString m_currentSubject;
 };
 
 #endif

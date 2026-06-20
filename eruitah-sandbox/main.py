@@ -1670,6 +1670,19 @@ async def websocket_coding(websocket: WebSocket, user_id: int = 0):
             engine_name = "🧠 Swarm (多智能体)" if use_swarm else "⚡ 单体 Agent"
             logger.info(f"{engine_name} 引擎启动: task={task_id}, model={model}, work_dir={work_dir}")
 
+            # ── AIOS 事件通知：Agent 开始写代码 ──
+            try:
+                from event_bus import aios_event_bus
+                ok = aios_event_bus.publish(
+                    user_id=str(effective_user_id),
+                    source="sandbox",
+                    action="thinking",
+                    message="AI Agent 正在您的沙盒中疯狂敲代码...",
+                )
+                logger.info(f"[AIOS] Agent 开始 thinking 事件发布: user={effective_user_id}, ok={ok}")
+            except Exception as e:
+                logger.error(f"[AIOS] Agent 开始 thinking 事件发布失败: {e}")
+
             agent_needs_restart = True
             while agent_needs_restart:
                 agent_needs_restart = False
@@ -1875,6 +1888,20 @@ async def websocket_coding(websocket: WebSocket, user_id: int = 0):
 
             if task_id:
                 logger.info(f"💾 任务 {task_id} Agent 循环结束 (消息已由 run_agent 内部每轮保存)")
+
+                # ── AIOS 事件通知：Agent 完成写代码 ──
+                try:
+                    from event_bus import aios_event_bus
+                    ok = aios_event_bus.publish(
+                        user_id=str(effective_user_id),
+                        source="sandbox",
+                        action="idle",
+                        message="AI Coding Agent 已完成任务，请验收学习",
+                    )
+                    logger.info(f"[AIOS] Agent 完成 idle 事件发布: user={effective_user_id}, ok={ok}")
+                except Exception as e:
+                    logger.error(f"[AIOS] Agent 完成 idle 事件发布失败: {e}")
+
                 if not skip_career_analysis:
                     await safe_trigger_analysis(effective_user_id, task_id, work_dir)
                 else:

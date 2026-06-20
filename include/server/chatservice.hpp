@@ -59,6 +59,8 @@ public:
   void farmAnswer(const TcpConnectionPtr& conn, json& js, Timestamp time);
   void farmQuery(const TcpConnectionPtr& conn, json& js, Timestamp time);
   void farmHarvest(const TcpConnectionPtr& conn, json& js, Timestamp time);
+  void farmLog(const TcpConnectionPtr& conn, json& js, Timestamp time);
+  void farmLogDelete(const TcpConnectionPtr& conn, json& js, Timestamp time);
   
   void clientCloseException(const TcpConnectionPtr& conn);
   

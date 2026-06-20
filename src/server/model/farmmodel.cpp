@@ -60,6 +60,27 @@ bool FarmModel::initTable()
         }
     }
 
+    const char *sql3 = "CREATE TABLE IF NOT EXISTS farm_harvest_log ("
+                       "id INT AUTO_INCREMENT PRIMARY KEY,"
+                       "ownerid INT NOT NULL,"
+                       "plotindex INT NOT NULL,"
+                       "answererid INT NOT NULL,"
+                       "question TEXT,"
+                       "subject VARCHAR(10),"
+                       "answer TEXT,"
+                       "score INT DEFAULT NULL,"
+                       "feedback TEXT,"
+                       "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+                       "KEY idx_ownerid (ownerid),"
+                       "KEY idx_answererid (answererid)"
+                       ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+
+    if (mysql.connect()) {
+        if (!mysql.update(sql3)) {
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -254,4 +275,77 @@ bool FarmModel::harvestPlot(int ownerid, int plotindex)
         return mysql.update(sql);
     }
     return false;
+}
+
+bool FarmModel::insertHarvestLog(int ownerid, int plotindex, int answererid, const string &question, const string &subject, const string &answer, int score, const string &feedback)
+{
+    string escapedQuestion = escapeString(question);
+    string escapedSubject = escapeString(subject);
+    string escapedAnswer = escapeString(answer);
+    string escapedFeedback = escapeString(feedback);
+
+    char sql[8192] = {0};
+    sprintf(sql, "INSERT INTO farm_harvest_log(ownerid, plotindex, answererid, question, subject, answer, score, feedback) "
+                 "VALUES(%d, %d, %d, '%s', '%s', '%s', %d, '%s')",
+            ownerid, plotindex, answererid,
+            escapedQuestion.c_str(), escapedSubject.c_str(), escapedAnswer.c_str(),
+            score, escapedFeedback.c_str());
+
+    MySQL mysql;
+    if (mysql.connect()) {
+        return mysql.update(sql);
+    }
+    return false;
+}
+
+bool FarmModel::deleteHarvestLog(int logId)
+{
+    char sql[256] = {0};
+    sprintf(sql, "DELETE FROM farm_harvest_log WHERE id=%d", logId);
+
+    MySQL mysql;
+    if (mysql.connect()) {
+        return mysql.update(sql);
+    }
+    return false;
+}
+
+vector<FarmPlot> FarmModel::queryHarvestLogs(int ownerid, const string &subject, int limit)
+{
+    vector<FarmPlot> logs;
+
+    string sql = "SELECT id, ownerid, plotindex, 0, IFNULL(question,''), IFNULL(subject,''), "
+                 "answererid, IFNULL(answer,''), IFNULL(score,-1), IFNULL(feedback,'') "
+                 "FROM farm_harvest_log WHERE ownerid=" + to_string(ownerid);
+
+    if (!subject.empty()) {
+        sql += " AND subject='" + escapeString(subject) + "'";
+    }
+
+    sql += " ORDER BY created_at DESC LIMIT " + to_string(limit);
+
+    MySQL mysql;
+    if (mysql.connect()) {
+        MYSQL_RES *res = mysql.query(sql.c_str());
+        if (res != nullptr) {
+            MYSQL_ROW row;
+            while ((row = mysql_fetch_row(res)) != nullptr) {
+                FarmPlot fp;
+                fp.id = atoi(row[0]);
+                fp.ownerid = atoi(row[1]);
+                fp.plotindex = atoi(row[2]);
+                fp.state = atoi(row[3]);
+                fp.question = row[4];
+                fp.subject = row[5];
+                fp.answererid = atoi(row[6]);
+                fp.answer = row[7];
+                fp.score = atoi(row[8]);
+                fp.feedback = row[9];
+                logs.push_back(fp);
+            }
+            mysql_free_result(res);
+        }
+    }
+
+    return logs;
 }

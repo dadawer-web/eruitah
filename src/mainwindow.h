@@ -19,6 +19,8 @@
 #include <QMessageBox>
 #include "chatserver.h"
 #include "loginwindow.h"
+#include "desktoppet.h"
+#include "globaleventbus.h"
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -55,6 +57,7 @@ private:
     int m_userId = 0;
 
     LoginWindow *loginWindow;
+    DesktopPetWidget *desktopPet;
 
     void initUI();
     void addLog(const QString &log);

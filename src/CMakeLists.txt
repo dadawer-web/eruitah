@@ -32,6 +32,10 @@ set(CLIENT_SOURCES
     realtimevoicedialog.h
     codingagentdialog.cpp
     codingagentdialog.h
+    desktoppet.cpp
+    desktoppet.h
+    messagebubble.cpp
+    messagebubble.h
     qtchat.qrc
 )
 
