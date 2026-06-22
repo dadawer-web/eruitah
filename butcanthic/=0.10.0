@@ -1,0 +1,6 @@
+Collecting duckdb
+  Downloading duckdb-1.5.4-cp312-cp312-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl.metadata (4.2 kB)
+Downloading duckdb-1.5.4-cp312-cp312-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl (21.5 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 21.5/21.5 MB 477.1 kB/s eta 0:00:00
+Installing collected packages: duckdb
+Successfully installed duckdb-1.5.4

@@ -14,10 +14,12 @@
 规则2 - 联网检测：如果指令中包含不在本地文档中的新技术名词，或明确要求'对比最新'、'查一下'、'外网'等，且流转历史中没有 Web_Researcher，必须返回 web_researcher。
 规则3 - PPT 强制路由：如果用户指令中出现'PPT'、'幻灯片'、'演示文稿'中的任何一个词，最终目标必须是 generate_ppt！但'写报告'、'调研报告'不等于PPT！
 规则4 - 纯总结路由：只有当用户指令中【完全没有】PPT/幻灯片/演示文稿相关词汇时，才允许路由到 generate_summary。
+规则5 - Excel/CSV 数据文件绝对禁止路由到 generate_summary：如果用户上传的是 Excel/CSV 文件（.xlsx/.xls/.csv），或者要求进行数据统计、生成图表、绘制饼图/柱状图/折线图、数据分析，你【绝对禁止】将任务分配给 generate_summary！Excel 数据文件必须交给数据分析专家处理。generate_summary 仅适用于纯文本文档（.docx）的摘要，将 Excel 表格数据当作文本提取后送入大模型会导致严重超时！
 
 【⚠️ 关键禁止规则】：
 - 禁止将 web_researcher 完成后的任务再路由到 generate_ppt！web_researcher 会自动导出Word报告并结束。
 - 禁止把'写报告'、'调研报告'、'研究报告'误解为PPT需求！除非用户明确说了'PPT'或'幻灯片'。
+- 禁止将 Excel/CSV 数据文件路由到 generate_summary！Excel 文件包含结构化表格数据，不是纯文本，强行提取全文会因数据量过大导致大模型超时崩溃。
 
 当前系统流转历史：
 {history_str}

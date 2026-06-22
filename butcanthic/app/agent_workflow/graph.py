@@ -28,6 +28,7 @@ from app.agent_workflow.nodes.retrieve_knowledge import retrieve_knowledge_async
 from app.agent_workflow.nodes.reason_and_fill import reason_and_fill
 from app.agent_workflow.nodes.critic_review import critic_review, critic_review_ppt, PPT_MAX_RETRIES
 from app.agent_workflow.nodes.process_excel import process_excel_node
+from app.agent_workflow.nodes.chat_excel_node import chat_excel_node
 from app.agent_workflow.nodes.process_ppt import process_ppt_node
 from app.agent_workflow.nodes.generate_ppt import generate_ppt_node
 from app.agent_workflow.nodes.process_summary import generate_summary_node
@@ -72,6 +73,14 @@ def _make_process_excel_node(llm_client, rag_engine=None):
 
     async def node(state: WorkflowState) -> WorkflowState:
         return await process_excel_node(state, processor, llm_client, rag_engine=rag_engine)
+    return node
+
+
+def _make_chat_excel_node(llm_client, rag_engine=None):
+    processor = ExcelDataProcessor()
+
+    async def node(state: WorkflowState) -> WorkflowState:
+        return await chat_excel_node(state, processor, llm_client, rag_engine=rag_engine)
     return node
 
 
@@ -242,6 +251,7 @@ def build_workflow_graph(
     graph.add_node("critic_review", _make_critic_review_node(llm_client))
     graph.add_node("increment_retry", _increment_retry)
     graph.add_node("process_excel", _make_process_excel_node(llm_client, rag_engine=rag_engine))
+    graph.add_node("chat_excel", _make_chat_excel_node(llm_client, rag_engine=rag_engine))
     graph.add_node("process_ppt", _make_process_ppt_node(llm_client, rag_engine=rag_engine))
     graph.add_node("supervisor", _make_supervisor_node(llm_client))
     graph.add_node("web_researcher", _make_web_researcher_node(llm_client))
@@ -261,6 +271,7 @@ def build_workflow_graph(
         {
             "process_word": "extract_context",
             "process_excel": "process_excel",
+            "chat_excel": "chat_excel",
             "process_ppt": "process_ppt",
             "generate_ppt": "generate_ppt_entry",
             "supervisor": "supervisor",
@@ -294,6 +305,7 @@ def build_workflow_graph(
 
     graph.add_edge("increment_retry", "reason_and_fill")
     graph.add_edge("process_excel", END)
+    graph.add_edge("chat_excel", END)
     graph.add_edge("process_ppt", END)
 
     graph.add_conditional_edges("supervisor", _route_from_supervisor)
@@ -401,6 +413,7 @@ NODE_DISPLAY_NAMES = {
     "critic_review": "审查校验",
     "increment_retry": "重试优化",
     "process_excel": "数据分析Agent",
+    "chat_excel": "ChatExcel查询Agent",
     "process_ppt": "PPT分析Agent",
     "supervisor": "主管调度",
     "web_researcher": "联网检索",
@@ -421,6 +434,7 @@ NODE_AGENT_NAMES = {
     "critic_review": "CriticAgent",
     "increment_retry": "RetryManager",
     "process_excel": "DataAgent",
+    "chat_excel": "ChatExcelAgent",
     "process_ppt": "PPTAgent",
     "supervisor": "Supervisor",
     "web_researcher": "WebResearcher",
@@ -431,6 +445,24 @@ NODE_AGENT_NAMES = {
     "generate_summary": "SummaryAgent",
     "auto_tagging": "Auto_Tagging",
     "literature_guide": "Literature_Guide",
+}
+
+# 流式模式下各节点的进度百分比，用于前端进度条更新
+NODE_PROGRESS_MAP = {
+    "gateway": 5,
+    "extract_context": 15,
+    "retrieve_knowledge": 25,
+    "reason_and_fill": 45,
+    "critic_review": 55,
+    "increment_retry": 60,
+    "process_excel": 40,
+    "process_ppt": 40,
+    "supervisor": 20,
+    "web_researcher": 30,
+    "knowledge_librarian": 25,
+    "generate_ppt": 65,
+    "generate_summary": 65,
+    "generate_ppt_entry": 20,
 }
 
 
@@ -473,6 +505,7 @@ async def run_workflow_streaming(
     file_desc = ", ".join(f.get("filename", "") for f in uploaded_files) if uploaded_files else ""
     yield {
         "status": "processing",
+        "progress": 2,
         "node": "",
         "agent": "System",
         "message": f"[System] 开始处理: {file_desc or '纯文本模式（无文件）'}",
@@ -517,6 +550,7 @@ async def run_workflow_streaming(
                 if error and not file_type:
                     yield {
                         "status": "error",
+                        "progress": -1,
                         "node": node_name,
                         "agent": agent,
                         "message": f"[{agent}] {display}失败: {error}",
@@ -526,6 +560,11 @@ async def run_workflow_streaming(
 
                 sse_event = _build_node_event(node_name, node_state, display, agent)
                 if sse_event:
+                    node_progress = NODE_PROGRESS_MAP.get(node_name, 0)
+                    state_progress = node_state.get("current_progress", 0)
+                    if state_progress > 0:
+                        node_progress = state_progress
+                    sse_event["progress"] = node_progress
                     yield sse_event
 
                 kg_data = None
@@ -547,6 +586,7 @@ async def run_workflow_streaming(
         logger.error(f"Workflow streaming error: {e}", exc_info=True)
         yield {
             "status": "error",
+            "progress": -1,
             "node": "",
             "agent": "System",
             "message": f"[System] 工作流执行异常: {str(e)}",
@@ -564,6 +604,7 @@ async def run_workflow_streaming(
 
         yield {
             "status": "preview",
+            "progress": 90,
             "node": "",
             "agent": "System",
             "message": "[System] 文档预览已生成",
@@ -579,6 +620,7 @@ async def run_workflow_streaming(
 
     yield {
         "status": "success",
+        "progress": 100,
         "node": "",
         "agent": "System",
         "message": "[System] 处理完成!",
@@ -745,6 +787,61 @@ def _build_node_event(
             "node": node_name,
             "agent": agent,
             "message": f"[{agent}] 正在提取数据Schema并生成清洗代码...",
+            "data": {},
+        }
+
+    elif node_name == "chat_excel":
+        structured = node_state.get("structured_data", {})
+        error = node_state.get("error_message", "")
+        query_result = structured.get("query_result", {})
+        duckdb_info = structured.get("duckdb_info", {})
+        chat_history = structured.get("chat_history", [])
+
+        if error and not query_result.get("success"):
+            return {
+                "status": "processing",
+                "node": node_name,
+                "agent": agent,
+                "message": f"[{agent}] 查询失败: {error[:100]}",
+                "data": {"error": error},
+            }
+
+        if query_result:
+            row_count = query_result.get("row_count", 0)
+            display_type = query_result.get("display_type", "table")
+            sql = query_result.get("sql", "")
+            display_labels = {
+                "table": "表格", "bar_chart": "柱状图",
+                "line_chart": "折线图", "pie_chart": "饼图",
+            }
+            label = display_labels.get(display_type, "表格")
+            rounds = len(chat_history)
+            return {
+                "status": "processing",
+                "node": node_name,
+                "agent": agent,
+                "message": f"[{agent}] SQL查询完成! 返回{row_count}行数据，展示方式: {label} (第{rounds}轮对话)",
+                "data": {
+                    "query_result": query_result,
+                    "duckdb_info": {"row_count": duckdb_info.get("row_count", 0), "table_name": duckdb_info.get("table_name", "")},
+                    "chat_mode": True,
+                },
+            }
+
+        if duckdb_info:
+            return {
+                "status": "processing",
+                "node": node_name,
+                "agent": agent,
+                "message": f"[{agent}] Excel已导入DuckDB ({duckdb_info.get('row_count', 0)}行)，正在生成SQL查询...",
+                "data": {"duckdb_loaded": True},
+            }
+
+        return {
+            "status": "processing",
+            "node": node_name,
+            "agent": agent,
+            "message": f"[{agent}] 正在将Excel导入DuckDB内存数据库...",
             "data": {},
         }
 

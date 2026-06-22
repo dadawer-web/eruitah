@@ -60,6 +60,18 @@
       background: #f0f0f0;
       font-weight: bold;
     }
+    .preview-paper img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 12px auto;
+      border-radius: 8px;
+    }
+    .preview-paper pre {
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
 
     .ppt-editor-left {
       width: 350px;
@@ -233,6 +245,14 @@
       background: #fff;
       flex-shrink: 0;
     }
+    /* Toast 动画 */
+    .toast-slide-enter-active, .toast-slide-leave-active {
+      transition: all 0.3s ease;
+    }
+    .toast-slide-enter-from, .toast-slide-leave-to {
+      opacity: 0;
+      transform: translateX(120px);
+    }
   </style>
 </head>
 <body class="bg-gray-950 text-white min-h-screen">
@@ -359,17 +379,20 @@
                   {{ { docx: 'W', xlsx: 'X', csv: 'X', pptx: 'P', pdf: 'D' }[doc.file_type] || '?' }}
                 </div>
                 <div class="flex-1 min-w-0">
-                  <div class="text-xs font-medium text-gray-200 truncate">{{ doc.filename }}</div>
+                  <div class="text-xs font-medium text-gray-200 truncate flex items-center gap-1.5">
+                    {{ doc.filename }}
+                    <span v-if="doc.status === 'failed' || doc.status === 'error'" class="text-[9px] px-1.5 py-0.5 rounded bg-red-600/30 text-red-400 font-medium flex-shrink-0">❌ 处理失败</span>
+                  </div>
                   <div class="text-[10px] text-gray-500 mt-0.5">{{ doc.upload_time ? new Date(doc.upload_time).toLocaleString('zh-CN') : '' }}</div>
                 </div>
                 <span class="text-[10px] px-2 py-0.5 rounded-full font-medium flex-shrink-0"
                   :class="{
                     'bg-amber-900/30 text-amber-400': doc.status === 'processing',
                     'bg-emerald-900/30 text-emerald-400': doc.status === 'completed',
-                    'bg-red-900/30 text-red-400': doc.status === 'failed',
-                    'bg-gray-800 text-gray-400': !['processing','completed','failed'].includes(doc.status)
+                    'bg-red-900/30 text-red-400': doc.status === 'failed' || doc.status === 'error',
+                    'bg-gray-800 text-gray-400': !['processing','completed','failed','error'].includes(doc.status)
                   }">
-                  {{ { processing: '处理中', completed: '已完成', failed: '失败' }[doc.status] || doc.status }}
+                  {{ { processing: '处理中', completed: '已完成', failed: '失败', error: '失败' }[doc.status] || doc.status }}
                 </span>
               </div>
               <div v-if="doc.status === 'processing' && docProgress[doc.task_id]" class="mt-2">
@@ -377,6 +400,25 @@
                   <div class="progress-bar-fill active" :style="{ width: Math.max(docProgress[doc.task_id].progress, 5) + '%' }"></div>
                 </div>
                 <div class="text-[10px] text-gray-500 mt-1">{{ docProgress[doc.task_id].action }}</div>
+              </div>
+              <!-- 操作按钮栏：查看 / 删除 / 沉淀入库（删除按钮任何状态都可点击，失败任务禁用查看/入库） -->
+              <div class="flex items-center gap-1 mt-2 pt-2 border-t border-gray-800">
+                <button @click="viewTaskResult(doc)" :disabled="viewingTaskId === doc.task_id || doc.status === 'failed' || doc.status === 'error'"
+                  class="flex items-center gap-1 text-[10px] px-2 py-1 rounded bg-indigo-900/40 text-indigo-400 hover:bg-indigo-800/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                  查看
+                </button>
+                <button @click="deleteTask(doc)"
+                  class="flex items-center gap-1 text-[10px] px-2 py-1 rounded bg-red-900/40 text-red-400 hover:bg-red-800/60 transition-colors">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  删除
+                </button>
+                <button @click="transferToRag(doc)" :disabled="doc._transferred || doc.status === 'failed' || doc.status === 'error' || transferringTaskId === doc.task_id"
+                  class="flex items-center gap-1 text-[10px] px-2 py-1 rounded bg-emerald-900/40 text-emerald-400 hover:bg-emerald-800/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                  <svg v-if="transferringTaskId === doc.task_id" class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                  <svg v-else class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                  {{ transferringTaskId === doc.task_id ? '入库中...' : (doc._transferred ? '已入库' : '沉淀入库') }}
+                </button>
               </div>
             </div>
           </div>
@@ -1085,6 +1127,21 @@
       </div>
     </div>
   </Teleport>
+
+  <!-- Toast 提示组件 -->
+  <Transition name="toast-slide">
+    <div v-if="toastVisible"
+      class="fixed top-6 right-6 z-[9999] flex items-center gap-2 px-4 py-3 rounded-lg shadow-2xl border"
+      :class="{
+        'bg-emerald-900/95 border-emerald-700 text-emerald-300': toastType === 'success',
+        'bg-red-900/95 border-red-700 text-red-300': toastType === 'error',
+        'bg-amber-900/95 border-amber-700 text-amber-300': toastType === 'warning',
+      }">
+      <svg v-if="toastType === 'success'" class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <svg v-else-if="toastType === 'error'" class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <span class="text-sm font-medium">{{ toastMessage }}</span>
+    </div>
+  </Transition>
 </div>
 
 <script>
@@ -1108,10 +1165,23 @@ createApp({
     const safePreviewHtml = computed(() => {
       if (!previewHtml.value) return '';
       if (typeof DOMPurify !== 'undefined') {
-        return DOMPurify.sanitize(previewHtml.value, {
-          ADD_TAGS: ['table', 'tr', 'td', 'th', 'thead', 'tbody', 'colgroup', 'col', 'img'],
-          ADD_ATTR: ['style', 'class', 'colspan', 'rowspan', 'src', 'alt', 'width', 'height'],
-        });
+        try {
+          const sanitized = DOMPurify.sanitize(previewHtml.value, {
+            ADD_TAGS: ['table', 'tr', 'td', 'th', 'thead', 'tbody', 'colgroup', 'col', 'img', 'div', 'h2', 'h4', 'pre', 'span', 'p'],
+            ADD_ATTR: ['style', 'class', 'colspan', 'rowspan', 'src', 'alt', 'width', 'height'],
+            ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|data):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+            ALLOW_DATA_ATTR: true,
+          });
+          // 如果 DOMPurify 清洗后内容大幅缩短（可能剥离了 base64 图片），回退到原始 HTML
+          if (sanitized.length < previewHtml.value.length * 0.5 && previewHtml.value.includes('base64')) {
+            console.warn('[Preview] DOMPurify 可能剥离了 base64 图片，回退到原始 HTML');
+            return previewHtml.value;
+          }
+          return sanitized;
+        } catch (e) {
+          console.error('[Preview] DOMPurify 清洗失败，回退到原始 HTML:', e);
+          return previewHtml.value;
+        }
       }
       return previewHtml.value;
     });
@@ -1438,6 +1508,12 @@ createApp({
     const myDocsPage = ref(1);
     const isLoadingDocs = ref(false);
     const docProgress = reactive({});
+    const viewingTaskId = ref('');  // 正在加载预览的任务 ID（用于按钮 disabled 状态）
+    const transferringTaskId = ref('');  // 正在沉淀入库的任务 ID（防止重复点击）
+    const toastVisible = ref(false);
+    const toastMessage = ref('');
+    const toastType = ref('success');
+    let toastTimer = null;
 
     const authToken = ref(localStorage.getItem('access_token') || '');
     const currentUser = ref(localStorage.getItem('current_user') || '');
@@ -1713,6 +1789,15 @@ createApp({
     watch(slideDeck, (newVal) => {
       if (newVal) {
         addLine('[Debug] ', `📊 slideDeck已更新: ${newVal.slides?.length || 0} slides, keys=${Object.keys(newVal).join(',')}`, 'text-yellow-400');
+      }
+    });
+
+    watch(previewHtml, (newVal) => {
+      if (newVal && newVal.length > 0) {
+        console.log('[Preview] previewHtml updated, length:', newVal.length, 'switching to preview tab');
+        if (activeTab.value !== 'preview') {
+          activeTab.value = 'preview';
+        }
       }
     });
 
@@ -1993,6 +2078,100 @@ createApp({
         }
       } catch (err) {
         alert('删除错误: ' + err.message);
+      }
+    }
+
+    // ===== 上区任务历史操作：查看 / 删除 / 沉淀入库 =====
+
+    function showToast(message, type = 'success') {
+      toastMessage.value = message;
+      toastType.value = type;
+      toastVisible.value = true;
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { toastVisible.value = false; }, 3000);
+    }
+
+    async function viewTaskResult(doc) {
+      if (!doc.task_id) {
+        alert('该记录无 task_id，无法查看');
+        return;
+      }
+      viewingTaskId.value = doc.task_id;
+      try {
+        const res = await apiFetch(`/api/v1/tasks/${doc.task_id}`);
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          alert('查看失败: ' + (err.detail || res.status));
+          return;
+        }
+        const data = await res.json();
+        if (data.filled_html) {
+          // 核心复用：直接设置 previewHtml，触发 safePreviewHtml 计算属性 + watch 自动切换 Tab
+          previewHtml.value = data.filled_html;
+          slideDeck.value = null;  // 确保显示 preview-paper 而非 PPT 编辑器
+          activeTab.value = 'preview';
+          addLine('[历史] ', `📄 正在查看: ${doc.filename}`, 'text-indigo-400');
+        } else {
+          alert('该任务尚无预览内容（可能任务未生成 filled_html）');
+        }
+      } catch (err) {
+        alert('查看错误: ' + err.message);
+      } finally {
+        viewingTaskId.value = '';
+      }
+    }
+
+    async function deleteTask(doc) {
+      if (!doc.task_id) {
+        alert('该记录无 task_id，无法删除');
+        return;
+      }
+      if (!window.confirm(`确定要删除「${doc.filename}」吗？此操作不可逆！`)) return;
+      try {
+        const res = await apiFetch(`/api/v1/tasks/${doc.task_id}`, { method: 'DELETE' });
+        if (res.ok) {
+          myDocuments.value = myDocuments.value.filter(d => d.task_id !== doc.task_id);
+          myDocsTotal.value = Math.max(0, myDocsTotal.value - 1);
+          addLine('[历史] ', `🗑️ 已删除: ${doc.filename}`, 'text-red-400');
+        } else {
+          const err = await res.json().catch(() => ({}));
+          alert('删除失败: ' + (err.detail || '未知错误'));
+        }
+      } catch (err) {
+        alert('删除错误: ' + err.message);
+      }
+    }
+
+    async function transferToRag(doc) {
+      if (!doc.task_id) {
+        alert('该记录无 task_id，无法入库');
+        return;
+      }
+      // 防抖：如果该任务正在入库中，忽略重复点击
+      if (transferringTaskId.value === doc.task_id) return;
+      transferringTaskId.value = doc.task_id;
+      try {
+        addLine('[历史] ', `📥 正在将「${doc.filename}」沉淀入库...`, 'text-emerald-400');
+        const res = await apiFetch(`/api/v1/knowledge/transfer_to_rag/${doc.task_id}`, { method: 'POST' });
+        if (res.ok) {
+          const data = await res.json();
+          addLine('[历史] ', `✓ ${data.message || '入库成功'} (${data.ingested_count || 0} 块)`, 'text-emerald-400');
+          // a) 上区移除：从 myDocuments 中过滤掉该条目（物理流转）
+          myDocuments.value = myDocuments.value.filter(d => d.task_id !== doc.task_id);
+          myDocsTotal.value = Math.max(0, myDocsTotal.value - 1);
+          // b) 下区刷新：await 确保拉取完成后再显示 Toast，避免用户看到旧列表
+          await fetchKbDocuments();
+          await loadKbStats();
+          // c) Toast 提示
+          showToast(`文件已成功转移至私人知识库`, 'success');
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast('入库失败: ' + (err.detail || '未知错误'), 'error');
+        }
+      } catch (err) {
+        showToast('入库错误: ' + err.message, 'error');
+      } finally {
+        transferringTaskId.value = '';
       }
     }
 
@@ -2370,6 +2549,8 @@ createApp({
       currentAction.value = '';
 
       const formData = new FormData();
+      // 保存文件副本用于 Path B 回退（submitTaskDirect），避免 selectedFiles 被清空后无法重传
+      const fallbackFiles = selectedFiles.value.length > 0 ? [...selectedFiles.value] : [];
       if (selectedFiles.value.length > 0) {
         selectedFiles.value.forEach(f => {
           formData.append('files', f);
@@ -2407,6 +2588,7 @@ createApp({
 
         const sseUrl = `/api/v1/task/${task_id}/stream?token=${encodeURIComponent(authToken.value)}`;
         const eventSource = new EventSource(sseUrl);
+        let sseTaskDone = false;  // 守卫标志：防止 onerror 在任务完成后重复提交
 
         const pptFrame = document.getElementById('ppt-frame');
         const sendToFrame = (type, payload) => {
@@ -2453,6 +2635,7 @@ createApp({
             }
 
             if (taskStatus === 'success') {
+              sseTaskDone = true;
               taskProgress.value = 100;
               currentAction.value = 'Processing complete!';
               addLine('[System] ', '✓ Processing complete!', 'text-green-400');
@@ -2460,10 +2643,15 @@ createApp({
               eventSource.close();
 
               const result = payload.result;
+              console.log('[SSE] success event received, result keys:', result ? Object.keys(result) : 'null');
               if (result) {
                 if (result.filled_html) {
+                  console.log('[SSE] filled_html received, length:', result.filled_html.length, 'has_img:', result.filled_html.includes('base64'));
                   previewHtml.value = result.filled_html;
+                  activeTab.value = 'preview';
                   addLine('[System] ', '📄 Document preview generated, click "Preview" tab to view', 'text-indigo-400');
+                } else {
+                  console.warn('[SSE] result has no filled_html field');
                 }
                 if (result.ppt_data && result.ppt_data.slides) {
                   slideDeck.value = result.ppt_data;
@@ -2479,6 +2667,7 @@ createApp({
               isProcessing.value = false;
 
             } else if (taskStatus === 'error') {
+              sseTaskDone = true;
               taskProgress.value = -1;
               currentAction.value = 'Processing failed';
               addLine('[Error] ', `Task failed: ${payload.error || 'Unknown error'}`, 'text-red-400');
@@ -2487,6 +2676,7 @@ createApp({
               isProcessing.value = false;
 
             } else if (taskStatus === 'timeout') {
+              sseTaskDone = true;
               taskProgress.value = -1;
               currentAction.value = 'Connection timeout';
               addLine('[Error] ', 'SSE connection timeout', 'text-red-400');
@@ -2500,22 +2690,24 @@ createApp({
         };
 
         eventSource.onerror = () => {
+          if (sseTaskDone) return;  // 任务已通过 onmessage 完成，忽略连接关闭事件
           addLine('[System] ', 'SSE connection closed, falling back to direct stream mode...', 'text-yellow-400');
           eventSource.close();
-          submitTaskDirect(instructionText || '(default)');
+          submitTaskDirect(instructionText || '(default)', fallbackFiles);
         };
 
       } catch (err) {
         addLine('[Error] ', `Connection error: ${err.message}`, 'text-red-400');
         addLine('[System] ', 'Falling back to direct stream mode...', 'text-yellow-400');
-        submitTaskDirect(instructionText || '(default)');
+        submitTaskDirect(instructionText || '(default)', fallbackFiles);
       }
     }
 
-    async function submitTaskDirect(instructionText) {
+    async function submitTaskDirect(instructionText, files) {
       const formData = new FormData();
-      if (selectedFiles.value.length > 0) {
-        selectedFiles.value.forEach(f => formData.append('files', f));
+      const filesToUpload = files && files.length > 0 ? files : selectedFiles.value;
+      if (filesToUpload.length > 0) {
+        filesToUpload.forEach(f => formData.append('files', f));
       }
       formData.append('user_instruction', instructionText);
       formData.append('max_retries', '3');
@@ -2605,6 +2797,13 @@ createApp({
         const agent = event.agent || node || 'Agent';
         let color = 'text-emerald-400';
 
+        if (event.progress && event.progress > 0) {
+          taskProgress.value = event.progress;
+        }
+        if (message) {
+          currentAction.value = message;
+        }
+
         if (node === 'critic_review' && data.review_result === 'pass') color = 'text-green-400';
         else if (node === 'critic_review' && data.review_result === 'fail') color = 'text-yellow-400';
         else if (node === 'gateway') color = 'text-violet-400';
@@ -2648,6 +2847,7 @@ createApp({
       } else if (status === 'preview') {
         if (data.html) {
           previewHtml.value = data.html;
+          activeTab.value = 'preview';
           addLine('[System] ', '📄 Document preview generated, click "Preview" tab to view', 'text-indigo-400');
         }
       } else if (status === 'ppt_ready') {
@@ -2666,14 +2866,23 @@ createApp({
         }
       } else if (status === 'error') {
         addLine('[Error] ', message, 'text-red-400');
+        taskProgress.value = -1;
+        isProcessing.value = false;
       } else if (status === 'success') {
+        taskProgress.value = 100;
+        currentAction.value = 'Processing complete!';
         addLine('[System] ', '✓ Processing complete!', 'text-green-400');
+        uploadQueue.value.forEach(item => { item.status = 'completed'; });
         if (data.url) {
           downloadUrl.value = data.url;
         } else if (data.output_path) {
           const filename = data.output_path.split(/[/\\]/).pop();
           downloadUrl.value = '/api/v1/files/output/' + filename;
         }
+        if (previewHtml.value) {
+          activeTab.value = 'preview';
+        }
+        isProcessing.value = false;
       }
     }
 
@@ -2772,8 +2981,10 @@ createApp({
       exportToWord, exportToHtml,
       authToken, currentUser, isLoggedIn, authMode, authUsername, authPassword, authError, isAuthLoading,
       handleAuth, handleLogout,
-      sidebarView, myDocuments, myDocsTotal, myDocsPage, isLoadingDocs, docProgress, loadMyDocuments,
+      sidebarView, myDocuments, myDocsTotal, myDocsPage, isLoadingDocs, docProgress, viewingTaskId, transferringTaskId, loadMyDocuments,
       loadKbStats, initKgView,
+      viewTaskResult, deleteTask, transferToRag,
+      toastVisible, toastMessage, toastType,
       kgSearchQuery, kgLoading, kgSelectedNode, kgStatsText, kgGetColor, kgSearch, kgLoadFull, kgClickNode,
     };
   }

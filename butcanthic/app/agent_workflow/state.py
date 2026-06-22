@@ -66,3 +66,7 @@ class WorkflowState(TypedDict, total=False):
     description: str
     guide_html: str
     user_id: str
+
+    # ChatExcel 多轮对话状态
+    duckdb_table_name: str
+    chat_history: List[Dict[str, Any]]

@@ -159,7 +159,7 @@ async def _load_docx_html(file_path: str) -> str | None:
 
 def route_by_file_type(
     state: WorkflowState,
-) -> Literal["process_word", "process_excel", "process_ppt", "generate_ppt", "supervisor", "error"]:
+) -> Literal["process_word", "process_excel", "chat_excel", "process_ppt", "generate_ppt", "supervisor", "error"]:
     file_type = state.get("file_type", "")
     error = state.get("error_message", "")
     user_instruction = state.get("user_instruction", "")
@@ -181,13 +181,37 @@ def route_by_file_type(
         logger.info("Router: fill intent → process_word")
         return "process_word"
 
+    # Excel/CSV 硬路由: 必须在 task_intent=="unknown" 检查之前执行，
+    # 避免 Excel 文件因 task_intent 默认为 unknown 而被误派给 supervisor，
+    # 进而由 LLM 错误路由到 generate_summary 导致大模型超时。
+    if file_type in ("xlsx", "csv"):
+        # 检测是否为对话查询模式（ChatExcel）
+        chat_keywords = [
+            "查询", "查一下", "请问", "多少", "统计", "汇总", "排名",
+            "对比", "趋势", "占比", "分布", "平均", "总和", "最大", "最小",
+            "筛选", "排序", "分组", "计数", "query", "how many", "count",
+            "sum", "average", "top", "rank",
+        ]
+        is_chat_mode = any(kw in user_instruction.lower() for kw in chat_keywords)
+
+        # 如果已有 DuckDB 加载记录（多轮对话的后续轮次），直接走 chat_excel
+        structured = state.get("structured_data", {})
+        if structured.get("duckdb_info") or structured.get("chat_mode"):
+            logger.info(f"Router: {file_type} → chat_excel (multi-turn conversation)")
+            return "chat_excel"
+
+        if is_chat_mode:
+            logger.info(f"Router: {file_type} → chat_excel (query mode detected)")
+            return "chat_excel"
+
+        logger.info(f"Router: {file_type} → process_excel (one-shot analysis, hard routing)")
+        return "process_excel"
+
     if task_intent == "unknown":
         logger.info("Router: unknown intent → supervisor (intelligent routing)")
         return "supervisor"
 
     routing_map = {
-        "xlsx": "process_excel",
-        "csv": "process_excel",
         "pptx": "process_ppt",
     }
 

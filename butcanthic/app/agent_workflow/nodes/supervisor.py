@@ -15,6 +15,15 @@ RESEARCH_KEYWORDS = re.compile(
 )
 PPT_STRICT_KEYWORDS = re.compile(r"PPT|幻灯片|演示文稿|课件|slides", re.IGNORECASE)
 
+# Excel/CSV 扩展名硬拦截：防止数据文件被误派给 generate_summary 导致大模型超时
+EXCEL_EXTENSIONS = (".xlsx", ".xls", ".csv")
+EXCEL_CHAT_KEYWORDS = [
+    "查询", "查一下", "请问", "多少", "统计", "汇总", "排名",
+    "对比", "趋势", "占比", "分布", "平均", "总和", "最大", "最小",
+    "筛选", "排序", "分组", "计数", "query", "how many", "count",
+    "sum", "average", "top", "rank",
+]
+
 
 class RouteDecision(BaseModel):
     next_node: str = Field(
@@ -33,8 +42,63 @@ def _fallback_route(user_instruction: str) -> str:
     return "generate_summary"
 
 
+def _hard_route_excel(state: WorkflowState) -> str | None:
+    """
+    Excel/CSV 硬路由拦截：在调用 LLM 之前检查 state 中的文件扩展名。
+    如果检测到 .xlsx/.xls/.csv 文件，直接返回 process_excel 或 chat_excel，
+    绝对禁止 Excel 数据进入 generate_summary 导致大模型超时。
+    返回 None 表示未命中硬路由，继续走 LLM 决策。
+    """
+    file_path = state.get("file_path", "")
+    file_type = state.get("file_type", "")
+    uploaded_files = state.get("uploaded_files", [])
+
+    # 检查 file_type 字段或 file_path 后缀
+    is_excel = file_type in ("xlsx", "csv", "xls")
+    if not is_excel and file_path:
+        is_excel = file_path.lower().endswith(EXCEL_EXTENSIONS)
+
+    # 检查 uploaded_files 中是否有 Excel 文件（多文件场景）
+    if not is_excel and uploaded_files:
+        for f in uploaded_files:
+            fp = f.get("path", "") if isinstance(f, dict) else ""
+            ft = f.get("type", "") if isinstance(f, dict) else ""
+            if ft in ("xlsx", "csv", "xls") or (fp and fp.lower().endswith(EXCEL_EXTENSIONS)):
+                is_excel = True
+                break
+
+    if not is_excel:
+        return None
+
+    user_instruction = state.get("user_instruction", "")
+    structured = state.get("structured_data", {})
+
+    # 多轮对话后续轮次
+    if structured.get("duckdb_info") or structured.get("chat_mode"):
+        logger.info("👔 [Supervisor] 硬路由拦截: Excel 文件 → chat_excel (多轮对话)")
+        return "chat_excel"
+
+    # 检测对话查询关键词
+    if any(kw in user_instruction.lower() for kw in EXCEL_CHAT_KEYWORDS):
+        logger.info("👔 [Supervisor] 硬路由拦截: Excel 文件 → chat_excel (查询模式)")
+        return "chat_excel"
+
+    logger.info("👔 [Supervisor] 硬路由拦截: Excel 文件 → process_excel (一次性分析，跳过 LLM)")
+    return "process_excel"
+
+
 async def supervisor_node(state: WorkflowState, llm_client=None) -> dict:
     logger.info("👔 [Supervisor] 正在评估当前任务进度...")
+
+    # 硬路由拦截：Excel/CSV 文件优先级最高，跳过 LLM 意图识别
+    excel_route = _hard_route_excel(state)
+    if excel_route:
+        logger.info(f"👔 [Supervisor] 硬路由命中，跳过 LLM 决策 → {excel_route}")
+        return {
+            "next_node": excel_route,
+            "current_progress": 20,
+            "current_action": f"Excel 硬路由拦截，指派给: {excel_route}",
+        }
 
     user_instruction = state.get("user_instruction", "")
 

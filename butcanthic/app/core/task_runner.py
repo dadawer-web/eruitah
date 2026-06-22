@@ -93,7 +93,7 @@ def push_progress(task_id: str, progress: int, action: str, extra: dict = None, 
             logger.debug(f"Redis push skipped (local mode): {e}")
 
 
-def update_doc_status(doc_ids: list, status: str):
+def update_doc_status(doc_ids: list, status: str, filled_html: str = ""):
     if not doc_ids:
         return
     try:
@@ -104,6 +104,8 @@ def update_doc_status(doc_ids: list, status: str):
                 doc = session.query(DocumentMeta).filter(DocumentMeta.id == doc_id).first()
                 if doc:
                     doc.status = status
+                    if filled_html:
+                        doc.filled_html = filled_html
             session.commit()
         except Exception as e:
             logger.warning(f"Failed to update doc status: {e}")
@@ -196,7 +198,7 @@ async def run_document_pipeline(
             task_id, uploaded_files, user_instruction, max_retries, thread_id, user_id, use_redis
         )
         push_progress(task_id, 100, "处理完成！", extra={"status": "success", "result": result}, use_redis=use_redis)
-        update_doc_status(doc_ids, "completed")
+        update_doc_status(doc_ids, "completed", filled_html=result.get("filled_html", ""))
         return result
     except Exception as e:
         logger.error(f"Pipeline {task_id} failed: {e}", exc_info=True)

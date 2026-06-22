@@ -39,6 +39,7 @@ class DocumentMeta(Base):
     collection_name = Column(String(200), default="default")
     task_id = Column(String(100), default="")
     owner_id = Column(String(200), default="")
+    filled_html = Column(Text, default="")  # AI 任务生成的预览 HTML（含 base64 图表）
 
     owner = relationship("User", back_populates="documents")
 
@@ -59,6 +60,7 @@ class DocumentMeta(Base):
             "collection_name": self.collection_name,
             "task_id": self.task_id,
             "owner_id": self.owner_id,
+            "has_preview": bool(self.filled_html),
         }
 
 
@@ -149,6 +151,21 @@ SessionLocal = sessionmaker(bind=ENGINE)
 
 def init_db():
     Base.metadata.create_all(ENGINE)
+    _migrate_add_filled_html()
+
+
+def _migrate_add_filled_html():
+    """为已存在的 document_meta 表补充 filled_html 列（SQLite ALTER TABLE）"""
+    from sqlalchemy import text, inspect
+    try:
+        inspector = inspect(ENGINE)
+        columns = [c["name"] for c in inspector.get_columns("document_meta")]
+        if "filled_html" not in columns:
+            with ENGINE.connect() as conn:
+                conn.execute(text("ALTER TABLE document_meta ADD COLUMN filled_html TEXT DEFAULT ''"))
+                conn.commit()
+    except Exception:
+        pass
 
 
 def get_session():

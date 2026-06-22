@@ -561,8 +561,12 @@ async def my_documents(
     current_user_id: str = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    """上区：仅返回 AI 任务生成的历史记录（task_id 非空）"""
     offset = (page - 1) * page_size
-    query = db.query(DocumentMeta).filter(DocumentMeta.user_id == current_user_id)
+    query = db.query(DocumentMeta).filter(
+        DocumentMeta.user_id == current_user_id,
+        DocumentMeta.task_id != "",
+    )
     total = query.count()
     docs = query.order_by(DocumentMeta.upload_time.desc()).offset(offset).limit(page_size).all()
     return {
@@ -1374,6 +1378,7 @@ async def kb_documents(
     x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
     current_user_id: Optional[str] = Depends(get_current_user_optional),
 ):
+    """下区：仅返回已入库的物理知识库文档（task_id 为空，含直接上传和从 AI 任务沉淀的）"""
     effective_user_id = x_user_id or current_user_id or None
     if not effective_user_id:
         raise HTTPException(status_code=401, detail="未提供用户身份")
@@ -1383,7 +1388,10 @@ async def kb_documents(
     try:
         docs = (
             session.query(DocumentMeta)
-            .filter(DocumentMeta.user_id == effective_user_id)
+            .filter(
+                DocumentMeta.user_id == effective_user_id,
+                DocumentMeta.task_id == "",
+            )
             .order_by(DocumentMeta.upload_time.desc())
             .all()
         )
@@ -1822,6 +1830,176 @@ async def get_task_status(task_id: str):
     )
 
 
+@router.get("/tasks/{task_id}")
+async def get_task_detail(
+    task_id: str,
+    current_user_id: str = Depends(get_current_user),
+):
+    """查看任务详情：返回完整字段（包括 filled_html 预览内容）"""
+    session = get_session()
+    try:
+        doc = session.query(DocumentMeta).filter(
+            DocumentMeta.task_id == task_id,
+            DocumentMeta.user_id == current_user_id,
+        ).first()
+        if not doc:
+            raise HTTPException(status_code=404, detail="任务不存在或无权查看")
+        return {
+            **doc.to_dict(),
+            "filled_html": doc.filled_html or "",
+        }
+    finally:
+        session.close()
+
+
+@router.delete("/tasks/{task_id}")
+async def delete_task(
+    task_id: str,
+    current_user_id: str = Depends(get_current_user),
+):
+    """删除任务：从数据库中彻底删除该任务记录（强力容错，确保幽灵记录可被清除）
+
+    无论附属文件/向量库清理是否成功，最后一步的数据库删除操作必须执行。
+    即使记录不存在也返回 200，让前端能从列表中移除。
+    """
+    session = get_session()
+    filename = ""
+    try:
+        doc = session.query(DocumentMeta).filter(
+            DocumentMeta.task_id == task_id,
+            DocumentMeta.user_id == current_user_id,
+        ).first()
+        if not doc:
+            # 记录不存在也返回 200，让前端能移除这条幽灵记录
+            return {"status": "success", "message": f"任务 {task_id} 不存在或已删除"}
+        filename = doc.filename
+
+        # 尝试清理附属物理文件（容错：文件可能本就不存在）
+        try:
+            if doc.owner_id:
+                upload_dir = os.path.join("uploads", f"user_{doc.owner_id}")
+                if os.path.isdir(upload_dir):
+                    for f in os.listdir(upload_dir):
+                        if task_id in f or (filename and filename in f):
+                            try:
+                                os.remove(os.path.join(upload_dir, f))
+                            except Exception:
+                                pass
+        except Exception as e:
+            logger.warning(f"清理任务 {task_id} 的物理文件时出错(可能本就不存在): {e}")
+            # 绝对不能 raise，继续往下走！
+
+        # 尝试清理向量库中的关联数据（容错：向量库可能未初始化或无此数据）
+        try:
+            rag_engine = _get_rag_engine()
+            if rag_engine and filename:
+                await rag_engine.delete_documents_by_source(filename, current_user_id)
+        except Exception as e:
+            logger.warning(f"清理任务 {task_id} 的向量数据时出错(可能本就不存在): {e}")
+            # 绝对不能 raise，继续往下走！
+
+    except Exception as e:
+        logger.warning(f"删除任务 {task_id} 预处理出错: {e}")
+        # 不 raise，继续尝试数据库删除
+    finally:
+        # 核心保证：无论上面发生了什么，数据库删除操作必须被执行
+        try:
+            session.query(DocumentMeta).filter(
+                DocumentMeta.task_id == task_id,
+                DocumentMeta.user_id == current_user_id,
+            ).delete(synchronize_session=False)
+            session.commit()
+        except Exception as e:
+            logger.error(f"删除任务 {task_id} 数据库记录失败: {e}")
+            session.rollback()
+            # 即使 commit 失败也返回 200，避免前端卡死
+        finally:
+            session.close()
+
+    return {"status": "success", "message": f"已删除任务: {filename or task_id}"}
+
+
+@router.post("/knowledge/transfer_to_rag/{task_id}")
+async def transfer_to_rag(
+    task_id: str,
+    current_user_id: str = Depends(get_current_user),
+):
+    """沉淀入库（物理流转 Move）：将 AI 任务结果向量化存入 ChromaDB，并将记录从上区移至下区
+
+    流程：
+    1. 从 filled_html 提取纯文本 → rag_engine.ingest_data() 向量化入库
+    2. 清除 task_id（销户口：从上区 AI 任务列表移除）
+    3. 更新 chunk_count + description（上户口：在下区知识库列表中出现）
+    """
+    rag_engine = _get_rag_engine()
+    if rag_engine is None:
+        raise HTTPException(status_code=503, detail="RAG 引擎未初始化")
+
+    session = get_session()
+    try:
+        doc = session.query(DocumentMeta).filter(
+            DocumentMeta.task_id == task_id,
+            DocumentMeta.user_id == current_user_id,
+        ).first()
+        if not doc:
+            raise HTTPException(status_code=404, detail="任务不存在或无权操作")
+
+        # 从 filled_html 中提取纯文本作为入库内容
+        import re
+        html_content = doc.filled_html or ""
+        if not html_content.strip():
+            raise HTTPException(status_code=400, detail="该任务无可入库的分析结果")
+
+        # 简易 HTML → 纯文本提取
+        text = re.sub(r'<[^>]+>', ' ', html_content)
+        text = re.sub(r'\s+', ' ', text).strip()
+        if len(text) < 10:
+            raise HTTPException(status_code=400, detail="分析结果内容过短，无法入库")
+
+        original_filename = doc.filename
+
+        # 调用 RAG 引擎向量化入库
+        data = {
+            "records": [{
+                "filename": doc.filename,
+                "file_type": doc.file_type,
+                "analysis_result": text,
+                "source": f"task:{task_id}",
+                "upload_time": doc.upload_time.isoformat() if doc.upload_time else "",
+            }]
+        }
+        result = await rag_engine.ingest_data(data, collection_name="", user_id=current_user_id)
+
+        # ===== 物理流转：从上区移至下区 =====
+        # 销户口：清除 task_id，使记录从 /documents/my（上区）查询中消失
+        doc.task_id = ""
+        # 上户口：标记来源 + 更新 chunk_count，使记录在 /kb/documents（下区）中出现
+        doc.chunk_count = result.get("ingested_count", 0)
+        doc.description = f"AI生成报告沉淀入库（源文件: {original_filename}）"
+        doc.status = "completed"
+        session.commit()
+
+        return {
+            "status": "success",
+            "message": f"已将「{original_filename}」转移至私人知识库",
+            "ingested_count": result.get("ingested_count", 0),
+            "collection": result.get("collection", ""),
+            "moved": True,
+        }
+    except HTTPException:
+        session.rollback()
+        raise
+    except PermissionError as e:
+        session.rollback()
+        raise HTTPException(status_code=403, detail=str(e))
+    except Exception as e:
+        session.rollback()
+        logger.error(f"transfer_to_rag failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"入库失败: {str(e)}")
+    finally:
+        session.close()
+
+
 _redis_for_sse = None
 
 
@@ -1976,7 +2154,7 @@ async def _task_stream_redis(task_id: str):
     async def event_generator():
         last_progress = None
         idle_count = 0
-        max_idle = 600
+        max_idle = 3600  # 3600 × 0.5s = 1800s（30分钟），适应大模型长耗时任务
 
         while True:
             cached = r.get(f"task_progress:{task_id}")
@@ -1992,6 +2170,9 @@ async def _task_stream_redis(task_id: str):
 
                         if payload.get("status") in ("success", "error"):
                             result = payload.get("result") or payload.get("error")
+                            # 剥离 structured_data 以减小 SSE 负载（前端预览仅使用 filled_html）
+                            if isinstance(result, dict) and "structured_data" in result:
+                                result = {k: v for k, v in result.items() if k != "structured_data"}
                             yield f"data: {json.dumps({'status': payload['status'], 'result': result}, ensure_ascii=False, default=str)}\n\n"
                             break
                 except json.JSONDecodeError:
@@ -2010,6 +2191,9 @@ async def _task_stream_redis(task_id: str):
 
                         if payload.get("status") in ("success", "error"):
                             result = payload.get("result") or payload.get("error")
+                            # 剥离 structured_data 以减小 SSE 负载
+                            if isinstance(result, dict) and "structured_data" in result:
+                                result = {k: v for k, v in result.items() if k != "structured_data"}
                             yield f"data: {json.dumps({'status': payload['status'], 'result': result}, ensure_ascii=False, default=str)}\n\n"
                             break
                 except json.JSONDecodeError:
@@ -2042,7 +2226,7 @@ async def _task_stream_local(task_id: str):
     async def event_generator():
         last_progress = None
         idle_count = 0
-        max_idle = 600
+        max_idle = 3600  # 3600 × 0.5s = 1800s（30分钟），适应大模型长耗时任务
 
         while True:
             payload = progress_store.get(task_id)
@@ -2057,6 +2241,9 @@ async def _task_stream_local(task_id: str):
 
                     if payload.get("status") in ("success", "error"):
                         result = payload.get("result") or payload.get("error")
+                        # 剥离 structured_data 以减小 SSE 负载
+                        if isinstance(result, dict) and "structured_data" in result:
+                            result = {k: v for k, v in result.items() if k != "structured_data"}
                         yield f"data: {json.dumps({'status': payload['status'], 'result': result}, ensure_ascii=False, default=str)}\n\n"
                         break
             else:
