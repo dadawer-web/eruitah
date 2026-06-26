@@ -37,6 +37,14 @@ DuckDB 表结构信息如下：
 采样数据（前5行）：
 {sample_data}
 
+【极其严格的表结构限制】
+你必须且只能使用上述 Schema 中明确列出的列名！
+绝不允许使用"假设存在"的列（如假设有 Profit 列）。
+如果用户查询的指标（如利润 Profit）在表中不存在，你必须：
+  a) 使用其他合理的可用列（如销售额 Sales）作为替代进行分析
+  b) 或仅查询可用的数据，绝不能在 SQL 中写不存在的列名！
+违反此规则将导致系统崩溃，是最高优先级的禁令！
+
 DuckDB 中需要特别注意的语法规则：
 1. 任何出现在 SELECT 子句中的非聚合列，必须同时出现在 GROUP BY 子句中
 2. 当在 ORDER BY 或窗口函数中引用某个列时，确保该列已在前面的 CTE 或查询中被正确选择
@@ -52,6 +60,11 @@ DuckDB 中需要特别注意的语法规则：
   3. SQL 中需要使用的表名是: {table_name}，请检查你生成的 SQL，不要使用没在数据结构中的列名
   4. 优先使用数据分析的方式回答，如果用户问题不涉及数据分析内容，你可以按你的理解进行回答
   5. 请注意，注释行要单独一行，不要放在 SQL 语句的同一行中
+  6. 你现在支持箱线图(response_box)、散点图(response_scatter)、直方图(response_histogram)等高级图表，请大胆使用：
+     - 当用户需要分析数据分布、查看异常值、或做分组对比时，请优先选择 response_box（箱线图能直观展示中位数、四分位距与离群点）
+     - 当用户需要分析两个数值变量之间的相关性（如销售额与利润的关系）时，请选择 response_scatter
+     - 当用户需要查看单个数值列的分布形态（如销售额集中区间）时，请选择 response_histogram
+     - 注意：箱线图/散点图/直方图对应的 SQL 应返回明细数据而非过度聚合，以便绘图引擎呈现真实分布
 
 请一步一步思考，给出回答，并确保你的回答内容格式如下:
     [对用户说的分析思路摘要]
@@ -98,8 +111,11 @@ ORDER BY year_month ASC;
 
 注意，回答一定要符合 <api-call> 的格式! 请使用和用户问题相同的语言回答！"""
 
-# 可选的展示方式
-_DISPLAY_TYPES = "response_table(表格), response_bar(柱状图), response_line(折线图), response_pie(饼图)"
+# 可选的展示方式（已全面解锁：分布/异常值/相关性分析场景可用高级图表）
+_DISPLAY_TYPES = (
+    "response_table(表格), response_bar(柱状图), response_line(折线图), response_pie(饼图), "
+    "response_box(箱线图), response_scatter(散点图), response_histogram(直方图)"
+)
 
 
 def _parse_api_call(response: str) -> Optional[Dict[str, str]]:
@@ -137,8 +153,133 @@ def _select_display_type(display_type: str) -> str:
         return "line_chart"
     elif "pie" in dt:
         return "pie_chart"
+    elif "box" in dt:
+        return "box_plot"
+    elif "scatter" in dt:
+        return "scatter_plot"
+    elif "hist" in dt:
+        return "histogram"
     else:
         return "table"
+
+
+def _display_type_to_chart_type(display_type: str) -> str:
+    """将 chat_excel 的 display_type 映射为 ChartPipeline 的 chart_type"""
+    dt = (display_type or "").lower().strip()
+    if dt == "bar_chart":
+        return "bar"
+    elif dt == "line_chart":
+        return "line"
+    elif dt == "pie_chart":
+        return "pie"
+    elif dt == "box_plot":
+        return "box"
+    elif dt == "scatter_plot":
+        return "scatter"
+    elif dt == "histogram":
+        return "hist"
+    else:
+        return ""  # table 或未知 → 不绘图
+
+
+async def _generate_node_output(
+    excel_processor: ExcelDataProcessor,
+    file_path: str,
+    sql: str,
+    display_type: str,
+    summary: str,
+    query_result: Dict[str, Any],
+    duckdb_info: Dict[str, Any],
+    user_instruction: str,
+    table_name: str = "excel_data",
+) -> Dict[str, Any]:
+    """
+    统一成功出口逻辑（Consolidate Success Flow）
+
+    将『执行 SQL -> 传入绘图管道 -> 渲染三段式 HTML 报告』封装为独立核心函数。
+    首轮成功与纠错重试成功均调用此函数，确保物理图表始终被生成并注入 HTML，
+    绝不直接把原始数据表格当纯文本输出。
+
+    绘图采用 DataFrame 直传方式（彻底规避连接隔离 / Catalog Error）：
+      1. execute_sql_to_df(sql, table_name) 在已加载的连接 A 上执行 SQL，拿到 result_df
+         （复用 load_to_duckdb 缓存的连接 self._duckdb_connections[table_name]）
+      2. draw_chart_from_df(result_df, ...) 让 Matplotlib 直接读取内存 df 绘图
+         （绘图函数内部不再二次查询数据库）
+
+    Args:
+        excel_processor: Excel 数据处理器（提供 execute_sql_to_df / draw_chart_from_df）
+        file_path: Excel 文件路径（保留以备回退，当前 df 路径不直接使用）
+        sql: 已执行成功的（或纠正后的）DuckDB SQL
+        display_type: 展示方式 table/bar_chart/line_chart/pie_chart
+        summary: LLM 给出的分析思路摘要
+        query_result: _execute_duckdb_async 返回 {success, columns, data, row_count, error}
+        duckdb_info: DuckDB 元信息（用于表结构展示）
+        user_instruction: 用户原始问题（用作图表标题）
+        table_name: DuckDB 已注册的表名（连接 A 的索引键，默认 excel_data）
+
+    Returns:
+        {"result_data": dict, "filled_html": str, "chart_base64": str|None}
+    """
+    # ── 物理绘图：连接A执行SQL -> DataFrame直传 -> Matplotlib绘图 ──
+    chart_type = _display_type_to_chart_type(display_type)
+    chart_base64: Optional[str] = None
+
+    if chart_type and query_result.get("success") and query_result.get("data"):
+        try:
+            title = (user_instruction or "数据分析")[:60]
+
+            # 1) 在已加载的连接 A 上执行 SQL，拿到原始 DataFrame（杜绝连接隔离 / Catalog Error）
+            df_result = await asyncio_to_thread(
+                excel_processor.execute_sql_to_df, sql, table_name
+            )
+            if not df_result.get("success") or df_result.get("df") is None:
+                logger.warning(
+                    f"📊 [ChatExcel] 绘图取数失败(连接A): "
+                    f"{df_result.get('error', '未知错误')}"
+                )
+            else:
+                result_df = df_result["df"]
+                # 2) DataFrame 直传绘图管道（内部不再二次查询数据库）
+                pipeline_result = await asyncio_to_thread(
+                    excel_processor.draw_chart_from_df,
+                    result_df, chart_type, title, summary or "",
+                )
+                if pipeline_result.get("success"):
+                    chart_base64 = pipeline_result.get("image_base64")
+                    logger.info(
+                        f"📊 [ChatExcel] ChartPipeline 绘图成功, "
+                        f"base64 长度={len(chart_base64) if chart_base64 else 0}"
+                    )
+                else:
+                    logger.warning(
+                        f"📊 [ChatExcel] ChartPipeline 绘图失败: "
+                        f"{pipeline_result.get('error', '未知错误')}"
+                    )
+        except Exception as e:
+            logger.warning(f"📊 [ChatExcel] ChartPipeline 异常（不影响数据返回）: {e}")
+
+    # ── 组装结构化结果 ──
+    result_data = {
+        "question": user_instruction,
+        "sql": sql,
+        "display_type": display_type,
+        "summary": summary,
+        "columns": query_result.get("columns", []),
+        "data": query_result.get("data", []),
+        "row_count": query_result.get("row_count", 0),
+        "success": query_result.get("success", False),
+        "error": query_result.get("error"),
+        "chart_base64": chart_base64,
+    }
+
+    # ── 渲染三段式 HTML 报告（强制注入物理图片）──
+    filled_html = _build_chatexcel_html(result_data, duckdb_info, chart_base64)
+
+    return {
+        "result_data": result_data,
+        "filled_html": filled_html,
+        "chart_base64": chart_base64,
+    }
 
 
 async def chat_excel_node(
@@ -270,6 +411,10 @@ async def chat_excel_node(
         # SQL 执行失败，尝试一次纠错
         logger.warning(f"📊 [ChatExcel] SQL 执行失败: {query_result['error']}, 尝试纠错...")
 
+        # 提取可用列名列表，帮助 LLM 纠错
+        available_columns = duckdb_info.get("schema", {}).get("columns", [])
+        col_names = [c["name"] for c in available_columns] if available_columns else []
+
         correction_prompt = f"""之前的 SQL 执行报错了：
 SQL: {sql}
 错误: {query_result['error']}
@@ -277,17 +422,59 @@ SQL: {sql}
 表结构:
 {schema_sql}
 
-请分析错误原因，并输出修正后的 SQL。只输出 SQL 代码，不要其他内容。"""
+【可用列名列表】（只能使用以下列名，绝不允许使用不在此列表中的列）:
+{', '.join(col_names) if col_names else '未知'}
+
+请分析错误原因，并输出修正后的 SQL。
+【极其严格的要求】：
+1. 只能使用上述列名列表中的列！
+2. 如果之前的 SQL 引用了不存在的列（如 Profit），必须改用存在的列（如 Sales）！
+3. 只输出 SQL 代码，不要其他内容！"""
 
         correction_response = await llm_client.acall_api(
-            [{"role": "system", "content": "你是 SQL 专家，只输出修正后的 SQL 代码。"},
+            [{"role": "system", "content": (
+                "你是 SQL 语法修复专家。系统需要你修复 SQL 语法错误。"
+                "修复后请直接输出合法的 SQL 语句，禁止输出具体的行数据，"
+                "图表将由系统底层 Python 引擎自动绘制。"
+                "只输出修正后的 SQL 代码，不要任何解释或思考过程。"
+             )},
              {"role": "user", "content": correction_prompt}],
-            max_tokens=2048,
+            max_tokens=8192,
         )
+
+        # 🔑 空值兜底：LLM 可能因 finish_reason=length 返回空内容
+        if not correction_response or not correction_response.strip():
+            logger.error(f"📊 [ChatExcel] 纠错 LLM 返回空内容（可能 finish_reason=length 截断）")
+            return {
+                **state,
+                "structured_data": {
+                    **state.get("structured_data", {}),
+                    "duckdb_info": duckdb_info,
+                    "chat_history": chat_history + [{"question": user_instruction, "answer": "大模型未能生成有效的 SQL，请尝试简化您的提问。"}],
+                    "chat_mode": True,
+                    "raw_response": "大模型未能生成有效的 SQL，请尝试简化您的提问。",
+                },
+                "filled_html": _build_text_html("大模型未能生成有效的 SQL，请尝试简化您的提问。", user_instruction),
+            }
 
         # 提取修正后的 SQL
         corrected_sql_match = re.search(r"```sql\s*(.*?)\s*```", correction_response, re.DOTALL)
         corrected_sql = corrected_sql_match.group(1).strip() if corrected_sql_match else correction_response.strip()
+
+        # 🔑 二次空值检查
+        if not corrected_sql or corrected_sql.strip() == "":
+            logger.error(f"📊 [ChatExcel] 纠错后 SQL 为空")
+            return {
+                **state,
+                "structured_data": {
+                    **state.get("structured_data", {}),
+                    "duckdb_info": duckdb_info,
+                    "chat_history": chat_history + [{"question": user_instruction, "answer": "大模型未能生成有效的 SQL，请尝试简化您的提问。"}],
+                    "chat_mode": True,
+                    "raw_response": "大模型未能生成有效的 SQL，请尝试简化您的提问。",
+                },
+                "filled_html": _build_text_html("大模型未能生成有效的 SQL，请尝试简化您的提问。", user_instruction),
+            }
 
         logger.info(f"📊 [ChatExcel] 纠正 SQL: {corrected_sql[:150]}...")
 
@@ -297,18 +484,22 @@ SQL: {sql}
         else:
             logger.error(f"📊 [ChatExcel] 纠正后仍失败: {query_result['error']}")
 
-    # ── Step 6: 构建返回结果 ──
-    result_data = {
-        "question": user_instruction,
-        "sql": sql,
-        "display_type": display_type,
-        "summary": summary,
-        "columns": query_result.get("columns", []),
-        "data": query_result.get("data", []),
-        "row_count": query_result.get("row_count", 0),
-        "success": query_result.get("success", False),
-        "error": query_result.get("error"),
-    }
+    # ── Step 6: 统一成功出口 — 物理绘图 + 渲染三段式 HTML 报告 ──
+    # 首轮成功与纠错重试成功均走此出口，确保物理图表始终被生成并注入 HTML
+    node_output = await _generate_node_output(
+        excel_processor=excel_processor,
+        file_path=file_path,
+        sql=sql,
+        display_type=display_type,
+        summary=summary,
+        query_result=query_result,
+        duckdb_info=duckdb_info,
+        user_instruction=user_instruction,
+        table_name=table_name,
+    )
+
+    result_data = node_output["result_data"]
+    preview_html = node_output["filled_html"]
 
     # 更新对话历史
     new_chat_history = chat_history + [{
@@ -317,12 +508,10 @@ SQL: {sql}
         "sql": sql,
     }]
 
-    # 构建 HTML 预览
-    preview_html = _build_chatexcel_html(result_data, duckdb_info)
-
     logger.info(
         f"📊 [ChatExcel] completed, success={result_data['success']}, "
-        f"rows={result_data['row_count']}, display={display_type}"
+        f"rows={result_data['row_count']}, display={display_type}, "
+        f"has_chart={bool(node_output['chart_base64'])}"
     )
 
     return {
@@ -360,8 +549,12 @@ async def asyncio_to_thread(func, *args, **kwargs):
     return await asyncio.to_thread(func, *args, **kwargs)
 
 
-def _build_chatexcel_html(result: Dict[str, Any], duckdb_info: Dict[str, Any]) -> str:
-    """构建 ChatExcel 结果 HTML 预览"""
+def _build_chatexcel_html(
+    result: Dict[str, Any],
+    duckdb_info: Dict[str, Any],
+    chart_base64: Optional[str] = None,
+) -> str:
+    """构建 ChatExcel 结果 HTML 预览（三段式：分析思路 / SQL / 数据表+物理图表）"""
     summary = result.get("summary", "")
     display_type = result.get("display_type", "table")
     columns = result.get("columns", [])
@@ -370,6 +563,9 @@ def _build_chatexcel_html(result: Dict[str, Any], duckdb_info: Dict[str, Any]) -
     success = result.get("success", False)
     error = result.get("error")
     row_count = result.get("row_count", 0)
+
+    # 优先使用显式传入的 chart_base64，其次从 result 中读取（向后兼容）
+    chart_base64 = chart_base64 or result.get("chart_base64")
 
     html = "<div style='padding: 20px; font-family: sans-serif;'>"
     html += "<h2 style='color: #4f46e5; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;'>📊 ChatExcel 数据查询</h2>"
@@ -397,6 +593,9 @@ def _build_chatexcel_html(result: Dict[str, Any], duckdb_info: Dict[str, Any]) -
             "bar_chart": "📊 柱状图",
             "line_chart": "📈 折线图",
             "pie_chart": "🥧 饼图",
+            "box_plot": "📦 箱线图",
+            "scatter_plot": "🔵 散点图",
+            "histogram": "📊 直方图",
         }
         label = display_labels.get(display_type, "📋 数据表格")
 
@@ -424,8 +623,15 @@ def _build_chatexcel_html(result: Dict[str, Any], duckdb_info: Dict[str, Any]) -
             html += "</tr>"
         html += "</tbody></table></div>"
 
-        # 如果是图表类型，添加前端渲染提示
-        if display_type != "table":
+        # 物理图表注入：只要 chart_base64 存在，强制包裹 <img> 标签
+        if chart_base64:
+            img_html = (
+                f'<div style="text-align:center; margin:20px 0;">'
+                f'<img src="data:image/png;base64,{chart_base64}" '
+                f'style="max-width:100%; border-radius:8px;"/></div>'
+            )
+            html += img_html
+        elif display_type != "table":
             html += f"<div style='margin-top: 10px; color: #6b7280; font-size: 13px;'>💡 建议使用 <strong>{display_type}</strong> 方式渲染数据（前端可基于以上数据生成图表）</div>"
 
     # 数据信息

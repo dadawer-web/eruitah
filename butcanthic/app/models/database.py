@@ -40,6 +40,8 @@ class DocumentMeta(Base):
     task_id = Column(String(100), default="")
     owner_id = Column(String(200), default="")
     filled_html = Column(Text, default="")  # AI 任务生成的预览 HTML（含 base64 图表）
+    history = Column(Text, default="")  # 多轮追问对话历史（JSON 数组字符串）
+    file_path = Column(Text, default="")  # 上传文件的物理路径（用于追问时重新加载）
 
     owner = relationship("User", back_populates="documents")
 
@@ -152,6 +154,22 @@ SessionLocal = sessionmaker(bind=ENGINE)
 def init_db():
     Base.metadata.create_all(ENGINE)
     _migrate_add_filled_html()
+    _migrate_add_file_path()
+    _migrate_add_history()
+
+
+def _migrate_add_file_path():
+    """为已存在的 document_meta 表补充 file_path 列"""
+    from sqlalchemy import text, inspect
+    try:
+        inspector = inspect(ENGINE)
+        columns = [c["name"] for c in inspector.get_columns("document_meta")]
+        if "file_path" not in columns:
+            with ENGINE.connect() as conn:
+                conn.execute(text("ALTER TABLE document_meta ADD COLUMN file_path TEXT DEFAULT ''"))
+                conn.commit()
+    except Exception:
+        pass
 
 
 def _migrate_add_filled_html():
@@ -163,6 +181,20 @@ def _migrate_add_filled_html():
         if "filled_html" not in columns:
             with ENGINE.connect() as conn:
                 conn.execute(text("ALTER TABLE document_meta ADD COLUMN filled_html TEXT DEFAULT ''"))
+                conn.commit()
+    except Exception:
+        pass
+
+
+def _migrate_add_history():
+    """为已存在的 document_meta 表补充 history 列（存储多轮追问 JSON）"""
+    from sqlalchemy import text, inspect
+    try:
+        inspector = inspect(ENGINE)
+        columns = [c["name"] for c in inspector.get_columns("document_meta")]
+        if "history" not in columns:
+            with ENGINE.connect() as conn:
+                conn.execute(text("ALTER TABLE document_meta ADD COLUMN history TEXT DEFAULT ''"))
                 conn.commit()
     except Exception:
         pass

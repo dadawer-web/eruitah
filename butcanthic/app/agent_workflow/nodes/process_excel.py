@@ -88,6 +88,11 @@ REPORT_GENERATION_PROMPT = """你是一个顶级数据战略顾问 (Top-tier Dat
 绝对禁止使用『假设』、『例如』、『预期』等词汇来捏造不存在的数据！
 如果你提供的数据不在上述结果中，该次分析将被判定为严重失败。
 
+【重要：图表已由系统自动生成】
+系统已经根据上述查询结果自动生成了可视化图表（{chart_type_desc}）。
+你只需输出文字分析结论！绝对不要在报告中重复输出原始数据表！
+绝对不要建议前端去渲染图表——图表已嵌入报告中！
+
 【你的输出格式】
 请直接输出分析报告正文（纯文本，可使用 Markdown 格式），不要输出 JSON 或代码块！
 不要在报告开头加 ``` 标记！
@@ -200,6 +205,31 @@ async def process_excel_node(
     user_instruction = state.get("user_instruction", "请分析这份数据并给出总结。")
     user_id = state.get("user_id", "")
 
+    # --- 解析追问上下文 ---
+    # 如果 user_instruction 包含 【追问】 标记，说明是追问请求
+    # 格式: "用户: xxx\nAI助手: xxx\n\n【追问】新的问题"
+    chat_history = []
+    actual_query = user_instruction
+    is_followup = "【追问】" in user_instruction
+
+    if is_followup:
+        parts = user_instruction.split("【追问】", 1)
+        history_text = parts[0].strip()
+        actual_query = parts[1].strip() if len(parts) > 1 else user_instruction
+
+        # 解析历史对话行
+        if history_text:
+            for line in history_text.split("\n"):
+                line = line.strip()
+                if line.startswith("用户:") or line.startswith("用户："):
+                    content = line.split(":", 1)[1].strip() if ":" in line else line.split("：", 1)[1].strip()
+                    chat_history.append({"role": "user", "content": content})
+                elif line.startswith("AI助手:") or line.startswith("AI助手："):
+                    content = line.split(":", 1)[1].strip() if ":" in line else line.split("：", 1)[1].strip()
+                    chat_history.append({"role": "assistant", "content": content})
+
+        logger.info(f"📊 [DataAgent] 追问模式: 历史轮数={len(chat_history)}, 当前问题={actual_query[:50]}")
+
     logger.info(f"📊 [DataAgent] starting Text-to-SQL-to-Chart (两阶段) for {file_path}")
 
     # --- RAG 知识检索 ---
@@ -263,16 +293,29 @@ async def process_excel_node(
 
         if attempt == 0:
             messages = sql_prompt_template.format_messages(
-                instruction=user_instruction,
+                instruction=actual_query,
                 chart_hint=chart_hint.replace("{", "{{").replace("}", "}}"),
             )
+            # 追问模式：在 system 和 user 之间插入历史对话
+            if chat_history:
+                history_msgs = []
+                for h in chat_history:
+                    if h["role"] == "user":
+                        history_msgs.append(("user", f"[历史] {h['content']}"))
+                    else:
+                        history_msgs.append(("assistant", f"[历史] {h['content']}"))
+                # 重建 messages: system + history + user
+                messages = [messages[0]] + [
+                    ChatPromptTemplate.from_messages([(r, c)]).format_messages()[0]
+                    for r, c in history_msgs
+                ] + [messages[-1]]
         else:
             correction_template = ChatPromptTemplate.from_messages([
                 ("system", sql_prompt_filled),
                 ("user", "用户的分析要求：『{instruction}』\n\n【上次执行出错】:\n{error_msg}\n\n请修正你的 JSON 输出。"),
             ])
             messages = correction_template.format_messages(
-                instruction=user_instruction,
+                instruction=actual_query,
                 error_msg=error_msg.replace("{", "{{").replace("}", "}}"),
             )
 
@@ -349,7 +392,7 @@ async def process_excel_node(
 
     logger.info(f"📊 [DataAgent] Step3 生成深度分析报告（真实数据注入）...")
 
-    report_prompt = REPORT_GENERATION_PROMPT.replace("{instruction}", user_instruction)
+    report_prompt = REPORT_GENERATION_PROMPT.replace("{instruction}", actual_query)
     report_prompt = report_prompt.replace("{chart_type_desc}", chart_type_desc)
     report_prompt = report_prompt.replace("{result_data}", result_markdown)
 
@@ -360,8 +403,12 @@ async def process_excel_node(
     try:
         report_messages = [
             {"role": "system", "content": "你是一个顶级数据战略顾问，擅长基于真实数据撰写深度分析报告。"},
-            {"role": "user", "content": report_prompt},
         ]
+        # 追问模式：注入历史对话
+        if chat_history:
+            for h in chat_history:
+                report_messages.append({"role": h["role"], "content": f"[历史] {h['content']}"})
+        report_messages.append({"role": "user", "content": report_prompt})
         text_analysis = await llm_client.acall_api(
             report_messages,
             max_tokens=8192,
@@ -370,7 +417,8 @@ async def process_excel_node(
         execution_log.append(f"Step3 报告生成成功，长度: {len(text_analysis)}")
     except Exception as e:
         logger.error(f"📊 [DataAgent] Step3 报告生成失败: {e}")
-        text_analysis = f"（报告生成失败: {e}）\n\n原始查询结果:\n{result_markdown}"
+        # 🔑 不再输出原始数据表，改为友好提示（图表仍会由 _build_preview_html 拼接）
+        text_analysis = f"⚠️ AI 深度分析报告生成超时，请参考下方图表进行解读。如需文字分析，请尝试追问。"
         execution_log.append(f"Step3 报告生成失败: {e}")
 
     # 用 Step3 生成的报告替换 pipeline 的 output
@@ -430,9 +478,15 @@ def _build_preview_html(result: dict, schema: dict, instruction: str) -> str:
     html += f"<h4 style='color: #6b7280; margin-top: 20px;'>💡 AI 分析结论:</h4>"
     html += f"<pre style='background: #1f2937; color: #a5b4fc; padding: 15px; border-radius: 8px; white-space: pre-wrap;'>{output}</pre>"
 
+    # 🔑 图表始终拼接：只要 image_base64 存在就强制渲染 <img>
     if img_b64:
         html += "<h4 style='color: #6b7280; margin-top: 20px;'>📈 可视化图表:</h4>"
-        html += f"<img src='data:image/png;base64,{img_b64}' style='max-width: 100%; border-radius: 8px; border: 1px solid #e5e7eb;' />"
+        html += (
+            f"<div style='margin-top:20px; text-align:center;'>"
+            f"<img src='data:image/png;base64,{img_b64}' "
+            f"style='max-width:100%; border-radius:8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 1px solid #e5e7eb;' />"
+            f"</div>"
+        )
 
     html += "</div>"
     return html

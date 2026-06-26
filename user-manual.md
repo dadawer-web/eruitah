@@ -786,6 +786,128 @@ GET /api/v1/health
 {"version": "1.0.0", "uptime": 86400.0}
 ```
 
+#### 3.13.7 知识库搜索与统计
+
+```
+POST /api/v1/knowledge/search
+```
+
+对当前用户的知识库 Collection 进行混合检索（向量 + BM25 + Reranker）。
+
+```json
+{"query": "进程调度算法", "top_k": 5}
+```
+
+```
+GET /api/v1/knowledge/stats
+```
+
+返回当前用户知识库的文档数、切片数、Collection 等统计信息。
+
+```
+POST /api/v1/knowledge/transfer_to_rag/{task_id}
+```
+
+将某个任务处理过的文档内容转入 RAG 知识库（向量化入库）。
+
+#### 3.13.8 GraphRAG 图谱接口
+
+Butcanthic 内置 GraphRAG 引擎（Neo4j + networkx + LLM），从文档抽取实体关系三元组构建知识图谱，支持图谱检索增强。
+
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/api/v1/graph/data` | GET | 获取完整图谱数据（节点+边） |
+| `/api/v1/graph/node/{id}` | GET | 获取指定节点详情 |
+| `/api/v1/graph/stats` | GET | 图谱统计（节点数、边数、实体类型分布） |
+| `/api/v1/graph/search` | POST | 图谱搜索（按实体名/关系查询子图） |
+| `/api/v1/graph/node/{id}/sources` | GET | 获取节点来源文档 |
+
+**GraphRAG 检索流程：**
+1. LLM 从文档抽取三元组（实体-关系-实体）
+2. 写入 Neo4j 图数据库
+3. 查询时 LLM 提取查询实体，Neo4j 子图检索
+4. networkx 分析 + matplotlib 可视化
+5. 与向量检索、BM25 检索结果经 RRF 融合后由 Reranker 重排
+
+#### 3.13.9 多轮追问接口
+
+```
+POST /api/v1/tasks/{task_id}/followup
+```
+
+对已处理的文档任务进行多轮追问（如 Excel 数据对话、文档内容深挖），复用原有任务上下文。
+
+```json
+{"question": "这张表的第二行数据是多少？"}
+```
+
+```
+DELETE /api/v1/tasks/{task_id}/delete_turn/{turn_index}
+```
+
+删除指定轮次的追问记录。
+
+#### 3.13.10 闪卡（间隔重复）接口
+
+Butcanthic 内置间隔重复（Spaced Repetition）闪卡系统，LLM 从知识库文档自动抽取 Q&A 对存入 SQLite `flashcard` 表，供 C++ 桌宠"碎碎念"推送和客户端复习。
+
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/api/v1/flashcards/draw` | POST | 抽取一张待复习闪卡 |
+| `/api/v1/flashcards/review` | POST | 提交复习结果（更新记忆曲线） |
+| `/api/v1/flashcards/due` | GET | 查询当前到期的闪卡列表 |
+
+**复习评分：**
+
+```bash
+curl -X POST http://localhost:8002/api/v1/flashcards/review \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <token>" \
+  -d '{"card_id": 1, "rating": "good"}'
+```
+
+`rating` 取值：`again`（忘记）/ `hard`（困难）/ `good`（良好）/ `easy`（简单），影响下次复习间隔。
+
+#### 3.13.11 Excel 数据对话（DuckDB）
+
+上传 Excel 后，`chat_excel_node` Agent 将用户自然语言问题转译为 SQL，在 DuckDB 引擎中执行查询并返回结果。
+
+**触发方式：** 上传 `.xlsx`/`.csv` 文档后，通过 `/api/v1/tasks/{task_id}/followup` 多轮追问接口提问，Supervisor 自动路由到 `chat_excel` 节点。
+
+**示例：**
+
+```json
+{"question": "按销售额降序排列前10名"}
+```
+
+Agent 生成 `SELECT * FROM sheet ORDER BY 销售额 DESC LIMIT 10` 并在 DuckDB 中执行。
+
+#### 3.13.12 Celery 异步任务与 OOM 防护
+
+Butcanthic 使用 Celery + Redis 处理异步任务（文档流水线、知识库处理、闪卡生成），Worker 配置了 OOM（内存溢出）防护：
+
+| 配置项 | 默认值 | 说明 |
+|--------|--------|------|
+| `max_tasks_per_child` | 5 | 每处理 5 个任务后 Worker 自动重启，释放内存 |
+| 内存阈值 | 300MB | 内存超 300MB 自动重启 Worker |
+| `CELERY_WORKER_CONCURRENCY` | 2 | Worker 并发数 |
+
+**环境变量：**
+
+```bash
+CELERY_BROKER_URL=redis://:123456@127.0.0.1:6379/0
+CELERY_RESULT_BACKEND=redis://:123456@127.0.0.1:6379/1
+CELERY_WORKER_CONCURRENCY=2
+```
+
+#### 3.13.13 调试接口
+
+```
+DELETE /api/v1/debug/graph/wipe_user
+```
+
+清空当前用户的图谱数据（仅供调试）。
+
 ---
 
 ## 4. 多智能体编排详解
@@ -1003,6 +1125,83 @@ GET /api/v1/health
 - **TTL**：30分钟
 - **内容**：JSON序列化的 `ExamContext`（科目、题干、标准答案、题目来源）
 - **生命周期**：出题时进入考试状态 → 用户回答后判卷 → 判卷完成后清除
+
+### 8.6 AIOS 桌宠事件总线（RabbitMQ + MQTT）
+
+除 Redis 消息通信外，系统还内置 **AIOS 全局事件总线**，基于 RabbitMQ + MQTT 实现 AI Service / Butcanthic / Eruitah Sandbox 三大微服务向 C++ 桌面宠物推送通知的跨服务事件机制。
+
+#### 8.6.1 架构
+
+```
+AI Service / Butcanthic / Sandbox 方法成功返回
+        │
+        ▼  (@AiosNotify 注解 + AiosNotifyAspect AOP 切面)
+RabbitMQ amq.topic 交换机（端口 5672）
+        │  路由键: aios.events.user_{userId}.{source}
+        ▼  (RabbitMQ MQTT 插件，端口 1883)
+C++ 桌面宠物 PetMqttClient（mosquitto 订阅）
+        │
+        ▼
+GlobalEventBus 单例广播 → 状态机驱动气泡通知
+```
+
+#### 8.6.2 AI Service 端：@AiosNotify 注解
+
+AI Service 通过自定义注解 `@AiosNotify` + `AiosNotifyAspect` 切面，在方法成功返回后自动向 RabbitMQ 发布事件，业务代码无感知。
+
+**注解定义：**
+
+```java
+@AiosNotify(source = "farm_judge", successMsg = "已批改完毕，快去看看反馈吧")
+public HarvestJudgment judgeFarm(...) { ... }
+```
+
+**切面行为：** 方法正常返回后，向 `amq.topic` 交换机发布消息：
+- 路由键：`aios.events.user_{userId}.{source}`
+- 消息体：`{"source": "...", "successMsg": "...", "timestamp": ...}`
+
+#### 8.6.3 RabbitMQ 配置
+
+```yaml
+spring:
+  rabbitmq:
+    host: ${RABBITMQ_HOST:127.0.0.1}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:admin}
+    password: ${RABBITMQ_PASSWORD:eruitah2026}
+```
+
+**前置条件：** RabbitMQ 必须启用 MQTT 插件（供 C++ 桌面端订阅）：
+
+```bash
+rabbitmq-plugins enable rabbitmq_mqtt
+```
+
+#### 8.6.4 C++ 客户端：PetMqttClient + GlobalEventBus
+
+C++ 客户端通过 `PetMqttClient`（mosquitto MQTT 客户端）订阅 AIOS 事件，由 `GlobalEventBus` 单例广播到 UI 层。
+
+**MQTT 配置（代码硬编码于 `petmqttclient.h`）：**
+
+| 配置项 | 默认值 |
+|--------|--------|
+| MQTT Broker | `127.0.0.1:1883` |
+| 用户名 | `admin` |
+| 密码 | `eruitah2026` |
+| 订阅主题 | `aios.events.user_{userId}.#` |
+
+**GlobalEventBus：** 全局事件总线单例，接收 MQTT 消息后跨 UI 组件广播，实现微服务事件与桌面端的解耦联动。
+
+#### 8.6.5 常见事件类型
+
+| source | 说明 | 触发源 |
+|--------|------|--------|
+| `farm_judge` | 农场答题判题完成 | AI Service FarmAiJudgeService |
+| `ai_reply` | AI 回复完成 | AI Service AiChatRequestListener |
+| `weekly_report` | 周报生成完成 | AI Service WeeklyReportScheduler |
+| `career_advice` | 职业建议推送 | AI Service GraphExamService |
+| 文档处理事件 | 文档处理进度/完成 | Butcanthic event_bus |
+| Agent 状态事件 | thinking/idle 状态 | Eruitah Sandbox event_bus |
 
 ---
 
@@ -1468,6 +1667,69 @@ ChatClient通过Qt信号槽与UI层通信：
     #include <arpa/inet.h>
 #endif
 ```
+
+### 17.7 桌面宠物与微服务大管家
+
+客户端内置桌面宠物（`desktoppet.cpp`），既是趣味伴学形象，也是微服务"大管家"，承担微服务健康监控与闪卡推送职责。
+
+#### 17.7.1 桌宠交互
+
+- **待机动画**：Live2D 风格的桌宠待机动画
+- **拖拽**：支持鼠标拖拽桌宠到屏幕任意位置
+- **气泡通知**：根据状态机驱动弹出气泡，报告服务异常/恢复、AIOS 事件
+
+#### 17.7.2 ServiceMonitor 微服务健康监控
+
+`ServiceMonitor` 周期性轮询三大微服务的健康端点，异常时驱动桌宠气泡报告：
+
+| 微服务 | 健康端点 | 端口 |
+|--------|----------|------|
+| Butcanthic | `/api/v1/health` | 8002 |
+| Eruitah Sandbox | `/api/v1/health` | 8001 |
+| AI Service | `/api/ai/health` | 8081 |
+
+#### 17.7.3 闪卡碎碎念
+
+桌宠 Idle 时从 AI Service / Butcanthic 拉取"闪卡知识"（间隔重复记忆卡），通过气泡碎碎念推送学习卡片，实现碎片化学习。
+
+#### 17.7.4 相关文件
+
+| 文件 | 说明 |
+|------|------|
+| `desktoppet.cpp/h` | 桌宠主体（动画、拖拽、状态机） |
+| `servicemonitor.cpp/h` | 微服务健康轮询器 |
+| `petmqttclient.cpp/h` | MQTT 客户端（订阅 AIOS 事件，见 8.6 节） |
+| `globaleventbus.cpp/h` | 全局事件总线单例（广播 AIOS 事件到 UI） |
+
+### 17.8 职业辅导套件
+
+客户端内置完整职业辅导套件，结合 AI Service 的职业档案分析能力（`GraphExamService`），为用户提供个性化职业建议。
+
+#### 17.8.1 功能模块
+
+| 模块 | 文件 | 功能 |
+|------|------|------|
+| 职业仪表盘 | `career_dashboard_dialog.cpp` | 展示职业能力雷达图（ECharts，加载 `html/career_radar.html`） |
+| 职业历史 | `career_history.cpp` | 历史职业建议记录查看 |
+| AI 职业建议弹窗 | `careeradvicepopup.cpp` | AI 生成的职业建议弹窗展示 |
+| 职业卡片 | `career_card_widget.cpp` | 技能卡片组件 |
+
+#### 17.8.2 数据流
+
+```
+AI Service GraphExamService 分析用户能力
+        │
+        ▼  (RPC: UpdateCareerProfile / SendCareerAdvice)
+C++ ChatServer (RPC_LISTEN_PORT=8888)
+        │
+        ▼  (信号槽)
+QtChat 客户端
+        │
+        ▼
+职业仪表盘 / 职业建议弹窗 展示
+```
+
+**RPC 方法：** 通过 Protobuf RPC Bridge（见第 22 节）的 `UpdateCareerProfile`（更新职业档案）和 `SendCareerAdvice`（推送职业建议）方法实现 AI Service 到 C++ 客户端的职业数据推送。
 
 ---
 
@@ -2721,6 +2983,98 @@ void CodingLabWindow::onTextMessageReceived(QString message) {
     }
 }
 ```
+
+### 20.19 "绝对网关"架构与意图判定
+
+Eruitah Sandbox v4 采用"绝对网关（Absolute Gateway）"架构：所有新任务先经过 Supervisor（CTO 监工，见 20.5 节）审题，做意图判定后再决定执行模式。
+
+#### 20.19.1 意图判定
+
+Supervisor 将用户请求分为三种意图：
+
+| 意图 | 说明 | 执行流向 |
+|------|------|----------|
+| TOUR | 代码导览请求 | 调用 `tour_generator` 生成代码讲解路径（见 20.21 节） |
+| AMBIGUOUS | 需求暧昧不清 | Agent 反问澄清需求，不直接编码 |
+| CODE | 明确的编码任务 | 进入编码流程（极速模式 / 深度模式） |
+
+#### 20.19.2 两种执行模式
+
+- **极速模式**：单体 Agent 穿上专家外衣直接执行（简单任务）
+- **深度模式**：红蓝对抗 Swarm 多智能体协同（复杂任务，见 20.5 节）
+
+### 20.20 代码图谱全链路
+
+Sandbox 基于 Tree-sitter 多语言 AST 解析构建项目级代码图谱，提供深度语义检索与变更影响分析。20.12 节列出了相关工具，本节详述完整链路。
+
+#### 20.20.1 处理链路
+
+```
+Tree-sitter 多语言索引（Python/Java/C++）
+        ▼
+项目依赖图（project_grapher.py）
+        ▼
+社区聚类（graph_cluster.py）→ 社区发现，识别模块边界
+        ▼
+变更影响传染分析（graph_diff.py）→ 评估代码变更的传染范围
+        ▼
+实时文件监听热更新（graph_watcher.py）→ 文件变动时增量更新图谱
+        ▼
+上下文剪裁（graph_context_tool.py）→ 为 LLM 裁剪最相关子图
+```
+
+#### 20.20.2 模块说明
+
+| 模块 | 功能 |
+|------|------|
+| `tree_sitter_engine.py` / `tree_sitter_index.py` | 多语言 AST 解析与代码索引 |
+| `project_grapher.py` | 项目级代码依赖图谱构建 |
+| `graph_cluster.py` | 社区发现（Louvain 等算法），识别模块边界 |
+| `graph_diff.py` | 变更影响传染分析，评估修改某文件的连锁影响 |
+| `graph_watcher.py` | 实时文件监听，图谱热更新 |
+| `graph_context_tool.py` | 上下文剪裁，为 LLM 提供最相关子图 |
+| `ast_tool.py` | AST 代码结构提取（对齐 Understand-Anything） |
+| `semantic_search_tool.py` | 向量语义搜索（sentence-transformers + numpy） |
+
+**支持的检索类型：** symbol / definition / hierarchy / reference / outline / overview
+
+**持久化：** 代码索引存储于 `.code_index.db`（SQLite）。
+
+### 20.21 代码导览（Tour）
+
+基于项目依赖图自动生成代码讲解路径，帮助用户快速理解陌生代码库。
+
+**触发方式：** Supervisor 判定为 TOUR 意图时，调用 `tour_generator` 按依赖顺序生成讲解路径，Agent 依次讲解各模块。
+
+**适用场景：** 接手新项目、代码审查前的预读、教学演示。
+
+### 20.22 进阶实验引擎详解
+
+20.12 节工具表已列出以下引擎，本节补充其设计理念与架构说明。这些引擎为研究性质的前沿实验功能。
+
+#### 20.22.1 影子沙盒（shadow_sandbox.py）
+
+借鉴 CPU **分支预测**机制的投机执行：Agent 在正式执行某个操作前，先在影子沙盒中"投机"执行一遍，验证结果无误后再正式提交。若投机失败则丢弃，不影响主流程。
+
+#### 20.22.2 忒修斯之船（theseus_rewrite.py）
+
+AI 自我重写引擎，允许 Agent 逐步替换自身代码模块（如同忒修斯之船逐块换木板），实现自我进化。重写快照存储于 `.theseus/shadow_*/` 目录。
+
+#### 20.22.3 自我微调（self_distill.py）
+
+闭环自我微调 / RLHF（人类反馈强化学习），Agent 从历史交互中学习优化自身行为策略。
+
+#### 20.22.4 算力自治（compute_autonomy.py）
+
+算力自治引擎，Agent 根据任务负载自主调度算力资源。
+
+#### 20.22.5 自我进化（meta_tool.py）
+
+"工具的工具"——Agent 可自动生成新工具并注册到工具表，实现能力自我扩展。
+
+#### 20.22.6 自动测试闭环（auto_test_tool.py）
+
+Green Check 自动化测试：Agent 生成测试用例 → 运行 → 验证通过 → 提交代码，形成测试闭环。
 
 ---
 

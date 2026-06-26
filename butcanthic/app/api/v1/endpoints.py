@@ -29,10 +29,12 @@ from app.models.ppt_schema import SlidePage
 from app.models.database import DocumentMeta, User, init_db, get_session, get_db
 
 from app.models.schemas import (
+    ChatMessage,
     DocumentProcessRequest,
     DocumentProcessResponse,
     DocumentUploadResponse,
     FlashcardResponse,
+    FollowUpRequest,
     HealthResponse,
     KnowledgeRecord,
     KnowledgeUploadRequest,
@@ -1919,6 +1921,156 @@ async def delete_task(
     return {"status": "success", "message": f"已删除任务: {filename or task_id}"}
 
 
+@router.post("/tasks/{task_id}/followup")
+async def followup_task(
+    task_id: str,
+    request: FollowUpRequest,
+    background_tasks: BackgroundTasks,
+    current_user_id: str = Depends(get_current_user),
+):
+    """多轮追问接口（单会话流）：基于已完成任务的原始文件，继续对话分析。
+
+    单会话流原则：追问绝不新建 DocumentMeta 记录！只复用原始任务的 task_id，
+    将状态重置为 processing 后派发 Celery。完成后 Celery 会按 task_id 查回原记录，
+    依据 filled_html 是否已有内容自动判断追加（追问）或覆盖（首轮），左侧列表永远只显示原任务。
+    """
+    from app.core.task_runner import run_document_pipeline_sync
+    from app.core.config import settings
+
+    session = get_session()
+    try:
+        doc = session.query(DocumentMeta).filter(
+            DocumentMeta.task_id == task_id,
+            DocumentMeta.user_id == current_user_id,
+        ).first()
+
+        if not doc:
+            return {"status": "error", "message": f"任务 {task_id} 不存在"}
+
+        if not doc.file_path or not os.path.exists(doc.file_path):
+            return {"status": "error", "message": f"任务 {task_id} 的原始文件已丢失，无法追问"}
+
+        file_path = doc.file_path
+        file_type = doc.file_type
+
+        # 单会话流核心：复用原任务记录，仅重置状态为 processing（不新建任何记录）
+        doc.status = "processing"
+        session.add(doc)
+        session.commit()
+    finally:
+        session.close()
+
+    # 构建 uploaded_files 格式（复用原文件路径，与 submit_task 一致）
+    uploaded_files_info = [{
+        "path": file_path,
+        "type": file_type,
+        "filename": os.path.basename(file_path),
+    }]
+
+    # 将历史对话序列化为 user_instruction 的上下文前缀
+    history_prefix = ""
+    if request.history:
+        history_parts = []
+        for msg in request.history[-10:]:  # 最多保留最近10轮
+            role_label = "用户" if msg.role == "user" else "AI助手"
+            history_parts.append(f"{role_label}: {msg.content}")
+        history_prefix = "\n".join(history_parts) + "\n\n"
+
+    combined_instruction = f"{history_prefix}【追问】{request.query}"
+
+    # 派发追问任务：直接复用原 task_id，doc_ids=[] 触发 persist_task_result 追加路径
+    if settings.USE_CELERY:
+        from app.worker.tasks import process_document_task
+        process_document_task.delay(
+            task_id=task_id,
+            uploaded_files=uploaded_files_info,
+            user_instruction=combined_instruction,
+            max_retries=3,
+            user_id=current_user_id,
+            doc_ids=[],
+        )
+    else:
+        background_tasks.add_task(
+            run_document_pipeline_sync,
+            task_id, uploaded_files_info, combined_instruction, 3, "",
+            current_user_id, [], True,
+        )
+
+    return {
+        "status": "processing",
+        "task_id": task_id,
+        "message": "追问已提交，正在处理...",
+    }
+
+
+@router.post("/tasks/{task_id}/delete_turn/{turn_index}")
+async def delete_task_turn(
+    task_id: str,
+    turn_index: int,
+    current_user_id: str = Depends(get_current_user),
+):
+    """定点删除单次追问的报告与对话记忆（防止单次错误回答污染后续上下文）。
+
+    单会话流下 history 结构：首轮占 history[0]，追问从 history[1] 起成对存在（user+ai）。
+    turn_index 从 1 开始：第 1 次追问对应 history[1:3]。
+
+    filled_html 中对应追问被 <div class='followup-block' id='followup-block-{turn_index}'> 包裹，
+    用 BeautifulSoup 定点拔除该节点。
+    """
+    from bs4 import BeautifulSoup
+
+    if turn_index < 1:
+        raise HTTPException(status_code=400, detail="turn_index 必须大于 0")
+
+    session = get_session()
+    try:
+        doc = session.query(DocumentMeta).filter(
+            DocumentMeta.task_id == task_id,
+            DocumentMeta.user_id == current_user_id,
+        ).first()
+        if not doc:
+            raise HTTPException(status_code=404, detail=f"任务 {task_id} 不存在")
+
+        # 1. 裁剪 history：turn N 对应 history[1+2*(N-1) : 1+2*(N-1)+2]
+        if doc.history:
+            try:
+                history_list = json.loads(doc.history)
+                if isinstance(history_list, list):
+                    start_idx = 1 + (turn_index - 1) * 2  # turn1→1, turn2→3, turn3→5
+                    if 0 <= start_idx < len(history_list):
+                        del history_list[start_idx: start_idx + 2]
+                    doc.history = json.dumps(history_list, ensure_ascii=False)
+            except Exception as e:
+                logger.warning(f"delete_turn: history 裁剪失败: {e}")
+
+        # 2. 移除 filled_html 中对应的 followup-block 节点
+        if doc.filled_html:
+            soup = BeautifulSoup(doc.filled_html, "html.parser")
+            target = soup.find("div", id=f"followup-block-{turn_index}")
+            if target:
+                target.decompose()
+            doc.filled_html = str(soup)
+
+        session.add(doc)
+        session.commit()
+        session.refresh(doc)
+        logger.info(f"delete_turn: task {task_id} turn {turn_index} deleted")
+        return {
+            "status": "success",
+            "message": f"第 {turn_index} 次追问已删除",
+            "filled_html": doc.filled_html,
+            "history": doc.history,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"delete_turn failed: {e}", exc_info=True)
+        session.rollback()
+        raise HTTPException(status_code=500, detail=f"删除失败: {e}")
+    finally:
+        session.close()
+
+
 @router.post("/knowledge/transfer_to_rag/{task_id}")
 async def transfer_to_rag(
     task_id: str,
@@ -2070,6 +2222,7 @@ async def submit_task(
                 task_id=task_id,
                 owner_id=current_user_id,
                 collection_name=RAGEngine._make_collection_name(current_user_id),
+                file_path=f_info.get("path", ""),  # 持久化物理路径，用于追问时重新加载
             )
             db_session.add(doc_meta)
         db_session.commit()

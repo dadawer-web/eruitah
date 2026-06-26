@@ -64,6 +64,61 @@ _FORBIDDEN_MODULES = {
 }
 
 
+def _build_chart_title(chart_type: str, df: pd.DataFrame, fallback: str) -> str:
+    """基于数据列名动态生成图表标题，绝不把多轮对话上下文当标题。
+
+    优先根据 chart_type + DataFrame 列名生成语义化标题；
+    若无法生成则回退到 fallback 的清洗版（剥离『AI助手:... 用户:...』多轮前缀，截断）。
+
+    Args:
+        chart_type: pie/bar/line/scatter/hist/box 或空
+        df: 查询结果 DataFrame
+        fallback: 调用方传入的原始标题（可能是脏的对话上下文）
+    """
+    cols = [str(c) for c in df.columns]
+    n = len(cols)
+    auto = ""
+    if chart_type == "box":
+        if n >= 2:
+            auto = f"{cols[1]} 分布（按 {cols[0]}）"
+        elif n == 1:
+            auto = f"{cols[0]} 分布"
+    elif chart_type == "scatter":
+        if n >= 2:
+            auto = f"{cols[0]} vs {cols[1]} 相关性"
+    elif chart_type == "hist":
+        if n >= 1:
+            auto = f"{cols[0]} 分布直方图"
+    elif chart_type == "pie":
+        if n >= 2:
+            auto = f"{cols[1]} 占比（按 {cols[0]}）"
+        elif n == 1:
+            auto = f"{cols[0]} 占比"
+    elif chart_type == "bar":
+        if n >= 2:
+            auto = f"{cols[1]} 对比（按 {cols[0]}）"
+        elif n == 1:
+            auto = f"{cols[0]} 统计"
+    elif chart_type == "line":
+        if n >= 2:
+            auto = f"{cols[1]} 趋势（按 {cols[0]}）"
+        elif n == 1:
+            auto = f"{cols[0]} 趋势"
+
+    if auto:
+        return auto if len(auto) <= 40 else auto[:40] + "…"
+
+    # 兜底：清洗 fallback，剥离『AI助手: / 用户: / 【追问】』多轮对话前缀
+    raw = fallback or "数据分析"
+    for sep in ("【追问】", "用户:", "AI助手:"):
+        if sep in raw:
+            raw = raw.split(sep)[-1]
+    raw = raw.strip().replace("\n", " ").strip("：: ")
+    if len(raw) > 20:
+        raw = raw[:20] + "…"
+    return raw or "数据分析"
+
+
 class ExcelDataProcessor:
     """Excel 异步数据处理器"""
 
@@ -213,70 +268,68 @@ class ExcelDataProcessor:
     # Text-to-SQL-to-Chart 管线：DuckDB 查询 + Python 系统级模板绘图
     # ================================================================
 
-    async def execute_chart_pipeline(
+    def execute_sql_to_df(
+        self, sql: str, table_name: str = "excel_data"
+    ) -> Dict[str, Any]:
+        """在已加载的 DuckDB 连接（连接 A）上执行 SQL，返回原始 DataFrame。
+
+        复用 load_to_duckdb 时缓存的连接 self._duckdb_connections[table_name]，
+        避免新建独立内存连接导致的连接隔离 / Catalog Error（Table 'excel_data' does not exist）。
+
+        Returns:
+            {"success": bool, "df": pd.DataFrame|None, "error": str|None}
+        """
+        if not sql or not sql.strip():
+            return {"success": False, "df": None, "error": "SQL 为空，大模型未能生成有效的查询语句"}
+
+        conn = getattr(self, "_duckdb_connections", {}).get(table_name)
+        if conn is None:
+            return {
+                "success": False,
+                "df": None,
+                "error": f"DuckDB table '{table_name}' not found. Please load data first.",
+            }
+
+        try:
+            result_df = conn.execute(sql).fetchdf()
+            logger.info(
+                f"📊 [ChartPipeline] 连接A执行SQL成功, 结果 "
+                f"{result_df.shape[0]} 行 × {result_df.shape[1]} 列"
+            )
+            return {"success": True, "df": result_df, "error": None}
+        except Exception as e:
+            logger.error(f"📊 [ChartPipeline] execute_sql_to_df 失败: {e}\nSQL: {sql}")
+            return {"success": False, "df": None, "error": str(e)}
+
+    def draw_chart_from_df(
         self,
-        file_path: str,
-        sql: str,
-        chart_type: str = "",
+        result_df: pd.DataFrame,
+        chart_type: str,
         title: str = "数据分析",
         text_analysis: str = "",
     ) -> Dict[str, Any]:
-        """执行 Text-to-SQL-to-Chart 管线。
+        """从 DataFrame 直接绘制图表（不再二次查询数据库）。
 
-        1. 加载 Excel → DuckDB 内存表
-        2. 执行 LLM 生成的 SQL 获取聚合结果
-        3. Python 系统代码根据 chart_type 模板绘图
-        4. 返回 {success, output, image_base64}
+        让 Matplotlib 直接读取传入的 df 进行图像绘制（如 plt.plot(df.iloc[:,0], df.iloc[:,1])），
+        利用内存中的数据生成 Base64 图像。本函数不含任何 duckdb.connect / conn.execute 调用，
+        彻底规避连接隔离问题。
 
-        Args:
-            file_path: Excel 文件路径
-            sql: DuckDB SQL 查询（表名固定为 df）
-            chart_type: pie/bar/line/scatter/hist/box 或空字符串（不画图）
-            title: 图表标题
-            text_analysis: LLM 的文字分析
+        Returns:
+            {"success": bool, "output": str, "image_base64": str|None,
+             "result_markdown": str, "error": str|None}
         """
-        return await asyncio.to_thread(
-            self._execute_chart_pipeline_sync,
-            file_path, sql, chart_type, title, text_analysis,
-        )
+        import numpy as np  # noqa: F401  保留以兼容历史绘图依赖
 
-    def _execute_chart_pipeline_sync(
-        self,
-        file_path: str,
-        sql: str,
-        chart_type: str,
-        title: str,
-        text_analysis: str,
-    ) -> Dict[str, Any]:
-        import duckdb
-        import numpy as np
-
-        # --- 1. 加载 DataFrame ---
-        try:
-            df = self._load_dataframe(file_path)
-        except Exception as e:
-            return {"success": False, "error": f"Failed to read file: {e}", "output": "", "image_base64": None}
-
-        # --- 2. DuckDB SQL 查询 ---
-        try:
-            conn = duckdb.connect(":memory:")
-            conn.register("df", df)
-            result_df = conn.execute(sql).fetchdf()
-            conn.close()
-            logger.info(f"📊 [ChartPipeline] SQL 执行成功, 结果 {result_df.shape[0]} 行 × {result_df.shape[1]} 列")
-        except Exception as e:
-            return {"success": False, "error": f"SQL 执行失败: {e}\nSQL: {sql}", "output": "", "image_base64": None}
-
-        # --- 3. 将查询结果转为 Markdown（供 Step3 报告生成使用） ---
+        # --- 1. 将查询结果转为 Markdown（供 Step3 报告生成使用） ---
         try:
             result_markdown = result_df.to_markdown(index=False)
         except Exception:
             result_markdown = result_df.to_string(index=False, max_rows=30)
 
-        # --- 4. 构建文字输出（仅使用 LLM 的深度分析，不再追加原始 SQL 结果） ---
+        # --- 2. 构建文字输出（仅使用 LLM 的深度分析，不再追加原始 SQL 结果） ---
         output = text_analysis if text_analysis else "（未生成分析报告）"
 
-        # --- 4. 系统级模板绘图 ---
+        # --- 3. 系统级模板绘图（纯内存 DataFrame，无数据库访问） ---
         img_base64 = None
         if chart_type and chart_type != "none":
             try:
@@ -285,17 +338,21 @@ class ExcelDataProcessor:
                 plt.rcParams['axes.unicode_minus'] = False
                 plt.clf()
 
+                # 标题重算：绝不把多轮对话上下文（AI助手:/用户:/【追问】）当标题，
+                # 优先基于 chart_type + 列名生成语义化标题
+                title = _build_chart_title(chart_type, result_df, title)
+
                 ncols = result_df.shape[1]
                 nrows = result_df.shape[0]
 
                 # 空结果保护
                 if nrows == 0:
-                    logger.warning(f"📊 [ChartPipeline] SQL 查询结果为空（0行），跳过绘图")
+                    logger.warning(f"📊 [ChartPipeline] 查询结果为空（0行），跳过绘图")
                     return {"success": True, "output": output, "image_base64": None, "result_markdown": result_markdown}
 
-                # 多列警告：SQL 返回超过2列时，只取前2列绘图
+                # 多列警告：结果超过2列时，只取前2列绘图
                 if ncols > 2:
-                    logger.warning(f"📊 [ChartPipeline] SQL 返回 {ncols} 列，取前2列绘图（第1列=标签，第2列=数值）")
+                    logger.warning(f"📊 [ChartPipeline] 结果 {ncols} 列，取前2列绘图（第1列=标签，第2列=数值）")
 
                 # 统一提取前两列（iloc 绝对安全，不依赖列名）
                 col0 = result_df.iloc[:, 0]  # 第1列：分类标签 / X轴
@@ -377,23 +434,56 @@ class ExcelDataProcessor:
                     plt.grid(True, alpha=0.3, axis='y')
 
                 elif chart_type == "box":
-                    # 箱线图：取第1列数值
-                    values = col0.dropna().values
+                    # 箱线图：智能识别分组场景
+                    #   - 2 列且第2列为数值 → 按 col0 分组，画每个组的 col1 分布（分组箱线图）
+                    #   - 1 列或第2列非数值   → 对 col0 单列画分布
                     plt.figure(figsize=(10, 6))
-                    plt.boxplot(values, patch_artist=True,
-                                boxprops=dict(facecolor='lightsteelblue', color='navy'),
-                                medianprops=dict(color='red', linewidth=2),
-                                whiskerprops=dict(color='navy'),
-                                capprops=dict(color='navy'))
+                    box_colors = dict(
+                        boxprops=dict(facecolor='lightsteelblue', color='navy'),
+                        medianprops=dict(color='red', linewidth=2),
+                        whiskerprops=dict(color='navy'),
+                        capprops=dict(color='navy'),
+                        flierprops=dict(marker='o', markerfacecolor='red',
+                                        markersize=4, markeredgecolor='red', alpha=0.6),
+                    )
+                    grouped_drawn = False
+                    if col1 is not None and pd.api.types.is_numeric_dtype(col1):
+                        # 分组箱线图：按 col0 类别聚合 col1 数值
+                        try:
+                            grouped = result_df.groupby(col0)[result_df.columns[1]].apply(list)
+                            group_labels = [str(lbl) for lbl in grouped.index]
+                            group_values = [pd.Series(v).dropna().tolist() for v in grouped.values]
+                            # 过滤掉空组，避免 matplotlib 报错
+                            non_empty = [(lbl, v) for lbl, v in zip(group_labels, group_values) if len(v) > 0]
+                            if len(non_empty) >= 1:
+                                group_labels = [lbl for lbl, _ in non_empty]
+                                group_values = [v for _, v in non_empty]
+                                plt.boxplot(group_values, labels=group_labels, patch_artist=True, **box_colors)
+                                plt.xticks(rotation=45, ha='right')
+                                plt.xlabel(result_df.columns[0], fontsize=12)
+                                plt.ylabel(result_df.columns[1], fontsize=12)
+                                grouped_drawn = True
+                        except Exception as be:
+                            logger.warning(f"📊 [ChartPipeline] 分组箱线图绘制失败，回退单列: {be}")
+                            grouped_drawn = False
+
+                    if not grouped_drawn:
+                        # 单列箱线图：对 col0 数值列画分布
+                        values = pd.to_numeric(col0, errors='coerce').dropna().values
+                        if len(values) == 0:
+                            logger.warning("📊 [ChartPipeline] 箱线图无可绘数值，跳过")
+                        else:
+                            plt.boxplot(values, patch_artist=True, **box_colors)
+                            plt.ylabel(result_df.columns[0], fontsize=12)
                     plt.title(title, fontsize=14)
-                    plt.ylabel(result_df.columns[0], fontsize=12)
                     plt.grid(True, alpha=0.3, axis='y')
 
                 else:
                     logger.warning(f"📊 [ChartPipeline] 不支持的图表类型: {chart_type}，跳过绘图")
                     return {"success": True, "output": output, "image_base64": None, "result_markdown": result_markdown}
 
-                # --- 5. 保存为 base64 ---
+                # --- 4. 保存为 base64 ---
+                plt.tight_layout()  # 防止 x 轴标签（如翻转的类别名）被切或重叠
                 img_buf = io.BytesIO()
                 plt.savefig(img_buf, format='png', bbox_inches='tight', dpi=150)
                 img_buf.seek(0)
@@ -411,6 +501,65 @@ class ExcelDataProcessor:
                     pass
 
         return {"success": True, "output": output, "image_base64": img_base64, "result_markdown": result_markdown}
+
+    async def execute_chart_pipeline(
+        self,
+        file_path: str,
+        sql: str,
+        chart_type: str = "",
+        title: str = "数据分析",
+        text_analysis: str = "",
+    ) -> Dict[str, Any]:
+        """执行 Text-to-SQL-to-Chart 管线。
+
+        1. 加载 Excel → DuckDB 内存表
+        2. 执行 LLM 生成的 SQL 获取聚合结果
+        3. Python 系统代码根据 chart_type 模板绘图
+        4. 返回 {success, output, image_base64}
+
+        Args:
+            file_path: Excel 文件路径
+            sql: DuckDB SQL 查询（表名固定为 df）
+            chart_type: pie/bar/line/scatter/hist/box 或空字符串（不画图）
+            title: 图表标题
+            text_analysis: LLM 的文字分析
+        """
+        return await asyncio.to_thread(
+            self._execute_chart_pipeline_sync,
+            file_path, sql, chart_type, title, text_analysis,
+        )
+
+    def _execute_chart_pipeline_sync(
+        self,
+        file_path: str,
+        sql: str,
+        chart_type: str,
+        title: str,
+        text_analysis: str,
+    ) -> Dict[str, Any]:
+        import duckdb
+        import numpy as np
+
+        # --- 1. 加载 DataFrame ---
+        try:
+            df = self._load_dataframe(file_path)
+        except Exception as e:
+            return {"success": False, "error": f"Failed to read file: {e}", "output": "", "image_base64": None}
+
+        # --- 2. DuckDB SQL 查询 ---
+        try:
+            conn = duckdb.connect(":memory:")
+            conn.register("df", df)
+            result_df = conn.execute(sql).fetchdf()
+            conn.close()
+            logger.info(f"📊 [ChartPipeline] SQL 执行成功, 结果 {result_df.shape[0]} 行 × {result_df.shape[1]} 列")
+        except Exception as e:
+            return {"success": False, "error": f"SQL 执行失败: {e}\nSQL: {sql}", "output": "", "image_base64": None}
+
+        # --- 3. 委托给 draw_chart_from_df 完成纯绘图（不再二次查询数据库）---
+        # 绘图逻辑已抽取到 draw_chart_from_df：Matplotlib 直接读取传入的 DataFrame，
+        # 彻底移除绘图函数内部的 duckdb.connect / conn.execute 等数据库操作。
+        return self.draw_chart_from_df(result_df, chart_type, title, text_analysis)
 
     async def get_sheet_names(self, file_path: str) -> List[str]:
         return await asyncio.to_thread(self._get_sheets_sync, file_path)
@@ -728,6 +877,16 @@ class ExcelDataProcessor:
                 "error": Optional[str],
             }
         """
+        # 🔑 空值兜底：防止 LLM 返回空 SQL 导致 NoneType 崩溃
+        if not sql or not sql.strip():
+            return {
+                "success": False,
+                "columns": [],
+                "data": [],
+                "row_count": 0,
+                "error": "SQL 为空，大模型未能生成有效的查询语句",
+            }
+
         conn = getattr(self, "_duckdb_connections", {}).get(table_name)
         if conn is None:
             return {

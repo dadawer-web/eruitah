@@ -55,6 +55,16 @@ class DocumentProcessRequest(BaseModel):
     selected_tables: Optional[List[int]] = Field(None, description="指定处理的表格索引列表，None则处理全部")
 
 
+class ChatMessage(BaseModel):
+    role: str = Field(..., description="消息角色: user / assistant")
+    content: str = Field(..., description="消息内容")
+
+
+class FollowUpRequest(BaseModel):
+    query: str = Field(..., description="用户新的追问内容")
+    history: Optional[List[ChatMessage]] = Field(None, description="历史对话列表")
+
+
 class DocumentProcessResponse(BaseModel):
     task_id: str = Field(..., description="任务ID")
     status: TaskStatus = Field(..., description="任务状态")

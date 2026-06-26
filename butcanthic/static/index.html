@@ -73,6 +73,161 @@
       word-wrap: break-word;
     }
 
+    /* ===== 多轮追问区样式（极客风） ===== */
+    .followup-zone {
+      background: linear-gradient(180deg, #0d1117 0%, #161b22 100%);
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    }
+    .followup-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+    }
+    .followup-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #58a6ff;
+      box-shadow: 0 0 8px #58a6ff;
+      animation: followup-pulse 1.8s infinite;
+    }
+    @keyframes followup-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .followup-title {
+      font-size: 13px; font-weight: 600; color: #c9d1d9;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    }
+    .followup-hint {
+      font-size: 11px; color: #6e7681; margin-left: auto;
+    }
+    .followup-messages {
+      max-height: 320px;
+      overflow-y: auto;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      scroll-behavior: smooth;
+    }
+    /* 当作为独立侧栏时，撑满高度 */
+    .followup-messages.flex-1 {
+      max-height: none;
+      height: 100%;
+    }
+    .followup-messages::-webkit-scrollbar { width: 6px; }
+    .followup-messages::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+    .followup-bubble {
+      max-width: 88%;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      line-height: 1.6;
+      word-break: break-word;
+    }
+    .followup-bubble-user {
+      align-self: flex-end;
+      background: linear-gradient(135deg, #1f6feb 0%, #388bfd 100%);
+      color: #ffffff;
+      border-bottom-right-radius: 2px;
+    }
+    .followup-bubble-ai {
+      align-self: flex-start;
+      background: #21262d;
+      color: #c9d1d9;
+      border: 1px solid #30363d;
+      border-bottom-left-radius: 2px;
+    }
+    .followup-bubble-role {
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      opacity: 0.8;
+    }
+    .followup-bubble-content { margin-top: 2px; }
+    .followup-bubble-content img { max-width: 100%; border-radius: 6px; margin: 6px 0; }
+    .followup-bubble-content table { border-collapse: collapse; margin: 6px 0; }
+    .followup-bubble-content td, .followup-bubble-content th {
+      border: 1px solid #30363d; padding: 4px 8px; font-size: 12px;
+    }
+    .followup-bubble-text { white-space: pre-wrap; }
+    .followup-thinking {
+      display: flex; align-items: center; gap: 4px;
+    }
+    .followup-dot-typing {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #58a6ff;
+      animation: followup-typing 1.4s infinite;
+    }
+    .followup-dot-typing:nth-child(2) { animation-delay: 0.2s; }
+    .followup-dot-typing:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes followup-typing {
+      0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+      30% { opacity: 1; transform: translateY(-4px); }
+    }
+    .followup-thinking-text {
+      margin-left: 6px; font-size: 12px; color: #8b949e;
+    }
+    .followup-input-bar {
+      display: flex;
+      gap: 8px;
+      padding: 12px 14px;
+      background: #0d1117;
+      border-top: 1px solid #30363d;
+    }
+    .followup-textarea {
+      flex: 1;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: #c9d1d9;
+      font-size: 13px;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      resize: none;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .followup-textarea:focus {
+      border-color: #58a6ff;
+      box-shadow: 0 0 0 2px rgba(88,166,255,0.15);
+    }
+    .followup-textarea::placeholder { color: #6e7681; }
+    .followup-send-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 0 18px;
+      background: linear-gradient(135deg, #238636 0%, #2ea043 100%);
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .followup-send-btn:hover:not(:disabled) {
+      box-shadow: 0 0 12px rgba(46,160,67,0.4);
+      transform: translateY(-1px);
+    }
+    .followup-send-btn:disabled {
+      opacity: 0.5; cursor: not-allowed;
+    }
+    .followup-spinner {
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #ffffff;
+      border-radius: 50%;
+      animation: followup-spin 0.6s linear infinite;
+    }
+    @keyframes followup-spin { to { transform: rotate(360deg); } }
+    .followup-send-label { font-size: 12px; }
+
     .ppt-editor-left {
       width: 350px;
       flex-shrink: 0;
@@ -335,15 +490,29 @@
 
         <div class="text-[10px] text-gray-600 mb-2 uppercase tracking-wider font-semibold">历史对话</div>
         <ul class="flex-1 overflow-y-auto space-y-1">
-          <li v-for="session in sessionHistory.slice().reverse()" :key="session.id"
-              @click="switchSession(session.id)"
-              :class="{'bg-gray-800 border-l-2 border-indigo-500': currentThreadId === session.id, 'hover:bg-gray-800/50': currentThreadId !== session.id}"
-              class="p-2.5 rounded cursor-pointer transition-colors border-l-2 border-transparent text-xs text-gray-400">
-            <div class="font-medium truncate text-gray-300">{{ session.title }}</div>
-            <div class="text-[10px] text-gray-600 mt-1">{{ session.date }}</div>
+          <li v-for="doc in myDocuments" :key="doc.id || doc.task_id"
+              @click="viewTaskResult(doc)"
+              :class="{'bg-gray-800 border-l-2 border-indigo-500': currentFollowupTaskId === doc.task_id, 'hover:bg-gray-800/50': currentFollowupTaskId !== doc.task_id}"
+              class="p-2.5 rounded cursor-pointer transition-colors border-l-2 border-transparent text-xs text-gray-400 group flex items-center justify-between gap-2">
+            <div class="min-w-0 flex-1">
+              <div class="font-medium truncate text-gray-300 flex items-center gap-1.5">
+                <span v-if="doc._isPlaceholder" class="animate-pulse text-amber-400">⏳</span>
+                <span v-else-if="doc.status === 'processing'" class="text-amber-400">⚡</span>
+                <span v-else-if="doc.status === 'completed'" class="text-emerald-400">✓</span>
+                <span v-else-if="doc.status === 'failed' || doc.status === 'error'" class="text-red-400">✗</span>
+                <span v-else class="text-gray-500">📄</span>
+                <span class="truncate flex-1">{{ doc._displayTitle || doc.filename }}</span>
+              </div>
+              <div class="text-[10px] text-gray-600 mt-1">{{ doc.upload_time ? new Date(doc.upload_time).toLocaleString('zh-CN', {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) : '' }}</div>
+            </div>
+            <button @click.stop="deleteTask(doc)"
+              class="flex-shrink-0 opacity-0 group-hover:opacity-100 text-red-500/70 hover:text-red-400 transition-opacity p-1 rounded hover:bg-red-900/30"
+              title="删除">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
           </li>
         </ul>
-        <div v-if="sessionHistory.length === 0" class="text-[10px] text-gray-700 text-center mt-4">暂无历史对话</div>
+        <div v-if="myDocuments.length === 0" class="text-[10px] text-gray-700 text-center mt-4">暂无历史对话</div>
       </div>
 
       <div v-if="sidebarView === 'mydocs'" class="w-[420px] flex-shrink-0 bg-gray-900/50 border-r border-gray-800 flex flex-col overflow-hidden">
@@ -366,7 +535,8 @@
             <p class="text-[10px] text-gray-600 mt-1">上传文档后将在此显示</p>
           </div>
           <div v-else class="space-y-2">
-            <div v-for="doc in myDocuments" :key="doc.id" class="bg-gray-900 rounded-lg border border-gray-800 p-3 transition-all hover:border-gray-700">
+            <div v-for="doc in myDocuments" :key="doc.id || doc.task_id" class="bg-gray-900 rounded-lg border border-gray-800 p-3 transition-all hover:border-gray-700"
+              :class="{ 'border-amber-500/30 bg-amber-900/5': doc._isPlaceholder, 'border-indigo-500/30 bg-indigo-900/5': currentFollowupTaskId === doc.task_id && !doc._isPlaceholder }">
               <div class="flex items-start gap-3">
                 <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 text-sm"
                   :class="{
@@ -376,23 +546,26 @@
                     'bg-red-900/40 text-red-400': doc.file_type === 'pdf',
                     'bg-gray-800 text-gray-400': !['docx','xlsx','csv','pptx','pdf'].includes(doc.file_type)
                   }">
-                  {{ { docx: 'W', xlsx: 'X', csv: 'X', pptx: 'P', pdf: 'D' }[doc.file_type] || '?' }}
+                  <span v-if="doc._isPlaceholder" class="animate-pulse">⏳</span>
+                  <template v-else>{{ { docx: 'W', xlsx: 'X', csv: 'X', pptx: 'P', pdf: 'D' }[doc.file_type] || '?' }}</template>
                 </div>
                 <div class="flex-1 min-w-0">
                   <div class="text-xs font-medium text-gray-200 truncate flex items-center gap-1.5">
-                    {{ doc.filename }}
+                    {{ doc._displayTitle || doc.filename }}
                     <span v-if="doc.status === 'failed' || doc.status === 'error'" class="text-[9px] px-1.5 py-0.5 rounded bg-red-600/30 text-red-400 font-medium flex-shrink-0">❌ 处理失败</span>
+                    <span v-if="currentFollowupTaskId === doc.task_id && !doc._isPlaceholder" class="text-[9px] px-1.5 py-0.5 rounded bg-indigo-600/30 text-indigo-400 font-medium flex-shrink-0">🔵 当前</span>
                   </div>
                   <div class="text-[10px] text-gray-500 mt-0.5">{{ doc.upload_time ? new Date(doc.upload_time).toLocaleString('zh-CN') : '' }}</div>
                 </div>
                 <span class="text-[10px] px-2 py-0.5 rounded-full font-medium flex-shrink-0"
                   :class="{
-                    'bg-amber-900/30 text-amber-400': doc.status === 'processing',
+                    'bg-amber-900/30 text-amber-400 animate-pulse': doc._isPlaceholder,
+                    'bg-amber-900/30 text-amber-400': doc.status === 'processing' && !doc._isPlaceholder,
                     'bg-emerald-900/30 text-emerald-400': doc.status === 'completed',
                     'bg-red-900/30 text-red-400': doc.status === 'failed' || doc.status === 'error',
                     'bg-gray-800 text-gray-400': !['processing','completed','failed','error'].includes(doc.status)
                   }">
-                  {{ { processing: '处理中', completed: '已完成', failed: '失败', error: '失败' }[doc.status] || doc.status }}
+                  {{ doc._isPlaceholder ? '提交中' : ({ processing: '处理中', completed: '已完成', failed: '失败', error: '失败' }[doc.status] || doc.status) }}
                 </span>
               </div>
               <div v-if="doc.status === 'processing' && docProgress[doc.task_id]" class="mt-2">
@@ -577,7 +750,9 @@
         <div class="border-t border-gray-800 my-1"></div>
       </div>
 
-      <div class="flex-1 flex flex-col bg-[#0d0d14] overflow-hidden">
+      <div class="flex-1 flex bg-[#0d0d14] overflow-hidden">
+
+        <div class="flex-1 flex flex-col overflow-hidden relative">
         <div class="flex items-center bg-[#12121c] border-b border-gray-800/50">
           <button
             @click="activeTab = 'terminal'"
@@ -667,25 +842,85 @@
           </div>
         </div>
 
-        <div v-show="activeTab === 'preview'" class="flex-1 min-h-0 overflow-y-auto" style="max-height: 80vh; background-color: #e5e7eb;">
-          <div v-if="!previewHtml && !slideDeck" class="flex items-center justify-center h-full text-gray-400 text-sm">
-            No preview available yet
+        <div v-show="activeTab === 'preview'" class="flex-1 min-h-0 flex overflow-hidden" style="background-color: #e5e7eb;">
+          <!-- 左侧：聊天消息区 -->
+          <div v-if="currentFollowupTaskId && !slideDeck" class="w-[420px] flex-shrink-0 flex flex-col bg-[#0d1117] border-r border-gray-800">
+            <div class="followup-header" style="border-radius: 0;">
+              <span class="followup-dot"></span>
+              <span class="followup-title">追问对话</span>
+              <span class="followup-hint">基于当前任务上下文继续提问</span>
+            </div>
+            <div class="followup-messages flex-1" ref="followupScrollRef" style="max-height: none; flex: 1; min-height: 0;">
+              <div v-for="(msg, idx) in chatHistory" :key="idx"
+                   :class="['followup-bubble', msg.role === 'user' ? 'followup-bubble-user' : 'followup-bubble-ai']">
+                <div class="followup-bubble-role">{{ msg.role === 'user' ? '🧑 你' : '🤖 AI' }}</div>
+                <div v-if="msg.html" class="followup-bubble-content">
+                  <div style="background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 8px 12px; font-size: 12px; color: #8b949e;">
+                    📊 分析报告已生成，请在右侧查看完整内容
+                  </div>
+                </div>
+                <div v-else class="followup-bubble-content followup-bubble-text">{{ msg.content }}</div>
+              </div>
+              <div v-if="isFollowupLoading" class="followup-bubble followup-bubble-ai">
+                <div class="followup-bubble-role">🤖 AI</div>
+                <div class="followup-bubble-content followup-thinking">
+                  <span class="followup-dot-typing"></span>
+                  <span class="followup-dot-typing"></span>
+                  <span class="followup-dot-typing"></span>
+                  <span class="followup-thinking-text">AI 思考中...</span>
+                </div>
+              </div>
+              <div v-if="chatHistory.length === 0 && !isFollowupLoading" class="flex items-center justify-center h-full text-gray-600 text-xs text-center px-4">
+                <div>
+                  <div class="mb-2 text-2xl">💬</div>
+                  <p>任务分析完成后，可在此处继续追问</p>
+                  <p class="mt-1 text-gray-700">例如：把饼图改成柱状图 / 按部门维度重新统计</p>
+                </div>
+              </div>
+            </div>
+            <div class="followup-input-bar">
+              <textarea
+                v-model="followupInput"
+                class="followup-textarea"
+                placeholder="输入追问内容，按 Enter 发送..."
+                rows="2"
+                @keydown.enter.exact.prevent="sendFollowup"
+                :disabled="isFollowupLoading"
+              ></textarea>
+              <button
+                class="followup-send-btn"
+                @click="sendFollowup"
+                :disabled="isFollowupLoading || !followupInput.trim()"
+              >
+                <span v-if="isFollowupLoading" class="followup-spinner"></span>
+                <span v-else>✈️</span>
+                <span class="followup-send-label">{{ isFollowupLoading ? '发送中' : '发送' }}</span>
+              </button>
+            </div>
           </div>
-          <div v-if="previewHtml && !slideDeck" class="flex justify-end space-x-3 mb-4 bg-gray-800 p-3 rounded-lg shadow-inner mx-4 mt-4">
-            <span class="text-gray-400 text-sm self-center mr-auto">💡 报告已生成，可导出到本地保存：</span>
-            <button @click="exportToWord" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded shadow transition-colors flex items-center">
-              <span class="mr-1">📄</span> 导出 Word (.doc)
-            </button>
-            <button @click="exportToHtml" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded shadow transition-colors flex items-center">
-              <span class="mr-1">🌐</span> 导出离线网页 (.html)
-            </button>
-          </div>
-          <div id="kg-container" class="mx-4 mb-4" v-show="knowledgeGraphData"></div>
-          <div v-if="!slideDeck && previewHtml" class="preview-paper" v-html="safePreviewHtml"></div>
-          <div v-if="slideDeck" class="flex flex-col items-center justify-center h-full text-gray-500 text-sm gap-3">
-            <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-            <p>PPT 已经生成完毕！</p>
-            <button @click="enterPptEditMode" style="margin-top: 16px; padding: 12px 24px; background: #2563eb; color: white; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; font-size: 15px; box-shadow: 0 4px 12px rgba(37,99,235,0.3);">✨ 开启全屏 PPT 编辑器</button>
+
+          <!-- 右侧：预览区 -->
+          <div class="flex-1 overflow-y-auto" style="background-color: #e5e7eb;">
+            <div v-if="!previewHtml && !slideDeck" class="flex items-center justify-center h-full text-gray-400 text-sm">
+              No preview available yet
+            </div>
+            <div v-if="previewHtml && !slideDeck" class="flex justify-end space-x-3 mb-4 bg-gray-800 p-3 rounded-lg shadow-inner mx-4 mt-4">
+              <span class="text-gray-400 text-sm self-center mr-auto">💡 报告已生成，可导出到本地保存：</span>
+              <button @click="exportToWord" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded shadow transition-colors flex items-center">
+                <span class="mr-1">📄</span> 导出 Word (.doc)
+              </button>
+              <button @click="exportToHtml" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded shadow transition-colors flex items-center">
+                <span class="mr-1">🌐</span> 导出离线网页 (.html)
+              </button>
+            </div>
+            <div id="kg-container" class="mx-4 mb-4" v-show="knowledgeGraphData"></div>
+            <div v-if="!slideDeck && previewHtml" class="preview-paper" v-html="safePreviewHtml"></div>
+
+            <div v-if="slideDeck" class="flex flex-col items-center justify-center h-full text-gray-500 text-sm gap-3">
+              <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+              <p>PPT 已经生成完毕！</p>
+              <button @click="enterPptEditMode" style="margin-top: 16px; padding: 12px 24px; background: #2563eb; color: white; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; font-size: 15px; box-shadow: 0 4px 12px rgba(37,99,235,0.3);">✨ 开启全屏 PPT 编辑器</button>
+            </div>
           </div>
         </div>
 
@@ -993,6 +1228,7 @@
             </div>
           </div>
         </div>
+        </div>
       </div>
 
       <Teleport to="body">
@@ -1187,6 +1423,13 @@ createApp({
     });
     const activeTab = ref('terminal');
     const slideDeck = ref(null);
+
+    // ===== 多轮追问状态 =====
+    const chatHistory = ref([]);          // [{ role: 'user'|'ai', content: '...', html?: bool }]
+    const followupInput = ref('');        // 输入框文本
+    const isFollowupLoading = ref(false); // AI 思考中
+    const chatInputText = ref('');        // 底部统一输入栏文本
+    const currentFollowupTaskId = ref(''); // 当前追问关联的原始 task_id
     const currentSlideIndex = ref(0);
     const pptFrameReady = ref(false);
     const currentThreadId = ref(null);
@@ -1626,7 +1869,9 @@ createApp({
         const data = await res.json();
         if (res.ok) {
           if (page === 1) {
-            myDocuments.value = data.documents || [];
+            // 🔑 保留占位任务（_isPlaceholder），避免刷新时丢失
+            const placeholders = myDocuments.value.filter(d => d._isPlaceholder);
+            myDocuments.value = [...placeholders, ...(data.documents || [])];
           } else {
             myDocuments.value = [...myDocuments.value, ...(data.documents || [])];
           }
@@ -1641,38 +1886,87 @@ createApp({
       }
     }
 
+    // 全局 SSE 连接注册表 + 已完成任务黑名单：防止重复订阅和轮询风暴
+    const _activeSSEConnections = new Set();
+    const _completedTaskIds = new Set();  // 永久标记：已收到终态的 task_id 不再订阅
+    let _loadDocsTimer = null;
+
+    // 防抖：避免 loadMyDocuments 被高频调用
+    function _debouncedLoadDocs(page) {
+      if (_loadDocsTimer) clearTimeout(_loadDocsTimer);
+      _loadDocsTimer = setTimeout(() => {
+        _loadDocsTimer = null;
+        loadMyDocuments(page);
+      }, 2000);
+    }
+
     function _subscribeProcessingDocs() {
       for (const doc of myDocuments.value) {
-        if (doc.status === 'processing' && doc.task_id && !docProgress[doc.task_id]) {
+        // 防重入 + 已完成黑名单：跳过已收到终态的 task
+        if (doc.status === 'processing' && doc.task_id
+            && !docProgress[doc.task_id]
+            && !_activeSSEConnections.has(doc.task_id)
+            && !_completedTaskIds.has(doc.task_id)) {
+          _activeSSEConnections.add(doc.task_id);
           docProgress[doc.task_id] = { progress: 0, action: '等待中...' };
           const sseUrl = `/api/v1/task/${doc.task_id}/stream?token=${encodeURIComponent(authToken.value)}`;
           const es = new EventSource(sseUrl);
+          const subscribedTaskId = doc.task_id;
+          let sseClosed = false;
+          const cleanupSSE = () => {
+            if (sseClosed) return;
+            sseClosed = true;
+            es.close();
+            _activeSSEConnections.delete(subscribedTaskId);
+            delete docProgress[subscribedTaskId];
+          };
           es.onmessage = (event) => {
             try {
               const payload = JSON.parse(event.data);
               if (payload.progress !== undefined) {
-                docProgress[doc.task_id] = { progress: payload.progress, action: payload.action || '' };
+                docProgress[subscribedTaskId] = { progress: payload.progress, action: payload.action || '' };
               }
               if (payload.status === 'success' || payload.status === 'error') {
-                es.close();
-                delete docProgress[doc.task_id];
-                loadMyDocuments(myDocsPage.value);
+                // 🔑 关键：先标记本地 doc 状态 + 加入黑名单，再清理 SSE
+                _completedTaskIds.add(subscribedTaskId);
+                const localDoc = myDocuments.value.find(d => d.task_id === subscribedTaskId);
+                if (localDoc) {
+                  localDoc.status = payload.status === 'success' ? 'completed' : 'error';
+                }
+                cleanupSSE();
+                // 防抖刷新，避免立即重新订阅
+                _debouncedLoadDocs(myDocsPage.value);
               }
             } catch (e) {}
           };
           es.onerror = () => {
-            es.close();
-            delete docProgress[doc.task_id];
+            // SSE 连接断开：标记为已完成（防止重连风暴），但不加入黑名单（允许下次页面加载时重试）
+            cleanupSSE();
+            const localDoc = myDocuments.value.find(d => d.task_id === subscribedTaskId);
+            if (localDoc && localDoc.status === 'processing') {
+              // 如果 onerror 且没有收到终态，可能是任务还在跑但 SSE 断了
+              // 不改状态，但加入临时冷却
+              _completedTaskIds.add(subscribedTaskId);
+            }
           };
         }
       }
     }
 
     let _kbPollTimer = null;
+    let _kbPollCount = 0;
+    const KB_MAX_POLLS = 60; // 最多轮询 60 次（3s * 60 = 3 分钟）后自动停止
     watch(kbDocuments, (docs) => {
       const hasProcessing = docs.some(d => d.status === 'processing');
       if (hasProcessing && !_kbPollTimer) {
+        _kbPollCount = 0;
         _kbPollTimer = setInterval(() => {
+          _kbPollCount++;
+          if (_kbPollCount > KB_MAX_POLLS) {
+            clearInterval(_kbPollTimer);
+            _kbPollTimer = null;
+            return;
+          }
           fetchKbDocuments();
           loadKbStats();
         }, 3000);
@@ -1683,6 +1977,9 @@ createApp({
     }, { deep: true });
 
     onMounted(async () => {
+      // 注册追问删除按钮的事件委托（v-html 重渲染不丢失，因挂在 document 上）
+      document.addEventListener('click', _handleFollowupDeleteClick);
+
       const searchParams = new URLSearchParams(window.location.search);
       const urlUserId = searchParams.get('userId');
       const urlAuthFrom = searchParams.get('authFrom');
@@ -1721,6 +2018,7 @@ createApp({
       } catch {}
       loadKbStats();
       fetchKbDocuments();
+      loadMyDocuments(); // 页面加载时拉取历史任务列表到左侧边栏
 
       window.addEventListener('message', (event) => {
         if (event.data && (event.data.type === 'PPT_VIEWER_READY' || event.data.type === 'PPT_READY')) {
@@ -1872,9 +2170,56 @@ createApp({
 
     function newSession() {
       currentThreadId.value = null;
+      currentFollowupTaskId.value = '';
+      chatHistory.value = [];
+      chatInputText.value = '';
+      previewHtml.value = '';
       slideDeck.value = null;
       terminalLines.value = [];
-      addLine('[System] ', '已开启全新对话，记忆已重置。', 'text-green-400');
+      activeTab.value = 'terminal';
+      sidebarView.value = 'upload';
+      addLine('[System] ', '已开启全新对话，请上传文件或输入分析需求。', 'text-green-400');
+    }
+
+    // ===== 底部统一输入栏：路由新建任务 vs 追问 =====
+    async function handleChatSend() {
+      const text = chatInputText.value.trim();
+      if (!text && selectedFiles.value.length === 0) return;
+      if (isProcessing.value) return;
+
+      // 有文件 → 一定是新建任务
+      if (selectedFiles.value.length > 0) {
+        userInstruction.value = text;
+        chatInputText.value = '';
+        await submitTask();
+        return;
+      }
+
+      // 无文件，有焦点任务 → 追问
+      if (currentFollowupTaskId.value && !currentFollowupTaskId.value.startsWith('temp_')) {
+        followupInput.value = text;
+        chatInputText.value = '';
+        await sendFollowup();
+        return;
+      }
+
+      // 无文件，无焦点 → 新建任务（纯文本）
+      if (currentFollowupTaskId.value && currentFollowupTaskId.value.startsWith('temp_')) {
+        showToast('⏳ 请等待当前分析完成后再追问', 'warning');
+        return;
+      }
+
+      // 纯文本新建任务
+      userInstruction.value = text;
+      chatInputText.value = '';
+      await submitTask();
+    }
+
+    // 底部输入栏文件选择
+    function onFileInputBarChange(e) {
+      const files = Array.from(e.target.files);
+      files.forEach(f => selectedFiles.value.push(f));
+      e.target.value = ''; // 允许重复选择同一文件
     }
 
     function exportPptJson() {
@@ -2111,6 +2456,17 @@ createApp({
           slideDeck.value = null;  // 确保显示 preview-paper 而非 PPT 编辑器
           activeTab.value = 'preview';
           addLine('[历史] ', `📄 正在查看: ${doc.filename}`, 'text-indigo-400');
+
+          // ===== 初始化追问上下文 =====
+          // 将最初的分析报告作为 AI 的第一条消息，开启多轮对话
+          currentFollowupTaskId.value = doc.task_id;
+          chatHistory.value = [{
+            role: 'ai',
+            content: data.filled_html,
+            html: true,
+          }];
+          followupInput.value = '';
+          isFollowupLoading.value = false;
         } else {
           alert('该任务尚无预览内容（可能任务未生成 filled_html）');
         }
@@ -2121,18 +2477,319 @@ createApp({
       }
     }
 
+    // ===== 追问 HTML 清洗（复用 DOMPurify 配置，允许 base64 图片） =====
+    function sanitizeHtml(html) {
+      if (!html) return '';
+      if (typeof DOMPurify !== 'undefined') {
+        try {
+          const sanitized = DOMPurify.sanitize(html, {
+            ADD_TAGS: ['table', 'tr', 'td', 'th', 'thead', 'tbody', 'colgroup', 'col', 'img', 'div', 'h2', 'h4', 'pre', 'span', 'p'],
+            ADD_ATTR: ['style', 'class', 'colspan', 'rowspan', 'src', 'alt', 'width', 'height'],
+            ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|data):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+            ALLOW_DATA_ATTR: true,
+          });
+          if (sanitized.length < html.length * 0.5 && html.includes('base64')) {
+            return html;
+          }
+          return sanitized;
+        } catch (e) {
+          return html;
+        }
+      }
+      return html;
+    }
+
+    // ===== 删除单次追问（事件委托：兼容 DOMPurify，用 class+data-* 而非 inline onclick） =====
+    // 因 DOMPurify 会剥离 onclick 且 ADD_TAGS 不含 button，删除控件用 span + class 触发委托
+    function _handleFollowupDeleteClick(e) {
+      const btn = e.target.closest('.followup-delete-btn');
+      if (!btn) return;
+      const taskId = btn.getAttribute('data-task-id');
+      const turnIndex = parseInt(btn.getAttribute('data-turn-index'), 10);
+      if (!taskId || !turnIndex) return;
+      deleteSingleTurn(taskId, turnIndex);
+    }
+
+    async function deleteSingleTurn(taskId, turnIndex) {
+      if (!confirm(`确定删除第 ${turnIndex} 次追问的报告与对话记忆？\n（删除后大模型将忘记本次对话，防止后续记忆污染）`)) return;
+      try {
+        const res = await apiFetch(`/api/v1/tasks/${taskId}/delete_turn/${turnIndex}`, { method: 'POST' });
+        if (res.ok) {
+          const data = await res.json();
+          // 局部刷新：用后端返回的最新 filled_html 重置预览区
+          previewHtml.value = data.filled_html || '';
+          // 重建 chatHistory：首轮 AI 气泡 + 剩余 history 的成对追问对话
+          try {
+            const hist = data.history ? JSON.parse(data.history) : [];
+            const bubbles = [];
+            if (data.filled_html) {
+              bubbles.push({ role: 'ai', content: data.filled_html, html: true });
+            }
+            // 跳过首轮 user（索引0），从索引1起按 user/ai 成对渲染
+            for (let i = 1; i < hist.length; i += 2) {
+              if (hist[i]) bubbles.push({ role: 'user', content: hist[i].content || '', html: false });
+              if (hist[i + 1]) bubbles.push({ role: 'ai', content: hist[i + 1].content || '', html: false });
+            }
+            chatHistory.value = bubbles;
+          } catch (err) {
+            console.warn('deleteSingleTurn: chatHistory 重建失败', err);
+          }
+          showToast(`已删除第 ${turnIndex} 次追问`, 'success');
+        } else {
+          showToast('删除失败: ' + res.status, 'error');
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('删除出错: ' + err.message, 'error');
+      }
+    }
+
+    // ===== 发送追问（复用 SSE 流式等待，追加渲染而非覆盖） =====
+    async function sendFollowup() {
+      const query = followupInput.value.trim();
+      if (!query || isFollowupLoading.value || !currentFollowupTaskId.value) return;
+
+      // 🔑 如果当前焦点任务还是 temp_ 占位，阻止追问
+      if (currentFollowupTaskId.value.startsWith('temp_')) {
+        showToast('⏳ 请等待当前分析完成后再追问', 'warning');
+        return;
+      }
+
+      // a. 立刻 push 用户问题到 chatHistory
+      chatHistory.value.push({ role: 'user', content: query, html: false });
+      followupInput.value = '';
+      isFollowupLoading.value = true;
+
+      // b. 🔑 追问：不清空预览区，在底部追加局部 Loading 提示
+      const prevPreview = previewHtml.value;
+      const loadingHtml = `
+        <div id="followup-loading" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px; gap:16px;">
+          <div style="width:40px; height:40px; border:4px solid #312e81; border-top:4px solid #818cf8; border-radius:50%; animation: followup-spin 0.8s linear infinite;"></div>
+          <p style="color:#818cf8; font-size:14px;">AI 正在深度思考和绘制图表中，请耐心等待...</p>
+        </div>`;
+      previewHtml.value = prevPreview + loadingHtml;
+      activeTab.value = 'preview';
+
+      // 自动滚动预览区到底部
+      await nextTick();
+      _scrollFollowupToBottom();
+      _scrollPreviewToBottom();
+
+      try {
+        // c. 请求 POST /api/v1/tasks/{task_id}/followup
+        const historyForApi = chatHistory.value
+          .filter(m => m.role === 'user' || m.role === 'ai')
+          .map(m => ({
+            role: m.role === 'ai' ? 'assistant' : 'user',
+            content: m.html ? '[上一轮分析报告含图表，已渲染在预览区]' : m.content,
+          }));
+
+        const res = await apiFetch(`/api/v1/tasks/${currentFollowupTaskId.value}/followup`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query, history: historyForApi }),
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.message || err.detail || `HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        if (data.status === 'error') {
+          throw new Error(data.message || '追问失败');
+        }
+
+        const followupTaskId = data.task_id;
+        addLine('[追问] ', `✈️ 已提交追问，新任务: ${followupTaskId}`, 'text-emerald-400');
+
+        // d. 复用 SSE 流式等待（仅等待，不渲染）
+        const filledHtml = await _waitForTaskViaSSE(followupTaskId);
+
+        // e. 🔑 追问：追加渲染（保留旧报告 + 结构化追问块[含删除按钮] + 新结果）
+        if (filledHtml) {
+          const taskId = currentFollowupTaskId.value;
+          // 计算本轮是第几次追问：基于已存在的 followup-block 数量 +1
+          // 与后端 persist_task_result 的 len(history)//2+1 在正常流程下一致
+          const existingBlocks = (previewHtml.value.match(/class=['"]followup-block['"]/g) || []).length;
+          const turnIndex = existingBlocks + 1;
+          // 结构化追问块：与后端 persist_task_result 模板完全一致（含定点删除按钮）
+          const block = `
+            <div class='followup-block' id='followup-block-${turnIndex}' data-turn-index='${turnIndex}'>
+              <div style='margin: 40px 0; border-bottom: 2px dashed #cbd5e1; text-align:center;'>
+                <span style='background: white; padding: 0 10px; color: #6b7280;'>👇 第 ${turnIndex} 次追问结果</span>
+              </div>
+              <div style='text-align: right; margin-bottom: 10px;'>
+                <span class='followup-delete-btn' data-task-id='${taskId}' data-turn-index='${turnIndex}' style='display:inline-block; color:#ef4444; background:#fef2f2; border:1px solid #fca5a5; padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px;'>🗑️ 撤销本次追问</span>
+              </div>
+              ${filledHtml}
+            </div>`;
+          previewHtml.value = prevPreview + block;
+          slideDeck.value = null;
+          activeTab.value = 'preview';
+          chatHistory.value.push({ role: 'ai', content: filledHtml, html: true });
+          addLine('[追问] ', '✅ 追问完成，结果已追加到预览区', 'text-emerald-400');
+          // 自动滚动到新结果
+          await nextTick();
+          _scrollPreviewToBottom();
+        }
+
+      } catch (err) {
+        // 🔑 追问失败：恢复旧报告 + 错误提示
+        previewHtml.value = prevPreview + `
+          <div style="margin: 30px 0; padding: 20px; background: #fef2f2; border-radius: 8px; border-left: 4px solid #ef4444;">
+            <p style="color: #ef4444; font-weight: 600;">❌ 追问失败: ${err.message}</p>
+            <p style="color: #6b7280; font-size: 14px; margin-top: 8px;">您可以修改问题后重试，或在左侧历史列表查看任务状态。</p>
+          </div>`;
+        chatHistory.value.push({
+          role: 'ai',
+          content: `❌ 追问失败: ${err.message}`,
+          html: false,
+        });
+        addLine('[追问] ', `❌ 失败: ${err.message}`, 'text-red-400');
+      } finally {
+        isFollowupLoading.value = false;
+        await nextTick();
+        _scrollFollowupToBottom();
+      }
+    }
+
+    // ===== SSE 流式等待任务完成（Promise 封装，仅等待不渲染） =====
+    function _waitForTaskViaSSE(taskId) {
+      return new Promise((resolve, reject) => {
+        const sseUrl = `/api/v1/task/${taskId}/stream?token=${encodeURIComponent(authToken.value)}`;
+        const eventSource = new EventSource(sseUrl);
+        let settled = false;
+
+        const cleanup = () => {
+          if (!settled) {
+            settled = true;
+            eventSource.close();
+          }
+        };
+
+        eventSource.onmessage = (e) => {
+          try {
+            const payload = JSON.parse(e.data);
+            const taskStatus = payload.status || '';
+            const action = payload.action || '';
+            const progress = payload.progress || 0;
+
+            // 更新进度条和终端
+            if (progress > 0) taskProgress.value = progress;
+            if (action) {
+              currentAction.value = action;
+              const agent = payload.agent || payload.node || 'Worker';
+              addLine(`[${agent}] `, action, 'text-emerald-400');
+            }
+
+            // 处理知识图谱数据
+            if (taskStatus === 'generative_ui' && payload.component === 'knowledge_graph' && payload.data) {
+              knowledgeGraphData.value = payload.data;
+              addLine('[System] ', '🧠 AI 知识图谱已生成！', 'text-violet-400');
+              return;
+            }
+
+            if (taskStatus === 'success') {
+              cleanup();
+              taskProgress.value = 100;
+              const result = payload.result || {};
+              const filledHtml = result.filled_html || '';
+
+              // PPT 数据
+              if (result.ppt_data && result.ppt_data.slides) {
+                slideDeck.value = result.ppt_data;
+                currentSlideIndex.value = 0;
+                showPptTriggerBtn.value = true;
+                addLine('[System] ', `📑 PPT Ready! ${result.ppt_data.slides.length} slides`, 'text-violet-400');
+              }
+
+              // 标记黑名单 + 防抖刷新左侧列表
+              _completedTaskIds.add(taskId);
+              _debouncedLoadDocs();
+              // 🔑 仅 resolve 结果，渲染逻辑由调用方处理
+              resolve(filledHtml);
+            } else if (taskStatus === 'error') {
+              cleanup();
+              taskProgress.value = -1;
+              _completedTaskIds.add(taskId);
+              _debouncedLoadDocs();
+              reject(new Error(payload.error || '任务处理失败'));
+            }
+          } catch (parseErr) {
+            console.error('[SSE] JSON parse error:', parseErr.message);
+          }
+        };
+
+        eventSource.onerror = () => {
+          if (settled) return;
+          cleanup();
+          reject(new Error('SSE 连接断开，请稍后在左侧历史列表查看结果'));
+        };
+      });
+    }
+
+    // ===== 预览区 Loading 遮罩（仅用于新建任务首轮） =====
+    function _showPreviewLoading(message) {
+      previewHtml.value = `
+        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; min-height:400px; gap:20px; padding:40px;">
+          <div style="width:56px; height:56px; border:4px solid #312e81; border-top:4px solid #818cf8; border-radius:50%; animation: followup-spin 0.8s linear infinite;"></div>
+          <div style="text-align:center;">
+            <h2 style="font-size:18px; font-weight:600; color:#818cf8; margin-bottom:8px;">⚙️ ${message}</h2>
+            <p style="color:#6b7280; font-size:14px;">数据量较大，可能需要 1-2 分钟，请勿刷新页面。</p>
+          </div>
+        </div>`;
+      slideDeck.value = null;
+      activeTab.value = 'preview';
+    }
+
+    // ===== 预览区错误提示（仅用于新建任务首轮） =====
+    function _showPreviewError(message) {
+      previewHtml.value = `
+        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; min-height:400px; gap:12px; text-align:center; padding:50px;">
+          <h3 style="font-size:18px; font-weight:600; color:#ef4444;">${message}</h3>
+          <p style="color:#6b7280; font-size:14px;">您可以稍后刷新页面，或者在左侧列表中查看任务是否在后台完成。</p>
+        </div>`;
+      slideDeck.value = null;
+      activeTab.value = 'preview';
+    }
+
+    // ===== 滚动预览区到底部 =====
+    function _scrollPreviewToBottom() {
+      const el = document.querySelector('#preview-panel, .preview-content, [class*="preview"]');
+      if (el) el.scrollTop = el.scrollHeight;
+    }
+
+    // ===== 滚动追问区到底部 =====
+    function _scrollFollowupToBottom() {
+      const el = document.querySelector('.followup-messages');
+      if (el) el.scrollTop = el.scrollHeight;
+    }
+
     async function deleteTask(doc) {
       if (!doc.task_id) {
         alert('该记录无 task_id，无法删除');
         return;
       }
-      if (!window.confirm(`确定要删除「${doc.filename}」吗？此操作不可逆！`)) return;
+      if (!window.confirm(`确定要删除「${doc._displayTitle || doc.filename}」吗？此操作不可逆！`)) return;
       try {
         const res = await apiFetch(`/api/v1/tasks/${doc.task_id}`, { method: 'DELETE' });
         if (res.ok) {
           myDocuments.value = myDocuments.value.filter(d => d.task_id !== doc.task_id);
           myDocsTotal.value = Math.max(0, myDocsTotal.value - 1);
           addLine('[历史] ', `🗑️ 已删除: ${doc.filename}`, 'text-red-400');
+
+          // 如果删除的是当前焦点任务，清空右侧工作区
+          if (currentFollowupTaskId.value === doc.task_id) {
+            currentFollowupTaskId.value = '';
+            chatHistory.value = [];
+            previewHtml.value = '';
+            slideDeck.value = null;
+            activeTab.value = 'terminal';
+            followupInput.value = '';
+            isFollowupLoading.value = false;
+            addLine('[System] ', '当前对话已删除，请新建分析。', 'text-yellow-400');
+          }
         } else {
           const err = await res.json().catch(() => ({}));
           alert('删除失败: ' + (err.detail || '未知错误'));
@@ -2538,6 +3195,7 @@ createApp({
       downloadUrl.value = '';
       previewHtml.value = '';
       knowledgeGraphData.value = null;
+      window._fallbackAttempted = false;  // 重置回退标志
       slideDeck.value = null;
       currentSlideIndex.value = 0;
       activeTab.value = 'terminal';
@@ -2548,6 +3206,34 @@ createApp({
       taskProgress.value = 0;
       currentAction.value = '';
 
+      // ============================================================
+      // 乐观 UI 更新：请求发出前，立即在左侧列表插入占位任务
+      // ============================================================
+      const tempId = 'temp_' + Date.now();
+      const fileNames = selectedFiles.value.map(f => f.name).join(', ');
+      const displayTitle = instructionText
+        ? instructionText.slice(0, 30) + (instructionText.length > 30 ? '...' : '')
+        : (fileNames || '文档分析任务');
+
+      // a) 立即 unshift 占位任务到 myDocuments 顶部
+      myDocuments.value.unshift({
+        id: -Date.now(),
+        task_id: tempId,
+        filename: fileNames || '新任务',
+        file_type: selectedFiles.value[0]?.name?.split('.').pop() || '',
+        status: 'processing',
+        upload_time: new Date().toISOString(),
+        tags: [],
+        description: '',
+        chunk_count: 0,
+        has_preview: false,
+        _isPlaceholder: true,   // 标记为占位任务
+        _displayTitle: '⏳ ' + displayTitle,
+      });
+
+      // b) 锁定焦点
+      currentFollowupTaskId.value = tempId;
+
       const formData = new FormData();
       // 保存文件副本用于 Path B 回退（submitTaskDirect），避免 selectedFiles 被清空后无法重传
       const fallbackFiles = selectedFiles.value.length > 0 ? [...selectedFiles.value] : [];
@@ -2555,7 +3241,6 @@ createApp({
         selectedFiles.value.forEach(f => {
           formData.append('files', f);
         });
-        const fileNames = selectedFiles.value.map(f => f.name).join(', ');
         addLine('[System] ', `Files uploaded: ${fileNames}`, 'text-indigo-400');
       } else {
         addLine('[System] ', 'No file uploaded. Generating from text prompt.', 'text-indigo-400');
@@ -2567,6 +3252,8 @@ createApp({
       addLine('[System] ', `Instruction: ${instructionText || '(default)'}`, 'text-indigo-400');
       addLine('[System] ', 'Submitting task to Celery worker...', 'text-gray-500');
 
+      let realTaskId = null;  // 提升到 try 外，供 catch 中传递给 submitTaskDirect
+
       try {
         const submitRes = await apiFetch('/api/v1/task/submit', {
           method: 'POST',
@@ -2576,12 +3263,28 @@ createApp({
         if (!submitRes.ok) {
           const err = await submitRes.text();
           addLine('[Error] ', `Submit failed: ${submitRes.status} - ${err}`, 'text-red-400');
+          // 移除占位任务
+          myDocuments.value = myDocuments.value.filter(d => d.task_id !== tempId);
           isProcessing.value = false;
           return;
         }
 
         const { task_id, status } = await submitRes.json();
+        realTaskId = task_id;  // 同步到外层变量，供 catch 使用
         addLine('[System] ', `Task submitted! task_id=${task_id}, status=${status}`, 'text-emerald-400');
+
+        // ============================================================
+        // 异步替换：将占位任务的 tempId 替换为真实 task_id
+        // ============================================================
+        const placeholder = myDocuments.value.find(d => d.task_id === tempId);
+        if (placeholder) {
+          placeholder.task_id = task_id;
+          placeholder._isPlaceholder = false;
+          placeholder._displayTitle = displayTitle;
+          placeholder.status = 'processing';
+        }
+        currentFollowupTaskId.value = task_id;
+
         currentAction.value = 'Task accepted, waiting for worker...';
         taskProgress.value = 2;
         uploadQueue.value.forEach(item => { item.status = 'processing'; });
@@ -2650,6 +3353,19 @@ createApp({
                   previewHtml.value = result.filled_html;
                   activeTab.value = 'preview';
                   addLine('[System] ', '📄 Document preview generated, click "Preview" tab to view', 'text-indigo-400');
+
+                  // 🔑 关键修复：任务完成后初始化追问上下文
+                  // 将真实 task_id 设置为焦点，并初始化 chatHistory
+                  if (task_id) {
+                    currentFollowupTaskId.value = task_id;
+                    chatHistory.value = [{
+                      role: 'ai',
+                      content: result.filled_html,
+                      html: true,
+                    }];
+                    followupInput.value = '';
+                    isFollowupLoading.value = false;
+                  }
                 } else {
                   console.warn('[SSE] result has no filled_html field');
                 }
@@ -2666,6 +3382,10 @@ createApp({
               sendToFrame('TASK_PROGRESS', { progress: 100, action: '处理完成', status: 'success' });
               isProcessing.value = false;
 
+              // 🔑 关键修复：任务完成后标记黑名单 + 防抖刷新左侧历史列表
+              if (task_id) _completedTaskIds.add(task_id);
+              _debouncedLoadDocs();
+
             } else if (taskStatus === 'error') {
               sseTaskDone = true;
               taskProgress.value = -1;
@@ -2674,6 +3394,9 @@ createApp({
               sendToFrame('TASK_ERROR', { error: payload.error || 'Unknown error' });
               eventSource.close();
               isProcessing.value = false;
+              // 🔑 标记黑名单 + 防抖刷新列表以更新失败状态
+              if (task_id) _completedTaskIds.add(task_id);
+              _debouncedLoadDocs();
 
             } else if (taskStatus === 'timeout') {
               sseTaskDone = true;
@@ -2682,6 +3405,9 @@ createApp({
               addLine('[Error] ', 'SSE connection timeout', 'text-red-400');
               sendToFrame('TASK_ERROR', { error: 'SSE connection timeout' });
               eventSource.close();
+              // 🔑 超时提示：后端可能仍在跑，用户可在左侧历史列表查看结果
+              addLine('[System] ', '⏳ 后端可能仍在处理，请稍后在左侧历史列表查看结果', 'text-yellow-400');
+              _showPreviewError('❌ 连接超时');
               isProcessing.value = false;
             }
           } catch (parseErr) {
@@ -2693,17 +3419,41 @@ createApp({
           if (sseTaskDone) return;  // 任务已通过 onmessage 完成，忽略连接关闭事件
           addLine('[System] ', 'SSE connection closed, falling back to direct stream mode...', 'text-yellow-400');
           eventSource.close();
-          submitTaskDirect(instructionText || '(default)', fallbackFiles);
+          // 防止无限回退：仅当尚未尝试过 direct 模式时才回退
+          if (!window._fallbackAttempted) {
+            window._fallbackAttempted = true;
+            submitTaskDirect(instructionText || '(default)', fallbackFiles, task_id);
+          } else {
+            addLine('[Error] ', 'Direct stream also failed', 'text-red-400');
+            // 🔑 direct 也失败：提示用户在左侧历史列表查看结果
+            _showPreviewError('❌ 连接失败');
+            isProcessing.value = false;
+          }
         };
 
       } catch (err) {
         addLine('[Error] ', `Connection error: ${err.message}`, 'text-red-400');
-        addLine('[System] ', 'Falling back to direct stream mode...', 'text-yellow-400');
-        submitTaskDirect(instructionText || '(default)', fallbackFiles);
+        // 检查占位任务是否还在（如果 submitRes 成功了，占位已被替换为真实 ID）
+        const placeholder = myDocuments.value.find(d => d.task_id === tempId);
+        if (placeholder) {
+          // fetch 本身就失败了（网络错误/超时），标记占位任务为后台处理
+          placeholder._isPlaceholder = false;
+          placeholder._displayTitle = '🔄 ' + displayTitle;
+          placeholder.status = 'background';
+          addLine('[System] ', '⏳ 任务可能已在后台处理，请稍后刷新列表查看结果', 'text-yellow-400');
+          showToast('⏳ 任务已提交到后台处理，请稍后刷新查看', 'warning');
+          if (tempId) _completedTaskIds.add(tempId);
+          setTimeout(() => _debouncedLoadDocs(), 5000);
+          isProcessing.value = false;
+        } else {
+          // 占位已被替换为真实 task_id，走回退路径
+          addLine('[System] ', 'Falling back to direct stream mode...', 'text-yellow-400');
+          submitTaskDirect(instructionText || '(default)', fallbackFiles, realTaskId);
+        }
       }
     }
 
-    async function submitTaskDirect(instructionText, files) {
+    async function submitTaskDirect(instructionText, files, taskId) {
       const formData = new FormData();
       const filesToUpload = files && files.length > 0 ? files : selectedFiles.value;
       if (filesToUpload.length > 0) {
@@ -2762,6 +3512,8 @@ createApp({
 
       } catch (err) {
         addLine('[Error] ', `Connection error: ${err.message}`, 'text-red-400');
+        // 🔑 direct stream 也失败：提示用户在左侧历史列表查看结果
+        _showPreviewError(`❌ 连接失败: ${err.message}`);
       } finally {
         isProcessing.value = false;
       }
@@ -2881,8 +3633,23 @@ createApp({
         }
         if (previewHtml.value) {
           activeTab.value = 'preview';
+          // 🔑 关键修复：任务完成后初始化追问上下文
+          if (currentFollowupTaskId.value && !currentFollowupTaskId.value.startsWith('temp_')) {
+            chatHistory.value = [{
+              role: 'ai',
+              content: previewHtml.value,
+              html: true,
+            }];
+            followupInput.value = '';
+            isFollowupLoading.value = false;
+          }
         }
         isProcessing.value = false;
+        // 🔑 关键修复：任务完成后标记黑名单 + 防抖刷新左侧历史列表
+        if (currentFollowupTaskId.value && !currentFollowupTaskId.value.startsWith('temp_')) {
+          _completedTaskIds.add(currentFollowupTaskId.value);
+        }
+        _debouncedLoadDocs();
       }
     }
 
@@ -2984,6 +3751,9 @@ createApp({
       sidebarView, myDocuments, myDocsTotal, myDocsPage, isLoadingDocs, docProgress, viewingTaskId, transferringTaskId, loadMyDocuments,
       loadKbStats, initKgView,
       viewTaskResult, deleteTask, transferToRag,
+      chatHistory, followupInput, isFollowupLoading, currentFollowupTaskId,
+      sendFollowup, sanitizeHtml,
+      chatInputText, handleChatSend, onFileInputBarChange,
       toastVisible, toastMessage, toastType,
       kgSearchQuery, kgLoading, kgSelectedNode, kgStatsText, kgGetColor, kgSearch, kgLoadFull, kgClickNode,
     };

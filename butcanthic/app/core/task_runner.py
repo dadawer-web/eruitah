@@ -116,6 +116,133 @@ def update_doc_status(doc_ids: list, status: str, filled_html: str = ""):
         logger.warning(f"Failed to update doc status (outer): {e}")
 
 
+# 追问报告的分隔线：将新报告与旧报告优雅隔开
+_FOLLOWUP_DIVIDER = (
+    "<div style='margin: 40px 0; border-bottom: 2px dashed #cbd5e1;'>"
+    "<span style='background: white; padding: 0 10px; color: #6b7280;'>"
+    "👇 追加分析结果</span></div>"
+)
+
+
+def persist_task_result(
+    task_id: str,
+    user_id: str,
+    filled_html: str,
+    user_instruction: str = "",
+    status: str = "completed",
+):
+    """单会话流统一持久化：按 task_id 查 DocumentMeta，已有内容则追加（追问），否则覆盖（首轮）。
+
+    追问绝不新建记录！只更新原始任务的 filled_html + history：
+      - 已有 filled_html → 追问追加（旧 + 分隔线 + 新），history 追加本轮对话
+      - filled_html 为空 → 首轮覆盖写入，history 初始化
+
+    Args:
+        task_id: 业务任务 ID（首轮=新uuid；追问=原任务ID，复用同一记录）
+        user_id: 当前用户 id
+        filled_html: 本轮生成的 HTML 报告
+        user_instruction: 本轮用户指令（追问时含【追问】标记，会清洗后写入 history）
+        status: 目标状态（completed / failed）；failed 时只改状态不动内容
+    """
+    if not task_id:
+        return
+    try:
+        from app.models.database import DocumentMeta, get_session
+
+        session = get_session()
+        try:
+            doc = session.query(DocumentMeta).filter(
+                DocumentMeta.task_id == task_id,
+                DocumentMeta.user_id == user_id,
+            ).first()
+            if not doc:
+                logger.warning(f"persist_task_result: task {task_id} not found, skip")
+                return
+
+            # 失败路径：只回滚状态，不动已有内容/历史（追问失败时保留首轮报告可见）
+            if status == "failed":
+                doc.status = "failed"
+                session.add(doc)
+                session.commit()
+                logger.info(f"persist_task_result: task {task_id} marked failed (content untouched)")
+                return
+
+            # 清洗出本轮用户的真实问句（剥离多轮 history 前缀）
+            clean_query = (user_instruction or "").strip()
+            if "【追问】" in clean_query:
+                clean_query = clean_query.split("【追问】")[-1].strip()
+            if len(clean_query) > 200:
+                clean_query = clean_query[:200] + "…"
+
+            existing_html = doc.filled_html or ""
+            if existing_html:
+                # 已有首轮报告 → 追问追加（绝不覆盖）
+                # 解析已有 history 以计算本轮是第几次追问
+                current_history = []
+                if doc.history:
+                    try:
+                        current_history = json.loads(doc.history)
+                        if not isinstance(current_history, list):
+                            current_history = []
+                    except Exception:
+                        current_history = []
+                # 轮次索引：首轮占 history[0]，追问从 history[1] 起成对存在
+                # len//2+1：len=1→1, len=3→2, len=5→3
+                turn_index = len(current_history) // 2 + 1
+
+                # 结构化追问块：带唯一 id + data-* 便于后端定点清除
+                block_start = (
+                    f"<div class='followup-block' id='followup-block-{turn_index}' "
+                    f"data-turn-index='{turn_index}'>"
+                )
+                divider = (
+                    f"<div style='margin: 40px 0; border-bottom: 2px dashed #cbd5e1; text-align:center;'>"
+                    f"<span style='background: white; padding: 0 10px; color: #6b7280;'>"
+                    f"👇 第 {turn_index} 次追问结果</span></div>"
+                )
+                # 删除按钮用 span（非 button，因 DOMPurify ADD_TAGS 不含 button），
+                # 配合前端事件委托（class + data-*，DOMPurify 允许）触发删除
+                delete_btn = (
+                    f"<div style='text-align: right; margin-bottom: 10px;'>"
+                    f"<span class='followup-delete-btn' data-task-id='{task_id}' "
+                    f"data-turn-index='{turn_index}' "
+                    f"style='display:inline-block; color:#ef4444; background:#fef2f2; "
+                    f"border:1px solid #fca5a5; padding:4px 10px; border-radius:4px; "
+                    f"cursor:pointer; font-size:12px;'>🗑️ 撤销本次追问</span></div>"
+                )
+                block_end = "</div>"
+                doc.filled_html = (
+                    existing_html + block_start + divider + delete_btn
+                    + (filled_html or "") + block_end
+                )
+
+                current_history.append({"role": "user", "content": clean_query})
+                current_history.append({"role": "ai", "content": "已为您生成追加分析，请查看报告。"})
+                doc.history = json.dumps(current_history, ensure_ascii=False)
+                mode = f"append(turn={turn_index})"
+            else:
+                # 首轮 → 覆盖写入
+                doc.filled_html = filled_html or ""
+                doc.history = json.dumps(
+                    [{"role": "user", "content": clean_query}],
+                    ensure_ascii=False,
+                )
+                mode = "overwrite"
+
+            doc.status = "completed"
+            session.add(doc)
+            session.commit()
+            session.refresh(doc)
+            logger.info(f"persist_task_result: task {task_id}, mode={mode}")
+        except Exception as e:
+            logger.error(f"persist_task_result failed: {e}", exc_info=True)
+            session.rollback()
+        finally:
+            session.close()
+    except Exception as e:
+        logger.error(f"persist_task_result (outer) failed: {e}")
+
+
 def _init_services():
     from app.services.ai_client import UnifiedAIClient
 
@@ -190,6 +317,11 @@ async def run_document_pipeline(
     可被以下两种方式调用:
       - Celery Worker: asyncio.run(run_document_pipeline(..., use_redis=True))
       - FastAPI BackgroundTasks: await run_document_pipeline(..., use_redis=False)
+
+    单会话流持久化策略：
+      - doc_ids 非空（首轮上传）→ update_doc_status 按 id 覆盖写入
+      - doc_ids 为空（追问）→ persist_task_result 按 task_id 查原记录，
+        已有 filled_html 则追加（旧+分隔线+新），否则覆盖
     """
     push_progress(task_id, 0, "任务已接收，正在初始化...", use_redis=use_redis)
 
@@ -198,12 +330,29 @@ async def run_document_pipeline(
             task_id, uploaded_files, user_instruction, max_retries, thread_id, user_id, use_redis
         )
         push_progress(task_id, 100, "处理完成！", extra={"status": "success", "result": result}, use_redis=use_redis)
-        update_doc_status(doc_ids, "completed", filled_html=result.get("filled_html", ""))
+        if doc_ids:
+            # 首轮上传：按 DocumentMeta.id 覆盖写入
+            update_doc_status(doc_ids, "completed", filled_html=result.get("filled_html", ""))
+        else:
+            # 追问：复用原任务记录，按 filled_html 判断追加/覆盖
+            persist_task_result(
+                task_id=task_id,
+                user_id=user_id,
+                filled_html=result.get("filled_html", ""),
+                user_instruction=user_instruction,
+            )
         return result
     except Exception as e:
         logger.error(f"Pipeline {task_id} failed: {e}", exc_info=True)
         push_progress(task_id, -1, f"处理失败: {str(e)}", extra={"status": "error", "error": str(e)}, use_redis=use_redis)
-        update_doc_status(doc_ids, "failed")
+        if doc_ids:
+            update_doc_status(doc_ids, "failed")
+        else:
+            # 追问失败：保留首轮报告可见，仅记录失败状态
+            persist_task_result(
+                task_id=task_id, user_id=user_id, filled_html="",
+                user_instruction=user_instruction, status="failed",
+            )
         raise
 
 
@@ -254,7 +403,8 @@ async def _run_workflow(
     if file_type:
         update_state["file_type"] = file_type
 
-    config = {"configurable": {"thread_id": thread_id}} if thread_id else None
+    # 始终使用 task_id 作为 thread_id，确保 LangGraph Checkpointer 正常工作
+    config = {"configurable": {"thread_id": str(thread_id or task_id)}}
 
     push_progress(task_id, 2, "正在启动工作流引擎...", use_redis=use_redis)
 
