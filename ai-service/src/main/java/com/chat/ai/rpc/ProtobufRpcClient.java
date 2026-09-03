@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -44,7 +45,7 @@ public class ProtobufRpcClient {
         return t;
     });
     private final Map<Long, ScheduledFuture<?>> streamTimeouts = new ConcurrentHashMap<>();
-    private long idCounter = 0;
+    private final AtomicLong idCounter = new AtomicLong(0);
 
     public ProtobufRpcClient(String host, int port) {
         this.host = host;
@@ -124,7 +125,7 @@ public class ProtobufRpcClient {
             return;
         }
 
-        long rpcId = ++idCounter;
+        long rpcId = idCounter.incrementAndGet();
 
         ChatProto.RpcMessage rpcMsg = ChatProto.RpcMessage.newBuilder()
                 .setType(ChatProto.RpcMessage.Type.REQUEST)
@@ -153,7 +154,7 @@ public class ProtobufRpcClient {
             return;
         }
 
-        long rpcId = ++idCounter;
+        long rpcId = idCounter.incrementAndGet();
 
         ChatProto.RpcMessage rpcMsg = ChatProto.RpcMessage.newBuilder()
                 .setType(ChatProto.RpcMessage.Type.REQUEST)

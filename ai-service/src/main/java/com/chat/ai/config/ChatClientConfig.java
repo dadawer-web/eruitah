@@ -8,6 +8,8 @@ import org.springframework.ai.model.function.FunctionCallbackWrapper;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
+import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
+import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -57,23 +59,26 @@ public class ChatClientConfig {
     @Qualifier("smartChatClient")
     public ChatClient smartChatClient(
             @Qualifier("webSearchTool") Function<SearchRequest, String> webSearchTool,
-            @Qualifier("cppCompilerToolCallback") FunctionCallback cppCompilerToolCallback) {
-        
+            @Qualifier("cppCompilerToolCallback") FunctionCallback cppCompilerToolCallback,
+            ChatMemory chatMemory) {
+
         FunctionCallback webSearchCallback = FunctionCallbackWrapper.builder(webSearchTool)
             .withName("webSearchTool")
             .withDescription("联网搜索工具。当你需要实时的互联网资讯、最新分数线等超出你知识库的问题时，必须调用此工具。必须严格按照格式传入包含 'query' 字段的 JSON 对象。")
             .withInputType(SearchRequest.class)
             .build();
-        
+
         return ChatClient.builder(standardChatModel())
+            .defaultAdvisors(new MessageChatMemoryAdvisor(chatMemory))
             .defaultFunctions(webSearchCallback, cppCompilerToolCallback)
             .build();
     }
 
     @Bean
     @Qualifier("fastChatClient")
-    public ChatClient fastChatClient() {
+    public ChatClient fastChatClient(ChatMemory chatMemory) {
         return ChatClient.builder(standardChatModel())
+            .defaultAdvisors(new MessageChatMemoryAdvisor(chatMemory))
             .build();
     }
 }

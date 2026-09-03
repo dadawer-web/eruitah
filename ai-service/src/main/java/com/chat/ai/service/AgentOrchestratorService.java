@@ -639,19 +639,30 @@ public class AgentOrchestratorService {
                     "【以下是从知识库中检索到的相关内容（经过混合检索+精排重排），请优先参考】：\n" +
                     knowledgeContext + webSearchContext;
 
-                log.info("[Solver] 理论解答模式：使用 fastChatClient (工业级混合检索RAG + 手动联网搜索)");
-                
-                Flux<String> theoryStream = fastChatClient.prompt()
+                log.info("[Solver] 理论解答模式：同步生成答案（RAG + 联网搜索）");
+
+                // Solver 阶段：同步生成完整答案
+                String draftAnswer = fastChatClient.prompt()
                     .system(ragEnhancedPrompt)
                     .user(userMessage)
-                    .stream()
-                    .content()
-                    .doOnSubscribe(s -> log.info("[Solver] 流式订阅开始"))
-                    .doOnNext(chunk -> log.debug("[Solver] 收到chunk: {}", chunk != null ? chunk.length() : 0))
-                    .doOnError(e -> log.error("[Solver] 流式处理错误: {}", e.getMessage()))
-                    .doOnComplete(() -> log.info("[Solver] 流式处理完成"));
-                
-                return new SolveResult("正在基于知识库和互联网生成回答...", theoryStream);
+                    .call()
+                    .content();
+
+                // Reflection 阶段：审核答案准确性与严谨性
+                log.info("[Reflection] 开始审核答案...");
+                String reviewedAnswer = fastChatClient.prompt()
+                    .system(REVIEWER_SYSTEM_PROMPT)
+                    .user("用户问题: " + userMessage + "\n\n待审核答案:\n" + draftAnswer)
+                    .call()
+                    .content();
+                log.info("[Reflection] 审核完成，答案长度: {} -> {}",
+                    draftAnswer != null ? draftAnswer.length() : 0,
+                    reviewedAnswer != null ? reviewedAnswer.length() : 0);
+
+                String finalAnswer = reviewedAnswer != null ? reviewedAnswer : draftAnswer;
+                Flux<String> theoryStream = simulateTyping(finalAnswer);
+
+                return new SolveResult(finalAnswer, theoryStream);
 
             case "日常闲聊":
             default:

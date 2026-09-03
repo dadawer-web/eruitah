@@ -1,5 +1,6 @@
 package com.chat.ai.scheduler;
 
+import com.chat.ai.annotation.AiosNotify;
 import com.chat.ai.model.graph.UserNode;
 import com.chat.ai.repository.UserRepository;
 import com.chat.ai.service.GraphExamService;
@@ -7,7 +8,9 @@ import com.chat.ai.service.RedisPubSubService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -31,6 +34,10 @@ public class WeeklyReportScheduler {
     @Qualifier("fastChatClient")
     private final ChatClient fastChatClient;
 
+    @Lazy
+    @Autowired
+    private WeeklyReportScheduler self;
+
     private static final int BOT_ID = 10000;
     private static final String BOT_NAME = "408考研严师";
 
@@ -47,7 +54,7 @@ public class WeeklyReportScheduler {
 
             for (UserNode user : activeUsers) {
                 try {
-                    generateAndPushReport(user.getUserId());
+                    self.generateAndPushReport(user.getUserId());
                     successCount++;
                     Thread.sleep(500);
                 } catch (Exception e) {
@@ -63,6 +70,7 @@ public class WeeklyReportScheduler {
         }
     }
 
+    @AiosNotify(source = "weekly_report", successMsg = "你的本周学习诊断周报已生成，请查看聊天消息")
     @Retryable(
         retryFor = {Exception.class},
         maxAttempts = 3,

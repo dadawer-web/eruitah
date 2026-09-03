@@ -101,11 +101,16 @@ public class AiChatService {
                 ));
 
             } else {
-                log.info("[{}] 使用fastChatClient（纯Prompt）", AiPersonaRegistry.getBotName(botId));
+                boolean useTools = AiPersonaRegistry.hasToolAccess(botId);
+                ChatClient chatClient = useTools ? smartChatClient : fastChatClient;
+                log.info("[{}] 使用{}（能力位驱动：hasTools={}）",
+                    AiPersonaRegistry.getBotName(botId),
+                    useTools ? "smartChatClient" : "fastChatClient",
+                    useTools);
 
                 SystemMessage systemMessage = AiPersonaRegistry.getPersonaByBotId(botId);
 
-                response = fastChatClient.prompt()
+                response = chatClient.prompt()
                     .system(systemMessage.getContent())
                     .user(message)
                     .advisors(spec -> spec

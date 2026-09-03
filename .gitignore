@@ -106,3 +106,17 @@ pnpm-debug.log*
 
 # Claude Code 开发工具目录
 claude-code-dev/
+
+# === 本地项目材料（根目录 Markdown 不上传） ===
+# 包括比赛方案、答辩材料、部署/优化手册等本地文档；
+# 子目录中的提示词与 README 不受影响。
+/*.md
+
+# 根目录本地文档及比赛附件（不上传）
+/*.doc
+/*.docx
+/*.pdf
+/*.ppt
+/*.pptx
+/*.xls
+/*.xlsx
